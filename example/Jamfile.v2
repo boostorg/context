@@ -1,0 +1,112 @@
+# Boost.Context Library Examples Jamfile
+
+#          Copyright Oliver Kowalke 2009.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+# For more information, see http://www.boost.org/
+
+import common ;
+import feature ;
+import indirect ;
+import modules ;
+import os ;
+import toolset ;
+
+if [ os.name ] = SOLARIS
+{
+  lib socket ;
+  lib nsl ;
+}
+else if [ os.name ] = NT
+{
+  lib ws2_32 ;
+  lib mswsock ;
+}
+else if [ os.name ] = HPUX
+{
+  lib ipv6 ;
+}
+
+project boost/context/example
+    : requirements
+      <library>/boost/context//boost_context
+      <library>/boost/system//boost_system
+      <library>/boost/thread//boost_thread
+      <define>BOOST_ALL_NO_LIB=1
+      <threading>multi
+      <os>SOLARIS:<library>socket
+      <os>SOLARIS:<library>nsl
+      <os>NT:<define>_WIN32_WINNT=0x0501
+      <os>NT,<toolset>gcc:<library>ws2_32
+      <os>NT,<toolset>gcc:<library>mswsock
+      <os>NT,<toolset>gcc-cygwin:<define>__USE_W32_SOCKETS
+      <os>HPUX,<toolset>gcc:<define>_XOPEN_SOURCE_EXTENDED
+      <os>HPUX:<library>ipv6
+      <link>shared
+    ;
+
+exe base_api
+    : base_api.cpp
+    ;
+
+exe exit
+    : exit.cpp
+    ;
+
+exe do_return
+    : do_return.cpp
+    ;
+
+exe link
+    : link.cpp
+    ;
+
+exe swap
+    : swap.cpp
+    ;
+
+exe unwind
+    : unwind.cpp
+    ;
+
+exe float
+    : float.cpp
+    ;
+
+exe transfer
+    : transfer.cpp
+    ;
+
+exe enumerate_string
+    : enumerator/enumerate_string.cpp
+    ;
+
+exe enumerate_tree
+    : enumerator/enumerate_tree.cpp
+    ;
+
+exe fringe
+    : enumerator/fringe.cpp
+    ;
+
+exe power
+    : enumerator/power.cpp
+    ;
+
+exe echo
+    : continuation/echo.cpp
+    ;
+
+exe parallel
+    : continuation/parallel.cpp
+    ;
+
+exe echo_client
+    : asio/echo_client.cpp
+    ;
+
+exe echo_server
+    : asio/echo_server.cpp
+    ;

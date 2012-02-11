@@ -1,0 +1,118 @@
+[/
+          Copyright Oliver Kowalke 2009.
+ Distributed under the Boost Software License, Version 1.0.
+    (See accompanying file LICENSE_1_0.txt or copy at
+          http://www.boost.org/LICENSE_1_0.txt
+]
+
+[section:rationale Rationale]
+
+[heading NoThrow guarantee]
+
+Member functions of __context__ do not thow exceptions but do require that
+certain preconditions are satisifed:
+context jumps can only be made by instances which are not a __not_a_context__
+and which are not complete.
+
+
+[heading Pimpl idiom]
+
+In order to support move semantics and context switching operations, the use of
+the Pimpl Idiom was necessary.
+A nice feature is that a __context__ has the size of a pointer, so it fits into
+a register.
+
+With the current design the constructor accepts functors and its arguments
+similiar to __thread__.
+
+The Pimpl Idiom allows type-erasing the __stack_allocator__ type.
+
+
+[heading Unwinding]
+
+In order to release resources allocated on the stack, unwinding the stack must be
+supported.
+The current implementation throws a exception in order to unwind the stack (jump
+back to invocation of `suspend()`). The special exception is caught inside the
+trampoline function (first function on top of stack).
+
+
+[heading Protecting the stack]
+
+Because the stack's size is fixed -- there is no support for split stacks -- it
+is important to protect against exceeding the stack's bounds. Otherwise, in the
+best case, overrunning the stack's memory will result in a segmentation fault or
+access violation and, in the worst case, the application's memory will be
+overwritten. `stack_allocator` appends a guard page to the stack to help detect
+overruns. The guard page consumes no physical memory, but generates a
+segmentation fault or access violation on access to the virtual memory addresses
+within it.
+
+
+[heading fcontext_t]
+
+__boost_context__ provides the low leve lAPI boost_fcontext_t which is
+implemented in assembler to provide context swapping operations.
+boost_fcontext_t is the part to port to new platforms.
+
+[note Context switches do not preserve the signal mask on UNIX systems.]
+
+
+[section Other APIs ]
+
+[heading setjmp()/longjmp()]
+
+C99 defines `setjmp()`/`longjmp()` to provide non-local jumps but it does not
+require that ['longjmp()] preserves the current stack frame. Therefore, jumping
+into a function which was exited via a call to ['longjmp()] is undefined
+[footnote [@boost:/libs/context/doc/pdf/iso_c99.pdf ISO/IEC 9899:1999, 2005],
+7.13.2.1:2].
+
+
+[heading ucontext_t]
+
+Since POSIX.1-2003 `ucontext_t` is deprecated and was removed in POSIX.1-2008!
+The function signature of `makecontext()` is:
+
+    void makecontext(ucontext_t *ucp, void (*func)(), int argc, ...);
+
+The third argument of `makecontext()` specifies the number of integer arguments
+that follow which will require function pointer cast if `func` will accept those
+arguments which is undefined in C99
+[footnote [@boost:/libs/context/doc/pdf/iso_c99.pdf ISO/IEC 9899:1999, 2005],
+J.2].
+
+The arguments in the var-arg list are required to be integers, passing pointers
+in var-arg list is not guarantied to work, especially it will fail for
+architectures where pointers are larger than integers.
+
+`ucontext_t` preserves signal mask between context switches which involes system
+calls consuming a lot of CPU cycles (ucontext_t is slower by
+perfomance_link[factor 13x] relative to `boost_fcontext_t`).
+
+
+[heading Windows fibers]
+
+A drawback of Windows Fiber API is that `CreateFiber()` does not accept a
+pointer to user allocated stack space preventing the reuse of stacks for other
+context instances. Because the Windows Fiber API requires to call
+`ConvertThreadToFiber()` if `SwitchFiber()` is called for a thread which has not
+been converted to a fiber. For the same reason `ConvertFiberToThread()`
+must be called after return from `SwitchFiber()` if the thread was forced to be
+converted to a fiber before (which is inefficient).
+
+        if ( ! is_a_fiber() )
+        {
+            ConvertThreadToFiber( 0);
+            SwitchToFiber( ctx);
+            ConvertFiberToThread();
+        }
+
+If the condition `_WIN32_WINNT >= _WIN32_WINNT_VISTA` is met function
+`IsThreadAFiber()` is provided in order to detect if the current thread was
+already converted. Unfortunately Windows XP + SP 2/3 defines
+`_WIN32_WINNT >= _WIN32_WINNT_VISTA` without providing `IsThreadAFiber()`.
+
+[endsect]
+
+[endsect]

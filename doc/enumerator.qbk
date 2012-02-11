@@ -1,0 +1,166 @@
+[/
+          Copyright Oliver Kowalke 2009.
+ Distributed under the Boost Software License, Version 1.0.
+    (See accompanying file LICENSE_1_0.txt or copy at
+          http://www.boost.org/LICENSE_1_0.txt
+]
+
+[section:enumerator Enumerator]
+
+Class `power` computes the power of `number` for the exponents in the range
+from `1` to `number` (constructor arguments).
+
+
+        class power
+        {
+        public:
+            power( int number, int exponent);
+
+            bool get( int & data);
+        };
+
+
+Each call to `power::get()` returns a boolean indicating a vaild result.
+The reference  argument `data` contains the computed result.
+
+
+        int main()
+        {
+            {
+                power pw( 2, 8);
+                int i;
+                // pw.get() returns the computed result
+                // for each value from 1 to 8
+                // return value of pw.get() indicates that
+                // a valid result
+                while ( pw.get( i) ) {
+                    std::cout << i <<  " ";
+                }
+            }
+
+            std::cout << "\nDone" << std::endl;
+
+            return EXIT_SUCCESS;
+        }
+
+        output:
+            2 4 8 16 32 64 128 256 
+            Done
+
+
+In `main()` an instance of `power` is constructed, computing the power of 2
+for exponents in the range from 1 to 8 by each call to `power::get()`. 
+
+It is intended to compute the numbers in a loop and transfer each result to the
+caller without disrupting the loop.
+
+__boost_context__ can be used to implement an equivalent to C#'s `yield`
+facility (C# provides the keywords `yield return` and `yield break`).
+For this purpose helper-template `enumerator` is defined containing the private
+member `ctx_` executing `enumerate()` as __context_fn__.
+
+        template< typename T >
+        class enumerator {
+        private:
+            boost::contexts::context            ctx_;
+            bool                                complete_;
+            bool                                do_unwind_;
+            bool                                started_;
+
+            static void run( enumerator * self)
+            { self->enumerate(); }
+
+        protected:
+            virtual void enumerate() = 0;
+
+            void yield_return( T const& v)
+            {
+                intptr_t vp = reinterpret_cast< intptr_t >( & v);
+                ctx_.suspend( vp);
+            }
+
+            void yield_break()
+            {
+                complete_ = true;
+                ctx_.suspend();
+            }
+
+        public:
+            enumerator( bool do_unwind = true): 
+                ctx_(
+                    & enumerator::run, this,
+                    boost::contexts::default_stacksize(),
+                    boost::contexts::no_stack_unwind,
+                    boost::contexts::return_to_caller),
+                complete_( false),
+                do_unwind_( do_unwind),
+                started_( false)
+            {}
+
+            ~enumerator()
+            {
+                if ( do_unwind_ && ! ctx_.is_complete() )
+                    ctx_.unwind_stack();
+            }
+
+            bool get( T & result)
+            {
+                intptr_t vp = 0;
+                if ( ! started_)
+                {
+                    started_ = true;
+                    vp = ctx_.start();
+                }
+                else
+                {
+                    vp = ctx_.resume();
+                }
+                if ( vp) result = * reinterpret_cast< T * >( vp);
+                return ! ( complete_ || ctx_.is_complete() );
+            }
+        };
+
+
+Member-function `get()` starts / resumes `context `ctx_` by calling
+__context_start__ / __context_resume__ so that `enumerate()` is (re-)entered.
+Functions __context_start__ / __context_resume__ return the computed values.
+
+`yield_return()` (equivalent to C# `yield return`) jumps to `get()` transfering
+the execution control and computed value back.
+With `yield_break()` (equivalent to C# `yield break`) the control is
+unconditionally returned to `get()` to signal the end of iteration.
+
+Class `power` derives from `enumerate< int >` and its implementation of
+`enumerate()` computes the power in a local loop.
+Each computed result is transfered to `get()` by calling `yield_return()`.
+
+
+        class power : public enumerator< int >
+        {
+        private:
+            void enumerate()
+            {
+                int counter = 0;
+                int result = 1;
+                // local scoped while loop
+                while ( counter++ < exponent_)
+                {
+                        // compute the value
+                        result = result * number_;
+
+                        // return the value by jumping to calling context
+                        // == jump to while-loop in main()
+                        yield_return( result);
+                }
+            }
+
+            int     number_;
+            int     exponent_;
+
+        public:
+            power( int number, int exponent) :
+                number_( number), exponent_( exponent)
+            {}
+        };
+
+[endsect]

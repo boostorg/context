@@ -1,0 +1,168 @@
+[/
+          Copyright Oliver Kowalke 2009.
+ Distributed under the Boost Software License, Version 1.0.
+    (See accompanying file LICENSE_1_0.txt or copy at
+          http://www.boost.org/LICENSE_1_0.txt
+]
+
+[section:asio ASIO]
+
+Adapted from [@http://blog.think-async.com/2009/08/secret-sauce-revealed.html
+Thinking Asynchronously in C++] using boost.asio to implement a simple echo
+server.
+
+Chris Kohlhoff uses stackless coroutines based on preprocessor-based switch
+statements to implement an echo server using boost.asio.
+Class `continuation` provides a simple coroutine implemenatation using
+boost.context.
+
+    class continuation
+    {
+    private:
+        boost::contexts::context                    ctx_;
+        boost::function< void( continuation &) >    fn_;
+        bool                                        started_;
+
+        void trampoline_()
+        { fn_( * this); }
+
+    public:
+        continuation( boost::function< void( continuation &) > const& fn) :
+            ctx_(
+                & continuation::trampoline_, this,
+                boost::contexts::default_stacksize(),
+                boost::contexts::no_stack_unwind, boost::contexts::return_to_caller),
+            fn_( fn), started_( false)
+        {}
+
+        void resume()
+        {
+            if ( ! started_)
+            {
+                started_ = true;
+                ctx_.start();
+            }
+            else ctx_.resume();
+        }
+
+        void suspend()
+        { ctx_.suspend(); }
+
+        bool is_complete() const
+        { return ctx_.is_complete(); }
+    };
+
+The operator `server::operator()` is called by the asio reactor and jumps to
+coroutine (which is entering or resuming in function `server::do_()`).
+In function `sever::do_()` the control flow is all in one place and easy to
+follow; *this is queued for accepting a connection before control flow
+is passed back to the reactor via `suspend()`. If `server::do_()` is reentered,
+a local buffer is created and an asynch. read operation is queued into the
+reactor.
+The control flow is then returned to the reactor for io-multiplexing again.
+After some bytes were received `server::do_()` is reentred again starting a
+asynch. write operation.
+
+The advantage over the ordinary `bind()` version is that the state of execution
+is preserved so that variables used by the read/write operations may have local
+scope. Stackfull coroutines (as boost.context provides) enable
+application-protocol stacks which can be more easily implemented.
+For instance, if only part of a message is received (some bytes are outstanding
+before message can be parsed or serviced), then the current state can be easily
+suspended/preserved (even from nested functions of the protocol stack)
+until the remaining bytes are received.
+
+    class server : public boost::enable_shared_from_this< server >,
+                   private continuation
+    {
+    private:
+        boost::asio::ip::tcp::acceptor      acceptor_;
+        boost::system::error_code           ec_;
+        std::size_t                         n_;
+
+        void do_()
+        {
+           for (;;)
+           {
+                boost::asio::ip::tcp::socket socket( acceptor_.get_io_service() );
+                // accept connection request and enque *this for reading data from conenction
+                acceptor_.async_accept( socket, boost::bind( & server::operator(), this->shared_from_this(), _1, 0) );
+                // suspend() jumps back to operator() which returns to asio reactor
+                suspend();
+
+                while ( ! ec_)
+                {
+                    // buffer has local scope!
+                    boost::array< char, 1024 > buffer;
+
+                    // enqueue *this to read some bytes from the connection into buffer
+                    socket.async_read_some(
+                        boost::asio::buffer( buffer),
+                        boost::bind( & server::operator(), this->shared_from_this(), _1, _2) );
+                    // suspend() jumps back to operator(); asio reactor
+                    suspend();
+
+                    // finish and return
+                    if ( ec_) break;
+
+                    // enqueue *this to write data from buffer to connection
+                    boost::asio::async_write(
+                        socket,
+                        boost::asio::buffer( buffer, n_),
+                        boost::bind( & server::operator(), this->shared_from_this(), _1, _2) ); 
+                    // suspend() jumps back to operator(); asio reactor
+                    suspend();
+                }
+           }
+        }
+
+        server( boost::asio::io_service & io_service, short port) :
+            continuation( boost::bind( & server::do_, this) ),
+            acceptor_( io_service, boost::asio::ip::tcp::endpoint( boost::asio::ip::tcp::v4(), port) ),
+            ec_(), n_( 0)
+        {}
+
+    public:
+        typedef boost::shared_ptr< server >     ptr_t;
+
+        static ptr_t create( boost::asio::io_service & io_service, short port)
+        { return ptr_t( new server( io_service, port) ); }
+
+        void operator()( boost::system::error_code ec, size_t n)
+        {
+            ec_ = ec;
+            n_ = n;
+            // jump to coroutine (do_())
+            resume();
+        }
+    };
+
+    int main( int argc, char * argv[])
+    {
+        try
+        {
+            if ( argc != 2)
+            {
+                std::cerr << "Usage: echo_server <port>\n";
+                return 1;
+            }
+            {
+                boost::asio::io_service io_service;
+                io_service.post(
+                    boost::bind(
+                        & server::operator(),
+                        server::create( io_service, boost::lexical_cast< short >( argv[1]) ),
+                        boost::system::error_code(), 0) );
+                io_service.run();
+            }
+            std::cout << "Done" << std::endl;
+
+            return  EXIT_SUCCESS;
+        }
+        catch ( std::exception const& e)
+        { std::cerr << "Exception: " << e.what() << std::endl; }
+
+        return EXIT_FAILURE;
+    }
+
+[endsect]
