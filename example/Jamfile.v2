@@ -44,7 +44,7 @@ project boost/context/example
       <os>NT,<toolset>gcc-cygwin:<define>__USE_W32_SOCKETS
       <os>HPUX,<toolset>gcc:<define>_XOPEN_SOURCE_EXTENDED
       <os>HPUX:<library>ipv6
-      <link>shared
+      <link>static
     ;
 
 exe base_api
