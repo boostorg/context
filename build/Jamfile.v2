@@ -197,6 +197,10 @@ alias asm_context_sources
      <target-os>windows
    ;
 
+message asm_context_sources
+ : "warning: Boost.Context requires architecture=[x86|power|mips1|arm]"
+ : "note: and (for x86 and power) address-model=[32|64]" ;
+
 explicit asm_context_sources ;
 
 
