@@ -60,54 +60,54 @@ feature.feature abi
 feature.set-default abi : [ default_abi ] ;
 
 
-alias asm_context_sources
-   : stack_allocator_posix.cpp
-     asm/fcontext_arm_aapcs_elf_gas.S
+alias context_sources
+   : asm/fcontext_arm_aapcs_elf_gas.S
+     stack_allocator_posix.cpp
      stack_utils_posix.cpp
    : <abi>aapcs
      <architecture>arm
      <binary-format>elf
    ;
 
-alias asm_context_sources
-   : stack_allocator_posix.cpp
-     asm/fcontext_mips32_o32_elf_gas.S
+alias context_sources
+   : asm/fcontext_mips32_o32_elf_gas.S
+     stack_allocator_posix.cpp
      stack_utils_posix.cpp
    : <abi>o32
      <architecture>mips1
      <binary-format>elf
    ;
 
-#alias asm_context_sources
-#   : stack_allocator_posix.cpp
-#     asm/fcontext_mips64_n32_elf_gas.S
+#alias context_sources
+#   : asm/fcontext_mips64_n32_elf_gas.S
+#     stack_allocator_posix.cpp
 #     stack_utils_posix.cpp
 #   : <abi>n32
 #     <architecture>mips1
 #     <binary-format>elf
 #   ;
 #
-#alias asm_context_sources
-#   : stack_allocator_posix.cpp
-#     asm/fcontext_mips64_n64_elf_gas.S
+#alias context_sources
+#   : asm/fcontext_mips64_n64_elf_gas.S
+#     stack_allocator_posix.cpp
 #     stack_utils_posix.cpp
 #   : <abi>n64
 #     <architecture>mips1
 #     <binary-format>elf
 #   ;
 #
-#alias asm_context_sources
-#   : stack_allocator_posix.cpp
-#     asm/fcontext_mips64_o64_elf_gas.S
+#alias context_sources
+#   : asm/fcontext_mips64_o64_elf_gas.S
+#     stack_allocator_posix.cpp
 #     stack_utils_posix.cpp
 #   : <abi>o64
 #     <architecture>mips1
 #     <binary-format>elf
 #   ;
 
-alias asm_context_sources
-   : stack_allocator_posix.cpp
-     asm/fcontext_ppc32_eabi_elf_gas.S
+alias context_sources
+   : asm/fcontext_ppc32_eabi_elf_gas.S
+     stack_allocator_posix.cpp
      stack_utils_posix.cpp
    : <abi>eabi
      <address-model>32
@@ -115,9 +115,9 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-alias asm_context_sources
-   : stack_allocator_posix.cpp
-     asm/fcontext_ppc32_sysv_elf_gas.S
+alias context_sources
+   : asm/fcontext_ppc32_sysv_elf_gas.S
+     stack_allocator_posix.cpp
      stack_utils_posix.cpp
    : <abi>sysv
      <address-model>32
@@ -125,9 +125,9 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-alias asm_context_sources
-   : stack_allocator_posix.cpp
-     asm/fcontext_ppc64_eabi_elf_gas.S
+alias context_sources
+   : asm/fcontext_ppc64_eabi_elf_gas.S
+     stack_allocator_posix.cpp
      stack_utils_posix.cpp
    : <abi>eabi
      <address-model>64
@@ -135,9 +135,9 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-alias asm_context_sources
-   : stack_allocator_posix.cpp
-     asm/fcontext_ppc64_sysv_elf_gas.S
+alias context_sources
+   : asm/fcontext_ppc64_sysv_elf_gas.S
+     stack_allocator_posix.cpp
      stack_utils_posix.cpp
    : <abi>sysv
      <address-model>64
@@ -145,9 +145,9 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-alias asm_context_sources
-   : stack_allocator_posix.cpp
-     asm/fcontext_i386_sysv_elf_gas.S
+alias context_sources
+   : asm/fcontext_i386_sysv_elf_gas.S
+     stack_allocator_posix.cpp
      stack_utils_posix.cpp
    : <abi>sysv
      <address-model>32
@@ -155,9 +155,9 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-alias asm_context_sources
-   : stack_allocator_posix.cpp
-     asm/fcontext_x86_64_sysv_elf_gas.S
+alias context_sources
+   : asm/fcontext_x86_64_sysv_elf_gas.S
+     stack_allocator_posix.cpp
      stack_utils_posix.cpp
    : <abi>sysv
      <address-model>64
@@ -165,9 +165,9 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-alias asm_context_sources
-   : stack_allocator_posix.cpp
-     asm/fcontext_x86_64_sysv_macho_gas.S
+alias context_sources
+   : asm/fcontext_x86_64_sysv_macho_gas.S
+     stack_allocator_posix.cpp
      stack_utils_posix.cpp
    : <abi>sysv
      <address-model>64
@@ -176,9 +176,10 @@ alias asm_context_sources
      <target-os>darwin
    ;
 
-alias asm_context_sources
-   : stack_allocator_windows.cpp
-     asm/fcontext_i386_ms_pe_masm.asm
+alias context_sources
+   : asm/fcontext_i386_ms_pe_masm.asm
+     seh.cpp
+     stack_allocator_windows.cpp
      stack_utils_windows.cpp
    : <abi>ms
      <address-model>32
@@ -187,9 +188,9 @@ alias asm_context_sources
      <target-os>windows
    ;
 
-alias asm_context_sources
-   : stack_allocator_windows.cpp
-     asm/fcontext_x86_64_ms_pe_masm.asm
+alias context_sources
+   : asm/fcontext_x86_64_ms_pe_masm.asm
+     stack_allocator_windows.cpp
      stack_utils_windows.cpp
    : <abi>ms
      <address-model>64
@@ -198,27 +199,11 @@ alias asm_context_sources
      <target-os>windows
    ;
 
-explicit asm_context_sources ;
-
-
-alias context_sources
-   : stack_allocator_windows.cpp
-     stack_utils_windows.cpp
-     seh.cpp
-   : <target-os>windows
-   ;
-
-alias context_sources
-   : stack_allocator_posix.cpp
-     stack_utils_posix.cpp
-   ;
-
 explicit context_sources ;
 
 
 lib boost_context
-   : asm_context_sources
-     context_sources
+   : context_sources
      fcontext.cpp
    : <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
      [ architecture.architecture ]
