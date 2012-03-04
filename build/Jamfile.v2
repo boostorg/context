@@ -202,12 +202,16 @@ alias context_sources
 explicit context_sources ;
 
 
+alias select_context_sources
+  : context_sources
+  : [ architecture.architecture ]
+    [ architecture.address-model ]
+  ;
+
 lib boost_context
-   : context_sources
+   : select_context_sources
      fcontext.cpp
    : <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
-     [ architecture.architecture ]
-     [ architecture.address-model ]
    ;
 
 boost-install boost_context ;
