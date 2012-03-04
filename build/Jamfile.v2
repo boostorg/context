@@ -12,6 +12,7 @@ import indirect ;
 import modules ;
 import os ;
 import toolset ;
+import architecture ;
 
 project boost/context
     : source-location ../src
@@ -197,10 +198,6 @@ alias asm_context_sources
      <target-os>windows
    ;
 
-message asm_context_sources
- : "warning: Boost.Context requires architecture=[x86|power|mips1|arm]"
- : "note: and (for x86 and power) address-model=[32|64]" ;
-
 explicit asm_context_sources ;
 
 
@@ -224,6 +221,8 @@ lib boost_context
      context_sources
      fcontext.cpp
    : <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
+     [ architecture.architecture ]
+     [ architecture.address-model ]
    ;
 
 boost-install boost_context ;
