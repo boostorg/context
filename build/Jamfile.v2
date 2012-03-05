@@ -190,6 +190,7 @@ alias context_sources
 
 alias context_sources
    : asm/fcontext_x86_64_ms_pe_masm.asm
+     seh.cpp
      stack_allocator_windows.cpp
      stack_utils_windows.cpp
    : <abi>ms
