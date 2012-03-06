@@ -60,12 +60,6 @@ feature.feature abi
 feature.set-default abi : [ default_abi ] ;
 
 
-
-actions gas
-{
-	as -o "$(<)" "$(>)"
-}
-
 actions masm
 {
 	ml /c /Fo"$(<)" "$(>)"
@@ -78,42 +72,42 @@ actions masm64
 
 
 alias asm_context_sources
-   : [ make asm/fcontext_arm_aapcs_elf_gas.o : asm/fcontext_arm_aapcs_elf_gas.S : @gas ]
+   : asm/fcontext_arm_aapcs_elf_gas.S
    : <abi>aapcs
      <architecture>arm
      <binary-format>elf
    ;
 
 alias asm_context_sources
-   : [ make asm/fcontext_mips32_o32_elf_gas.o : asm/fcontext_mips32_o32_elf_gas.S : @gas ]
+   : asm/fcontext_mips32_o32_elf_gas.S
    : <abi>o32
      <architecture>mips1
      <binary-format>elf
    ;
 
 #alias asm_context_sources
-#   : [ make asm/fcontext_mips64_n32_elf_gas.o : asm/fcontext_mips64_n32_elf_gas.S : @gas ]
+#   : asm/fcontext_mips64_n32_elf_gas.S
 #   : <abi>n32
 #     <architecture>mips1
 #     <binary-format>elf
 #   ;
 #
 #alias asm_context_sources
-#   : [ make asm/fcontext_mips64_n64_elf_gas.o : asm/fcontext_mips64_n64_elf_gas.S : @gas ]
+#   : asm/fcontext_mips64_n64_elf_gas.S
 #   : <abi>n64
 #     <architecture>mips1
 #     <binary-format>elf
 #   ;
 #
 #alias asm_context_sources
-#   : [ make asm/fcontext_mips64_o64_elf_gas.o : asm/fcontext_mips64_o64_elf_gas.S : @gas ]
+#   : asm/fcontext_mips64_o64_elf_gas.S
 #   : <abi>o64
 #     <architecture>mips1
 #     <binary-format>elf
 #   ;
 
 alias asm_context_sources
-   : [ make asm/fcontext_ppc32_sysv_elf_gas.o : asm/fcontext_ppc32_sysv_elf_gas.S : @gas ]
+   : asm/fcontext_ppc32_sysv_elf_gas.S
    : <abi>sysv
      <address-model>32
      <architecture>power
@@ -121,7 +115,7 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : [ make asm/fcontext_ppc64_sysv_elf_gas.o : asm/fcontext_ppc64_sysv_elf_gas.S : @gas ]
+   : asm/fcontext_ppc64_sysv_elf_gas.S
    : <abi>sysv
      <address-model>64
      <architecture>power
@@ -129,7 +123,7 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : [ make asm/fcontext_i386_sysv_elf_gas.o : asm/fcontext_i386_sysv_elf_gas.S : @gas ]
+   : asm/fcontext_i386_sysv_elf_gas.S
    : <abi>sysv
      <address-model>32
      <architecture>x86
@@ -137,7 +131,7 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : [ make asm/fcontext_x86_64_sysv_elf_gas.o : asm/fcontext_x86_64_sysv_elf_gas.S : @gas ]
+   : asm/fcontext_x86_64_sysv_elf_gas.S
    : <abi>sysv
      <address-model>64
      <architecture>x86
@@ -145,7 +139,7 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : [ make asm/fcontext_x86_64_sysv_macho_gas.o : asm/fcontext_x86_64_sysv_macho_gas.S : @gas ]
+   : asm/fcontext_x86_64_sysv_macho_gas.S
    : <abi>sysv
      <address-model>64
      <architecture>x86
