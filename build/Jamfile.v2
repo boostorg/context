@@ -61,6 +61,11 @@ feature.set-default abi : [ default_abi ] ;
 
 
 
+actions gas
+{
+	as -o "$(<)" "$(>)"
+}
+
 actions masm
 {
 	ml /c /Fo"$(<)" "$(>)"
@@ -72,121 +77,75 @@ actions masm64
 }
 
 
-
-make asm/fcontext_i386_ms_pe_masm.o : asm/fcontext_i386_ms_pe_masm.asm : @masm ;
-make asm/fcontext_x86_64_ms_pe_masm.o : asm/fcontext_x86_64_ms_pe_masm.asm : @masm64 ;
-
-
-
-alias context_sources
-   : asm/fcontext_arm_aapcs_elf_gas.S
-     stack_allocator_posix.cpp
-     stack_utils_posix.cpp
+alias asm_context_sources
+   : [ make asm/fcontext_arm_aapcs_elf_gas.o : asm/fcontext_arm_aapcs_elf_gas.S : @gas ]
    : <abi>aapcs
      <architecture>arm
      <binary-format>elf
    ;
 
-alias context_sources
-   : asm/fcontext_mips32_o32_elf_gas.S
-     stack_allocator_posix.cpp
-     stack_utils_posix.cpp
+alias asm_context_sources
+   : [ make asm/fcontext_mips32_o32_elf_gas.o : asm/fcontext_mips32_o32_elf_gas.S : @gas ]
    : <abi>o32
      <architecture>mips1
      <binary-format>elf
    ;
 
-#alias context_sources
-#   : asm/fcontext_mips64_n32_elf_gas.S
-#     stack_allocator_posix.cpp
-#     stack_utils_posix.cpp
+#alias asm_context_sources
+#   : [ make asm/fcontext_mips64_n32_elf_gas.o : asm/fcontext_mips64_n32_elf_gas.S : @gas ]
 #   : <abi>n32
 #     <architecture>mips1
 #     <binary-format>elf
 #   ;
 #
-#alias context_sources
-#   : asm/fcontext_mips64_n64_elf_gas.S
-#     stack_allocator_posix.cpp
-#     stack_utils_posix.cpp
+#alias asm_context_sources
+#   : [ make asm/fcontext_mips64_n64_elf_gas.o : asm/fcontext_mips64_n64_elf_gas.S : @gas ]
 #   : <abi>n64
 #     <architecture>mips1
 #     <binary-format>elf
 #   ;
 #
-#alias context_sources
-#   : asm/fcontext_mips64_o64_elf_gas.S
-#     stack_allocator_posix.cpp
-#     stack_utils_posix.cpp
+#alias asm_context_sources
+#   : [ make asm/fcontext_mips64_o64_elf_gas.o : asm/fcontext_mips64_o64_elf_gas.S : @gas ]
 #   : <abi>o64
 #     <architecture>mips1
 #     <binary-format>elf
 #   ;
 
-alias context_sources
-   : asm/fcontext_ppc32_eabi_elf_gas.S
-     stack_allocator_posix.cpp
-     stack_utils_posix.cpp
-   : <abi>eabi
-     <address-model>32
-     <architecture>power
-     <binary-format>elf
-   ;
-
-alias context_sources
-   : asm/fcontext_ppc32_sysv_elf_gas.S
-     stack_allocator_posix.cpp
-     stack_utils_posix.cpp
+alias asm_context_sources
+   : [ make asm/fcontext_ppc32_sysv_elf_gas.o : asm/fcontext_ppc32_sysv_elf_gas.S : @gas ]
    : <abi>sysv
      <address-model>32
      <architecture>power
      <binary-format>elf
    ;
 
-alias context_sources
-   : asm/fcontext_ppc64_eabi_elf_gas.S
-     stack_allocator_posix.cpp
-     stack_utils_posix.cpp
-   : <abi>eabi
-     <address-model>64
-     <architecture>power
-     <binary-format>elf
-   ;
-
-alias context_sources
-   : asm/fcontext_ppc64_sysv_elf_gas.S
-     stack_allocator_posix.cpp
-     stack_utils_posix.cpp
+alias asm_context_sources
+   : [ make asm/fcontext_ppc64_sysv_elf_gas.o : asm/fcontext_ppc64_sysv_elf_gas.S : @gas ]
    : <abi>sysv
      <address-model>64
      <architecture>power
      <binary-format>elf
    ;
 
-alias context_sources
-   : asm/fcontext_i386_sysv_elf_gas.S
-     stack_allocator_posix.cpp
-     stack_utils_posix.cpp
+alias asm_context_sources
+   : [ make asm/fcontext_i386_sysv_elf_gas.o : asm/fcontext_i386_sysv_elf_gas.S : @gas ]
    : <abi>sysv
      <address-model>32
      <architecture>x86
      <binary-format>elf
    ;
 
-alias context_sources
-   : asm/fcontext_x86_64_sysv_elf_gas.S
-     stack_allocator_posix.cpp
-     stack_utils_posix.cpp
+alias asm_context_sources
+   : [ make asm/fcontext_x86_64_sysv_elf_gas.o : asm/fcontext_x86_64_sysv_elf_gas.S : @gas ]
    : <abi>sysv
      <address-model>64
      <architecture>x86
      <binary-format>elf
    ;
 
-alias context_sources
-   : asm/fcontext_x86_64_sysv_macho_gas.S
-     stack_allocator_posix.cpp
-     stack_utils_posix.cpp
+alias asm_context_sources
+   : [ make asm/fcontext_x86_64_sysv_macho_gas.o : asm/fcontext_x86_64_sysv_macho_gas.S : @gas ]
    : <abi>sysv
      <address-model>64
      <architecture>x86
@@ -194,24 +153,8 @@ alias context_sources
      <target-os>darwin
    ;
 
-alias context_sources
-   : seh.cpp
-     stack_allocator_windows.cpp
-     stack_utils_windows.cpp
-     asm/fcontext_i386_ms_pe_masm.o
-   : <abi>ms
-     <address-model>32
-     <architecture>x86
-     <binary-format>pe
-     <toolset>gcc
-     <target-os>windows
-   ;
-
-alias context_sources
-   : seh.cpp
-     stack_allocator_windows.cpp
-     stack_utils_windows.cpp
-     asm/fcontext_i386_ms_pe_masm.o
+alias asm_context_sources
+   : [ make asm/fcontext_i386_ms_pe_masm.o : asm/fcontext_i386_ms_pe_masm.asm : @masm ]
    : <abi>ms
      <address-model>32
      <architecture>x86
@@ -219,44 +162,47 @@ alias context_sources
      <target-os>windows
    ;
 
-alias context_sources
-   : seh.cpp
-     stack_allocator_windows.cpp
-     stack_utils_windows.cpp
-     asm/fcontext_x86_64_ms_pe_masm.o
+alias asm_context_sources
+   : [ make asm/fcontext_x86_64_ms_pe_masm.o : asm/fcontext_x86_64_ms_pe_masm.asm : @masm64 ]
    : <abi>ms
      <address-model>64
      <architecture>x86
      <binary-format>pe
-     <toolset>gcc
      <target-os>windows
    ;
 
+explicit asm_context_sources ;
+
+
+alias select_asm_context_sources
+  : asm_context_sources
+  : [ architecture.architecture ]
+    [ architecture.address-model ]
+  ;
+
+
 alias context_sources
-   : seh.cpp
+   : fcontext.cpp
+     seh.cpp
      stack_allocator_windows.cpp
      stack_utils_windows.cpp
-     asm/fcontext_x86_64_ms_pe_masm.o
-   : <abi>ms
-     <address-model>64
-     <architecture>x86
-     <binary-format>pe
-     <target-os>windows
+   : <target-os>windows
+   ;
+
+alias context_sources
+   : fcontext.cpp
+     stack_allocator_posix.cpp
+     stack_utils_posix.cpp
    ;
 
 explicit context_sources ;
 
 
-alias select_context_sources
-  : context_sources
-  : [ architecture.architecture ]
-    [ architecture.address-model ]
-  ;
-
 lib boost_context
-   : select_context_sources
-     fcontext.cpp
+   : select_asm_context_sources
+     context_sources
    : <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
    ;
+
 
 boost-install boost_context ;
