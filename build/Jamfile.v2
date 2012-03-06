@@ -60,6 +60,24 @@ feature.feature abi
 feature.set-default abi : [ default_abi ] ;
 
 
+
+actions masm
+{
+	ml /c /Fo"$(<)" "$(>)"
+}
+
+actions masm64
+{
+	ml64 /c /Fo"$(<)" "$(>)"
+}
+
+
+
+make asm/fcontext_i386_ms_pe_masm.o : asm/fcontext_i386_ms_pe_masm.asm : @masm ;
+make asm/fcontext_x86_64_ms_pe_masm.o : asm/fcontext_x86_64_ms_pe_masm.asm : @masm64 ;
+
+
+
 alias context_sources
    : asm/fcontext_arm_aapcs_elf_gas.S
      stack_allocator_posix.cpp
@@ -177,10 +195,23 @@ alias context_sources
    ;
 
 alias context_sources
-   : asm/fcontext_i386_ms_pe_masm.asm
-     seh.cpp
+   : seh.cpp
      stack_allocator_windows.cpp
      stack_utils_windows.cpp
+     asm/fcontext_i386_ms_pe_masm.o
+   : <abi>ms
+     <address-model>32
+     <architecture>x86
+     <binary-format>pe
+     <toolset>gcc
+     <target-os>windows
+   ;
+
+alias context_sources
+   : seh.cpp
+     stack_allocator_windows.cpp
+     stack_utils_windows.cpp
+     asm/fcontext_i386_ms_pe_masm.o
    : <abi>ms
      <address-model>32
      <architecture>x86
@@ -189,10 +220,23 @@ alias context_sources
    ;
 
 alias context_sources
-   : asm/fcontext_x86_64_ms_pe_masm.asm
-     seh.cpp
+   : seh.cpp
      stack_allocator_windows.cpp
      stack_utils_windows.cpp
+     asm/fcontext_x86_64_ms_pe_masm.o
+   : <abi>ms
+     <address-model>64
+     <architecture>x86
+     <binary-format>pe
+     <toolset>gcc
+     <target-os>windows
+   ;
+
+alias context_sources
+   : seh.cpp
+     stack_allocator_windows.cpp
+     stack_utils_windows.cpp
+     asm/fcontext_x86_64_ms_pe_masm.o
    : <abi>ms
      <address-model>64
      <architecture>x86
