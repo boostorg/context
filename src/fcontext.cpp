@@ -10,8 +10,6 @@
 
 #include <cstddef>
 
-#include <boost/cstdint.hpp>
-
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
 #endif
@@ -19,7 +17,8 @@
 namespace boost {
 namespace contexts {
 
-extern "C" BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL boost_fcontext_align( void * vp)
+extern "C" {
+BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL boost_fcontext_align( void * vp)
 {
 	void * base = vp;
     if ( 0 != ( ( ( uintptr_t) base) & 15) )
@@ -29,9 +28,11 @@ extern "C" BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL boost_fcontext_align
 }
 
 # if !defined(__arm__) && !defined(__powerpc__)
-extern "C" BOOST_CONTEXT_DECL intptr_t BOOST_CONTEXT_CALLDECL boost_fcontext_start( boost_fcontext_t * ofc, boost_fcontext_t const* nfc)
+BOOST_CONTEXT_DECL intptr_t BOOST_CONTEXT_CALLDECL boost_fcontext_start( boost_fcontext_t * ofc, boost_fcontext_t const* nfc)
 { return boost_fcontext_jump( ofc, nfc, 0); }
 #endif
+
+}
 
 }}
 
