@@ -247,13 +247,17 @@ alias context_sources
 
 explicit context_sources ;
 
+
 rule configure ( properties * )
 {
 	local result  ;
 
-	if ( ! ( <toolset>gcc in $(properties) || <toolset>intel in $(properties) || <toolset>msvc in $(properties) ) )
+	if ( ! ( <toolset>gcc in $(properties)
+			|| <toolset>intel in $(properties)
+			|| <toolset>msvc in $(properties) ) )
 	{
 		result = <build>no ;
+		ECHO "toolset not supported" ;
 	}
 
 	return $(result) ;
