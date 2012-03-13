@@ -23,7 +23,6 @@ private:
     boost::contexts::context          ctx_;
     bool                                complete_;
     bool                                do_unwind_;
-    bool                                started_;
 
     static void run( enumerator * self)
     { self->enumerate(); }
@@ -50,8 +49,7 @@ public:
             boost::contexts::default_stacksize(),
 			boost::contexts::no_stack_unwind, boost::contexts::return_to_caller),
         complete_( false),
-        do_unwind_( do_unwind),
-        started_( false)
+        do_unwind_( do_unwind)
     {}
 
     ~enumerator()
@@ -63,15 +61,10 @@ public:
     bool get( T & result)
     {
         intptr_t vp = 0;
-        if ( ! started_)
-        {
-            started_ = true;
+        if ( ! ctx_.is_started() )
             vp = ctx_.start();
-        }
         else
-        {
             vp = ctx_.resume();
-        }
         if ( vp) result = * reinterpret_cast< T * >( vp);
         return ! ( complete_ || ctx_.is_complete() );
     }

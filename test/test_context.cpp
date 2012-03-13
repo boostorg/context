@@ -53,6 +53,7 @@ void fn3( std::string const& str)
     X x( str);
     intptr_t vp = gctx.suspend( value1);
     value1 = vp;
+	BOOST_ASSERT( gctx.is_running() );
     gctx.suspend();
 }
 
@@ -88,6 +89,7 @@ void test_case_2()
         fn0,
         boost::contexts::default_stacksize(),
         boost::contexts::stack_unwind, boost::contexts::return_to_caller);
+    BOOST_CHECK( ! ctx.is_started() );
     BOOST_CHECK( ! ctx.is_complete() );
     ctx.start();
     BOOST_CHECK( ctx.is_complete() );
@@ -101,6 +103,7 @@ void test_case_3()
         fn1, i,
 		boost::contexts::default_stacksize(),
         boost::contexts::stack_unwind, boost::contexts::return_to_caller);
+    BOOST_CHECK( ! ctx.is_started() );
     BOOST_CHECK( ! ctx.is_complete() );
     ctx.start();
     BOOST_CHECK( ctx.is_complete() );
@@ -114,6 +117,7 @@ void test_case_4()
         fn2, "abc",
 		boost::contexts::default_stacksize(),
         boost::contexts::stack_unwind, boost::contexts::return_to_caller);
+    BOOST_CHECK( ! ctx.is_started() );
     BOOST_CHECK( ! ctx.is_complete() );
     ctx.start();
     BOOST_CHECK( ctx.is_complete() );
@@ -129,17 +133,21 @@ void test_case_5()
         fn3, "abc",
         boost::contexts::default_stacksize(),
         boost::contexts::stack_unwind, boost::contexts::return_to_caller);
+    BOOST_CHECK( ! gctx.is_started() );
     BOOST_CHECK( ! gctx.is_complete() );
     intptr_t vp = gctx.start();
+    BOOST_CHECK( gctx.is_started() );
+    BOOST_CHECK( ! gctx.is_resumed() );
+    BOOST_CHECK( ! gctx.is_complete() );
     BOOST_CHECK_EQUAL( vp, value1);
     BOOST_CHECK_EQUAL( 1, value1);
-    BOOST_CHECK( ! gctx.is_complete() );
     int x = 7;
     vp = 0;
     vp = gctx.resume( x);
     BOOST_CHECK_EQUAL( 7, value1);
     BOOST_CHECK( ! vp);
     BOOST_CHECK( ! gctx.is_complete() );
+    BOOST_CHECK( gctx.is_resumed() );
     BOOST_CHECK_EQUAL( std::string(""), value3);
     gctx.unwind_stack();
     BOOST_CHECK( gctx.is_complete() );
@@ -158,21 +166,23 @@ void test_case_6()
     boost::contexts::context ctx1(
         fn4, "abc", "xyz",
         boost::contexts::default_stacksize(),
-        boost::contexts::stack_unwind, boost::contexts::return_to_caller);
+        boost::contexts::stack_unwind,
+		boost::contexts::return_to_caller);
     boost::contexts::context ctx2(
         fn1, 7,
         boost::contexts::default_stacksize(),
-        boost::contexts::stack_unwind, ctx1);
+        boost::contexts::stack_unwind,
+		ctx1);
 
     BOOST_CHECK( ! ctx1.is_complete() );
     BOOST_CHECK( ! ctx2.is_complete() );
     ctx2.start();
-//  BOOST_CHECK( ctx1.is_complete() );
-//  BOOST_CHECK( ctx2.is_complete() );
-//
-//  BOOST_CHECK_EQUAL( 7, value1);
-//  BOOST_CHECK_EQUAL( "abc", value2);
-//  BOOST_CHECK_EQUAL( "xyz", value3);
+    BOOST_CHECK( ctx1.is_complete() );
+    BOOST_CHECK( ctx2.is_complete() );
+  
+    BOOST_CHECK_EQUAL( 7, value1);
+    BOOST_CHECK_EQUAL( "abc", value2);
+    BOOST_CHECK_EQUAL( "xyz", value3);
 }
 
 void test_case_7()
@@ -180,7 +190,8 @@ void test_case_7()
     boost::contexts::context ctx(
         fn5, 7.34,
         boost::contexts::default_stacksize(),
-        boost::contexts::stack_unwind, boost::contexts::return_to_caller);
+        boost::contexts::stack_unwind,
+		boost::contexts::return_to_caller);
     BOOST_CHECK( ! ctx.is_complete() );
     ctx.start();
     BOOST_CHECK( ctx.is_complete() );

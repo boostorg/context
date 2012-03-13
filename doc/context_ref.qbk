@@ -699,6 +699,20 @@ of `other`.]]
 [[Throws:] [Nothing.]]
 ]
 
+[heading `bool is_started() const`]
+[variablelist
+[[Preconditions:] [`*this` is not a __not_a_context__.]]
+[[Effects:] [Returns `true` if context-function of `*this` has started.]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `bool is_resumed() const`]
+[variablelist
+[[Preconditions:] [`*this` is not a __not_a_context__.]]
+[[Effects:] [Returns `true` if context-function of `*this` has resumed.]]
+[[Throws:] [Nothing.]]
+]
+
 [heading `intptr_t start()`]
 [variablelist
 [[Preconditions:] [`*this` is not a __not_a_context__, `! is_complete()` and
