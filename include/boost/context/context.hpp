@@ -305,6 +305,24 @@ BOOST_PP_REPEAT_FROM_TO( 1, BOOST_CONTEXT_ARITY, BOOST_CONTEXT_CTOR, ~)
         BOOST_ASSERT( impl_);
         return impl_->is_complete();
     }
+
+    bool is_started() const
+    {
+        BOOST_ASSERT( impl_);
+        return impl_->is_started();
+    }
+
+    bool is_resumed() const
+    {
+        BOOST_ASSERT( impl_);
+        return impl_->is_resumed();
+    }
+
+    bool is_running() const
+    {
+        BOOST_ASSERT( impl_);
+        return impl_->is_running();
+    }
 };
 
 inline

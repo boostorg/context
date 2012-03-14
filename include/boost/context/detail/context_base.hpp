@@ -138,7 +138,7 @@ public:
     { return 0 != ( flags_ & flag_started); }
 
     bool is_resumed() const
-    { return 0 != ( flags_ & flag_started); }
+    { return 0 != ( flags_ & flag_resumed); }
 
     bool is_running() const
     { return 0 != ( flags_ & flag_running); }
