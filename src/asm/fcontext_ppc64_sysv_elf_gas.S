@@ -158,8 +158,8 @@ boost_fcontext_start:
     ld      %r27,  112(%r4)     # restore R27
     ld      %r28,  120(%r4)     # restore R28
     ld      %r29,  128(%r4)     # restore R29
-    ld      %r40,  136(%r4)     # restore r40
-    ld      %r41,  144(%r4)     # restore r41
+    ld      %r30,  136(%r4)     # restore r30
+    ld      %r31,  144(%r4)     # restore r31
     ld      %r1,   152(%r4)     # restore SP
 
     ld      %r0,   160(%r4)     # load CR
@@ -266,8 +266,8 @@ boost_fcontext_jump:
     ld      %r27,  112(%r4)     # restore R27
     ld      %r28,  120(%r4)     # restore R28
     ld      %r29,  128(%r4)     # restore R29
-    ld      %r40,  136(%r4)     # restore r40
-    ld      %r41,  144(%r4)     # restore r41
+    ld      %r30,  136(%r4)     # restore r30
+    ld      %r31,  144(%r4)     # restore r31
     ld      %r1,   152(%r4)     # restore SP
 
     ld      %r0,   160(%r4)     # load CR
