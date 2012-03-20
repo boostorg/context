@@ -71,6 +71,29 @@ actions masm64
 }
 
 
+rule configure ( properties * )
+{
+	local result  ;
+
+	if ( ! ( <toolset>gcc in $(properties)
+			|| <toolset>intel in $(properties)
+			|| <toolset>msvc in $(properties) ) )
+	{
+		result = <build>no ;
+		ECHO "toolset not supported" ;
+	}
+
+	if ( <target-os>darwin in $(properties)
+			&& <address-model>32 in $(properties) )
+	{
+		result = <build>no ;
+		ECHO "32bit Darwin not supported" ;
+	}
+
+	return $(result) ;
+}
+
+
 alias asm_context_sources
    : asm/fcontext_arm_aapcs_elf_gas.S
    : <abi>aapcs
@@ -228,6 +251,7 @@ alias select_asm_context_sources
   : asm_context_sources
   : [ architecture.architecture ]
     [ architecture.address-model ]
+     <conditional>@configure
   ;
 
 
@@ -246,22 +270,6 @@ alias context_sources
    ;
 
 explicit context_sources ;
-
-
-rule configure ( properties * )
-{
-	local result  ;
-
-	if ( ! ( <toolset>gcc in $(properties)
-			|| <toolset>intel in $(properties)
-			|| <toolset>msvc in $(properties) ) )
-	{
-		result = <build>no ;
-		ECHO "toolset not supported" ;
-	}
-
-	return $(result) ;
-}
 
 
 lib boost_context
