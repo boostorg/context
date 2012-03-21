@@ -83,13 +83,6 @@ rule configure ( properties * )
 		ECHO "toolset not supported" ;
 	}
 
-	if ( <target-os>darwin in $(properties)
-			&& <address-model>32 in $(properties) )
-	{
-		result = <build>no ;
-		ECHO "32bit Darwin not supported" ;
-	}
-
 	return $(result) ;
 }
 
@@ -162,6 +155,16 @@ alias asm_context_sources
      <architecture>x86
      <binary-format>elf
 	 <toolset>intel
+   ;
+
+alias asm_context_sources
+   : asm/fcontext_i386_sysv_macho_gas.S
+   : <abi>sysv
+     <address-model>32
+     <architecture>x86
+     <binary-format>mach-o
+     <target-os>darwin
+	 <toolset>gcc
    ;
 
 alias asm_context_sources
@@ -251,7 +254,6 @@ alias select_asm_context_sources
   : asm_context_sources
   : [ architecture.architecture ]
     [ architecture.address-model ]
-     <conditional>@configure
   ;
 
 
@@ -276,7 +278,6 @@ lib boost_context
    : select_asm_context_sources
      context_sources
    : <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
-     <conditional>@configure
    ;
 
 
