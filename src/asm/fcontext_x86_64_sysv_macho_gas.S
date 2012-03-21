@@ -68,18 +68,18 @@ _boost_fcontext_jump:
     movq     (%rsi),      %rbx      /* restore RBX */
     movq     0x8(%rsi),   %r12      /* restore R12 */
     movq     0x10(%rsi),  %r13      /* restore R13 */
-    movq     0x18(%rsi),  %r15      /* restore R14 */
+    movq     0x18(%rsi),  %r14      /* restore R14 */
     movq     0x20(%rsi),  %r15      /* restore R15 */
     movq     0x28(%rsi),  %rbp      /* restore RBP */
 
-    ldmxcsr  0x41(%rsi)             /* restore SSE2 control and status word */
+    ldmxcsr  0x40(%rsi)             /* restore SSE2 control and status word */
     fldcw    0x44(%rsi)             /* restore x87 control word */
 
     movq     %rdx,        %rax      /* use third arg as return value after jump */
 
     movq     0x30(%rsi),  %rsp      /* restore RSP */
     movq     0x38(%rsi),  %rcx      /* fetch the address to return to */
-    movq     %r13,        %rdi      /* restore RDI */
+    movq     %r13,        %rdi      /* restore void pointer as argument */
 
     jmp      *%rcx                  /* indirect jump to context */
 
@@ -103,8 +103,8 @@ _boost_fcontext_make:
     movq   0x58(%rdi),           %rcx       /* load the address of the next context */
     movq   %rcx,                 0x8(%rdi)  /* save the address of next context */
     stmxcsr  0x40(%rdi)                     /* save SSE2 control and status word */
-    fnstcw   0x44(%rdi)                     /* save x87 control word */
-    leaq   link_fcontext(%rip),  %rcx       /* helper code executed after fn() returns */
+    fnstcw 0x44(%rdi)                       /* save x87 control word */
+    leaq   link_fcontext(%rip),  %rcx       /* helper code executed after context function returns */
     movq   %rcx,                 (%rdx)
     xorq   %rax,                 %rax       /* set RAX to zero */
     ret
@@ -115,8 +115,9 @@ link_fcontext:
     je     1f                               /* jump to finish */
 
     movq   %rbx,               %rdi         /* restore current context */
-    call   _boost_fcontext_start            /* install next context */
+    call   boost_fcontext_start@PLT         /* jump to next context */
 
 1:
     xorq    %rdi,              %rdi         /* exit code is zero */
-    call   _exit                            /* exit application */
+    call   _exit@PLT                        /* exit application */
+    hlt

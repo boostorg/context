@@ -89,14 +89,10 @@ boost_fcontext_make:
     pushl  %eax                         /* save pointer to fcontext_t */
     pushl  %ebx                         /* save EBX */
     pushl  %edx                         /* stack pointer as arg for boost_fcontext_align */
-#ifdef __PIC__
     call   1f
 1:  popl   %ebx                                    /* address of label 1 */
     addl   $_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx     /* compute address of GOT and store it in EBX */
     call   boost_fcontext_align@PLT     /* align stack */
-#else
-    call   boost_fcontext_align         /* align stack */
-#endif
     movl   %eax,           %edx         /* begin of aligned stack */
     popl   %eax                         /* remove arg for boost_fcontext_align */
     popl   %ebx                         /* restore EBX */
@@ -110,14 +106,10 @@ boost_fcontext_make:
     movl   %ecx,           0x4(%edx)    /* save the address of the void pointer */
     stmxcsr  0x18(%eax)                 /* save SSE2 control and status word */
     fnstcw   0x1c(%eax)                 /* save x87 control word */
-#ifdef __PIC__
     call    2f
 2:  popl    %ecx                        /* address of label 1 */
     addl    $link_fcontext-2b, %ecx     /* compute address of label link_fcontext */
     movl    %ecx, (%edx)                /* store address of link_fcontext as return address on stack */
-#else
-    movl    $link_fcontext, (%edx)      /* store address of link_fcontext as return address on stack */
-#endif
 
     xorl   %eax,            %eax        /* set EAX to zero */
     ret
@@ -125,30 +117,20 @@ boost_fcontext_make:
 link_fcontext:
     leal   -0xc(%esp),    %esp
 
-#ifdef  __PIC__
     call    3f
-3:  popl    %ebx                                    /* address of label 2 */
+3:  popl    %ebx                                    /* address of label 3 */
     addl    $_GLOBAL_OFFSET_TABLE_+[.-3b], %ebx     /* compute address of GOT and store it in EBX */
-#endif
 
     testl  %esi,           %esi         /* test if a next context was given */
     je     4f                           /* jump to finish */
 
     pushl  %esi                         /* push the address of the next context on the stack */
     pushl  %edi                         /* push the address of the current context to stack */
-#ifdef __PIC__
     call   boost_fcontext_start@PLT     /* jump to next context */
-#else
-    call   boost_fcontext_start         /* jump to next context */
-#endif
 
 4:
     movl    %eax,           %eax
     pushl   %eax                        /* exit code is zero */
-#ifdef __PIC__
     call   _exit@PLT                    /* exit application */
-#else
-    call   _exit                        /* exit application */
-#endif
     hlt
 .size boost_fcontext_make,.-boost_fcontext_make

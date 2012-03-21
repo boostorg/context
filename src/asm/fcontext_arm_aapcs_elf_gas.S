@@ -106,11 +106,7 @@ boost_fcontext_make:
 
 	push    {a1,lr}				@ save pointer to fcontext_t
 	mov     a1, a2				@ stack pointer as arg for boost_fcontext_align
-#ifdef __PIC__
 	bl		boost_fcontext_align@PLT @ align stack
-#else
-	bl		boost_fcontext_align     @ align stack
-#endif
 	mov		a2, a1				@ begin of aligned stack 
 	pop     {a1,lr}				@ restore pointer to boost_fcontext_t
 
@@ -127,15 +123,8 @@ link_fcontext:
     mov     a2, v2              @ load the adddress of the next context
     teq     a2, #0              @ test if the address of the next context is a null pointer
 
-#ifdef __PIC__
     bne     boost_fcontext_start@PLT   @ install next context
 
     mov     a1, #0
     bl      _exit@PLT                  @ exit application
-#else
-    bne     boost_fcontext_start       @ install next context
-
-    mov     a1, #0
-    bl      _exit                      @ exit application
-#endif
 .size boost_fcontext_make,.-boost_fcontext_make

@@ -126,12 +126,8 @@ boost_fcontext_make:
     sw      $ra, 24($sp)
     sw      $a0, 20($sp)
     move    $a0, $t0            # stack pointer as arg for boost_fcontext_align
-#ifdef __PIC__
     lw      $t9, %call16(boost_fcontext_align)($gp) # align stack
     jalr    $t9
-#else
-    jal     boost_fcontext_align                    # align stack
-#endif
     nop
     move    $t0, $v0            # begin of aligned stack 
     lw      $ra, 24($sp)
@@ -154,20 +150,12 @@ link_fcontext:
     beqz    $a1, 2f             # test if a next context was given
 
     move    $a0, $s0            # set A0 to address of current context
-#ifdef __PIC__
     lw      $t9, %call16(boost_fcontext_start)($gp)  # install next context
     jr      $t9
-#else
-    j       boost_fcontext_start       # install next context
-#endif
 
 2:
     move    $a0, $zero
-#ifdef __PIC__
     lw      $t9, %call16(_exit)($gp)  # exit application
     jalr    $t9
-#else
-    j       _exit               # exit application
-#endif
 .end boost_fcontext_make
 .size boost_fcontext_make, .-boost_fcontext_make

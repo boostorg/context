@@ -306,11 +306,7 @@ boost_fcontext_make:
     mflr    %r4                 # load LR
     stw     %r4, 20(%r1)        # store LR on stack
     mr.     %r3, %r0            # context stack as arg to boost_fcontext_algin
-#ifdef __PIC__
     bl      boost_fcontext_align@plt    # call boost_fcontext_align
-#else
-    bl      boost_fcontext_align        # call boost_fcontext_align
-#endif
     mr.     %r0, %r3            # load result into R0
     lwz     %r4, 20(%r1)        # pop LR from stack
     mtlr    %r4                 # restore LR
@@ -322,17 +318,12 @@ boost_fcontext_make:
     stw     %r0, 76(%r3)        # save the stack base
     lwz     %r0, 256(%r3)       # load address of next user context
     stw     %r0, 4(%r3)         # save the next context
-#ifdef __PIC__
     mflr    %r0                 # load LR
     bl      1f                  # jump to label 1
 1:
     mflr    %r4                             # load LR
     addi    %r4, %r4, link_fcontext - 1b    # calulate absolute address of link_fcontext
     mtlr    %r0                             # restore LR
-#else
-   lis     %r4, link_fcontext@ha       # get hight address of link_fcontext
-   addi    %r4, %r4, link_fcontext@l   # get low address of link_fcontext
-#endif
     stw     %r4, 84(%r3)        # save address of link_fcontext
 
     li      %r3,  0             # set return value to zero
@@ -343,17 +334,9 @@ link_fcontext:
     mr.     %r4, %r14
     beq     2f                  # test if a next context was given
 
-#ifdef __PIC__
     bl      boost_fcontext_start@plt   # install next context
 
 2:
     li      %r3,  0             # set return value to zero
     bl      _exit@plt           # exit application
-#else
-    bl      boost_fcontext_start # install next context
-
-2:
-    li      %r3,  0             # set return value to zero
-    bl      _exit               # exit application
-#endif
 .size boost_fcontext_make, .-boost_fcontext_make
