@@ -12,7 +12,6 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/move/move.hpp>
-#include <boost/type_traits/remove_reference.hpp>
 #include <boost/utility/base_from_member.hpp>
 
 #include <boost/context/detail/config.hpp>

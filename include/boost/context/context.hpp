@@ -45,7 +45,7 @@ private:
     {
         return base_ptr_t(
             new detail::context_object< void(*)(), Allocator >(
-                fn, alloc, size, do_unwind, do_return) );
+                boost::forward< void(*)() >( fn), alloc, size, do_unwind, do_return) );
     }
 
     template< typename Allocator >
@@ -55,7 +55,7 @@ private:
         BOOST_ASSERT( nxt);
         return base_ptr_t(
             new detail::context_object< void(*)(), Allocator >(
-                fn, alloc, size, do_unwind, nxt.impl_) );
+                boost::forward< void(*)() >( fn), alloc, size, do_unwind, nxt.impl_) );
     }
 
     template< typename Fn, typename Allocator >
