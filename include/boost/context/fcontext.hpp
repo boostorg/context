@@ -33,7 +33,8 @@
 # endif
 // x86_64
 #elif defined(__x86_64__) || defined(__x86_64) \
-    || defined(__amd64__) || defined(__amd64)
+    || defined(__amd64__) || defined(__amd64) \
+    || defined(_M_X64) || defined(_M_AMD64)
 # if defined(BOOST_WINDOWS)
 #  include <boost/context/detail/fcontext_x86_64_win.hpp>
 # else
