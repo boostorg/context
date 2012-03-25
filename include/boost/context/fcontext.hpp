@@ -20,8 +20,17 @@
 # include BOOST_ABI_PREFIX
 #endif
 
+// x86_64
+#if defined(__x86_64__) || defined(__x86_64) \
+    || defined(__amd64__) || defined(__amd64) \
+    || defined(_M_X64) || defined(_M_AMD64)
+# if defined(BOOST_WINDOWS)
+#  include <boost/context/detail/fcontext_x86_64_win.hpp>
+# else
+#  include <boost/context/detail/fcontext_x86_64.hpp>
+# endif
 // i386
-#if defined(i386) || defined(__i386__) || defined(__i386) \
+#elif defined(i386) || defined(__i386__) || defined(__i386) \
     || defined(__i486__) || defined(__i586__) || defined(__i686__) \
     || defined(__X86__) || defined(_X86_) || defined(__THW_INTEL__) \
     || defined(__I86__) || defined(__INTEL__) || defined(__IA32__) \
@@ -29,16 +38,8 @@
 # if defined(BOOST_WINDOWS)
 #  include <boost/context/detail/fcontext_i386_win.hpp>
 # else
+# error "wrong platform"
 #  include <boost/context/detail/fcontext_i386.hpp>
-# endif
-// x86_64
-#elif defined(__x86_64__) || defined(__x86_64) \
-    || defined(__amd64__) || defined(__amd64) \
-    || defined(_M_X64) || defined(_M_AMD64)
-# if defined(BOOST_WINDOWS)
-#  include <boost/context/detail/fcontext_x86_64_win.hpp>
-# else
-#  include <boost/context/detail/fcontext_x86_64.hpp>
 # endif
 // arm
 #elif defined(__arm__) || defined(__thumb__) || defined(__TARGET_ARCH_ARM) \
