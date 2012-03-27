@@ -21,6 +21,8 @@
 #endif
 
 // x86_64
+// test x86_64 before i386 because icc might
+// define __i686__ for x86_64 too
 #if defined(__x86_64__) || defined(__x86_64) \
     || defined(__amd64__) || defined(__amd64) \
     || defined(_M_X64) || defined(_M_AMD64)
@@ -38,7 +40,6 @@
 # if defined(BOOST_WINDOWS)
 #  include <boost/context/detail/fcontext_i386_win.hpp>
 # else
-# error "wrong platform"
 #  include <boost/context/detail/fcontext_i386.hpp>
 # endif
 // arm
