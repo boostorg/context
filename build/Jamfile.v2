@@ -91,7 +91,7 @@ rule configure ( properties * )
 	return $(result) ;
 }
 
-
+# ARM
 alias asm_context_sources
    : asm/fcontext_arm_aapcs_elf_gas.S
    : <abi>aapcs
@@ -107,6 +107,7 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
+# MIPS 32bit
 alias asm_context_sources
    : asm/fcontext_mips32_o32_elf_gas.S
    : <abi>o32
@@ -122,6 +123,7 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
+# POWERPC 32bit
 alias asm_context_sources
    : asm/fcontext_ppc32_sysv_elf_gas.S
    : <abi>sysv
@@ -139,6 +141,7 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
+# POWERPC 64bit
 alias asm_context_sources
    : asm/fcontext_ppc64_sysv_elf_gas.S
    : <abi>sysv
@@ -156,6 +159,7 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
+# I386
 alias asm_context_sources
    : asm/fcontext_i386_sysv_elf_gas.S
    : <abi>sysv
@@ -181,33 +185,6 @@ alias asm_context_sources
      <architecture>x86
      <binary-format>elf
    ;
-
-alias asm_context_sources
-   : asm/fcontext_x86_64_sysv_elf_gas.S
-   : <abi>sysv
-     <address-model>64
-     <architecture>x86
-     <binary-format>elf
-	 <toolset>gcc
-   ;
-
-alias asm_context_sources
-   : asm/fcontext_x86_64_sysv_elf_gas.S
-   : <abi>sysv
-     <address-model>64
-     <architecture>x86
-     <binary-format>elf
-	 <toolset>intel
-   ;
-
-alias asm_context_sources
-   : [ make asm/fcontext_x86_64_sysv_elf_gas.o : asm/fcontext_x86_64_sysv_elf_gas.S : @gas ]
-   : <abi>sysv
-     <address-model>64
-     <architecture>x86
-     <binary-format>elf
-   ;
-
 
 alias asm_context_sources
    : asm/fcontext_i386_sysv_macho_gas.S
@@ -239,36 +216,6 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : asm/fcontext_x86_64_sysv_macho_gas.S
-   : <abi>sysv
-     <address-model>64
-     <architecture>x86
-     <binary-format>mach-o
-     <target-os>darwin
-	 <toolset>gcc
-   ;
-
-alias asm_context_sources
-   : asm/fcontext_x86_64_sysv_macho_gas.S
-   : <abi>sysv
-     <address-model>64
-     <architecture>x86
-     <binary-format>mach-o
-     <target-os>darwin
-	 <toolset>intel
-   ;
-
-alias asm_context_sources
-   : [ make asm/fcontext_x86_64_sysv_macho_gas.o : asm/fcontext_x86_64_sysv_macho_gas.S : @gas ]
-   : <abi>sysv
-     <address-model>64
-     <architecture>x86
-     <binary-format>mach-o
-     <target-os>darwin
-   ;
-
-
-alias asm_context_sources
    : asm/fcontext_i386_ms_pe_masm.asm
    : <abi>ms
      <address-model>32
@@ -296,6 +243,64 @@ alias asm_context_sources
      <binary-format>pe
      <target-os>windows
 	 <toolset>gcc
+   ;
+
+
+# X86_64
+alias asm_context_sources
+   : asm/fcontext_x86_64_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>x86
+     <binary-format>elf
+	 <toolset>gcc
+   ;
+
+alias asm_context_sources
+   : asm/fcontext_x86_64_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>x86
+     <binary-format>elf
+	 <toolset>intel
+   ;
+
+alias asm_context_sources
+   : [ make asm/fcontext_x86_64_sysv_elf_gas.o : asm/fcontext_x86_64_sysv_elf_gas.S : @gas ]
+   : <abi>sysv
+     <address-model>64
+     <architecture>x86
+     <binary-format>elf
+   ;
+
+
+alias asm_context_sources
+   : asm/fcontext_x86_64_sysv_macho_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>x86
+     <binary-format>mach-o
+     <target-os>darwin
+	 <toolset>gcc
+   ;
+
+alias asm_context_sources
+   : asm/fcontext_x86_64_sysv_macho_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>x86
+     <binary-format>mach-o
+     <target-os>darwin
+	 <toolset>intel
+   ;
+
+alias asm_context_sources
+   : [ make asm/fcontext_x86_64_sysv_macho_gas.o : asm/fcontext_x86_64_sysv_macho_gas.S : @gas ]
+   : <abi>sysv
+     <address-model>64
+     <architecture>x86
+     <binary-format>mach-o
+     <target-os>darwin
    ;
 
 alias asm_context_sources
