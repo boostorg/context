@@ -87,11 +87,18 @@
  *                                                                 *
  * *****************************************************************/
 
-.text
-.globl boost_fcontext_start
+.section ".text"
 .align 2
-.type boost_fcontext_start,@function
+.globl boost_fcontext_start
+.section ".opd","aw"
+.align 3
 boost_fcontext_start:
+.quad .boost_fcontext_start,.TOC.@tocbase,0
+.previous
+.size boost_fcontext_start,24
+.type .boost_fcontext_start,@function
+.globl .boost_fcontext_start
+.boost_fcontext_start:
     std     %r13,  0(%r3)       # save R13
     std     %r14,  8(%r3)       # save R14
     std     %r15,  16(%r3)      # save R15
@@ -193,13 +200,20 @@ boost_fcontext_start:
     mtctr   %r0                 # restore CTR
 
     bctr                        # start to context
-.size boost_fcontext_start, .-boost_fcontext_start
+.size .boost_fcontext_start, .-.boost_fcontext_start
 
-.text
-.globl boost_fcontext_jump
+.section ".text"
 .align 2
-.type boost_fcontext_jump,@function
+.globl boost_fcontext_jump
+.section ".opd","aw"
+.align 3
 boost_fcontext_jump:
+.quad .boost_fcontext_jump,.TOC.@tocbase,0
+.previous
+.size boost_fcontext_jump,24
+.type .boost_fcontext_jump,@function
+.globl .boost_fcontext_jump
+.boost_fcontext_jump:
     std     %r13,  0(%r3)       # save R13
     std     %r14,  8(%r3)       # save R14
     std     %r15,  16(%r3)      # save R15
@@ -302,13 +316,20 @@ boost_fcontext_jump:
     mtctr   %r0                 # restore CTR
 
     bctr                        # jump to context
-.size boost_fcontext_jump, .-boost_fcontext_jump
+.size .boost_fcontext_jump, .-.boost_fcontext_jump
 
-.text
-.globl boost_fcontext_make
+.section ".text"
 .align 2
-.type boost_fcontext_make,@function
+.globl boost_fcontext_make
+.section ".opd","aw"
+.align 3
 boost_fcontext_make:
+.quad .boost_fcontext_make,.TOC.@tocbase,0
+.previous
+.size boost_fcontext_make,24
+.type .boost_fcontext_make,@function
+.globl .boost_fcontext_make
+.boost_fcontext_make:
     std     %r3, 0(%r3)         # save the current context
     std     %r4, 176(%r3)       # save the address of the function supposed to be run
     std     %r5, 16(%r3)        # save void pointer
@@ -353,4 +374,4 @@ link_fcontext:
 2:
     li      %r3,  0             # set return value to zero
     bl      _exit@plt           # exit application
-.size boost_fcontext_make, .-boost_fcontext_make
+.size .boost_fcontext_make, .-.boost_fcontext_make
