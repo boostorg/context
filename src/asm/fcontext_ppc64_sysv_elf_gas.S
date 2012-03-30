@@ -348,8 +348,8 @@ boost_fcontext_make:
     lwz     %r3, 48(%r1)        # pop pointer to fcontext_t from stack
     addi    %r1, %r1, 56        # release space on stack
 
-    li      %r4, 32
-    subf    %r0, %r4, %r0       # reserve 32 bytes on top of the stack
+    li      %r4, 64
+    subf    %r0, %r4, %r0       # 64 bytes on stack for parameter area (== 8 registers)
     std     %r0, 152(%r3)       # save the stack base
     ld      %r0, 360(%r3)       # load address of next user context
     std     %r0, 8(%r3)         # save the next context
