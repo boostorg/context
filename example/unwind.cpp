@@ -21,13 +21,15 @@ struct X
     { std::cout << "~X()" << std::endl; }
 };
 
-void fn()
+void fn( int n)
 {
-    X x;
-
-    for( int i = 0;; ++i)
+    if ( 0 < n)
     {
-        std::cout << "fn(): " << i << std::endl;
+        X x;
+        fn ( --n);
+    }
+    else
+    {
         ctx.suspend();
     }
 }
@@ -35,14 +37,10 @@ void fn()
 int main( int argc, char * argv[])
 {
     ctx = boost::contexts::context(
-            fn,
+            fn, 5,
             boost::contexts::default_stacksize(),
 			boost::contexts::no_stack_unwind, boost::contexts::return_to_caller);
     ctx.start();
-    for ( int i = 0; i < 4; ++i)
-    {
-        ctx.resume();
-    }
 
     std::cout << "ctx is complete: " << std::boolalpha << ctx.is_complete() << "\n";
     std::cout << "call ctx.unwind_stack()" << std::endl;
