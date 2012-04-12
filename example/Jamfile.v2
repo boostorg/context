@@ -47,66 +47,14 @@ project boost/context/example
       <link>static
     ;
 
-exe base_api
-    : base_api.cpp
-    ;
-
-exe exit
-    : exit.cpp
-    ;
-
-exe do_return
-    : do_return.cpp
-    ;
+exe jump
+		: jump.cpp
+		;
 
 exe link
-    : link.cpp
-    ;
-
-exe swap
-    : swap.cpp
-    ;
-
-exe unwind
-    : unwind.cpp
-    ;
-
-exe float
-    : float.cpp
-    ;
+		: link.cpp
+		;
 
 exe transfer
-    : transfer.cpp
-    ;
-
-exe enumerate_string
-    : enumerator/enumerate_string.cpp
-    ;
-
-exe enumerate_tree
-    : enumerator/enumerate_tree.cpp
-    ;
-
-exe fringe
-    : enumerator/fringe.cpp
-    ;
-
-exe power
-    : enumerator/power.cpp
-    ;
-
-exe echo
-    : continuation/echo.cpp
-    ;
-
-exe parallel
-    : continuation/parallel.cpp
-    ;
-
-exe echo_client
-    : asio/echo_client.cpp
-    ;
-
-exe echo_server
-    : asio/echo_server.cpp
-    ;
+		: transfer.cpp
+		;

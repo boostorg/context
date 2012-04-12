@@ -53,10 +53,10 @@
  * *****************************************************************/
 
 .text
-.globl boost_fcontext_start
+.globl start_fcontext
 .align 2
-.type boost_fcontext_start,%function
-boost_fcontext_start:
+.type start_fcontext,%function
+start_fcontext:
     stmia   a1, {v1-v8,sp-lr}       @ save V1-V8,SP-LR
     str     lr, [a1,#40]            @ save LR as PC
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
@@ -71,13 +71,13 @@ boost_fcontext_start:
 #endif
 	
     ldmia   a2, {v1-v8,sp-pc}       @ restore v1-V8,SP-PC
-.size boost_fcontext_start,.-boost_fcontext_start
+.size start_fcontext,.-start_fcontext
 
 .text
-.globl boost_fcontext_jump
+.globl jump_fcontext
 .align 2
-.type boost_fcontext_jump,%function
-boost_fcontext_jump:
+.type jump_fcontext,%function
+jump_fcontext:
     stmia   a1, {v1-v8,sp-lr}       @ save V1-V8,SP-LR
     str     lr, [a1,#40]            @ save LR as PC
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
@@ -92,21 +92,21 @@ boost_fcontext_jump:
 #endif
 
     ldmia   a2, {v1-v8,sp-pc}       @ restore v1-V8,SP-PC
-.size boost_fcontext_jump,.-boost_fcontext_jump
+.size jump_fcontext,.-jump_fcontext
 
 .text
-.globl boost_fcontext_make
+.globl make_fcontext
 .align 2
-.type boost_fcontext_make,%function
-boost_fcontext_make:
+.type make_fcontext,%function
+make_fcontext:
     str     a1, [a1,#0]         @ save the address of the current context
     str     a2, [a1,#40]        @ save address of the function supposed to be run
     str     a3, [a1,#8]         @ save void pointer
     ldr     a2, [a1,#108]       @ load the stack base
 
 	push    {a1,lr}				@ save pointer to fcontext_t
-	mov     a1, a2				@ stack pointer as arg for boost_fcontext_align
-	bl		boost_fcontext_align@PLT @ align stack
+	mov     a1, a2				@ stack pointer as arg for align_stack
+	bl		align_stack@PLT @ align stack
 	mov		a2, a1				@ begin of aligned stack 
 	pop     {a1,lr}				@ restore pointer to boost_fcontext_t
 
@@ -123,8 +123,8 @@ link_fcontext:
     mov     a2, v2              @ load the adddress of the next context
     teq     a2, #0              @ test if the address of the next context is a null pointer
 
-    bne     boost_fcontext_start@PLT   @ install next context
+    bne     start_fcontext@PLT   @ install next context
 
     mov     a1, #0
     bl      _exit@PLT                  @ exit application
-.size boost_fcontext_make,.-boost_fcontext_make
+.size make_fcontext,.-make_fcontext

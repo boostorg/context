@@ -9,7 +9,7 @@
     [quickbook 1.4]
     [authors [Kowalke, Oliver]]
     [copyright 2009 Oliver Kowalke]
-    [purpose C++ Library for swiching different user contexts]
+    [purpose C++ Library for swiching different user ctx]
     [category text]
     [license
         Distributed under the Boost Software License, Version 1.0.
@@ -21,8 +21,7 @@
 
 [def __boost_build__ [*Boost.Build]]
 [def __boost_context__ [*Boost.Context]]
-[def __boost_fiber__ [*Boost.Fiber]]
-[def __boost_move__ [*Boost.Move]]
+[def __boost_fiber__ [*Boost.Coroutine]]
 [def __boost_task__ [*Boost.Task]]
 
 [template cs_example_link[link_text] [link context.examples.enumerator [link_text]]]
@@ -43,7 +42,6 @@
 [def __tls__ ['thread-local storage]]
 [def __stack_allocator__ ['StackAllocator]]
 [def __stack_allocator_concept__ ['StackAllocator concept]]
-[def __yield__ ['yield]]
 
 [def __fcontext__ ['fcontext_t]]
 [def __ucontext__ ['ucontext_t]]
@@ -52,25 +50,24 @@
 [def __fls_free__ ['::FlsFree()]]
 
 [def __bad_alloc__ ['std::bad_alloc]]
-[def __context__ [context_link ['context]]]
-[def __context_start__ ['context::start()]]
-[def __context_resume__ ['context::resume()]]
-[def __context_suspend__ ['context::suspend()]]
-[def __context_unwind__ ['context::unwind_stack()]]
-[def __forced_unwind__ ['forced_unwind]]
+[def __fc_base__ ['fc_base]]
+[def __fc_limit__ ['fc_limit]]
+[def __fc_link__ ['fc_link]]
+[def __start_fcontext__ ['start_fcontext()]]
+[def __jump_fcontext__ ['jump_fcontext()]]
+[def __make_fcontext__ ['make_fcontext()]]
 [def __invalid_argument__ ['std::invalid_argument]]
 [def __stack_alloc__ ['allocate()]]
 [def __stack_dealloc__ ['deallocate()]]
 [def __stack_helper__ ['stack_helper]]
+[def __yield__ ['yield]]
 
-[def __context_ns__ ['boost::contexts]]
+[def __context_ns__ ['boost::ctx]]
 
 [include overview.qbk]
 [include requirements.qbk]
-[include context_ref.qbk]
-[include stack_ref.qbk]
 [include fcontext.qbk]
-[include examples.qbk]
+[include stack.qbk]
 [include performance.qbk]
 [include tested.qbk]
 [include rationale.qbk]

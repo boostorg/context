@@ -17,43 +17,18 @@
 #include "bind_processor.hpp"
 #include "performance.hpp"
 
+namespace ctx = boost::ctx;
 namespace po = boost::program_options;
 
-boost::contexts::context c;
+ctx::fcontext_t fc, fcm;
 
-void fn()
-{ c.suspend(); }
-
-void test_creation( unsigned int iterations)
+void fn( intptr_t param)
 {
-    cycle_t total( 0);
-    cycle_t overhead( get_overhead() );
-    std::cout << "overhead for rdtsc == " << overhead << " cycles" << std::endl;
-
-    // cache warm-up
-    {
-        c = boost::contexts::context(
-				fn,
-				boost::contexts::default_stacksize(),
-				boost::contexts::no_stack_unwind, boost::contexts::return_to_caller);
-    }
-
-    for ( unsigned int i = 0; i < iterations; ++i)
-    {
-        cycle_t start( get_cycles() );
-        c = boost::contexts::context(
-				fn,
-				boost::contexts::default_stacksize(),
-				boost::contexts::no_stack_unwind, boost::contexts::return_to_caller);
-        cycle_t diff( get_cycles() - start);
-        diff -= overhead;
-        BOOST_ASSERT( diff >= 0);
-        total += diff;
-    }
-    std::cout << "average of " << total/iterations << " cycles per creation" << std::endl;
+    while ( param)
+        ctx::jump_fcontext( & fc, & fcm, 0);
 }
 
-void test_switching( unsigned int iterations)
+void test( unsigned int iterations)
 {
     cycle_t total( 0);
     cycle_t overhead( get_overhead() );
@@ -61,22 +36,20 @@ void test_switching( unsigned int iterations)
 
     // cache warum-up
     {
-        c = boost::contexts::context(
-				fn,
-				boost::contexts::default_stacksize(),
-				boost::contexts::no_stack_unwind, boost::contexts::return_to_caller);
-        c.start();
-        c.resume();
+        ctx::stack_allocator alloc;
+
+        fc.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
+        fc.fc_stack.limit =
+            static_cast< char * >( fc.fc_stack.base) - ctx::minimum_stacksize();
+		ctx::make_fcontext( & fc, fn, 1);
+        ctx::start_fcontext( & fcm, & fc);
+        ctx::jump_fcontext( & fcm, & fc, 1);
     }
 
     for ( unsigned int i = 0; i < iterations; ++i)
     {
-        c = boost::contexts::context(
-				fn,
-				boost::contexts::default_stacksize(),
-				boost::contexts::no_stack_unwind, boost::contexts::return_to_caller);
         cycle_t start( get_cycles() );
-        c.start();
+        ctx::jump_fcontext( & fcm, & fc, 1);
         cycle_t diff( get_cycles() - start);
 
         // we have two jumps and two measuremt-overheads
@@ -98,8 +71,6 @@ int main( int argc, char * argv[])
         po::options_description desc("allowed options");
         desc.add_options()
             ("help,h", "help message")
-            ("creating,c", "test creation")
-            ("switching,s", "test switching")
             ("iterations,i", po::value< unsigned int >( & iterations), "iterations");
 
         po::variables_map vm;
@@ -121,11 +92,7 @@ int main( int argc, char * argv[])
 
         bind_to_processor( 0);
 
-       if ( vm.count("creating") )
-           test_creation( iterations);
-
-       if ( vm.count("switching") )
-            test_switching( iterations);
+        test( iterations);
 
         return EXIT_SUCCESS;
     }

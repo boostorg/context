@@ -46,9 +46,9 @@
  * **************************************************************************************/
 
 .text
-.globl _boost_fcontext_jump
+.globl _jump_fcontext
 .align 8
-_boost_fcontext_jump:
+_jump_fcontext:
     movq     %rbx,       (%rdi)         /* save RBX */
     movq     %r12,       0x8(%rdi)      /* save R12 */
     movq     %r13,       0x10(%rdi)     /* save R13 */
@@ -84,17 +84,17 @@ _boost_fcontext_jump:
     jmp      *%rcx                  /* indirect jump to context */
 
 .text
-.globl _boost_fcontext_make
+.globl _make_fcontext
 .align 8
-_boost_fcontext_make:
+_make_fcontext:
     movq   %rdi,                 (%rdi)     /* save the address of current context */
     movq   %rsi,                 0x38(%rdi) /* save the address of the function supposed to run */
     movq   %rdx,                 0x10(%rdi) /* save the the void pointer */
     movq   0x48(%rdi),           %rdx       /* load the stack base */
 
     pushq  %rdi                             /* save pointer to fcontext_t */
-    movq   %rdx,                 %rdi       /* stack pointer as arg for boost_fcontext_align */
-    call   boost_fcontext_align@PLT         /* align stack */
+    movq   %rdx,                 %rdi       /* stack pointer as arg for align_stack */
+    call   align_stack@PLT         /* align stack */
     movq   %rax,                 %rdx       /* begin of aligned stack */
     popq   %rdi                             /* restore pointer to fcontext_t */
 
@@ -115,7 +115,7 @@ link_fcontext:
     je     1f                               /* jump to finish */
 
     movq   %rbx,               %rdi         /* restore current context */
-    call   boost_fcontext_start@PLT         /* jump to next context */
+    call   start_fcontext@PLT         /* jump to next context */
 
 1:
     xorq    %rdi,              %rdi         /* exit code is zero */

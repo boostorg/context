@@ -74,10 +74,10 @@
  * *****************************************************************/
 
 .text
-.globl boost_fcontext_start
+.globl start_fcontext
 .align 2
-.type boost_fcontext_start,@function
-boost_fcontext_start:
+.type start_fcontext,@function
+start_fcontext:
     stw     %r13,  0(%r3)       # save R13
     stw     %r14,  4(%r3)       # save R14
     stw     %r15,  8(%r3)       # save R15
@@ -179,13 +179,13 @@ boost_fcontext_start:
     mtctr   %r0                 # restore CTR
 
     bctr                        # start to context
-.size boost_fcontext_start, .-boost_fcontext_start
+.size start_fcontext, .-start_fcontext
 
 .text
-.globl boost_fcontext_jump
+.globl jump_fcontext
 .align 2
-.type boost_fcontext_jump,@function
-boost_fcontext_jump:
+.type jump_fcontext,@function
+jump_fcontext:
     stw     %r13,  0(%r3)       # save R13
     stw     %r14,  4(%r3)       # save R14
     stw     %r15,  8(%r3)       # save R15
@@ -288,13 +288,13 @@ boost_fcontext_jump:
     mtctr   %r0                 # restore CTR
 
     bctr                        # jump to context
-.size boost_fcontext_jump, .-boost_fcontext_jump
+.size jump_fcontext, .-jump_fcontext
 
 .text
-.globl boost_fcontext_make
+.globl make_fcontext
 .align 2
-.type boost_fcontext_make,@function
-boost_fcontext_make:
+.type make_fcontext,@function
+make_fcontext:
     stw     %r3, 0(%r3)         # save the current context
     stw     %r4, 88(%r3)        # save the address of the function supposed to to be run
     stw     %r5, 8(%r3)         # save void pointer
@@ -306,7 +306,7 @@ boost_fcontext_make:
     mflr    %r4                 # load LR
     stw     %r4, 20(%r1)        # store LR on stack
     mr.     %r3, %r0            # context stack as arg to boost_fcontext_algin
-    bl      boost_fcontext_align@plt    # call boost_fcontext_align
+    bl      align_stack@plt    # call align_stack
     mr.     %r0, %r3            # load result into R0
     lwz     %r4, 20(%r1)        # pop LR from stack
     mtlr    %r4                 # restore LR
@@ -334,9 +334,9 @@ link_fcontext:
     mr.     %r4, %r14
     beq     2f                  # test if a next context was given
 
-    bl      boost_fcontext_start@plt   # install next context
+    bl      start_fcontext@plt   # install next context
 
 2:
     li      %r3,  0             # set return value to zero
     bl      _exit@plt           # exit application
-.size boost_fcontext_make, .-boost_fcontext_make
+.size make_fcontext, .-make_fcontext

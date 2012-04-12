@@ -89,16 +89,16 @@
 
 .section ".text"
 .align 2
-.globl boost_fcontext_start
+.globl start_fcontext
 .section ".opd","aw"
 .align 3
-boost_fcontext_start:
-.quad .boost_fcontext_start,.TOC.@tocbase,0
+start_fcontext:
+.quad .start_fcontext,.TOC.@tocbase,0
 .previous
-.size boost_fcontext_start,24
-.type .boost_fcontext_start,@function
-.globl .boost_fcontext_start
-.boost_fcontext_start:
+.size start_fcontext,24
+.type .start_fcontext,@function
+.globl .start_fcontext
+.start_fcontext:
     std     %r13,  0(%r3)       # save R13
     std     %r14,  8(%r3)       # save R14
     std     %r15,  16(%r3)      # save R15
@@ -200,20 +200,20 @@ boost_fcontext_start:
     mtctr   %r0                 # restore CTR
 
     bctr                        # start to context
-.size .boost_fcontext_start, .-.boost_fcontext_start
+.size .start_fcontext, .-.start_fcontext
 
 .section ".text"
 .align 2
-.globl boost_fcontext_jump
+.globl jump_fcontext
 .section ".opd","aw"
 .align 3
-boost_fcontext_jump:
-.quad .boost_fcontext_jump,.TOC.@tocbase,0
+jump_fcontext:
+.quad .jump_fcontext,.TOC.@tocbase,0
 .previous
-.size boost_fcontext_jump,24
-.type .boost_fcontext_jump,@function
-.globl .boost_fcontext_jump
-.boost_fcontext_jump:
+.size jump_fcontext,24
+.type .jump_fcontext,@function
+.globl .jump_fcontext
+.jump_fcontext:
     std     %r13,  0(%r3)       # save R13
     std     %r14,  8(%r3)       # save R14
     std     %r15,  16(%r3)      # save R15
@@ -316,20 +316,20 @@ boost_fcontext_jump:
     mtctr   %r0                 # restore CTR
 
     bctr                        # jump to context
-.size .boost_fcontext_jump, .-.boost_fcontext_jump
+.size .jump_fcontext, .-.jump_fcontext
 
 .section ".text"
 .align 2
-.globl boost_fcontext_make
+.globl make_fcontext
 .section ".opd","aw"
 .align 3
-boost_fcontext_make:
-.quad .boost_fcontext_make,.TOC.@tocbase,0
+make_fcontext:
+.quad .make_fcontext,.TOC.@tocbase,0
 .previous
-.size boost_fcontext_make,24
-.type .boost_fcontext_make,@function
-.globl .boost_fcontext_make
-.boost_fcontext_make:
+.size make_fcontext,24
+.type .make_fcontext,@function
+.globl .make_fcontext
+.make_fcontext:
     std     %r3, 0(%r3)         # save the current context
     std     %r4, 176(%r3)       # save the address of the function supposed to be run
     std     %r5, 16(%r3)        # save void pointer
@@ -341,7 +341,7 @@ boost_fcontext_make:
     mflr    %r4                 # load LR
     stw     %r4, 40(%r1)        # store LR on stack
     mr.     %r3, %r0            # context stack as arg to boost_fcontext_algin
-    bl      boost_fcontext_align@plt    # call boost_fcontext_align
+    bl      align_stack@plt    # call align_stack
     mr.     %r0, %r3            # load result into R0
     lwz     %r4, 40(%r1)        # pop LR from stack
     mtlr    %r4                 # restore LR
@@ -369,9 +369,9 @@ link_fcontext:
     mr.     %r4, %r14
     beq     2f                  # test if a next context was given
 
-    bl      boost_fcontext_start@plt   # install next context
+    bl      start_fcontext@plt   # install next context
 
 2:
     li      %r3,  0             # set return value to zero
     bl      _exit@plt           # exit application
-.size .boost_fcontext_make, .-.boost_fcontext_make
+.size .make_fcontext, .-.make_fcontext

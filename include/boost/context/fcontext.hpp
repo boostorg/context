@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CONTEXTS_FCONTEXT_H
-#define BOOST_CONTEXTS_FCONTEXT_H
+#ifndef BOOST_CTX_FCONTEXT_H
+#define BOOST_CTX_FCONTEXT_H
 
 #if defined(__PGI)
 #include <stdint.h>
@@ -59,18 +59,19 @@
 # error "platform not supported"
 #endif
 
-extern "C" {
+namespace boost {
+namespace ctx {
 
-BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL boost_fcontext_align( void * vp);
-BOOST_CONTEXT_DECL intptr_t BOOST_CONTEXT_CALLDECL boost_fcontext_start( boost_fcontext_t * ofc, boost_fcontext_t const* nfc);
-BOOST_CONTEXT_DECL intptr_t BOOST_CONTEXT_CALLDECL boost_fcontext_jump( boost_fcontext_t * ofc, boost_fcontext_t const* nfc, intptr_t vp);
-BOOST_CONTEXT_DECL void BOOST_CONTEXT_CALLDECL boost_fcontext_make( boost_fcontext_t * fc, void (* fn)( intptr_t), intptr_t vp);
+extern "C" BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL align_stack( void * vp);
+extern "C" BOOST_CONTEXT_DECL intptr_t BOOST_CONTEXT_CALLDECL start_fcontext( fcontext_t * ofc, fcontext_t const* nfc);
+extern "C" BOOST_CONTEXT_DECL intptr_t BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t * ofc, fcontext_t const* nfc, intptr_t vp);
+extern "C" BOOST_CONTEXT_DECL void BOOST_CONTEXT_CALLDECL make_fcontext( fcontext_t * fc, void (* fn)( intptr_t), intptr_t vp);
 
-}
+}}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_CONTEXTS_FCONTEXT_H
+#endif // BOOST_CTX_FCONTEXT_H
 

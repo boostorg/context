@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CONTEXTS_STACK_UTILS_H
-#define BOOST_CONTEXTS_STACK_UTILS_H
+#ifndef BOOST_CTX_STACK_UTILS_H
+#define BOOST_CTX_STACK_UTILS_H
 
 #include <cstddef>
 
@@ -18,7 +18,7 @@
 #endif
 
 namespace boost {
-namespace contexts {
+namespace ctx {
 
 BOOST_CONTEXT_DECL std::size_t default_stacksize();
 
@@ -38,4 +38,4 @@ BOOST_CONTEXT_DECL bool is_stack_unbound();
 # include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_CONTEXTS_STACK_UTILS_H
+#endif // BOOST_CTX_STACK_UTILS_H

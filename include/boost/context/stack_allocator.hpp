@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CONTEXTS_STACK_ALLOCATOR_H
-#define BOOST_CONTEXTS_STACK_ALLOCATOR_H
+#ifndef BOOST_CTX_STACK_ALLOCATOR_H
+#define BOOST_CTX_STACK_ALLOCATOR_H
 
 #include <cstddef>
 
@@ -18,7 +18,7 @@
 #endif
 
 namespace boost {
-namespace contexts {
+namespace ctx {
 
 class BOOST_CONTEXT_DECL stack_allocator
 {
@@ -34,4 +34,4 @@ public:
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_CONTEXTS_STACK_ALLOCATOR_H
+#endif // BOOST_CTX_STACK_ALLOCATOR_H

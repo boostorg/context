@@ -46,10 +46,10 @@
  * **************************************************************************************/
 
 .text
-.globl boost_fcontext_jump
-.type boost_fcontext_jump,@function
+.globl jump_fcontext
+.type jump_fcontext,@function
 .align 16
-boost_fcontext_jump:
+jump_fcontext:
     movq     %rbx,       (%rdi)         /* save RBX */
     movq     %r12,       0x8(%rdi)      /* save R12 */
     movq     %r13,       0x10(%rdi)     /* save R13 */
@@ -83,21 +83,21 @@ boost_fcontext_jump:
     movq     %r13,        %rdi      /* restore void pointer as argument */
 
     jmp      *%rcx                  /* indirect jump to context */
-.size boost_fcontext_jump,.-boost_fcontext_jump
+.size jump_fcontext,.-jump_fcontext
 
 .text
-.globl boost_fcontext_make
-.type boost_fcontext_make,@function
+.globl make_fcontext
+.type make_fcontext,@function
 .align 16
-boost_fcontext_make:
+make_fcontext:
     movq   %rdi,                 (%rdi)     /* save the address of current context */
     movq   %rsi,                 0x38(%rdi) /* save the address of the function supposed to run */
     movq   %rdx,                 0x10(%rdi) /* save the the void pointer */
     movq   0x48(%rdi),           %rdx       /* load the stack base */
 
     pushq  %rdi                             /* save pointer to fcontext_t */
-    movq   %rdx,                 %rdi       /* stack pointer as arg for boost_fcontext_align */
-    call   boost_fcontext_align@PLT         /* align stack */
+    movq   %rdx,                 %rdi       /* stack pointer as arg for align_stack */
+    call   align_stack@PLT         /* align stack */
     movq   %rax,                 %rdx       /* begin of aligned stack */
     popq   %rdi                             /* restore pointer to fcontext_t */
 
@@ -118,11 +118,11 @@ link_fcontext:
     je     1f                               /* jump to finish */
 
     movq   %rbx,               %rdi         /* restore current context */
-    call   boost_fcontext_start@PLT         /* jump to next context */
+    call   start_fcontext@PLT         /* jump to next context */
 
 1:
     xorq    %rdi,              %rdi         /* exit code is zero */
     call   _exit@PLT                        /* exit application */
     hlt
-.size boost_fcontext_make,.-boost_fcontext_make
+.size make_fcontext,.-make_fcontext
 

@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 namespace boost {
-namespace contexts {
+namespace ctx {
 
 void *
 stack_allocator::allocate( std::size_t size) const

@@ -35,7 +35,7 @@ static SYSTEM_INFO system_info()
 }
 
 namespace boost {
-namespace contexts {
+namespace ctx {
 
 BOOST_CONTEXT_DECL
 std::size_t default_stacksize()

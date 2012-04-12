@@ -8,5 +8,6 @@
 [section:todo Todo]
 
 * provide support for SPARC
+* support split-stack feature from gcc/gold linker
 
 [endsect]

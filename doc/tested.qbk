@@ -40,27 +40,9 @@
         [SYSV]
     ]
     [
-        [X86_64 (Intel Core2 Quad)]
-        [Ubuntu GNU/Linux (Lucid Lynx)]
-        [Intel 12.0.2]
-        [SYSV]
-    ]
-    [
-        [X86_64 (Intel Core2 Quad)]
-        [Ubuntu GNU/Linux (Lucid Lynx)]
-        [PGI 12.2]
-        [SYSV]
-    ]
-    [
         [X86_64]
         [Windows 7]
         [MS VC 10.0]
-        [PE]
-    ]
-    [
-        [X86_64]
-        [Windows 7]
-        [mingw ]
         [PE]
     ]
     [

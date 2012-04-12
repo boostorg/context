@@ -10,9 +10,7 @@ extern "C" {
 
 #include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 
-#include <excpt.h>
 #include <windows.h>
 #include <winnt.h>
 
@@ -28,11 +26,7 @@ static char * exception_description(
     {
         const char * accessType = ( info[0]) ? "writing" : "reading";
         const ULONG_PTR address = info[1];
-#if defined (__MINGW32__) || defined (__MINGW64__)
-        snprintf( description, len, "Access violation %s 0x%08X", accessType, address);
-#else
         _snprintf_s( description, len, _TRUNCATE, "Access violation %s 0x%08X", accessType, address);
-#endif
         return description;
     }
     case EXCEPTION_DATATYPE_MISALIGNMENT:    return "Datatype misalignment";
@@ -58,20 +52,16 @@ static char * exception_description(
     case EXCEPTION_INVALID_HANDLE:           return "Invalid handle";
     }
 
-#if defined (__MINGW32__) || defined (__MINGW64__)
-    snprintf( description, len, "Unknown (0x%08X)", code);
-#else
     _snprintf_s( description, len, _TRUNCATE, "Unknown (0x%08X)", code);
-#endif
 
     return description;
 }
 
-EXCEPTION_DISPOSITION boost_fcontext_seh(
+EXCEPTION_DISPOSITION seh_fcontext(
      struct _EXCEPTION_RECORD * record,
-     void * frame,
-     struct _CONTEXT * ctx,
-     void * dispatcher)
+     void *,
+     struct _CONTEXT *,
+     void *)
 {
     char description[255];
 

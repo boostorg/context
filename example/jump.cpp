@@ -14,7 +14,7 @@
 
 namespace ctx = boost::ctx;
 
-ctx::fcontext_t fc1, fc2;
+ctx::fcontext_t fcm, fc1, fc2;
 
 void f1( intptr_t)
 {
@@ -22,6 +22,7 @@ void f1( intptr_t)
 		std::cout << "f1: call jump_fcontext( & fc1, & fc2)" << std::endl;
 		ctx::jump_fcontext( & fc1, & fc2, 0);
 		std::cout << "f1: return" << std::endl;
+		ctx::jump_fcontext( & fc1, & fcm, 0);
 }
 
 void f2( intptr_t)
@@ -34,16 +35,14 @@ void f2( intptr_t)
 
 int main( int argc, char * argv[])
 {
-        ctx::fcontext_t fcm;
-        ctx::stack_allocator alloc;
+        ctx::stack_allocator alloc1, alloc2;
 
-        fc1.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
+        fc1.fc_stack.base = alloc1.allocate(ctx::minimum_stacksize());
         fc1.fc_stack.limit =
             static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-        fc1.fc_link = & fcm;
 		ctx::make_fcontext( & fc1, f1, 0);
 
-        fc2.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
+        fc2.fc_stack.base = alloc2.allocate(ctx::minimum_stacksize());
         fc2.fc_stack.limit =
             static_cast< char * >( fc2.fc_stack.base) - ctx::minimum_stacksize();
 		ctx::make_fcontext( & fc2, f2, 0);

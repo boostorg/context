@@ -7,39 +7,9 @@
 
 [section:rationale Rationale]
 
-[heading NoThrow guarantee]
-
-Member functions of __context__ do not thow exceptions but do require that
-certain preconditions are satisifed:
-context jumps can only be made by instances which are not a __not_a_context__
-and which are not complete.
-
-
-[heading Pimpl idiom]
-
-In order to support move semantics and context switching operations, the use of
-the Pimpl Idiom was necessary.
-A nice feature is that a __context__ has the size of a pointer, so it fits into
-a register.
-
-With the current design the constructor accepts functors and its arguments
-similiar to __thread__.
-
-The Pimpl Idiom allows type-erasing the __stack_allocator__ type.
-
-
-[heading Unwinding]
-
-In order to release resources allocated on the stack, unwinding the stack must be
-supported.
-The current implementation throws a exception in order to unwind the stack (jump
-back to invocation of `suspend()`). The special exception is caught inside the
-trampoline function (first function on top of stack).
-
-
 [heading Protecting the stack]
 
-Because the stack's size is fixed -- there is no support for split stacks -- it
+Because the stack's size is fixed -- there is no support for split stacks yet -- it
 is important to protect against exceeding the stack's bounds. Otherwise, in the
 best case, overrunning the stack's memory will result in a segmentation fault or
 access violation and, in the worst case, the application's memory will be
@@ -51,9 +21,9 @@ within it.
 
 [heading fcontext_t]
 
-__boost_context__ provides the low leve lAPI boost_fcontext_t which is
+__boost_context__ provides the low level API fcontext_t which is
 implemented in assembler to provide context swapping operations.
-boost_fcontext_t is the part to port to new platforms.
+fcontext_t is the part to port to new platforms.
 
 [note Context switches do not preserve the signal mask on UNIX systems.]
 
@@ -88,7 +58,7 @@ architectures where pointers are larger than integers.
 
 `ucontext_t` preserves signal mask between context switches which involes system
 calls consuming a lot of CPU cycles (ucontext_t is slower by
-perfomance_link[factor 13x] relative to `boost_fcontext_t`).
+perfomance_link[factor 13x] relative to `fcontext_t`).
 
 
 [heading Windows fibers]

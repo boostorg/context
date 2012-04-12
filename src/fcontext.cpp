@@ -15,10 +15,9 @@
 #endif
 
 namespace boost {
-namespace contexts {
+namespace ctx {
 
-extern "C" {
-BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL boost_fcontext_align( void * vp)
+extern "C" BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL align_stack( void * vp)
 {
 	void * base = vp;
     if ( 0 != ( ( ( uintptr_t) base) & 15) )
@@ -28,11 +27,9 @@ BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL boost_fcontext_align( void * vp
 }
 
 # if !defined(__arm__) && !defined(__powerpc__)
-BOOST_CONTEXT_DECL intptr_t BOOST_CONTEXT_CALLDECL boost_fcontext_start( boost_fcontext_t * ofc, boost_fcontext_t const* nfc)
-{ return boost_fcontext_jump( ofc, nfc, 0); }
+extern "C" BOOST_CONTEXT_DECL intptr_t BOOST_CONTEXT_CALLDECL start_fcontext( fcontext_t * ofc, fcontext_t const* nfc)
+{ return jump_fcontext( ofc, nfc, 0); }
 #endif
-
-}
 
 }}
 

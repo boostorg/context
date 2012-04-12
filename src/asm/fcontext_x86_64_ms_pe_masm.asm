@@ -55,12 +55,12 @@
 ;  ----------------------------------------------------------------------------------
 
 EXTERN  _exit:PROC                  ; standard C library function
-EXTERN  boost_fcontext_align:PROC   ; stack alignment
-EXTERN  boost_fcontext_seh:PROC     ; exception handler
-EXTERN  boost_fcontext_start:PROC   ; start fcontext
+EXTERN  align_stack:PROC   ; stack alignment
+EXTERN  seh_fcontext:PROC     ; exception handler
+EXTERN  start_fcontext:PROC   ; start fcontext
 .code
 
-boost_fcontext_jump PROC EXPORT FRAME:boost_fcontext_seh
+jump_fcontext PROC EXPORT FRAME:seh_fcontext
     .endprolog
 
     mov     [rcx],       r12        ; save R12
@@ -116,9 +116,9 @@ boost_fcontext_jump PROC EXPORT FRAME:boost_fcontext_seh
     mov     rax,        r8          ; use third arg as return value after jump
 
     jmp     r9                      ; indirect jump to caller
-boost_fcontext_jump ENDP
+jump_fcontext ENDP
 
-boost_fcontext_make PROC EXPORT FRAME ; generate function table entry in .pdata and unwind information in    E
+make_fcontext PROC EXPORT FRAME ; generate function table entry in .pdata and unwind information in    E
     .endprolog                        ; .xdata for a function's structured exception handling unwind behavior
 
     mov  [rcx],      rcx         ; store the address of current context
@@ -128,9 +128,9 @@ boost_fcontext_make PROC EXPORT FRAME ; generate function table entry in .pdata 
 
     push  rcx                    ; save pointer to fcontext_t
     sub   rsp,       028h        ; reserve shadow space for boost_fcontext_algin
-    mov   rcx,       rdx         ; stack pointer as arg for boost_fcontext_align
+    mov   rcx,       rdx         ; stack pointer as arg for align_stack
 	mov   [rsp+8],   rcx
-    call  boost_fcontext_align   ; align stack
+    call  align_stack   ; align stack
     mov   rdx,       rax         ; begin of aligned stack
 	add	  rsp,       028h
     pop   rcx                    ; restore pointer to fcontext_t
@@ -143,14 +143,14 @@ boost_fcontext_make PROC EXPORT FRAME ; generate function table entry in .pdata 
     stmxcsr [rcx+050h]           ; save SSE2 control and status word
     fnstcw  [rcx+054h]           ; save x87 control word
 
-    lea  rax,       boost_fcontext_link   ; helper code executed after fn() returns
+    lea  rax,       link_fcontext   ; helper code executed after fn() returns
     mov  [rdx],     rax          ; store address off the helper function as return address
 
     xor  rax,       rax          ; set RAX to zero
     ret
-boost_fcontext_make ENDP
+make_fcontext ENDP
 
-boost_fcontext_link PROC FRAME   ; generate function table entry in .pdata and unwind information in
+link_fcontext PROC FRAME   ; generate function table entry in .pdata and unwind information in
     .endprolog					 ; .xdata for a function's structured exception handling unwind behavior
 
     sub   rsp,      028h         ; reserve shadow space for boost_fcontext_algin
@@ -161,12 +161,12 @@ boost_fcontext_link PROC FRAME   ; generate function table entry in .pdata and u
     mov   rdx,      r13          ; second argumnet eq. address of next context
 	mov   [rsp+010h], rdx
 	mov   [rsp+08h],  rcx
-    call  boost_fcontext_start   ; install next context
+    call  start_fcontext   ; install next context
 
 finish:
     xor   rcx,        rcx
 	mov   [rsp+08h],  rcx
     call  _exit                  ; exit application
     hlt
-boost_fcontext_link ENDP
+link_fcontext ENDP
 END

@@ -5,49 +5,48 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
-#include <string>
+#include <utility>
+#include <vector>
 
+#include <boost/assert.hpp>
 #include <boost/context/all.hpp>
 
+namespace ctx = boost::ctx;
 
-boost::contexts::context ctx;
+ctx::fcontext_t fc1, fcm;
 
-void fn()
+typedef std::pair< int, int >   pair_t;
+
+void f1( intptr_t param)
 {
-	  int i = 7;
-      std::cout << "fn(): local variable i == " << i << std::endl;
+    pair_t * p = ( pair_t *) param;
 
-      // save current context
-      // transfer execution control back to caller
-	  // pass pointer to local variable i
-      intptr_t vp = ctx.suspend( i);
-	  int j = vp;
+	p = ( pair_t *) ctx::jump_fcontext( & fc1, & fcm, ( intptr_t) ( p->first + p->second) );
 
-      std::cout << "transfered value: " << j << std::endl;
+	ctx::jump_fcontext( & fc1, & fcm, ( intptr_t) ( p->first + p->second) );
 }
 
 int main( int argc, char * argv[])
 {
-    ctx = boost::contexts::context( fn,
-		boost::contexts::default_stacksize(),
-		boost::contexts::no_stack_unwind,
-		boost::contexts::return_to_caller);
-
-    std::cout << "main() calls context ctx" << std::endl;
-
-	// start the context ctx for the first time
-	// enter fn()
-	intptr_t vp = ctx.start();
-	int x = vp;
-
-    std::cout << "transfered value: " << x << std::endl;
-	x = 10;
-
-	// ctx.suspend() was called so we returned from start()
-    ctx.resume( x);
-
-    std::cout << "Done" << std::endl;
-
+    ctx::stack_allocator alloc;
+    
+    fc1.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
+    fc1.fc_stack.limit =
+        static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
+    fc1.fc_link = & fcm;
+    pair_t p( std::make_pair( 2, 7) );
+    ctx::make_fcontext( & fc1, f1, ( intptr_t) & p);
+    
+    int res = ( int) ctx::start_fcontext( & fcm, & fc1);
+    std::cout << p.first << " + " << p.second << " == " << res << std::endl;
+    
+    p = std::make_pair( 5, 6);
+    res = ( int) ctx::jump_fcontext( & fcm, & fc1, ( intptr_t) & p);
+    std::cout << p.first << " + " << p.second << " == " << res << std::endl;
+    
+    std::cout << "main: done" << std::endl;
+    
     return EXIT_SUCCESS;
 }

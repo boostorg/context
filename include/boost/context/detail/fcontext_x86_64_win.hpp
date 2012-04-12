@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CONTEXTS_DETAIL_FCONTEXT_X86_64_H
-#define BOOST_CONTEXTS_DETAIL_FCONTEXT_X86_64_H
+#ifndef BOOST_CTX_DETAIL_FCONTEXT_X86_64_H
+#define BOOST_CTX_DETAIL_FCONTEXT_X86_64_H
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
@@ -17,31 +17,34 @@
 # include BOOST_ABI_PREFIX
 #endif
 
+namespace boost {
+namespace ctx {
+
 extern "C" {
 
 #define BOOST_CONTEXT_CALLDECL
 
-typedef struct boost_fcontext_stack  boost_fcontext_stack_t;
-struct boost_fcontext_stack
+struct stack_t
 {
-    void    *   ss_base;
-    void    *   ss_limit;
+    void    *   base;
+    void    *   limit;
 };
 
-typedef struct boost_fcontext  boost_fcontext_t;
-struct boost_fcontext
+struct fcontext_t
 {
-    boost::uint64_t        fc_greg[10];
-    boost::uint32_t        fc_freg[2];
-    boost_fcontext_stack_t fc_stack;
-    boost_fcontext_t    *  fc_link;
-    void                *  fc_local_storage;
+    boost::uint64_t     fc_greg[10];
+    boost::uint32_t     fc_freg[2];
+    stack_t				fc_stack;
+    fcontext_t		*	fc_link;
+    void			*	fc_local_storage;
 };
 
 }
+
+}}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_CONTEXTS_DETAIL_FCONTEXT_X86_64_H
+#endif // BOOST_CTX_DETAIL_FCONTEXT_X86_64_H

@@ -46,11 +46,11 @@
  * *****************************************************************/
 
 .text
-.globl boost_fcontext_jump
+.globl jump_fcontext
 .align 2
-.type boost_fcontext_jump,@function
-.ent boost_fcontext_jump
-boost_fcontext_jump:
+.type jump_fcontext,@function
+.ent jump_fcontext
+jump_fcontext:
     sw      $s0, ($a0)      # save S0
     sw      $s1, 8($a0)     # save S1
     sw      $s2, 16($a0)    # save S2
@@ -102,15 +102,15 @@ boost_fcontext_jump:
 
     lw      $t9, 96($a1)    # load PC
     jr      $t9             # jump to context
-.end boost_fcontext_jump
-.size boost_fcontext_jump, .-boost_fcontext_jump
+.end jump_fcontext
+.size jump_fcontext, .-jump_fcontext
 
 .text
-.globl boost_fcontext_make
+.globl make_fcontext
 .align 2
-.type boost_fcontext_make,@function
-.ent boost_fcontext_make
-boost_fcontext_make:
+.type make_fcontext,@function
+.ent make_fcontext
+make_fcontext:
 #ifdef __PIC__
 .set    noreorder
 .cpload $t9
@@ -125,8 +125,8 @@ boost_fcontext_make:
     sub     $sp, $sp, 28
     sw      $ra, 24($sp)
     sw      $a0, 20($sp)
-    move    $a0, $t0            # stack pointer as arg for boost_fcontext_align
-    lw      $t9, %call16(boost_fcontext_align)($gp) # align stack
+    move    $a0, $t0            # stack pointer as arg for align_stack
+    lw      $t9, %call16(align_stack)($gp) # align stack
     jalr    $t9
     nop
     move    $t0, $v0            # begin of aligned stack 
@@ -150,12 +150,12 @@ link_fcontext:
     beqz    $a1, 2f             # test if a next context was given
 
     move    $a0, $s0            # set A0 to address of current context
-    lw      $t9, %call16(boost_fcontext_start)($gp)  # install next context
+    lw      $t9, %call16(start_fcontext)($gp)  # install next context
     jr      $t9
 
 2:
     move    $a0, $zero
     lw      $t9, %call16(_exit)($gp)  # exit application
     jalr    $t9
-.end boost_fcontext_make
-.size boost_fcontext_make, .-boost_fcontext_make
+.end make_fcontext
+.size make_fcontext, .-make_fcontext

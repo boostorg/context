@@ -38,7 +38,7 @@ static rlimit stacksize_limit()
 }
 
 namespace boost {
-namespace contexts {
+namespace ctx {
 
 BOOST_CONTEXT_DECL
 std::size_t default_stacksize()

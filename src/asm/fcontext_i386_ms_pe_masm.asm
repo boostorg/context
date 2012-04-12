@@ -44,12 +44,12 @@
 .XMM
 .model flat, c
 _exit PROTO, value:SDWORD 
-boost_fcontext_align PROTO, vp:DWORD
-boost_fcontext_seh PROTO, except:DWORD, frame:DWORD, context:DWORD, dispatch:DWORD
-boost_fcontext_start PROTO, from:DWORD, to:DWORD, vp:DWORD
+align_stack PROTO, vp:DWORD
+seh_fcontext PROTO, except:DWORD, frame:DWORD, context:DWORD, dispatch:DWORD
+start_fcontext PROTO, from:DWORD, to:DWORD, vp:DWORD
 .code
 
-boost_fcontext_jump PROC EXPORT
+jump_fcontext PROC EXPORT
     mov     ecx,         [esp+04h]  ; load address of the first fcontext_t arg
     mov     [ecx],       edi        ; save EDI
     mov     [ecx+04h],   esi        ; save ESI
@@ -104,9 +104,9 @@ boost_fcontext_jump PROC EXPORT
     mov     ecx,        [ecx+014h]  ; fetch the address to return to
 
     jmp     ecx                     ; indirect jump to context
-boost_fcontext_jump ENDP
+jump_fcontext ENDP
 
-boost_fcontext_make PROC EXPORT
+make_fcontext PROC EXPORT
     mov  eax,         [esp+04h]     ; load address of the fcontext_t arg0
     mov  [eax],       eax           ; save the address of current context
     mov  ecx,         [esp+08h]     ; load the address of the function supposed to run
@@ -114,16 +114,16 @@ boost_fcontext_make PROC EXPORT
     mov  edx,         [eax+020h]    ; load the stack base
 
     push  eax                       ; save pointer to fcontext_t
-    push  edx                       ; stack pointer as arg for boost_fcontext_align
-    call  boost_fcontext_align      ; align stack
+    push  edx                       ; stack pointer as arg for align_stack
+    call  align_stack      ; align stack
     mov   edx,        eax           ; begin of aligned stack
-    pop   eax                       ; remove arg for boost_fcontext_align
+    pop   eax                       ; remove arg for align_stack
     pop   eax                       ; restore pointer to fcontext_t
 
     lea  edx,         [edx-014h]    ; reserve space for last frame on stack, (ESP + 4) % 16 == 0
     mov  [eax+010h],  edx           ; save the address
 
-    mov  ecx,         boost_fcontext_seh    ; set ECX to exception-handler
+    mov  ecx,         seh_fcontext    ; set ECX to exception-handler
     mov  [edx+0ch],   ecx               ; save ECX as SEH handler
     mov  ecx,         0ffffffffh        ; set ECX to -1
     mov  [edx+08h],   ecx               ; save ECX as next SEH item
@@ -136,25 +136,25 @@ boost_fcontext_make PROC EXPORT
     mov  [edx+04h],   ecx           ; save the address of the void pointer onto the context stack
     stmxcsr [eax+018h]              ; save SSE2 control word
     fnstcw  [eax+01ch]              ; save x87 control word
-    mov  ecx,         boost_fcontext_link ; load helper code executed after fn() returns
+    mov  ecx,         link_fcontext ; load helper code executed after fn() returns
     mov  [edx],       ecx           ; save helper code executed adter fn() returns
     xor  eax,         eax           ; set EAX to zero
     ret
-boost_fcontext_make ENDP
+make_fcontext ENDP
 
-boost_fcontext_link PROC
+link_fcontext PROC
     lea   esp,        [esp-0ch]     ; adjust the stack to proper boundaries
     test  esi,        esi           ; test if a next context was given
     je    finish                    ; jump to finish
 
     push  esi                       ; push the address of the next context on the stack
     push  edi                       ; push the address of the current context on the stack
-    call  boost_fcontext_start      ; install next context
+    call  start_fcontext      ; install next context
 
 finish:
     xor   eax,        eax           ; set EAX to zero
     push  eax                       ; exit code is zero
     call  _exit                     ; exit application
     hlt
-boost_fcontext_link ENDP
+link_fcontext ENDP
 END

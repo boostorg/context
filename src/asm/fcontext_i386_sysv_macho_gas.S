@@ -39,9 +39,9 @@
  * *****************************************************************/
 
 .text
-.globl _boost_fcontext_jump
+.globl _jump_fcontext
 .align 2
-_boost_fcontext_jump:
+_jump_fcontext:
     movl    0x4(%esp), %ecx         /* load address of the first fcontext_t arg */
     movl    %edi,       (%ecx)      /* save EDI */
     movl    %esi,       0x4(%ecx)   /* save ESI */
@@ -74,9 +74,9 @@ _boost_fcontext_jump:
     jmp     *%ecx                   /* indirect jump to context */
 
 .text
-.globl _boost_fcontext_make
+.globl _make_fcontext
 .align 2
-_boost_fcontext_make:
+_make_fcontext:
     movl   0x4(%esp),      %eax         /* load address of the fcontext_t */
     movl   %eax,           (%eax)       /* save the address of current context */
     movl   0x8(%esp),      %ecx         /* load the address of the function supposed to run */
@@ -85,13 +85,13 @@ _boost_fcontext_make:
 
     pushl  %eax                         /* save pointer to fcontext_t */
     pushl  %ebx                         /* save EBX */
-    pushl  %edx                         /* stack pointer as arg for boost_fcontext_align */
+    pushl  %edx                         /* stack pointer as arg for align_stack */
     call   1f
 1:  popl   %ebx                                    /* address of label 1 */
     addl   $_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx     /* compute address of GOT and store it in EBX */
-    call   boost_fcontext_align@PLT     /* align stack */
+    call   align_stack@PLT     /* align stack */
     movl   %eax,           %edx         /* begin of aligned stack */
-    popl   %eax                         /* remove arg for boost_fcontext_align */
+    popl   %eax                         /* remove arg for align_stack */
     popl   %ebx                         /* restore EBX */
     popl   %eax                         /* restore pointer to fcontext_t */
 
@@ -123,7 +123,7 @@ link_fcontext:
 
     pushl  %esi                         /* push the address of the next context on the stack */
     pushl  %edi                         /* push the address of the current context to stack */
-    call   boost_fcontext_start@PLT     /* jump to next context */
+    call   start_fcontext@PLT     /* jump to next context */
 
 4:
     movl    %eax,           %eax
