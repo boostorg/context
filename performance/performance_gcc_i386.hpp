@@ -8,6 +8,7 @@
 #define PERFORMANCE_GCC_I386_H
 
 #include <algorithm>
+#include <numeric>
 #include <cstddef>
 #include <vector>
 
@@ -20,6 +21,9 @@ typedef boost::uint64_t cycle_t;
 inline
 cycle_t get_cycles()
 {
+#if defined(__INTEL_COMPILER) || defined(__ICC) || defined(_ECC) || defined(__ICL)
+    return __rdtsc();
+#else
     boost::uint32_t res[2];
 
     __asm__ __volatile__ (
@@ -35,6 +39,7 @@ cycle_t get_cycles()
     );
 
     return * reinterpret_cast< cycle_t * >( res);
+#endif
 }
 
 struct measure
@@ -56,7 +61,7 @@ cycle_t get_overhead()
             overhead.begin(), overhead.end(),
             measure() );
     BOOST_ASSERT( overhead.begin() != overhead.end() );
-    return * std::min_element( overhead.begin(), overhead.end() );
+    return std::accumulate( overhead.begin(), overhead.end(), 0) / iterations;
 }
 
 #endif // PERFORMANCE_GCC_I386_H
