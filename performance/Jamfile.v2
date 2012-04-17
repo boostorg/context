@@ -15,7 +15,6 @@ import toolset ;
 
 project boost/context/performance
     : requirements
-      <library>/boost/program_options//boost_program_options
       <library>/boost/thread//boost_thread
       <library>/boost/system//boost_system
       <library>/boost/context//boost_context

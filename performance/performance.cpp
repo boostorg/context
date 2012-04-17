@@ -52,9 +52,8 @@ static void f1( intptr_t)
 }
 
 #ifndef BOOST_WINDOWS
-unsigned int test_ucontext( cycle_t ov)
+cycle_t test_ucontext( cycle_t ov)
 {
-
     ctx::stack_allocator alloc;
 
     ::getcontext( & uc);
@@ -80,7 +79,7 @@ BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_UCONTEXT, ~)
 }
 #endif
 
-unsigned int test_fcontext( cycle_t ov)
+cycle_t test_fcontext( cycle_t ov)
 {
     ctx::stack_allocator alloc;
     fc.fc_stack.base = alloc.allocate(ctx::default_stacksize());
