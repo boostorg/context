@@ -26,7 +26,7 @@ static char * exception_description(
     {
         const char * accessType = ( info[0]) ? "writing" : "reading";
         const ULONG_PTR address = info[1];
-        _snprintf_s( description, len, _TRUNCATE, "Access violation %s 0x%08X", accessType, address);
+        snprintf( description, len, "Access violation %s 0x%08X", accessType, address);
         return description;
     }
     case EXCEPTION_DATATYPE_MISALIGNMENT:    return "Datatype misalignment";
@@ -52,8 +52,7 @@ static char * exception_description(
     case EXCEPTION_INVALID_HANDLE:           return "Invalid handle";
     }
 
-    _snprintf_s( description, len, _TRUNCATE, "Unknown (0x%08X)", code);
-
+    snprintf( description, len, "Unknown (0x%08X)", code);
     return description;
 }
 
