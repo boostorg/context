@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef PERFORMANCE_GCC_I386_H
-#define PERFORMANCE_GCC_I386_H
+#ifndef CYCLE_I386_H
+#define CYCLE_I386_H
 
 #include <algorithm>
 #include <numeric>
@@ -18,41 +18,55 @@
 
 typedef boost::uint64_t cycle_t;
 
+#if _MSC_VER
 inline
-cycle_t get_cycles()
+cycle_t cycles()
 {
-#if defined(__INTEL_COMPILER) || defined(__ICC) || defined(_ECC) || defined(__ICL)
-    return __rdtsc();
-#else
-    boost::uint32_t res[2];
-
-    __asm__ __volatile__ (
-        "xorl %%eax, %%eax\n"
-        "cpuid\n"
-        ::: "%eax", "%ebx", "%ecx", "%edx"
-    );
-    __asm__ __volatile__ ("rdtsc" : "=a" (res[0]), "=d" (res[1]) );
-    __asm__ __volatile__ (
-        "xorl %%eax, %%eax\n"
-        "cpuid\n"
-        ::: "%eax", "%ebx", "%ecx", "%edx"
-    );
-
-    return * reinterpret_cast< cycle_t * >( res);
-#endif
+    cycle_t c;
+    __asm {
+        cpuid 
+        rdtsc
+        mov dword ptr [c + 0], eax
+        mov dword ptr [c + 4], edx
+    }
+    return c;
 }
+#elif defined(__GNUC__) || \
+      defined(__INTEL_COMPILER) || defined(__ICC) || defined(_ECC) || defined(__ICL)
+inline
+cycle_t cycles()
+{
+    boost::uint32_t lo, hi;
+
+    __asm__ __volatile__ (
+        "xorl %%eax, %%eax\n"
+        "cpuid\n"
+        ::: "%eax", "%ebx", "%ecx", "%edx"
+    );
+    __asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi) );
+    __asm__ __volatile__ (
+        "xorl %%eax, %%eax\n"
+        "cpuid\n"
+        ::: "%eax", "%ebx", "%ecx", "%edx"
+    );
+   
+    return ( cycle_t)hi << 32 | lo; 
+}
+#else
+# error "this compiler is not supported"
+#endif
 
 struct measure
 {
     cycle_t operator()()
     {
-        cycle_t start( get_cycles() );
-        return get_cycles() - start;
+        cycle_t start( cycles() );
+        return cycles() - start;
     }
 };
 
 inline
-cycle_t get_overhead()
+cycle_t overhead()
 {
     std::size_t iterations( 10);
     std::vector< cycle_t >  overhead( iterations, 0);
@@ -64,4 +78,4 @@ cycle_t get_overhead()
     return std::accumulate( overhead.begin(), overhead.end(), 0) / iterations;
 }
 
-#endif // PERFORMANCE_GCC_I386_H
+#endif // CYCLE_I386_H

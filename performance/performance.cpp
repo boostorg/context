@@ -22,7 +22,7 @@
 #endif
 
 #include "bind_processor.hpp"
-#include "performance.hpp"
+#include "cycle.hpp"
 
 namespace ctx = boost::ctx;
 
@@ -52,10 +52,8 @@ static void f1( intptr_t)
 }
 
 #ifndef BOOST_WINDOWS
-unsigned int test_ucontext()
+unsigned int test_ucontext( cycle_t ov)
 {
-    cycle_t overhead( get_overhead() );
-    std::cout << "overhead for rdtsc == " << overhead << " cycles" << std::endl;
 
     ctx::stack_allocator alloc;
 
@@ -69,12 +67,12 @@ unsigned int test_ucontext()
     // cache warum-up
 BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_UCONTEXT, ~)
 
-    cycle_t start( get_cycles() );
+    cycle_t start( cycles() );
 BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_UCONTEXT, ~)
-    cycle_t total( get_cycles() - start);
+    cycle_t total( cycles() - start);
 
     // we have two jumps and two measuremt-overheads
-    total -= overhead; // overhead of measurement
+    total -= ov; // overhead of measurement
     total /= BOOST_PP_LIMIT_MAG; // per call
     total /= 2; // 2x jump_to c1->c2 && c2->c1
 
@@ -82,11 +80,8 @@ BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_UCONTEXT, ~)
 }
 #endif
 
-unsigned int test_fcontext()
+unsigned int test_fcontext( cycle_t ov)
 {
-    cycle_t overhead( get_overhead() );
-    std::cout << "overhead for rdtsc == " << overhead << " cycles" << std::endl;
-
     ctx::stack_allocator alloc;
     fc.fc_stack.base = alloc.allocate(ctx::default_stacksize());
     fc.fc_stack.limit =
@@ -98,12 +93,12 @@ unsigned int test_fcontext()
     // cache warum-up
 BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_FCONTEXT, ~)
 
-    cycle_t start( get_cycles() );
+    cycle_t start( cycles() );
 BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_FCONTEXT, ~)
-    cycle_t total( get_cycles() - start);
+    cycle_t total( cycles() - start);
 
     // we have two jumps and two measuremt-overheads
-    total -= overhead; // overhead of measurement
+    total -= ov; // overhead of measurement
     total /= BOOST_PP_LIMIT_MAG; // per call
     total /= 2; // 2x jump_to c1->c2 && c2->c1
 
@@ -116,10 +111,13 @@ int main( int argc, char * argv[])
     {
         bind_to_processor( 0);
 
-        unsigned int res = test_fcontext();
+        cycle_t ov( overhead() );
+        std::cout << "overhead for rdtsc == " << ov << " cycles" << std::endl;
+
+        unsigned int res = test_fcontext( ov);
         std::cout << "fcontext: average of " << res << " cycles per switch" << std::endl;
 #ifndef BOOST_WINDOWS
-        res = test_ucontext();
+        res = test_ucontext( ov);
         std::cout << "ucontext: average of " << res << " cycles per switch" << std::endl;
 #endif
 
