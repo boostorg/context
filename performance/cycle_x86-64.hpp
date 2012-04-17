@@ -28,14 +28,6 @@ cycle_t cycles()
 inline
 cycle_t cycles()
 { return __rdtsc(); }
-#elif defined(__PGI)
-inline
-cycle_t cycles()
-{
-    asm (
-        " rdtsc; shl $0x20,%rdx; mov %eax,%eax; or %rdx,%rax; "
-    );
-}
 #elif defined(__GNUC__) || defined(__SUNPRO_C)
 inline
 cycle_t cycles()
