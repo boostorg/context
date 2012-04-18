@@ -98,8 +98,10 @@ already converted. Unfortunately Windows XP + SP 2/3 defines
 
 [heading i386]
 
-"The FpCsr and the MxCsr register must be saved an restored before any call or return
+"The FpCsr and the MxCsr register must be saved and restored before any call or return
 by any procedure that needs to modify them ..."
+[footnote [@boost:/libs/context/doc/pdf/calling-conventions.pdf 'Calling Conventions',
+Agner Fog]].
 
 
 [heading x86_64]
@@ -127,10 +129,11 @@ context switches. There is no explicit calling convention for these registers."
 'Legacy Floating-Point Support']].
 
 "The 64-bit Microsoft compiler does not use ST(0)-ST(7)/MM0-MM7".
-[footnote [@ 'Calling Conventions', Agner Fog]].
+[footnote [@boost:/libs/context/doc/pdf/calling-conventions.pdf 'Calling Conventions',
+Agner Fog]].
 
 Conclusion: because no explicit calling convetion exists and MS compiler do not use those
-registers __start_fcontext__ and __jump_fcontext__ do not preserve those registers.
+registers, those registers will not be preserved.
 
 "XMM6-XMM15 must be preserved"
 [footnote [@http://msdn.microsoft.com/en-us/library/9z1stfyw%28v=vs.90%29.aspx MSDN
