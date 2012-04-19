@@ -103,6 +103,9 @@ by any procedure that needs to modify them ..."
 [footnote [@boost:/libs/context/doc/pdf/calling-conventions.pdf 'Calling Conventions',
 Agner Fog]].
 
+Conclusion: because caller as well as callee preserve FpCsr and MxCsr __start_fcontext__
+and __jump_fcontext__ are not required to preserve FpCsr and MxCsr.
+
 
 [heading x86_64]
 
@@ -133,7 +136,7 @@ context switches. There is no explicit calling convention for these registers."
 Agner Fog]].
 
 Conclusion: because no explicit calling convetion exists and MS compiler do not use those
-registers, those registers will not be preserved.
+registers, they will not be preserved.
 
 "XMM6-XMM15 must be preserved"
 [footnote [@http://msdn.microsoft.com/en-us/library/9z1stfyw%28v=vs.100%29.aspx MSDN
