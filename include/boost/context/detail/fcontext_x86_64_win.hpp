@@ -50,7 +50,8 @@ struct fcontext_t
         fc_buffer()
     {
         if ( 0 != ( ( ( uintptr_t) fc_buffer) & 15) )
-            fc_fp = ( ( ( ( uintptr_t) fc_buffer) + 16) >> 4) << 4;
+            fc_fp = ( boost::uint8_t *)
+		( ( ( ( ( uintptr_t) fc_buffer) + 16) >> 4) << 4);
     }
 };
 
