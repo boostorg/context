@@ -48,8 +48,8 @@ _jump_fcontext:
     movl    %ebx,       0x8(%ecx)   /* save EBX */
     movl    %ebp,       0xc(%ecx)   /* save EBP */
 
-    stmxcsr  0x18(%ecx)              /* save SSE2 control and status word */
-    fnstcw   0x1c(%ecx)              /* save x87 control word */
+/*    stmxcsr  0x18(%ecx)  */            /* save SSE2 control and status word */
+/*    fnstcw   0x1c(%ecx)  */            /* save x87 control word */
 
     leal    0x4(%esp),  %eax        /* exclude the return address */
     movl    %eax,       0x10(%ecx)  /* save as stack pointer */
@@ -63,8 +63,8 @@ _jump_fcontext:
     movl    0x8(%ecx),   %ebx       /* restore EBX */
     movl    0xc(%ecx),   %ebp       /* restore EBP */
 
-    ldmxcsr  0x18(%ecx)             /* restore SSE2 control and status word */
-    fldcw    0x1c(%ecx)             /* restore x87 control word */
+/*    ldmxcsr  0x18(%ecx)  */           /* restore SSE2 control and status word */
+/*    fldcw    0x1c(%ecx)  */           /* restore x87 control word */
 
     movl    0xc(%esp),   %eax       /* use third arg as return value after jump */
 

@@ -16,6 +16,7 @@
 
 namespace boost {
 namespace ctx {
+namespace detail {
 
 extern "C" BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL align_stack( void * vp)
 {
@@ -24,6 +25,8 @@ extern "C" BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL align_stack( void * 
         base = ( char * )(
             ( ( ( ( uintptr_t) base) - 16) >> 4) << 4);
 	return base;
+}
+
 }
 
 # if !defined(__arm__) && !defined(__powerpc__)

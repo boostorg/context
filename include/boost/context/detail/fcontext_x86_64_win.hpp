@@ -37,6 +37,21 @@ struct fcontext_t
     stack_t				fc_stack;
     fcontext_t		*	fc_link;
     void			*	fc_local_storage;
+    void			*	fc_fp;
+    boost::uint8_t      fc_buffer[162];
+
+    fcontext_t() :
+        fc_greg(),
+        fc_freg(),
+        fc_stack(),
+        fc_link( 0),
+        fc_local_storage( 0),
+        fc_fp( 0),
+        fc_buffer()
+    {
+        if ( 0 != ( ( ( uintptr_t) fc_buffer) & 15) )
+            fc_fp = ( ( ( ( uintptr_t) fc_buffer) + 16) >> 4) << 4;
+    }
 };
 
 }

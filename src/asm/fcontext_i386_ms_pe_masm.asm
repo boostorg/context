@@ -68,8 +68,8 @@ jump_fcontext PROC EXPORT
     mov     eax,         [edx+010h] ; load fiber local storage
     mov     [ecx+030h],  eax        ; save fiber local storage
 
-    stmxcsr [ecx+018h]              ; save SSE2 control word
-    fnstcw  [ecx+01ch]              ; save x87 control word
+;    stmxcsr [ecx+018h]              ; save SSE2 control word
+;    fnstcw  [ecx+01ch]              ; save x87 control word
 
     lea     eax,         [esp+04h]  ; exclude the return address
     mov     [ecx+010h],  eax        ; save as stack pointer
@@ -95,8 +95,8 @@ jump_fcontext PROC EXPORT
     mov     eax,        [ecx+030h]  ; load fiber local storage
     mov     [edx+010h], eax         ; restore fiber local storage
 
-    ldmxcsr [ecx+018h]              ; restore SSE2 control word
-    fldcw   [ecx+01ch]              ; restore x87 control word
+;    ldmxcsr [ecx+018h]              ; restore SSE2 control word
+;    fldcw   [ecx+01ch]              ; restore x87 control word
 
     mov     eax,        [esp+0ch]   ; use third arg as return value after jump
 

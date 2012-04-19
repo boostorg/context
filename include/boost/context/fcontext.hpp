@@ -61,8 +61,12 @@
 
 namespace boost {
 namespace ctx {
+namespace detail {
 
 extern "C" BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL align_stack( void * vp);
+
+}
+
 extern "C" BOOST_CONTEXT_DECL intptr_t BOOST_CONTEXT_CALLDECL start_fcontext( fcontext_t * ofc, fcontext_t const* nfc);
 extern "C" BOOST_CONTEXT_DECL intptr_t BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t * ofc, fcontext_t const* nfc, intptr_t vp);
 extern "C" BOOST_CONTEXT_DECL void BOOST_CONTEXT_CALLDECL make_fcontext( fcontext_t * fc, void (* fn)( intptr_t), intptr_t vp);
