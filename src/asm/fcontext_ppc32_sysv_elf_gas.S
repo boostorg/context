@@ -298,15 +298,15 @@ make_fcontext:
     stw     %r3, 0(%r3)         # save the current context
     stw     %r4, 88(%r3)        # save the address of the function supposed to to be run
     stw     %r5, 8(%r3)         # save void pointer
-    lwz     %r0, 248(%r3)       # load the stack base
+    lwz     %r0, 96(%r3)        # load the stack base
 
     li      %r4, 28
     subf    %r1, %r4, %r1       # reserve space on stack
     stw     %r3, 24(%r1)        # store pointer to fcontext_t on stack
     mflr    %r4                 # load LR
     stw     %r4, 20(%r1)        # store LR on stack
-    mr.     %r3, %r0            # context stack as arg to boost_fcontext_algin
-    bl      align_stack@plt    # call align_stack
+    mr.     %r3, %r0            # context stack as arg to align_stack
+    bl      align_stack@plt     # call align_stack
     mr.     %r0, %r3            # load result into R0
     lwz     %r4, 20(%r1)        # pop LR from stack
     mtlr    %r4                 # restore LR
@@ -316,7 +316,7 @@ make_fcontext:
     li      %r4, 32
     subf    %r0, %r4, %r0       # 32 bytes on stack for parameter area(== 8 registers)
     stw     %r0, 76(%r3)        # save the stack base
-    lwz     %r0, 256(%r3)       # load address of next user context
+    lwz     %r0, 104(%r3)       # load address of next user context
     stw     %r0, 4(%r3)         # save the next context
     mflr    %r0                 # load LR
     bl      1f                  # jump to label 1
