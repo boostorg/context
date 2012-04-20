@@ -27,11 +27,19 @@ struct stack_t
 {
     void    *   base;
     void    *   limit;
+
+    stack_t() :
+        base( 0), limit( 0)
+    {}
 };
 
 struct fp_t
 {
     boost::uint64_t     fc_freg[19];
+
+    fp_t() :
+        fc_reg()
+    {}
 };
 
 struct fcontext_t
@@ -44,6 +52,13 @@ struct fcontext_t
     stack_t				fc_stack;
     fcontext_t		*	fc_link;
     fp_t                fc_fp;
+
+    fcontext_t() :
+        fc_greg(),
+        fc_stack(),
+        fc_link( 0),
+        fc_fp()
+    {}
 };
 
 }

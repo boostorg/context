@@ -28,6 +28,10 @@ struct stack_t
 {
     void    *   base;
     void    *   limit;
+
+    stack_t() :
+        base( 0), limit( 0)
+    {}
 };
 
 struct fp_t
@@ -54,6 +58,14 @@ struct fcontext_t
     fcontext_t		*	fc_link;
     void			*	fc_local_storage;
     fp_t                fc_fp;
+
+    fcontext_t() :
+        fc_greg(),
+        fc_stack(),
+        fc_link( 0),
+        fc_local_storage( 0),
+        fc_fp()
+    {}
 };
 
 }
