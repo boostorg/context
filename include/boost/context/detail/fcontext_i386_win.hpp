@@ -55,7 +55,7 @@ struct fcontext_t
         fc_greg(),
         fc_stack(),
         fc_link( 0),
-        fc_except_lst( 0),
+        fc_excpt_lst( 0),
         fc_local_storage( 0),
         fc_fp()
     {}

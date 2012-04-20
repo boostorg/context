@@ -120,7 +120,7 @@ make_fcontext PROC EXPORT
     mov  [eax],       eax           ; save the address of current context
     mov  ecx,         [esp+08h]     ; load the address of the function supposed to run
     mov  [eax+014h],  ecx           ; save the address of the function supposed to run
-    mov  edx,         [eax+020h]    ; load the stack base
+    mov  edx,         [eax+018h]    ; load the stack base
 
     push  eax                       ; save pointer to fcontext_t
     push  edx                       ; stack pointer as arg for align_stack
