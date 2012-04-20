@@ -40,7 +40,7 @@ struct fp_t
     boost::uint64_t     fc_freg[6];
 
     fp_t() :
-        fc_reg()
+        fc_freg()
     {}
 };
 
