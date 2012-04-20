@@ -29,12 +29,17 @@ struct stack_t
     void    *   limit;
 };
 
+struct fp_t
+{
+    boost::uint32_t     fc_freg[16];
+};
+
 struct fcontext_t
 {
     boost::uint32_t     fc_greg[11];
-    boost::uint32_t     fc_freg[16];
     stack_t				fc_stack;
     fcontext_t		*	fc_link;
+    fp_t                fc_fp;
 };
 
 }

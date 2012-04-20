@@ -19,21 +19,21 @@
  *  -------------------i------------------------------------------  *
  *  |   0x18  |   0x1c  |                                        |  *
  *  --------------------------------------------------------------  *
- *  | fc_mxcsr|fc_x87_cw|                                        |  *
- *  --------------------------------------------------------------  *
- *  --------------------------------------------------------------  *
- *  |    8    |    9    |                                        |  *
- *  --------------------------------------------------------------  *
- *  |  0x20   |   0x24  |                                        |  *
- *  --------------------------------------------------------------  *
  *  |  sbase  | slimit  |                                        |  *
  *  --------------------------------------------------------------  *
  *  --------------------------------------------------------------  *
- *  |    10   |                                                  |  *
+ *  |    8    |                                                  |  *
  *  --------------------------------------------------------------  *
- *  |   0x28  |                                                  |  *
+ *  |  0x20   |                                                  |  *
  *  --------------------------------------------------------------  *
  *  | fc_link |                                                  |  *
+ *  --------------------------------------------------------------  *
+ *  --------------------------------------------------------------  *
+ *  |    9    |    10   |                                        |  *
+ *  --------------------------------------------------------------  *
+ *  |   0x24  |   0x28  |                                        |  *
+ *  --------------------------------------------------------------  *
+ *  | fc_mxcsr|fc_x87_cw|                                        |  *
  *  --------------------------------------------------------------  *
  *                                                                  *
  * *****************************************************************/
@@ -49,8 +49,8 @@ jump_fcontext:
     movl    %ebx,       0x8(%ecx)   /* save EBX */
     movl    %ebp,       0xc(%ecx)   /* save EBP */
 
-/*    stmxcsr  0x18(%ecx)  */            /* save SSE2 control and status word */
-/*    fnstcw   0x1c(%ecx)  */            /* save x87 control word */
+/*    stmxcsr  0x24(%ecx)  */            /* save MMX control and status word */
+/*    fnstcw   0x28(%ecx)  */            /* save x87 control word */
 
     leal    0x4(%esp),  %eax        /* exclude the return address */
     movl    %eax,       0x10(%ecx)  /* save as stack pointer */
@@ -64,8 +64,8 @@ jump_fcontext:
     movl    0x8(%ecx),   %ebx       /* restore EBX */
     movl    0xc(%ecx),   %ebp       /* restore EBP */
 
-/*    ldmxcsr  0x18(%ecx)  */           /* restore SSE2 control and status word */
-/*    fldcw    0x1c(%ecx)  */           /* restore x87 control word */
+/*    ldmxcsr  0x24(%ecx)  */           /* restore MMX control and status word */
+/*    fldcw    0x28(%ecx)  */           /* restore x87 control word */
 
     movl    0xc(%esp),   %eax       /* use third arg as return value after jump */
 
@@ -84,7 +84,7 @@ make_fcontext:
     movl   %eax,           (%eax)       /* save the address of current context */
     movl   0x8(%esp),      %ecx         /* load the address of the function supposed to run */
     movl   %ecx,           0x14(%eax)   /* save the address of the function supposed to run */
-    movl   0x20(%eax),     %edx         /* load the stack base */
+    movl   0x18(%eax),     %edx         /* load the stack base */
 
     pushl  %eax                         /* save pointer to fcontext_t */
     pushl  %ebx                         /* save EBX */
@@ -92,7 +92,7 @@ make_fcontext:
     call   1f
 1:  popl   %ebx                                    /* address of label 1 */
     addl   $_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx     /* compute address of GOT and store it in EBX */
-    call   align_stack@PLT     /* align stack */
+    call   align_stack@PLT              /* align stack */
     movl   %eax,           %edx         /* begin of aligned stack */
     popl   %eax                         /* remove arg for align_stack */
     popl   %ebx                         /* restore EBX */
@@ -100,12 +100,14 @@ make_fcontext:
 
     leal   -0x14(%edx),    %edx         /* reserve space for the last frame on stack, (ESP + 4) % 16 == 0 */
     movl   %edx,           0x10(%eax)   /* save the address as stack pointer */
-    movl   0x28(%eax),     %ecx         /* load the address of the next context */
+    movl   0x20(%eax),     %ecx         /* load the address of the next context */
     movl   %ecx,           0x4(%eax)    /* save the address of the next context */
     movl   0xc(%esp),      %ecx         /* load the address of the void pointer */
     movl   %ecx,           0x4(%edx)    /* save the address of the void pointer */
-    stmxcsr  0x18(%eax)                 /* save SSE2 control and status word */
-    fnstcw   0x1c(%eax)                 /* save x87 control word */
+
+;    stmxcsr  0x24(%eax)                 /* save MMX control and status word */
+;    fnstcw   0x30(%eax)                 /* save x87 control word */
+
     call    2f
 2:  popl    %ecx                        /* address of label 1 */
     addl    $link_fcontext-2b, %ecx     /* compute address of label link_fcontext */
@@ -126,7 +128,7 @@ link_fcontext:
 
     pushl  %esi                         /* push the address of the next context on the stack */
     pushl  %edi                         /* push the address of the current context to stack */
-    call   start_fcontext@PLT     /* jump to next context */
+    call   start_fcontext@PLT           /* jump to next context */
 
 4:
     movl    %eax,           %eax

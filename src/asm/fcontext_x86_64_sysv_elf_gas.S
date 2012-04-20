@@ -22,25 +22,25 @@
  *  |        R15        |        RBP        |         RSP        |        RIP        |  *
  *  ----------------------------------------------------------------------------------  *
  *  ----------------------------------------------------------------------------------  *
- *  |    16   |    17   |                                                            |  *
+ *  |   16    |   17    |   18    |    19   |                                        |  *
  *  ----------------------------------------------------------------------------------  *
- *  |   0x40  |   0x44  |                                                            |  *
- *  ----------------------------------------------------------------------------------  *
- *  | fc_mxcsr|fc_x87_cw|                                                            |  *
- *  ----------------------------------------------------------------------------------  *
- *  ----------------------------------------------------------------------------------  *
- *  |   18    |   19    |   20    |    21   |                                        |  *
- *  ----------------------------------------------------------------------------------  *
- *  |  0x48   |  0x4c   |  0x50   |   0x54  |                                        |  *
+ *  |  0x40   |  0x44   |  0x48   |   0x4c  |                                        |  *
  *  ----------------------------------------------------------------------------------  *
  *  |       sbase       |        slimit     |                                        |  *
+ *  ----------------------------------------------------------------------------------  *
+ *  ----------------------------------------------------------------------------------  *
+ *  |    20   |    21   |                                                            |  *
+ *  ----------------------------------------------------------------------------------  *
+ *  |   0x50  |   0x54  |                                                            |  *
+ *  ----------------------------------------------------------------------------------  *
+ *  |      fc_link      |                                                            |  *
  *  ----------------------------------------------------------------------------------  *
  *  ----------------------------------------------------------------------------------  *
  *  |    22   |    23   |                                                            |  *
  *  ----------------------------------------------------------------------------------  *
  *  |   0x58  |   0x5c  |                                                            |  *
  *  ----------------------------------------------------------------------------------  *
- *  |      fc_link      |                                                            |  *
+ *  | fc_mxcsr|fc_x87_cw|                                                            |  *
  *  ----------------------------------------------------------------------------------  *
  *                                                                                      *
  * **************************************************************************************/
@@ -57,8 +57,8 @@ jump_fcontext:
     movq     %r15,       0x20(%rdi)     /* save R15 */
     movq     %rbp,       0x28(%rdi)     /* save RBP */
 
-    stmxcsr  0x40(%rdi)                 /* save SSE2 control and status word */
-    fnstcw   0x44(%rdi)                 /* save x87 control word */
+    stmxcsr  0x58(%rdi)                 /* save MMX control and status word */
+    fnstcw   0x5c(%rdi)                 /* save x87 control word */
 
     leaq     0x8(%rsp),  %rcx           /* exclude the return address and save as stack pointer */
     movq     %rcx,       0x30(%rdi)     /* save as stack pointer */
@@ -73,8 +73,8 @@ jump_fcontext:
     movq     0x20(%rsi),  %r15      /* restore R15 */
     movq     0x28(%rsi),  %rbp      /* restore RBP */
 
-    ldmxcsr  0x40(%rsi)             /* restore SSE2 control and status word */
-    fldcw    0x44(%rsi)             /* restore x87 control word */
+    ldmxcsr  0x58(%rsi)             /* restore MMX control and status word */
+    fldcw    0x5c(%rsi)             /* restore x87 control word */
 
     movq     %rdx,        %rax      /* use third arg as return value after jump */
 
@@ -93,20 +93,20 @@ make_fcontext:
     movq   %rdi,                 (%rdi)     /* save the address of current context */
     movq   %rsi,                 0x38(%rdi) /* save the address of the function supposed to run */
     movq   %rdx,                 0x10(%rdi) /* save the the void pointer */
-    movq   0x48(%rdi),           %rdx       /* load the stack base */
+    movq   0x40(%rdi),           %rdx       /* load the stack base */
 
     pushq  %rdi                             /* save pointer to fcontext_t */
     movq   %rdx,                 %rdi       /* stack pointer as arg for align_stack */
-    call   align_stack@PLT         /* align stack */
+    call   align_stack@PLT                  /* align stack */
     movq   %rax,                 %rdx       /* begin of aligned stack */
     popq   %rdi                             /* restore pointer to fcontext_t */
 
     leaq   -0x8(%rdx),           %rdx       /* reserve space for the last frame on stack, (RSP + 8) % 16 == 0 */
     movq   %rdx,                 0x30(%rdi) /* save the address */
-    movq   0x58(%rdi),           %rcx       /* load the address of the next context */
+    movq   0x50(%rdi),           %rcx       /* load the address of the next context */
     movq   %rcx,                 0x8(%rdi)  /* save the address of next context */
-    stmxcsr  0x40(%rdi)                     /* save SSE2 control and status word */
-    fnstcw 0x44(%rdi)                       /* save x87 control word */
+    stmxcsr  0x58(%rdi)                     /* save MMX control and status word */
+    fnstcw   0x5c(%rdi)                     /* save x87 control word */
     leaq   link_fcontext(%rip),  %rcx       /* helper code executed after context function returns */
     movq   %rcx,                 (%rdx)
     xorq   %rax,                 %rax       /* set RAX to zero */

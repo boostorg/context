@@ -31,16 +31,17 @@ struct stack_t
     void    *   limit;
 };
 
+struct fp_t
+{
+    boost::uint64_t     fc_freg[6];
+};
+
 struct fcontext_t
 {
     boost::uint64_t     fc_greg[13];
-# if _MIPS_SIM == _ABI64
-    boost::uint64_t     fc_freg[8];
-# else
-    boost::uint64_t     fc_freg[6];
-# endif
     stack_t				fc_stack;
     fcontext_t		*	fc_link;
+    fp_t                fc_fp;
 };
 
 }

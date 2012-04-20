@@ -43,46 +43,46 @@
  *  |    CR     |    LR     |     PC    |                       |  *
  *  -------------------------------------------------------------  *
  *  -------------------------------------------------------------  *
- *  |  48 |  49 |  50 |  51 |  52 |  53 |  54 |  55 |  56 |  57 |  *
+ *  |  46 |  47 |  48 |  49 |                                   |  *
  *  -------------------------------------------------------------  *
- *  | 192 | 196 | 200 | 204 | 208 | 212 | 216 | 220 | 224 | 228 |  *
- *  -------------------------------------------------------------  *
- *  |    F14    |    F15    |    F16    |    F17    |    F18    |  *
- *  -------------------------------------------------------------  *
- *  -------------------------------------------------------------  *
- *  |  58 |  59 |  60 |  61 |  62 |  63 |  64 |  65 |  66 |  67 |  *
- *  -------------------------------------------------------------  *
- *  | 232 | 236 | 240 | 244 | 248 | 252 | 256 | 260 | 264 | 268 |  *
- *  -------------------------------------------------------------  *
- *  |    F19    |    F20    |    F21    |    F22    |    F23    |  *
- *  -------------------------------------------------------------  *
- *  -------------------------------------------------------------  *
- *  |  68 |  69 |  70 |  71 |  72 |  73 |  74 |  75 |  76 |  77 |  *
- *  -------------------------------------------------------------  *
- *  | 272 | 276 | 280 | 284 | 288 | 292 | 296 | 300 | 304 | 308 |  *
- *  -------------------------------------------------------------  *
- *  |    F24    |    F25    |    F26    |    F27    |    F28    |  *
- *  -------------------------------------------------------------  *
- *  -------------------------------------------------------------  *
- *  |  78 |  79 |  80 |  81 |  82 |  83 |  84 |  85 |           |  *
- *  -------------------------------------------------------------  *
- *  | 312 | 316 | 320 | 324 | 328 | 332 | 336 | 340 |           |  *
- *  -------------------------------------------------------------  *
- *  |    F29    |    F30    |    F31    |   fpscr   |           |  *
- *  -------------------------------------------------------------  *
- *  -------------------------------------------------------------  *
- *  |  86 |  87 |  88 |  89 |                                   |  *
- *  -------------------------------------------------------------  *
- *  | 344 | 348 | 352 | 356 |                                   |  *
+ *  | 184 | 188 | 192 | 196 |                                   |  *
  *  -------------------------------------------------------------  *
  *  |   sbase   |   slimt   |                                   |  *
  *  -------------------------------------------------------------  *
  *  -------------------------------------------------------------  *
- *  |  90 |  91 |                                               |  *
+ *  |  50 |  51 |                                               |  *
  *  -------------------------------------------------------------  *
- *  | 360 | 364 |                                               |  *
+ *  | 200 | 204 |                                               |  *
  *  -------------------------------------------------------------  *
  *  |   flink   |                                               |  *
+ *  -------------------------------------------------------------  *
+ *  -------------------------------------------------------------  *
+ *  |  52 |  53 |  54 |  55 |  56 |  57 |  58 |  59 |  60 |  61 |  *
+ *  -------------------------------------------------------------  *
+ *  | 208 | 212 | 216 | 220 | 224 | 228 | 232 | 236 | 240 | 244 |  *
+ *  -------------------------------------------------------------  *
+ *  |    F14    |    F15    |    F16    |    F17    |    F18    |  *
+ *  -------------------------------------------------------------  *
+ *  -------------------------------------------------------------  *
+ *  |  62 |  63 |  64 |  65 |  66 |  67 |  68 |  69 |  70 |  71 |  *
+ *  -------------------------------------------------------------  *
+ *  | 248 | 252 | 256 | 260 | 264 | 268 | 272 | 276 | 280 | 284 |  *
+ *  -------------------------------------------------------------  *
+ *  |    F19    |    F20    |    F21    |    F22    |    F23    |  *
+ *  -------------------------------------------------------------  *
+ *  -------------------------------------------------------------  *
+ *  |  72 |  73 |  74 |  75 |  76 |  77 |  78 |  79 |  80 |  81 |  *
+ *  -------------------------------------------------------------  *
+ *  | 288 | 292 | 296 | 300 | 304 | 308 | 312 | 316 | 320 | 324 |  *
+ *  -------------------------------------------------------------  *
+ *  |    F24    |    F25    |    F26    |    F27    |    F28    |  *
+ *  -------------------------------------------------------------  *
+ *  -------------------------------------------------------------  *
+ *  |  82 |  83 |  84 |  85 |  86 |  87 |  88 |  89 |           |  *
+ *  -------------------------------------------------------------  *
+ *  | 328 | 332 | 336 | 340 | 344 | 348 | 352 | 356 |           |  *
+ *  -------------------------------------------------------------  *
+ *  |    F29    |    F30    |    F31    |   fpscr   |           |  *
  *  -------------------------------------------------------------  *
  *                                                                 *
  * *****************************************************************/
@@ -126,26 +126,26 @@ start_fcontext:
     std     %r0,   168(%r3)     # save LR
     std     %r0,   176(%r3)     # save LR as PC
 
-    stfd    %f14,  192(%r3)     # save F14
-    stfd    %f15,  200(%r3)     # save F15
-    stfd    %f16,  208(%r3)     # save F16
-    stfd    %f17,  216(%r3)     # save F17
-    stfd    %f18,  224(%r3)     # save F18
-    stfd    %f19,  232(%r3)     # save F19
-    stfd    %f20,  240(%r3)     # save F20
-    stfd    %f21,  248(%r3)     # save F21
-    stfd    %f22,  256(%r3)     # save F22
-    stfd    %f23,  264(%r3)     # save F23
-    stfd    %f24,  272(%r3)     # save F24
-    stfd    %f25,  280(%r3)     # save F25
-    stfd    %f26,  288(%r3)     # save F26
-    stfd    %f27,  296(%r3)     # save F27
-    stfd    %f28,  304(%r3)     # save F28
-    stfd    %f29,  312(%r3)     # save F29
-    stfd    %f30,  320(%r3)     # save F30
-    stfd    %f31,  328(%r3)     # save F31
+    stfd    %f14,  208(%r3)     # save F14
+    stfd    %f15,  216(%r3)     # save F15
+    stfd    %f16,  224(%r3)     # save F16
+    stfd    %f17,  232(%r3)     # save F17
+    stfd    %f18,  240(%r3)     # save F18
+    stfd    %f19,  248(%r3)     # save F19
+    stfd    %f20,  256(%r3)     # save F20
+    stfd    %f21,  264(%r3)     # save F21
+    stfd    %f22,  272(%r3)     # save F22
+    stfd    %f23,  280(%r3)     # save F23
+    stfd    %f24,  288(%r3)     # save F24
+    stfd    %f25,  296(%r3)     # save F25
+    stfd    %f26,  304(%r3)     # save F26
+    stfd    %f27,  312(%r3)     # save F27
+    stfd    %f28,  320(%r3)     # save F28
+    stfd    %f29,  328(%r3)     # save F29
+    stfd    %f30,  336(%r3)     # save F30
+    stfd    %f31,  344(%r3)     # save F31
     mffs    %f0                 # load FPSCR
-    stfd    %f0,   336(%r3)     # save FPSCR
+    stfd    %f0,   352(%r3)     # save FPSCR
 
 
     ld      %r13,  0(%r4)       # restore R13
@@ -174,25 +174,25 @@ start_fcontext:
     ld      %r0,   168(%r4)     # load LR
     mtlr    %r0                 # restore LR
 
-    lfd     %f14,  192(%r4)     # restore F14
-    lfd     %f15,  200(%r4)     # restore F15
-    lfd     %f16,  208(%r4)     # restore F16
-    lfd     %f17,  216(%r4)     # restore F17
-    lfd     %f18,  224(%r4)     # restore F18
-    lfd     %f19,  232(%r4)     # restore F19
-    lfd     %f20,  240(%r4)     # restore F20
-    lfd     %f21,  248(%r4)     # restore F21
-    lfd     %f22,  256(%r4)     # restore F22
-    lfd     %f23,  264(%r4)     # restore F23
-    lfd     %f24,  272(%r4)     # restore F24
-    lfd     %f25,  280(%r4)     # restore F25
-    lfd     %f26,  288(%r4)     # restore F26
-    lfd     %f27,  296(%r4)     # restore F27
-    lfd     %f28,  304(%r4)     # restore F28
-    lfd     %f29,  312(%r4)     # restore F29
-    lfd     %f30,  320(%r4)     # restore F30
-    lfd     %f31,  328(%r4)     # restore F31
-    lfd     %f0,   336(%r4)     # load FPSCR
+    lfd     %f14,  208(%r4)     # restore F14
+    lfd     %f15,  216(%r4)     # restore F15
+    lfd     %f16,  224(%r4)     # restore F16
+    lfd     %f17,  232(%r4)     # restore F17
+    lfd     %f18,  240(%r4)     # restore F18
+    lfd     %f19,  248(%r4)     # restore F19
+    lfd     %f20,  256(%r4)     # restore F20
+    lfd     %f21,  264(%r4)     # restore F21
+    lfd     %f22,  272(%r4)     # restore F22
+    lfd     %f23,  280(%r4)     # restore F23
+    lfd     %f24,  288(%r4)     # restore F24
+    lfd     %f25,  296(%r4)     # restore F25
+    lfd     %f26,  304(%r4)     # restore F26
+    lfd     %f27,  312(%r4)     # restore F27
+    lfd     %f28,  320(%r4)     # restore F28
+    lfd     %f29,  328(%r4)     # restore F29
+    lfd     %f30,  336(%r4)     # restore F30
+    lfd     %f31,  344(%r4)     # restore F31
+    lfd     %f0,   352(%r4)     # load FPSCR
     mtfsf   0xff,  %f0          # restore FPSCR
 
     ld      %r0,   176(%r4)     # load PC
@@ -241,26 +241,26 @@ jump_fcontext:
     std     %r0,   168(%r3)     # save LR
     std     %r0,   176(%r3)     # save LR as PC
 
-    stfd    %f14,  192(%r3)     # save F14
-    stfd    %f15,  200(%r3)     # save F15
-    stfd    %f16,  208(%r3)     # save F16
-    stfd    %f17,  216(%r3)     # save F17
-    stfd    %f18,  224(%r3)     # save F18
-    stfd    %f19,  232(%r3)     # save F19
-    stfd    %f20,  240(%r3)     # save F20
-    stfd    %f21,  248(%r3)     # save F21
-    stfd    %f22,  256(%r3)     # save F22
-    stfd    %f23,  264(%r3)     # save F23
-    stfd    %f24,  272(%r3)     # save F24
-    stfd    %f25,  280(%r3)     # save F25
-    stfd    %f26,  288(%r3)     # save F26
-    stfd    %f27,  296(%r3)     # save F27
-    stfd    %f28,  304(%r3)     # save F28
-    stfd    %f29,  312(%r3)     # save F29
-    stfd    %f30,  320(%r3)     # save F30
-    stfd    %f31,  328(%r3)     # save F31
+    stfd    %f14,  208(%r3)     # save F14
+    stfd    %f15,  216(%r3)     # save F15
+    stfd    %f16,  224(%r3)     # save F16
+    stfd    %f17,  232(%r3)     # save F17
+    stfd    %f18,  240(%r3)     # save F18
+    stfd    %f19,  248(%r3)     # save F19
+    stfd    %f20,  256(%r3)     # save F20
+    stfd    %f21,  264(%r3)     # save F21
+    stfd    %f22,  272(%r3)     # save F22
+    stfd    %f23,  280(%r3)     # save F23
+    stfd    %f24,  288(%r3)     # save F24
+    stfd    %f25,  296(%r3)     # save F25
+    stfd    %f26,  304(%r3)     # save F26
+    stfd    %f27,  312(%r3)     # save F27
+    stfd    %f28,  320(%r3)     # save F28
+    stfd    %f29,  328(%r3)     # save F29
+    stfd    %f30,  336(%r3)     # save F30
+    stfd    %f31,  344(%r3)     # save F31
     mffs    %f0                 # load FPSCR
-    stfd    %f0,   336(%r3)     # save FPSCR
+    stfd    %f0,   352(%r3)     # save FPSCR
 
 
     ld      %r13,  0(%r4)       # restore R13
@@ -289,25 +289,25 @@ jump_fcontext:
     ld      %r0,   168(%r4)     # load LR
     mtlr    %r0                 # restore LR
 
-    lfd     %f14,  192(%r4)     # restore F14
-    lfd     %f15,  200(%r4)     # restore F15
-    lfd     %f16,  208(%r4)     # restore F16
-    lfd     %f17,  216(%r4)     # restore F17
-    lfd     %f18,  224(%r4)     # restore F18
-    lfd     %f19,  232(%r4)     # restore F19
-    lfd     %f20,  240(%r4)     # restore F20
-    lfd     %f21,  248(%r4)     # restore F21
-    lfd     %f22,  256(%r4)     # restore F22
-    lfd     %f23,  264(%r4)     # restore F23
-    lfd     %f24,  272(%r4)     # restore F24
-    lfd     %f25,  280(%r4)     # restore F25
-    lfd     %f26,  288(%r4)     # restore F26
-    lfd     %f27,  296(%r4)     # restore F27
-    lfd     %f28,  304(%r4)     # restore F28
-    lfd     %f29,  312(%r4)     # restore F29
-    lfd     %f30,  320(%r4)     # restore F30
-    lfd     %f31,  328(%r4)     # restore F31
-    lfd     %f0,   336(%r4)     # load FPSCR
+    lfd     %f14,  208(%r4)     # restore F14
+    lfd     %f15,  216(%r4)     # restore F15
+    lfd     %f16,  224(%r4)     # restore F16
+    lfd     %f17,  232(%r4)     # restore F17
+    lfd     %f18,  240(%r4)     # restore F18
+    lfd     %f19,  248(%r4)     # restore F19
+    lfd     %f20,  256(%r4)     # restore F20
+    lfd     %f21,  264(%r4)     # restore F21
+    lfd     %f22,  272(%r4)     # restore F22
+    lfd     %f23,  280(%r4)     # restore F23
+    lfd     %f24,  288(%r4)     # restore F24
+    lfd     %f25,  296(%r4)     # restore F25
+    lfd     %f26,  304(%r4)     # restore F26
+    lfd     %f27,  312(%r4)     # restore F27
+    lfd     %f28,  320(%r4)     # restore F28
+    lfd     %f29,  328(%r4)     # restore F29
+    lfd     %f30,  336(%r4)     # restore F30
+    lfd     %f31,  344(%r4)     # restore F31
+    lfd     %f0,   352(%r4)     # load FPSCR
     mtfsf   0xff,  %f0          # restore FPSCR
 
     mr.     %r3,   %r5          # use third arg as return value after jump
@@ -333,15 +333,15 @@ make_fcontext:
     std     %r3, 0(%r3)         # save the current context
     std     %r4, 176(%r3)       # save the address of the function supposed to be run
     std     %r5, 16(%r3)        # save void pointer
-    ld      %r0, 344(%r3)       # load the stack base
+    ld      %r0, 184(%r3)       # load the stack base
 
     li      %r4, 56
     subf    %r1, %r4, %r1       # reserve space on stack
     stw     %r3, 48(%r1)        # store pointer to fcontext_t on stack
     mflr    %r4                 # load LR
     stw     %r4, 40(%r1)        # store LR on stack
-    mr.     %r3, %r0            # context stack as arg to boost_fcontext_algin
-    bl      align_stack@plt    # call align_stack
+    mr.     %r3, %r0            # context stack as arg to align_stack
+    bl      align_stack@plt     # call align_stack
     mr.     %r0, %r3            # load result into R0
     lwz     %r4, 40(%r1)        # pop LR from stack
     mtlr    %r4                 # restore LR
@@ -351,7 +351,7 @@ make_fcontext:
     li      %r4, 64
     subf    %r0, %r4, %r0       # 64 bytes on stack for parameter area (== 8 registers)
     std     %r0, 152(%r3)       # save the stack base
-    ld      %r0, 360(%r3)       # load address of next user context
+    ld      %r0, 200(%r3)       # load address of next user context
     std     %r0, 8(%r3)         # save the next context
     mflr    %r0                 # load LR
     bl      1f                  # jump to label 1

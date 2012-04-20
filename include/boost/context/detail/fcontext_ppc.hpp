@@ -29,6 +29,11 @@ struct stack_t
     void    *   limit;
 };
 
+struct fp_t
+{
+    boost::uint64_t     fc_freg[19];
+};
+
 struct fcontext_t
 {
 # if defined(__powerpc64__)
@@ -36,9 +41,9 @@ struct fcontext_t
 # else
     boost::uint32_t     fc_greg[23];
 # endif
-    boost::uint64_t     fc_freg[19];
     stack_t				fc_stack;
     fcontext_t		*	fc_link;
+    fp_t                fc_fp;
 };
 
 }

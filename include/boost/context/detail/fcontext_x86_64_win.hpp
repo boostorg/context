@@ -30,29 +30,30 @@ struct stack_t
     void    *   limit;
 };
 
-struct fcontext_t
+struct fp_t
 {
-    boost::uint64_t     fc_greg[10];
     boost::uint32_t     fc_freg[2];
-    stack_t				fc_stack;
-    fcontext_t		*	fc_link;
-    void			*	fc_local_storage;
-    void			*	fc_fp;
+    void			*	fc_xmm;
     boost::uint8_t      fc_buffer[162];
 
-    fcontext_t() :
-        fc_greg(),
+    fp_t() :
         fc_freg(),
-        fc_stack(),
-        fc_link( 0),
-        fc_local_storage( 0),
-        fc_fp( 0),
+        fc_xmm( 0),
         fc_buffer()
     {
         if ( 0 != ( ( ( uintptr_t) fc_buffer) & 15) )
-            fc_fp = ( boost::uint8_t *)
+            fc_xmm = ( boost::uint8_t *)
 		( ( ( ( ( uintptr_t) fc_buffer) + 16) >> 4) << 4);
     }
+};
+
+struct fcontext_t
+{
+    boost::uint64_t     fc_greg[10];
+    stack_t				fc_stack;
+    fcontext_t		*	fc_link;
+    void			*	fc_local_storage;
+    fp_t                fc_fp;
 };
 
 }
