@@ -214,22 +214,15 @@ make_fcontext:
     mflr    %r0                 # load LR
     bl      1f                  # jump to label 1
 1:
-    mflr    %r4                             # load LR
-    addi    %r4, %r4, link_fcontext - 1b    # calulate absolute address of link_fcontext
-    mtlr    %r0                             # restore LR
-    stw     %r4, 84(%r3)        # save address of link_fcontext
+    mflr    %r4                 # load LR
+    addi    %r4, %r4, finish - 1b    # calulate absolute address of finish
+    mtlr    %r0                 # restore LR
+    stw     %r4, 84(%r3)        # save address of finish
 
     li      %r3,  0             # set return value to zero
     blr
 
-link_fcontext:
-    mr.     %r3, %r13
-    mr.     %r4, %r14
-    beq     2f                  # test if a next context was given
-
-    bl      start_fcontext@plt   # install next context
-
-2:
+finish:
     li      %r3,  0             # set return value to zero
     bl      _exit@plt           # exit application
 .size make_fcontext, .-make_fcontext
