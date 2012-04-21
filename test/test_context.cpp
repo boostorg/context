@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include <boost/assert.hpp>
 #include <boost/test/unit_test.hpp>
@@ -26,11 +27,6 @@ void f1( intptr_t)
 {
     ++value1;
 	ctx::jump_fcontext( & fc1, & fcm, 0);
-}
-
-void f2( intptr_t)
-{
-    ++value1;
 }
 
 void f3( intptr_t)
@@ -53,9 +49,12 @@ void f5( intptr_t arg)
 
 void f6( intptr_t arg)
 {
-    ctx::jump_fcontext(
-        & fc1, & fcm, 
-	    ctx::jump_fcontext( & fc1, & fcm, arg) );
+    std::pair< int, int > data = * ( std::pair< int, int > * ) arg;
+    int res = data.first + data.second;
+    data = * ( std::pair< int, int > *)
+        ctx::jump_fcontext( & fc1, & fcm, ( intptr_t) res);
+    res = data.first + data.second;
+    ctx::jump_fcontext( & fc1, & fcm, ( intptr_t) res);
 }
 
 void f7( intptr_t arg)
@@ -64,6 +63,7 @@ void f7( intptr_t arg)
     { throw std::runtime_error( ( char *) arg); }
     catch ( std::runtime_error const& e)
     { value2 = e.what(); }
+	ctx::jump_fcontext( & fc1, & fcm, arg);
 }
 
 void f8( intptr_t arg)
@@ -71,6 +71,7 @@ void f8( intptr_t arg)
     double d = * ( double *) arg;
     d += 3.45;
     value3 = d;
+	ctx::jump_fcontext( & fc1, & fcm, 0);
 }
 
 void test_start()
@@ -84,23 +85,7 @@ void test_start()
     ctx::make_fcontext( & fc1, f1, 0);
 
     BOOST_CHECK_EQUAL( 0, value1);
-    ctx::start_fcontext( & fcm, & fc1);
-    BOOST_CHECK_EQUAL( 1, value1);
-}
-
-void test_link()
-{
-    value1 = 0;
-
-    ctx::stack_allocator alloc;
-
-    fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
-    fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-    fc1.fc_link = & fcm;
-    ctx::make_fcontext( & fc1, f2, 0);
-
-    BOOST_CHECK_EQUAL( 0, value1);
-    ctx::start_fcontext( & fcm, & fc1);
+    ctx::jump_fcontext( & fcm, & fc1, 0);
     BOOST_CHECK_EQUAL( 1, value1);
 }
 
@@ -115,7 +100,7 @@ void test_jump()
     ctx::make_fcontext( & fc1, f3, 0);
 
     BOOST_CHECK_EQUAL( 0, value1);
-    ctx::start_fcontext( & fcm, & fc1);
+    ctx::jump_fcontext( & fcm, & fc1, 0);
     BOOST_CHECK_EQUAL( 1, value1);
     ctx::jump_fcontext( & fcm, & fc1, 0);
     BOOST_CHECK_EQUAL( 2, value1);
@@ -129,7 +114,7 @@ void test_result()
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
     ctx::make_fcontext( & fc1, f4, 0);
 
-    int result = ( int) ctx::start_fcontext( & fcm, & fc1);
+    int result = ( int) ctx::jump_fcontext( & fcm, & fc1, 0);
     BOOST_CHECK_EQUAL( 7, result);
 }
 
@@ -142,7 +127,7 @@ void test_arg()
     int i = 7;
     ctx::make_fcontext( & fc1, f5, i);
 
-    int result = ( int) ctx::start_fcontext( & fcm, & fc1);
+    int result = ( int) ctx::jump_fcontext( & fcm, & fc1, i);
     BOOST_CHECK_EQUAL( i, result);
 }
 
@@ -152,14 +137,14 @@ void test_transfer()
 
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-    int i = 3;
-    ctx::make_fcontext( & fc1, f6, i);
+    std::pair< int, int > data = std::make_pair( 3, 7);
+    ctx::make_fcontext( & fc1, f6, ( intptr_t) & data);
 
-    int result = ( int) ctx::start_fcontext( & fcm, & fc1);
-    BOOST_CHECK_EQUAL( i, result);
-    i = 7;
-    result = ( int) ctx::jump_fcontext( & fcm, & fc1, i);
-    BOOST_CHECK_EQUAL( i, result);
+    int result = ( int) ctx::jump_fcontext( & fcm, & fc1, ( intptr_t) & data);
+    BOOST_CHECK_EQUAL( 10, result);
+    data = std::make_pair( 7, 7);
+    result = ( int) ctx::jump_fcontext( & fcm, & fc1, ( intptr_t) & data);
+    BOOST_CHECK_EQUAL( 14, result);
 }
 
 void test_exception()
@@ -169,10 +154,9 @@ void test_exception()
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
     char * what = "hello world";
-    fc1.fc_link = & fcm;
     ctx::make_fcontext( & fc1, f7, ( intptr_t) what);
 
-    ctx::start_fcontext( & fcm, & fc1);
+    ctx::jump_fcontext( & fcm, & fc1, ( intptr_t) what);
     BOOST_CHECK_EQUAL( std::string( what), value2);
 }
 
@@ -182,11 +166,10 @@ void test_fp()
 
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-    fc1.fc_link = & fcm;
     double d = 7.13;
     ctx::make_fcontext( & fc1, f8, ( intptr_t) & d);
 
-    ctx::start_fcontext( & fcm, & fc1);
+    ctx::jump_fcontext( & fcm, & fc1, (intptr_t) & d);
     BOOST_CHECK_EQUAL( 10.58, value3);
 }
 
@@ -196,7 +179,6 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
         BOOST_TEST_SUITE("Boost.Context: context test suite");
 
     test->add( BOOST_TEST_CASE( & test_start) );
-    test->add( BOOST_TEST_CASE( & test_link) );
     test->add( BOOST_TEST_CASE( & test_jump) );
     test->add( BOOST_TEST_CASE( & test_result) );
     test->add( BOOST_TEST_CASE( & test_arg) );

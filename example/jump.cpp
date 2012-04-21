@@ -48,7 +48,7 @@ int main( int argc, char * argv[])
 		ctx::make_fcontext( & fc2, f2, 0);
 
 		std::cout << "main: call start_fcontext( & fcm, & fc1)" << std::endl;
-		ctx::start_fcontext( & fcm, & fc1);
+		ctx::jump_fcontext( & fcm, & fc1, 0);
 
 		std::cout << "main: done" << std::endl;
 

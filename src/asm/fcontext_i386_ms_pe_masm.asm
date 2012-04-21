@@ -84,7 +84,6 @@ jump_fcontext PROC EXPORT
 ;    stmxcsr [ecx+02ch]              ; save MMX control word
 ;    fnstcw  [ecx+030h]              ; save x87 control word
 
-
     mov     ecx,        [esp+08h]   ; load address of the second fcontext_t arg
     mov     edi,        [ecx]       ; restore EDI
     mov     esi,        [ecx+04h]   ; restore ESI
@@ -103,11 +102,11 @@ jump_fcontext PROC EXPORT
     mov     eax,        [ecx+028h]  ; load fiber local storage
     mov     [edx+010h], eax         ; restore fiber local storage
 
-
 ;    ldmxcsr [ecx+02ch]              ; restore MMX control word
 ;    fldcw   [ecx+030h]              ; restore x87 control word
 
     mov     eax,        [esp+0ch]   ; use third arg as return value after jump
+    mov     [esp+04h],  eax         ; use third arg as first arg in context function
 
     mov     esp,        [ecx+010h]  ; restore ESP
     mov     ecx,        [ecx+014h]  ; fetch the address to return to
@@ -143,27 +142,20 @@ make_fcontext PROC EXPORT
     mov  [eax+04h],   ecx           ; save the address of the next context
     mov  ecx,         [esp+0ch]     ; load the address of the void pointer arg2
     mov  [edx+04h],   ecx           ; save the address of the void pointer onto the context stack
-    stmxcsr [eax+02ch]              ; save MMX control word
-    fnstcw  [eax+030h]              ; save x87 control word
-    mov  ecx,         link_fcontext ; load helper code executed after fn() returns
-    mov  [edx],       ecx           ; save helper code executed adter fn() returns
+
+;    stmxcsr [eax+02ch]              ; save MMX control word
+;    fnstcw  [eax+030h]              ; save x87 control word
+
+    mov  ecx,         finish        ; helper code executed after context function returns
+    mov  [edx],       ecx
+
     xor  eax,         eax           ; set EAX to zero
     ret
-make_fcontext ENDP
-
-link_fcontext PROC
-    lea   esp,        [esp-0ch]     ; adjust the stack to proper boundaries
-    test  esi,        esi           ; test if a next context was given
-    je    finish                    ; jump to finish
-
-    push  esi                       ; push the address of the next context on the stack
-    push  edi                       ; push the address of the current context on the stack
-    call  start_fcontext            ; install next context
 
 finish:
     xor   eax,        eax           ; set EAX to zero
     push  eax                       ; exit code is zero
     call  _exit                     ; exit application
     hlt
-link_fcontext ENDP
+make_fcontext ENDP
 END

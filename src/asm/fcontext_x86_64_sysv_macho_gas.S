@@ -56,14 +56,13 @@ _jump_fcontext:
     movq     %r15,       0x20(%rdi)     /* save R15 */
     movq     %rbp,       0x28(%rdi)     /* save RBP */
 
-    stmxcsr  0x58(%rdi)                 /* save MMX control and status word */
-    fnstcw   0x5c(%rdi)                 /* save x87 control word */
+    stmxcsr  0x58(%rdi)             /* save MMX control and status word */
+    fnstcw   0x5c(%rdi)             /* save x87 control word */
 
-    leaq     0x8(%rsp),  %rcx           /* exclude the return address and save as stack pointer */
-    movq     %rcx,       0x30(%rdi)     /* save as stack pointer */
-    movq     (%rsp),     %rcx           /* save return address */
-    movq     %rcx,       0x38(%rdi)     /* save return address as RIP */
-
+    leaq     0x8(%rsp),  %rax           /* exclude the return address and save as stack pointer */
+    movq     %rax,       0x30(%rdi)     /* save as stack pointer */
+    movq     (%rsp),     %rax           /* save return address */
+    movq     %rax,       0x38(%rdi)     /* save return address as RIP */
 
     movq     (%rsi),      %rbx      /* restore RBX */
     movq     0x8(%rsi),   %r12      /* restore R12 */
@@ -75,11 +74,11 @@ _jump_fcontext:
     ldmxcsr  0x58(%rsi)             /* restore MMX control and status word */
     fldcw    0x5c(%rsi)             /* restore x87 control word */
 
-    movq     %rdx,        %rax      /* use third arg as return value after jump */
-
     movq     0x30(%rsi),  %rsp      /* restore RSP */
     movq     0x38(%rsi),  %rcx      /* fetch the address to return to */
-    movq     %r13,        %rdi      /* restore void pointer as argument */
+
+    movq     %rdx,        %rax      /* use third arg as return value after jump */
+    movq     %rdx,        %rdi      /* use third arg as first arg in context function */
 
     jmp      *%rcx                  /* indirect jump to context */
 
@@ -104,20 +103,14 @@ _make_fcontext:
     movq   %rcx,                 0x8(%rdi)  /* save the address of next context */
     stmxcsr  0x58(%rdi)                     /* save MMX control and status word */
     fnstcw   0x5c(%rdi)                     /* save x87 control word */
-    leaq   link_fcontext(%rip),  %rcx       /* helper code executed after context function returns */
+
+    leaq   finish(%rip),         %rcx       /* helper code executed after context function returns */
     movq   %rcx,                 (%rdx)
+
     xorq   %rax,                 %rax       /* set RAX to zero */
     ret
 
-link_fcontext:
-    movq   %r12,               %rsi         /* restore next context */
-    testq  %rsi,               %rsi         /* test if a next context was given */
-    je     1f                               /* jump to finish */
-
-    movq   %rbx,               %rdi         /* restore current context */
-    call   start_fcontext@PLT         /* jump to next context */
-
-1:
+finish:
     xorq    %rdi,              %rdi         /* exit code is zero */
     call   _exit@PLT                        /* exit application */
     hlt

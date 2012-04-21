@@ -16,6 +16,7 @@
 #include <boost/config.hpp>
 #include <boost/context/all.hpp>
 #include <boost/preprocessor/repetition/repeat_from_to.hpp>
+#include <boost/program_options.hpp>
 
 #ifndef BOOST_WINDOWS
 #include <ucontext.h>
@@ -25,12 +26,15 @@
 #include "cycle.hpp"
 
 namespace ctx = boost::ctx;
+namespace po = boost::program_options;
+
+bool preserve_fpu = true;
 
 #define CALL_UCONTEXT(z,n,unused) \
     ::swapcontext( & ucm, & uc);
 
 #define CALL_FCONTEXT(z,n,unused) \
-    ctx::jump_fcontext( & fcm, & fc, 0);
+    ctx::jump_fcontext( & fcm, & fc, 7, preserve_fpu);
 
 #ifndef BOOST_WINDOWS
 ucontext_t uc, ucm;
@@ -48,7 +52,7 @@ static void f2()
 static void f1( intptr_t)
 {
     while ( true)
-        ctx::jump_fcontext( & fc, & fcm, 0);
+        ctx::jump_fcontext( & fc, & fcm, 7, preserve_fpu);
 }
 
 #ifndef BOOST_WINDOWS
@@ -85,9 +89,9 @@ cycle_t test_fcontext( cycle_t ov)
     fc.fc_stack.base = alloc.allocate(ctx::default_stacksize());
     fc.fc_stack.limit =
         static_cast< char * >( fc.fc_stack.base) - ctx::default_stacksize();
-	ctx::make_fcontext( & fc, f1, 0);
+	ctx::make_fcontext( & fc, f1, 7);
 
-    ctx::start_fcontext( & fcm, & fc);
+    ctx::jump_fcontext( & fcm, & fc, 7, preserve_fpu);
 
     // cache warum-up
 BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_FCONTEXT, ~)
@@ -108,6 +112,25 @@ int main( int argc, char * argv[])
 {
     try
     {
+        po::options_description desc("allowed options");
+        desc.add_options()
+            ("help,h", "help message")
+            ("preserve-fpu,p", po::value< bool >( & preserve_fpu), "preserve floating point env");
+
+        po::variables_map vm;
+        po::store(
+            po::parse_command_line(
+                argc,
+                argv,
+                desc),
+            vm);
+        po::notify( vm);
+
+        if ( vm.count("help") )
+        {
+            std::cout << desc << std::endl;
+            return EXIT_SUCCESS;
+        }
         bind_to_processor( 0);
 
         cycle_t ov( overhead() );

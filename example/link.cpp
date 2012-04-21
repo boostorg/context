@@ -40,7 +40,6 @@ int main( int argc, char * argv[])
         fc1.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
         fc1.fc_stack.limit =
             static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-        fc1.fc_link = & fcm;
 		ctx::make_fcontext( & fc1, f1, 0);
 
         fc2.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
@@ -49,7 +48,7 @@ int main( int argc, char * argv[])
 		ctx::make_fcontext( & fc2, f2, 0);
 
 		std::cout << "main: call start_fcontext( & fcm, & fc1)" << std::endl;
-		ctx::start_fcontext( & fcm, & fc1);
+		ctx::jump_fcontext( & fcm, & fc1, 0);
 
 		std::cout << "main: done" << std::endl;
 

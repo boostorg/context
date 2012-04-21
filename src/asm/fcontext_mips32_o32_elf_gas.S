@@ -99,6 +99,7 @@ jump_fcontext:
 #endif
 
     move    $v0, $a2        # use third arg as return value after jump
+    move    $a0, $a2        # use third arg as first arg in context function
 
     lw      $t9, 96($a1)    # load PC
     jr      $t9             # jump to context
@@ -138,22 +139,15 @@ make_fcontext:
     sw      $t0, 72($a0)        # save the stack base
     lw      $t0, 120($a0)       # load address of next user context
     sw      $t0, 8($a0)         # save the next context
-    la      $t9, link_fcontext  # get address of link_fcontext
-    sw      $t9, 88($a0)        # save address of link_fcontext
+
+    la      $t9, finish         # get address of finish
+    sw      $t9, 88($a0)        # save address of finish
 
     move    $v0, $zero
     jr      $ra
 
-link_fcontext:
+finish:
     move    $gp, $s3            # restore GP (global pointer)
-    move    $a1, $s1            # set A1 to address of next context
-    beqz    $a1, 2f             # test if a next context was given
-
-    move    $a0, $s0            # set A0 to address of current context
-    lw      $t9, %call16(start_fcontext)($gp)  # install next context
-    jr      $t9
-
-2:
     move    $a0, $zero
     lw      $t9, %call16(_exit)($gp)  # exit application
     jalr    $t9

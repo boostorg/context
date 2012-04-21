@@ -107,17 +107,16 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     mov     [rcx+030h],  rbx        ; save RBX
     mov     [rcx+038h],  rbp        ; save RBP
 
-    mov     r9,          gs:[030h]  ; load NT_TIB
-    mov     rax,         [r9+08h]   ; load current stack base
+    mov     r10,         gs:[030h]  ; load NT_TIB
+    mov     rax,         [r10+08h]  ; load current stack base
     mov     [rcx+050h],  rax        ; save current stack base
-    mov     rax,         [r9+010h]  ; load current stack limit
+    mov     rax,         [r10+010h] ; load current stack limit
     mov     [rcx+058h],  rax        ; save current stack limit
-    mov     rax,         [r9+018h]  ; load fiber local storage
+    mov     rax,         [r10+018h] ; load fiber local storage
     mov     [rcx+068h],  rax        ; save fiber local storage
 
-;    stmxcsr [rcx+070h]              ; save MMX control and status word
-;    fnstcw  [rcx+074h]              ; save x87 control word
-
+    stmxcsr [rcx+070h]              ; save MMX control and status word
+    fnstcw  [rcx+074h]              ; save x87 control word
     movaps  [rcx+080h],  xmm6
     movaps  [rcx+090h],  xmm7
     movaps  [rcx+0100h], xmm8
@@ -134,7 +133,6 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     mov     rax,         [rsp]      ; load return address
     mov     [rcx+048h],  rax        ; save return address
 
-
     mov     r12,        [rdx]       ; restore R12
     mov     r13,        [rdx+08h]   ; restore R13
     mov     r14,        [rdx+010h]  ; restore R14
@@ -144,17 +142,16 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     mov     rbx,        [rdx+030h]  ; restore RBX
     mov     rbp,        [rdx+038h]  ; restore RBP
 
-    mov     r9,         gs:[030h]   ; load NT_TIB
+    mov     r10,        gs:[030h]   ; load NT_TIB
     mov     rax,        [rdx+050h]  ; load stack base
-    mov     [r9+08h],   rax         ; restore stack base
+    mov     [r10+08h],  rax         ; restore stack base
     mov     rax,        [rdx+058h]  ; load stack limit
-    mov     [r9+010h],  rax         ; restore stack limit
+    mov     [r10+010h], rax         ; restore stack limit
     mov     rax,        [rdx+068h]  ; load fiber local storage
-    mov     [r9+018h],  rax         ; restore fiber local storage
+    mov     [r10+018h], rax         ; restore fiber local storage
 
-;    ldmxcsr  [rdx+070h]             ; restore MMX control and status word
-;    fldcw    [rdx+074h]             ; restore x87 control word
-
+    ldmxcsr [rdx+070h]              ; restore MMX control and status word
+    fldcw   [rdx+074h]              ; restore x87 control word
     movaps  xmm6,  [rdx+080h]
     movaps  xmm7,  [rdx+090h]
     movaps  xmm8,  [rdx+0100h]
@@ -167,12 +164,12 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     movaps  xmm15, [rdx+0170h]
 
     mov     rsp,        [rdx+040h]  ; restore RSP
-    mov     r9,         [rdx+048h]  ; fetch the address to returned to
-    mov     rcx,        r14         ; restore RCX as first argument for called context
+    mov     r10,        [rdx+048h]  ; fetch the address to returned to
 
     mov     rax,        r8          ; use third arg as return value after jump
+    mov     rcx,        r8          ; use third arg as first arg in context function
 
-    jmp     r9                      ; indirect jump to caller
+    jmp     r10                     ; indirect jump to caller
 jump_fcontext ENDP
 
 make_fcontext PROC EXPORT FRAME ; generate function table entry in .pdata and unwind information in    E
@@ -200,30 +197,16 @@ make_fcontext PROC EXPORT FRAME ; generate function table entry in .pdata and un
     stmxcsr [rcx+070h]           ; save MMX control and status word
     fnstcw  [rcx+074h]           ; save x87 control word
 
-    lea  rax,       link_fcontext   ; helper code executed after fn() returns
+    lea  rax,       finish       ; helper code executed after fn() returns
     mov  [rdx],     rax          ; store address off the helper function as return address
 
     xor  rax,       rax          ; set RAX to zero
     ret
-make_fcontext ENDP
-
-link_fcontext PROC FRAME   ; generate function table entry in .pdata and unwind information in
-    .endprolog                   ; .xdata for a function's structured exception handling unwind behavior
-
-    sub   rsp,      028h         ; reserve shadow space for boost_fcontext_algin
-    test  r13,      r13          ; test if a next context was given
-    je    finish                 ; jump to finish
-
-    mov   rcx,      r12          ; first argument eq. address of current context
-    mov   rdx,      r13          ; second argumnet eq. address of next context
-    mov   [rsp+010h], rdx
-    mov   [rsp+08h],  rcx
-    call  start_fcontext         ; install next context
 
 finish:
     xor   rcx,        rcx
     mov   [rsp+08h],  rcx
     call  _exit                  ; exit application
     hlt
-link_fcontext ENDP
+make_fcontext ENDP
 END

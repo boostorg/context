@@ -18,7 +18,8 @@ namespace boost {
 namespace ctx {
 namespace detail {
 
-extern "C" BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL align_stack( void * vp)
+extern "C" BOOST_CONTEXT_DECL
+void * BOOST_CONTEXT_CALLDECL align_stack( void * vp)
 {
 	void * base = vp;
     if ( 0 != ( ( ( uintptr_t) base) & 15) )
@@ -28,11 +29,6 @@ extern "C" BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL align_stack( void * 
 }
 
 }
-
-# if !defined(__arm__) && !defined(__powerpc__)
-extern "C" BOOST_CONTEXT_DECL intptr_t BOOST_CONTEXT_CALLDECL start_fcontext( fcontext_t * ofc, fcontext_t const* nfc)
-{ return jump_fcontext( ofc, nfc, 0); }
-#endif
 
 }}
 

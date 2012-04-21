@@ -67,6 +67,7 @@ _jump_fcontext:
 /*    fldcw    0x28(%ecx)  */           /* restore x87 control word */
 
     movl    0xc(%esp),   %eax       /* use third arg as return value after jump */
+    movl    %eax,        0x4(%esp)  /* use third arg as first arg in context function */
 
     movl    0x10(%ecx),  %esp       /* restore ESP */
     movl    0x14(%ecx),  %ecx       /* fetch the address to return to */
@@ -107,27 +108,19 @@ _make_fcontext:
 
     call    2f
 2:  popl    %ecx                        /* address of label 1 */
-    addl    $link_fcontext-2b, %ecx     /* compute address of label link_fcontext */
-    movl    %ecx, (%edx)                /* store address of link_fcontext as return address on stack */
+    addl    $finish-2b, %ecx            /* compute address of label finish */
+    movl    %ecx, (%edx)                /* store address of finish as return address on stack */
 
     xorl   %eax,            %eax        /* set EAX to zero */
     ret
 
-link_fcontext:
+finish:
     leal   -0xc(%esp),    %esp
 
     call    3f
 3:  popl    %ebx                                    /* address of label 3 */
     addl    $_GLOBAL_OFFSET_TABLE_+[.-3b], %ebx     /* compute address of GOT and store it in EBX */
 
-    testl  %esi,           %esi         /* test if a next context was given */
-    je     4f                           /* jump to finish */
-
-    pushl  %esi                         /* push the address of the next context on the stack */
-    pushl  %edi                         /* push the address of the current context to stack */
-    call   start_fcontext@PLT     /* jump to next context */
-
-4:
     movl    %eax,           %eax
     pushl   %eax                        /* exit code is zero */
     call   _exit@PLT                    /* exit application */

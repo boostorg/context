@@ -35,11 +35,10 @@ int main( int argc, char * argv[])
     fc1.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
     fc1.fc_stack.limit =
         static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-    fc1.fc_link = & fcm;
     pair_t p( std::make_pair( 2, 7) );
     ctx::make_fcontext( & fc1, f1, ( intptr_t) & p);
     
-    int res = ( int) ctx::start_fcontext( & fcm, & fc1);
+    int res = ( int) ctx::jump_fcontext( & fcm, & fc1, ( intptr_t) & p);
     std::cout << p.first << " + " << p.second << " == " << res << std::endl;
     
     p = std::make_pair( 5, 6);

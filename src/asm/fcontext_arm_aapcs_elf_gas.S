@@ -53,27 +53,6 @@
  * *****************************************************************/
 
 .text
-.globl start_fcontext
-.align 2
-.type start_fcontext,%function
-start_fcontext:
-    stmia   a1, {v1-v8,sp-lr}       @ save V1-V8,SP-LR
-    str     lr, [a1,#40]            @ save LR as PC
-#if (defined(__VFP_FP__) && !defined(__SOFTFP__))
-    ldr     a4, [a1,#56]
-    stmia   a4, {s16-s31}           @ save S16-S31
-#endif
-
-    ldr     a1, [a2,#8]             @ restore A1 as first arg
-#if (defined(__VFP_FP__) && !defined(__SOFTFP__))
-    ldr     a4, [a2,#56]
-    ldmia   a4, {s16-s31}           @ restore S16-S31
-#endif
-	
-    ldmia   a2, {v1-v8,sp-pc}       @ restore v1-V8,SP-PC
-.size start_fcontext,.-start_fcontext
-
-.text
 .globl jump_fcontext
 .align 2
 .type jump_fcontext,%function
@@ -85,7 +64,8 @@ jump_fcontext:
     stmia   a4, {s16-s31}           @ save S16-S31
 #endif
 
-	mov		a1, a3                  @ use thrid arg as return value after jump
+	mov		a1, a3                  @ use third arg as return value after jump
+	                                @ and as first arg in context function
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
     ldr     a4, [a2,#56]
     ldmia   a4, {s16-s31}           @ restore S16-S31
@@ -113,18 +93,14 @@ make_fcontext:
     str     a2, [a1,#32]        @ save the stack base
     ldr     a2, [a1,#52]        @ load the address of the next context
     str     a2, [a1,#4]         @ save the address of the next context
-    adr     a2, link_fcontext   @ load address of link_fcontext
-    str     a2, [a1,#36]        @ save address of link_fcontext
+
+    adr     a2, finish          @ helper code executed after context function returns
+    str     a2, [a1,#36]
+
     mov     a1, #0
     bx      lr
 
-link_fcontext:
-    mov     a1, v1              @ load the adddress of the current context
-    mov     a2, v2              @ load the adddress of the next context
-    teq     a2, #0              @ test if the address of the next context is a null pointer
-
-    bne     start_fcontext@PLT   @ install next context
-
+finish:
     mov     a1, #0
-    bl      _exit@PLT                  @ exit application
+    bl      _exit@PLT           @ exit application
 .size make_fcontext,.-make_fcontext

@@ -89,121 +89,6 @@
 
 .section ".text"
 .align 2
-.globl start_fcontext
-.section ".opd","aw"
-.align 3
-start_fcontext:
-.quad .start_fcontext,.TOC.@tocbase,0
-.previous
-.size start_fcontext,24
-.type .start_fcontext,@function
-.globl .start_fcontext
-.start_fcontext:
-    std     %r13,  0(%r3)       # save R13
-    std     %r14,  8(%r3)       # save R14
-    std     %r15,  16(%r3)      # save R15
-    std     %r16,  24(%r3)      # save R16
-    std     %r17,  32(%r3)      # save R17
-    std     %r18,  40(%r3)      # save R18
-    std     %r19,  48(%r3)      # save R19
-    std     %r20,  56(%r3)      # save R20
-    std     %r21,  64(%r3)      # save R21
-    std     %r22,  72(%r3)      # save R22
-    std     %r23,  80(%r3)      # save R23
-    std     %r24,  88(%r3)      # save R24
-    std     %r25,  96(%r3)      # save R25
-    std     %r26,  104(%r3)     # save R26
-    std     %r27,  112(%r3)     # save R27
-    std     %r28,  120(%r3)     # save R28
-    std     %r29,  128(%r3)     # save R29
-    std     %r30,  136(%r3)     # save R30
-    std     %r31,  144(%r3)     # save R31
-    std     %r1,   152(%r3)     # save SP
-
-    mfcr    %r0                 # load CR
-    std     %r0,   160(%r3)     # save CR
-    mflr    %r0                 # load LR
-    std     %r0,   168(%r3)     # save LR
-    std     %r0,   176(%r3)     # save LR as PC
-
-    stfd    %f14,  208(%r3)     # save F14
-    stfd    %f15,  216(%r3)     # save F15
-    stfd    %f16,  224(%r3)     # save F16
-    stfd    %f17,  232(%r3)     # save F17
-    stfd    %f18,  240(%r3)     # save F18
-    stfd    %f19,  248(%r3)     # save F19
-    stfd    %f20,  256(%r3)     # save F20
-    stfd    %f21,  264(%r3)     # save F21
-    stfd    %f22,  272(%r3)     # save F22
-    stfd    %f23,  280(%r3)     # save F23
-    stfd    %f24,  288(%r3)     # save F24
-    stfd    %f25,  296(%r3)     # save F25
-    stfd    %f26,  304(%r3)     # save F26
-    stfd    %f27,  312(%r3)     # save F27
-    stfd    %f28,  320(%r3)     # save F28
-    stfd    %f29,  328(%r3)     # save F29
-    stfd    %f30,  336(%r3)     # save F30
-    stfd    %f31,  344(%r3)     # save F31
-    mffs    %f0                 # load FPSCR
-    stfd    %f0,   352(%r3)     # save FPSCR
-
-
-    ld      %r13,  0(%r4)       # restore R13
-    ld      %r14,  8(%r4)       # restore R14
-    ld      %r15,  16(%r4)      # restore R15
-    ld      %r16,  24(%r4)      # restore R16
-    ld      %r17,  32(%r4)      # restore R17
-    ld      %r18,  40(%r4)      # restore R18
-    ld      %r19,  48(%r4)      # restore R19
-    ld      %r20,  56(%r4)      # restore R20
-    ld      %r21,  64(%r4)      # restore R21
-    ld      %r22,  72(%r4)      # restore R22
-    ld      %r23,  80(%r4)      # restore R23
-    ld      %r24,  88(%r4)      # restore R24
-    ld      %r25,  96(%r4)      # restore R25
-    ld      %r26,  104(%r4)     # restore R26
-    ld      %r27,  112(%r4)     # restore R27
-    ld      %r28,  120(%r4)     # restore R28
-    ld      %r29,  128(%r4)     # restore R29
-    ld      %r30,  136(%r4)     # restore r30
-    ld      %r31,  144(%r4)     # restore r31
-    ld      %r1,   152(%r4)     # restore SP
-
-    ld      %r0,   160(%r4)     # load CR
-    mtcr    %r0                 # restore CR
-    ld      %r0,   168(%r4)     # load LR
-    mtlr    %r0                 # restore LR
-
-    lfd     %f14,  208(%r4)     # restore F14
-    lfd     %f15,  216(%r4)     # restore F15
-    lfd     %f16,  224(%r4)     # restore F16
-    lfd     %f17,  232(%r4)     # restore F17
-    lfd     %f18,  240(%r4)     # restore F18
-    lfd     %f19,  248(%r4)     # restore F19
-    lfd     %f20,  256(%r4)     # restore F20
-    lfd     %f21,  264(%r4)     # restore F21
-    lfd     %f22,  272(%r4)     # restore F22
-    lfd     %f23,  280(%r4)     # restore F23
-    lfd     %f24,  288(%r4)     # restore F24
-    lfd     %f25,  296(%r4)     # restore F25
-    lfd     %f26,  304(%r4)     # restore F26
-    lfd     %f27,  312(%r4)     # restore F27
-    lfd     %f28,  320(%r4)     # restore F28
-    lfd     %f29,  328(%r4)     # restore F29
-    lfd     %f30,  336(%r4)     # restore F30
-    lfd     %f31,  344(%r4)     # restore F31
-    lfd     %f0,   352(%r4)     # load FPSCR
-    mtfsf   0xff,  %f0          # restore FPSCR
-
-    ld      %r0,   176(%r4)     # load PC
-    mr.     %r3,   %r15         # load void pointer as argument
-    mtctr   %r0                 # restore CTR
-
-    bctr                        # start to context
-.size .start_fcontext, .-.start_fcontext
-
-.section ".text"
-.align 2
 .globl jump_fcontext
 .section ".opd","aw"
 .align 3
@@ -311,6 +196,7 @@ jump_fcontext:
     mtfsf   0xff,  %f0          # restore FPSCR
 
     mr.     %r3,   %r5          # use third arg as return value after jump
+                                # and as first arg in context function
 
     ld      %r0,   176(%r4)     # load PC
     mtctr   %r0                 # restore CTR
