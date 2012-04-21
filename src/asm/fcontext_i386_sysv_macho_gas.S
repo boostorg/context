@@ -121,7 +121,7 @@ finish:
 3:  popl    %ebx                                    /* address of label 3 */
     addl    $_GLOBAL_OFFSET_TABLE_+[.-3b], %ebx     /* compute address of GOT and store it in EBX */
 
-    movl    %eax,           %eax
+    xorl    %eax,           %eax
     pushl   %eax                        /* exit code is zero */
     call   _exit@PLT                    /* exit application */
     hlt
