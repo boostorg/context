@@ -68,9 +68,9 @@ jump_fcontext:
 /*    fldcw    0x28(%ecx)  */           /* restore x87 control word */
 
     movl    0xc(%esp),   %eax       /* use third arg as return value after jump */
-    movl    %eax,        0x4(%esp)  /* use third arg as first arg in context function */
 
     movl    0x10(%ecx),  %esp       /* restore ESP */
+    movl    %eax,        0x4(%esp)  /* use third arg as first arg in context function */
     movl    0x14(%ecx),  %ecx       /* fetch the address to return to */
 
     jmp     *%ecx                   /* indirect jump to context */

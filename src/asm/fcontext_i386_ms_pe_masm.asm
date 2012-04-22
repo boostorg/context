@@ -106,9 +106,9 @@ jump_fcontext PROC EXPORT
 ;    fldcw   [ecx+030h]              ; restore x87 control word
 
     mov     eax,        [esp+0ch]   ; use third arg as return value after jump
-    mov     [esp+04h],  eax         ; use third arg as first arg in context function
 
     mov     esp,        [ecx+010h]  ; restore ESP
+    mov     [esp+04h],  eax         ; use third arg as first arg in context function
     mov     ecx,        [ecx+014h]  ; fetch the address to return to
 
     jmp     ecx                     ; indirect jump to context
