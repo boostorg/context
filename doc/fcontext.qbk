@@ -8,9 +8,9 @@
 [section:context Context]
 
 Each instance of __fcontext__ represents a context (CPU registers and stack
-space). Together with its related functions __start_fcontext__,
-__jump_fcontext__ and __make_fcontext__ it provides a execution control transfer
-mechanism similar interface like
+space). Together with its related functions __jump_fcontext__ and
+__make_fcontext__ it provides a execution control transfer mechanism similar
+interface like
 [@http://www.kernel.org/doc/man-pages/online/pages/man2/getcontext.2.html ucontext_t].
 __fcontext__ and its functions are located in __context_ns__ and the functions
 are declared as extern "C". 
@@ -47,14 +47,13 @@ intptr_t as argument) must be initialized by function __make_fcontext__.
 __fcontext__ requires a pointer to the top of the stack (__fc_base__) as well
 as a pointer to the lower bound of the stack (__fc_limit__).
 
-Calling __start_fcontext__ invokes the __context_fn__ in a newly created context
+Calling __jump_fcontext__ invokes the __context_fn__ in a newly created context
 complete with registers, flags, stack and instruction pointers.  When control
 should be returned to the original calling context, call __jump_fcontext__.
 The current context information (registers, flags, and stack and instruction
 pointers) is saved and the original context information is restored. Calling
 __jump_fcontext__ again resumes execution in the second context after saving the
 new state of the original context.
-Note that __start_fcontext__ must be called first and only once.
 
         namespace ctx = boost::ctx;
 
@@ -89,10 +88,10 @@ Note that __start_fcontext__ must be called first and only once.
                 fc2.fc_stack.base = alloc2.allocate(ctx::minimum_stacksize());
                 fc2.fc_stack.limit =
                     static_cast< char * >( fc2.fc_stack.base) - ctx::minimum_stacksize();
-                ctx::make_fcontext( & fc2, f2, 0);
+                ctx::make_fcontext( & fc2, f2);
 
-                std::cout << "main: call start_fcontext( & fcm, & fc1)" << std::endl;
-                ctx::start_fcontext( & fcm, & fc1);
+                std::cout << "main: call jump_fcontext( & fcm, & fc1, 0)" << std::endl;
+                ctx::jump_fcontext( & fcm, & fc1, 0);
 
                 std::cout << "main: done" << std::endl;
 
@@ -100,20 +99,19 @@ Note that __start_fcontext__ must be called first and only once.
         }
 
         output:
-            main: call start_fcontext( & fcm, & fc1)
+            main: call jump_fcontext( & fcm, & fc1, 0)
             f1: entered
-            f1: call jump_fcontext( & fc1, & fc2)
+            f1: call jump_fcontext( & fc1, & fc2, 0)
             f2: entered
-            f2: call jump_fcontext( & fc2, & fc1)
+            f2: call jump_fcontext( & fc2, & fc1, 0)
             f1: return
             main: done
 
-Function `start_fcontext()` enters the __context_fn__ `f1()` by starting
+First call of __jump_fcontext__ enters the __context_fn__ `f1()` by starting
 context fc1 (context fcm saves the registers of `main()`). For jumping between
 context's fc1 and fc2 `jump_fcontext()` is called.
 Because context fcm is chained to fc1, `main()` is entered (returning from
-`start_fcontext()`) after context fc1 becomes complete (return from
-`f1()`).
+__jump_fcontext__) after context fc1 becomes complete (return from `f1()`).
 
 [warning Calling __jump_fcontext__ to the same context from inside the same
 context results in undefined behaviour.]
@@ -125,13 +123,12 @@ involved in the context switches.]
 
 [heading Transfer of data]
 
-The argument passed to __jump_fcontext__, in one context, is returned by
-__jump_fcontext__ in the other context.  The intptr_t passed to
-__jump_fcontext__, in one context, is returned by __jump_fcontext__ (or
-__start_fcontext__, depending upon which function was called previously) in the
+The third argument passed to __jump_fcontext__, in one context, is passed as
+the first argument of the __context_fn__ if the context is started for the
+first time.
+In all following invocations of __jump_fcontext__ the intptr_t passed to
+__jump_fcontext__, in one context, is returned by __jump_fcontext__ in the
 other context. 
-__start_fcontext__ has no data argument because it enters the start of the function,
-and there is no previous call to __jump_fcontext__ to return a value.
 
         namespace ctx = boost::ctx;
 
@@ -157,9 +154,9 @@ and there is no previous call to __jump_fcontext__ to return a value.
                 static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
             fc1.fc_link = & fcm;
             pair_t p( std::make_pair( 2, 7) );
-            ctx::make_fcontext( & fc1, f1, ( intptr_t) & p);
+            ctx::make_fcontext( & fc1, f1);
             
-            int res = ( int) ctx::start_fcontext( & fcm, & fc1);
+            int res = ( int) ctx::jump_fcontext( & fcm, & fc1, ( intptr_t) & p);
             std::cout << p.first << " + " << p.second << " == " << res << std::endl;
             
             p = std::make_pair( 5, 6);
@@ -182,72 +179,6 @@ and there is no previous call to __jump_fcontext__ to return a value.
 If the __context_fn__ emits an exception, the application will terminate.
 
 
-[heading Chaining contexts]
-
-__boost_context__ provides the ability to chain context instances by passing
-a pointer to another context to __fc_link__.
-In this way, it is possible to create a chain of contexts.
-
-        namespace ctx = boost::ctx;
-
-        ctx::fcontext_t fc1, fc2;
-
-        void f1( intptr_t)
-        {
-                std::cout << "f1: entered" << std::endl;
-                std::cout << "f1: call jump_fcontext( & fc1, & fc2)" << std::endl;
-                ctx::jump_fcontext( & fc1, & fc2, 0);
-                std::cout << "f1: return" << std::endl;
-                // implizit jump back to fcm -> main()
-        }
-
-        void f2( intptr_t)
-        {
-                std::cout << "f2: entered" << std::endl;
-                std::cout << "f2: call jump_fcontext( & fc2, & fc1)" << std::endl;
-                ctx::jump_fcontext( & fc2, & fc1, 0);
-                BOOST_ASSERT( false && ! "f2: never returns");
-        }
-
-        int main( int argc, char * argv[])
-        {
-                ctx::fcontext_t fcm;
-                ctx::stack_allocator alloc;
-
-                fc1.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
-                fc1.fc_stack.limit =
-                    static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-                // chain fc1 and fcm
-                fc1.fc_link = & fcm;
-                ctx::make_fcontext( & fc1, f1, 0);
-
-                fc2.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
-                fc2.fc_stack.limit =
-                    static_cast< char * >( fc2.fc_stack.base) - ctx::minimum_stacksize();
-                ctx::make_fcontext( & fc2, f2, 0);
-
-                std::cout << "main: call start_fcontext( & fcm, & fc1)" << std::endl;
-                ctx::start_fcontext( & fcm, & fc1);
-
-                std::cout << "main: done" << std::endl;
-
-                return EXIT_SUCCESS;
-        }
-
-        output:
-            main: call start_fcontext( & fcm, & fc1)
-            f1: entered
-            f1: call jump_fcontext( & fc1, & fc2)
-            f2: entered
-            f2: call jump_fcontext( & fc2, & fc1)
-            f1: return
-            main: done
-
-Because context fcm is chained to fc1, `main()` is entered (returning from
-`start_fcontext()`) after context fc1 becomes complete (return from
-`f1()`).
-
-
 [heading Stack unwinding]
 
 Sometimes it is necessary to unwind the stack of an unfinished context to
@@ -257,23 +188,19 @@ pattern). The user is responsible for this task.
 
 [section:boost_fcontext Struct `fcontext_t` and related functions]
 
-        typedef struct boost_fcontext_stack boost_fcontext_stack_t;
-        struct boost_fcontext_stack
+        struct stack_t
         {
             void    *   base;
             void    *   limit;
         };
 
-        typedef struct boost_fcontext fcontext_t;
-        struct boost_fcontext
+        struct fcontext_t
         {
             < platform specific >
 
-            boost_fcontext_stack_t  fc_stack;
-            fcontext_t     *  fc_link;
+            stack_t  fc_stack;
         };
 
-        intptr_t start_fcontext( fcontext_t * ofc, fcontext_t const* nfc);
         intptr_t jump_fcontext( fcontext_t * ofc, fcontext_t const* nfc, intptr_t vp);
         void make_fcontext( fcontext_t * fc, void(* fn)(void*), intptr_t p);
 
@@ -297,35 +224,22 @@ pattern). The user is responsible for this task.
 [[Member:] [The address of the next context link in a chain, if any.]]
 ]
 
-[heading `intptr_t start_fcontext( fcontext_t * ofc,
-		fcontext_t * nfc)`]
-[variablelist
-[[Effects:] [Stores the current context data (stack pointer, instruction
-pointer, and CPU registers) to `*ofc` and restores the context data from `*nfc`,
-which implies jumping to `*nfc`'s execution context. This function must be
-called when first entering `*nfc`'s execution context.]]
-[[Returns:] [The result of calling `jump_fcontext()`.]]
-]
-
 [heading `intptr_t jump_fcontext( fcontext_t * ofc, fcontext_t * nfc, intptr_t p)`]
 [variablelist
 [[Effects:] [Stores the current context data (stack pointer, instruction
 pointer, and CPU registers) to `*ofc` and restores the context data from `*nfc`,
 which implies jumping to `*nfc`'s execution context. The intptr_t argument, `p`,
 is passed to the current context to be returned by the most recent call to
-`start_fcontext()` or `jump_fcontext()` in the same thread.]]
+`jump_fcontext()` in the same thread.]]
 [[Returns:] [The third pointer argument passed to the most recent call to
 `jump_fcontext()`, if any.]]
 ]
 
-[heading `void make_fcontext( fcontext_t * fc, void(*fn)(intptr_t), intptr_t p)`]
+[heading `void make_fcontext( fcontext_t * fc, void(*fn)(intptr_t))`]
 [variablelist
-[[Precondition:] [A stack is applied to `*fc` before
-`make_fcontext()` is called. If a successor context should be executed
-after `*fc` finishes the address of the successor context must be stored ir
-`fc->fc_link`. The application exits otherwise.]]
-[[Effects:] [Modifies `*fc` in order to execute `fn` with argument `p` when the
-context is activated next.]]
+[[Precondition:] [A stack is applied to `*fc` before `make_fcontext()` is called.]]
+[[Effects:] [Modifies `*fc` in order to execute `fn` when the context is
+activated next.]]
 ]
 
 [endsect]

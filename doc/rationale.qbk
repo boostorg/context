@@ -103,8 +103,8 @@ by any procedure that needs to modify them ..."
 [footnote [@boost:/libs/context/doc/pdf/calling-conventions.pdf 'Calling Conventions',
 Agner Fog]].
 
-Conclusion: because caller as well as callee preserve FpCsr and MxCsr __start_fcontext__
-and __jump_fcontext__ are not required to preserve FpCsr and MxCsr.
+Conclusion: because caller as well as callee preserve FpCsr and MxCsr
+__jump_fcontext__ is not required to preserve FpCsr and MxCsr.
 
 
 [heading x86_64]
@@ -123,8 +123,8 @@ fields must restore them to their standard values before invoking a callee ..."
 [footnote [@http://http://msdn.microsoft.com/en-us/library/ms235300.aspx MSDN article
 'FpCsr']].
 
-Conclusion: because caller as well as callee preserve FpCsr and MxCsr __start_fcontext__
-and __jump_fcontext__ are not required to preserve FpCsr and MxCsr.
+Conclusion: because caller as well as callee preserve FpCsr and MxCsr
+__jump_fcontext__ are not required to preserve FpCsr and MxCsr.
 
 "The MMX and floating-point stack registers (MM0-MM7/ST0-ST7) are preserved across
 context switches. There is no explicit calling convention for these registers."

@@ -53,7 +53,6 @@
 [def __fc_base__ ['fc_base]]
 [def __fc_limit__ ['fc_limit]]
 [def __fc_link__ ['fc_link]]
-[def __start_fcontext__ ['start_fcontext()]]
 [def __jump_fcontext__ ['jump_fcontext()]]
 [def __make_fcontext__ ['make_fcontext()]]
 [def __invalid_argument__ ['std::invalid_argument]]
