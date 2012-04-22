@@ -88,7 +88,6 @@ _jump_fcontext:
 _make_fcontext:
     movq   %rdi,                 (%rdi)     /* save the address of current context */
     movq   %rsi,                 0x38(%rdi) /* save the address of the function supposed to run */
-    movq   %rdx,                 0x10(%rdi) /* save the the void pointer */
     movq   0x40(%rdi),           %rdx       /* load the stack base */
 
     pushq  %rdi                             /* save pointer to fcontext_t */
@@ -99,8 +98,7 @@ _make_fcontext:
 
     leaq   -0x8(%rdx),           %rdx       /* reserve space for the last frame on stack, (RSP + 8) % 16 == 0 */
     movq   %rdx,                 0x30(%rdi) /* save the address */
-    movq   0x50(%rdi),           %rcx       /* load the address of the next context */
-    movq   %rcx,                 0x8(%rdi)  /* save the address of next context */
+
     stmxcsr  0x58(%rdi)                     /* save MMX control and status word */
     fnstcw   0x5c(%rdi)                     /* save x87 control word */
 

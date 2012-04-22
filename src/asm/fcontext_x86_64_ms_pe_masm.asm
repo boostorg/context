@@ -118,15 +118,15 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     fnstcw  [rcx+074h]              ; save x87 control word
 	mov	    r10,         [rcx+078h] ; address of aligned XMM storage
     movaps  [r10],       xmm6
-;    movaps  [r10+010h],  xmm7
-;    movaps  [r10+020h],  xmm8
-;    movaps  [r10+030h],  xmm9
-;    movaps  [r10+040h],  xmm10
-;    movaps  [r10+050h],  xmm11
-;    movaps  [r10+060h],  xmm12
-;    movaps  [r10+070h],  xmm13
-;    movaps  [r10+080h],  xmm14
-;    movaps  [r10+090h],  xmm15
+    movaps  [r10+010h],  xmm7
+    movaps  [r10+020h],  xmm8
+    movaps  [r10+030h],  xmm9
+    movaps  [r10+040h],  xmm10
+    movaps  [r10+050h],  xmm11
+    movaps  [r10+060h],  xmm12
+    movaps  [r10+070h],  xmm13
+    movaps  [r10+080h],  xmm14
+    movaps  [r10+090h],  xmm15
 
     lea     rax,         [rsp+08h]  ; exclude the return address
     mov     [rcx+040h],  rax        ; save as stack pointer
@@ -154,15 +154,15 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     fldcw   [rdx+074h]              ; restore x87 control word
 	mov	    r10,         [rdx+078h] ; address of aligned XMM storage
     movaps  xmm6,        [r10]
-;    movaps  xmm7,        [r10+010h]
-;    movaps  xmm8,        [r10+020h]
-;    movaps  xmm9,        [r10+030h]
-;    movaps  xmm10,       [r10+040h]
-;    movaps  xmm11,       [r10+050h]
-;    movaps  xmm12,       [r10+060h]
-;    movaps  xmm13,       [r10+070h]
-;    movaps  xmm14,       [r10+080h]
-;    movaps  xmm15,       [r10+090h]
+    movaps  xmm7,        [r10+010h]
+    movaps  xmm8,        [r10+020h]
+    movaps  xmm9,        [r10+030h]
+    movaps  xmm10,       [r10+040h]
+    movaps  xmm11,       [r10+050h]
+    movaps  xmm12,       [r10+060h]
+    movaps  xmm13,       [r10+070h]
+    movaps  xmm14,       [r10+080h]
+    movaps  xmm15,       [r10+090h]
 
     mov     rsp,        [rdx+040h]  ; restore RSP
     mov     r10,        [rdx+048h]  ; fetch the address to returned to
@@ -173,12 +173,11 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     jmp     r10                     ; indirect jump to caller
 jump_fcontext ENDP
 
-make_fcontext PROC EXPORT FRAME ; generate function table entry in .pdata and unwind information in    E
-    .endprolog                        ; .xdata for a function's structured exception handling unwind behavior
+make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and unwind information in    E
+    .endprolog                   ; .xdata for a function's structured exception handling unwind behavior
 
     mov  [rcx],      rcx         ; store the address of current context
     mov  [rcx+048h], rdx         ; save the address of the function supposed to run
-    mov  [rcx+010h], r8          ; save the the void pointer
     mov  rdx,        [rcx+050h]  ; load the address where the context stack beginns
 
     push  rcx                    ; save pointer to fcontext_t
@@ -193,8 +192,6 @@ make_fcontext PROC EXPORT FRAME ; generate function table entry in .pdata and un
     lea  rdx,        [rdx-028h]  ; reserve 32byte shadow space + return address on stack, (RSP + 8) % 16 == 0
     mov  [rcx+040h], rdx         ; save the address where the context stack beginns
 
-    mov  rax,       [rcx+060h]   ; load the address of the next context
-    mov  [rcx+08h], rax          ; save the address of next context
     stmxcsr [rcx+070h]           ; save MMX control and status word
     fnstcw  [rcx+074h]           ; save x87 control word
 

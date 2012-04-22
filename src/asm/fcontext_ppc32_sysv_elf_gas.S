@@ -189,8 +189,7 @@ jump_fcontext:
 .type make_fcontext,@function
 make_fcontext:
     stw     %r3, 0(%r3)         # save the current context
-    stw     %r4, 88(%r3)        # save the address of the function supposed to to be run
-    stw     %r5, 8(%r3)         # save void pointer
+    stw     %r4, 88(%r3)        # save the address of the context function
     lwz     %r0, 92(%r3)        # load the stack base
 
     li      %r4, 28
@@ -208,21 +207,20 @@ make_fcontext:
 
     li      %r4, 32
     subf    %r0, %r4, %r0       # 32 bytes on stack for parameter area(== 8 registers)
-    stw     %r0, 76(%r3)        # save the stack base
-    lwz     %r0, 100(%r3)       # load address of next user context
-    stw     %r0, 4(%r3)         # save the next context
+    stw     %r0, 76(%r3)        # save the aligned stack base
+
     mflr    %r0                 # load LR
     bl      1f                  # jump to label 1
 1:
     mflr    %r4                 # load LR
-    addi    %r4, %r4, finish - 1b    # calulate absolute address of finish
+    addi    %r4, %r4, finish - 1b    # address of finish; called after context function returns
     mtlr    %r0                 # restore LR
-    stw     %r4, 84(%r3)        # save address of finish
+    stw     %r4, 84(%r3)
 
-    li      %r3,  0             # set return value to zero
+    li      %r3,  0
     blr
 
 finish:
-    li      %r3,  0             # set return value to zero
+    li      %r3,  0             # exit code is zero
     bl      _exit@plt           # exit application
 .size make_fcontext, .-make_fcontext

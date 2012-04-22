@@ -116,9 +116,9 @@ jump_fcontext ENDP
 
 make_fcontext PROC EXPORT
     mov  eax,         [esp+04h]     ; load address of the fcontext_t arg0
-    mov  [eax],       eax           ; save the address of current context
-    mov  ecx,         [esp+08h]     ; load the address of the function supposed to run
-    mov  [eax+014h],  ecx           ; save the address of the function supposed to run
+    mov  [eax],       eax           ; save the address of passed context
+    mov  ecx,         [esp+08h]     ; load the address of the context function
+    mov  [eax+014h],  ecx           ; save the address of the context function
     mov  edx,         [eax+018h]    ; load the stack base
 
     push  eax                       ; save pointer to fcontext_t
@@ -129,7 +129,7 @@ make_fcontext PROC EXPORT
     pop   eax                       ; restore pointer to fcontext_t
 
     lea  edx,         [edx-014h]    ; reserve space for last frame on stack, (ESP + 4) % 16 == 0
-    mov  [eax+010h],  edx           ; save the address
+    mov  [eax+010h],  edx           ; save the aligned stack
 
     mov  ecx,         seh_fcontext  ; set ECX to exception-handler
     mov  [edx+0ch],   ecx           ; save ECX as SEH handler
@@ -138,22 +138,17 @@ make_fcontext PROC EXPORT
     lea  ecx,         [edx+08h]     ; load address of next SEH item
     mov  [eax+02ch],  ecx           ; save next SEH
 
-    mov  ecx,         [eax+020h]    ; load the address of the next context
-    mov  [eax+04h],   ecx           ; save the address of the next context
-    mov  ecx,         [esp+0ch]     ; load the address of the void pointer arg2
-    mov  [edx+04h],   ecx           ; save the address of the void pointer onto the context stack
-
 ;    stmxcsr [eax+02ch]              ; save MMX control word
 ;    fnstcw  [eax+030h]              ; save x87 control word
 
-    mov  ecx,         finish        ; helper code executed after context function returns
+    mov  ecx,         finish        ; address of finish
     mov  [edx],       ecx
 
-    xor  eax,         eax           ; set EAX to zero
+    xor  eax,         eax
     ret
 
 finish:
-    xor   eax,        eax           ; set EAX to zero
+    xor   eax,        eax
     push  eax                       ; exit code is zero
     call  _exit                     ; exit application
     hlt

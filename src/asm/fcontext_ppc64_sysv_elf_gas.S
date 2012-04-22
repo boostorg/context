@@ -218,7 +218,6 @@ make_fcontext:
 .make_fcontext:
     std     %r3, 0(%r3)         # save the current context
     std     %r4, 176(%r3)       # save the address of the function supposed to be run
-    std     %r5, 16(%r3)        # save void pointer
     ld      %r0, 184(%r3)       # load the stack base
 
     li      %r4, 56
@@ -237,8 +236,7 @@ make_fcontext:
     li      %r4, 64
     subf    %r0, %r4, %r0       # 64 bytes on stack for parameter area (== 8 registers)
     std     %r0, 152(%r3)       # save the stack base
-    ld      %r0, 200(%r3)       # load address of next user context
-    std     %r0, 8(%r3)         # save the next context
+
     mflr    %r0                 # load LR
     bl      1f                  # jump to label 1
 1:

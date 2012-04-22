@@ -89,9 +89,8 @@ jump_fcontext:
 .type make_fcontext,@function
 .align 16
 make_fcontext:
-    movq   %rdi,                 (%rdi)     /* save the address of current context */
-    movq   %rsi,                 0x38(%rdi) /* save the address of the function supposed to run */
-    movq   %rdx,                 0x10(%rdi) /* save the the void pointer */
+    movq   %rdi,                 (%rdi)     /* save the address of passed context */
+    movq   %rsi,                 0x38(%rdi) /* save the address of the context function */
     movq   0x40(%rdi),           %rdx       /* load the stack base */
 
     pushq  %rdi                             /* save pointer to fcontext_t */
@@ -100,17 +99,16 @@ make_fcontext:
     movq   %rax,                 %rdx       /* begin of aligned stack */
     popq   %rdi                             /* restore pointer to fcontext_t */
 
-    leaq   -0x8(%rdx),           %rdx       /* reserve space for the last frame on stack, (RSP + 8) % 16 == 0 */
-    movq   %rdx,                 0x30(%rdi) /* save the address */
-    movq   0x50(%rdi),           %rcx       /* load the address of the next context */
-    movq   %rcx,                 0x8(%rdi)  /* save the address of next context */
+    leaq   -0x8(%rdx),           %rdx       /* reserve space for the last frame on stack, (RSP + 8) & 15 == 0 */
+    movq   %rdx,                 0x30(%rdi) /* save the algined stack base */
+
     stmxcsr  0x58(%rdi)                     /* save MMX control and status word */
     fnstcw   0x5c(%rdi)                     /* save x87 control word */
 
-    leaq   finish(%rip),         %rcx       /* helper code executed after context function returns */
+    leaq   finish(%rip),         %rcx       /* address of finish; called after context function returns */
     movq   %rcx,                 (%rdx)
 
-    xorq   %rax,                 %rax       /* set RAX to zero */
+    xorq   %rax,                 %rax
     ret
 
 finish:

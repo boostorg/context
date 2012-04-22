@@ -65,7 +65,7 @@ cycle_t test_ucontext( cycle_t ov)
         static_cast< char * >( alloc.allocate(ctx::default_stacksize() ) )
         - ctx::default_stacksize();
     uc.uc_stack.ss_size = ctx::default_stacksize();
-    ::makecontext( & uc, f2, 0);
+    ::makecontext( & uc, f2, 7);
 
     // cache warum-up
 BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_UCONTEXT, ~)
@@ -89,7 +89,7 @@ cycle_t test_fcontext( cycle_t ov)
     fc.fc_stack.base = alloc.allocate(ctx::default_stacksize());
     fc.fc_stack.limit =
         static_cast< char * >( fc.fc_stack.base) - ctx::default_stacksize();
-	ctx::make_fcontext( & fc, f1, 7);
+	ctx::make_fcontext( & fc, f1);
 
     ctx::jump_fcontext( & fcm, & fc, 7, preserve_fpu);
 

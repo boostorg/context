@@ -80,15 +80,15 @@ _jump_fcontext:
 _make_fcontext:
     movl   0x4(%esp),      %eax         /* load address of the fcontext_t */
     movl   %eax,           (%eax)       /* save the address of current context */
-    movl   0x8(%esp),      %ecx         /* load the address of the function supposed to run */
-    movl   %ecx,           0x14(%eax)   /* save the address of the function supposed to run */
+    movl   0x8(%esp),      %ecx         /* load the address of the context function */
+    movl   %ecx,           0x14(%eax)   /* save the address of the context function */
     movl   0x18(%eax),     %edx         /* load the stack base */
 
     pushl  %eax                         /* save pointer to fcontext_t */
     pushl  %ebx                         /* save EBX */
     pushl  %edx                         /* stack pointer as arg for align_stack */
     call   1f
-1:  popl   %ebx                                    /* address of label 1 */
+1:  popl   %ebx                         /* address of label 1 */
     addl   $_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx     /* compute address of GOT and store it in EBX */
     call   align_stack@PLT              /* align stack */
     movl   %eax,           %edx         /* begin of aligned stack */
@@ -97,21 +97,17 @@ _make_fcontext:
     popl   %eax                         /* restore pointer to fcontext_t */
 
     leal   -0x14(%edx),    %edx         /* reserve space for the last frame on stack, (ESP + 4) % 16 == 0 */
-    movl   %edx,           0x10(%eax)   /* save the address as stack pointer */
-    movl   0x20(%eax),     %ecx         /* load the address of the next context */
-    movl   %ecx,           0x4(%eax)    /* save the address of the next context */
-    movl   0xc(%esp),      %ecx         /* load the address of the void pointer */
-    movl   %ecx,           0x4(%edx)    /* save the address of the void pointer */
+    movl   %edx,           0x10(%eax)   /* save the aligned stack base */
 
 ;    stmxcsr  0x24(%eax)                 /* save MMX control and status word */
 ;    fnstcw   0x30(%eax)                 /* save x87 control word */
 
     call    2f
-2:  popl    %ecx                        /* address of label 1 */
-    addl    $finish-2b, %ecx            /* compute address of label finish */
-    movl    %ecx, (%edx)                /* store address of finish as return address on stack */
+2:  popl    %ecx                        /* address of label 2 */
+    addl    $finish-2b, %ecx            /* helper code executed after context function returns */
+    movl    %ecx, (%edx)
 
-    xorl   %eax,            %eax        /* set EAX to zero */
+    xorl   %eax,            %eax
     ret
 
 finish:

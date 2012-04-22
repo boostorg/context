@@ -119,8 +119,7 @@ make_fcontext:
 #endif
     sw      $a0, ($a0)          # save the current context
     sw      $gp, 24($a0)        # save global pointer
-    sw      $a1, 96($a0)        # save the address of the function supposed to be run
-    sw      $a2, 16($a0)        # save void pointer
+    sw      $a1, 96($a0)        # save the address of the context function
     lw      $t0, 104($a0)       # load the stack base
 
     sub     $sp, $sp, 28
@@ -136,19 +135,17 @@ make_fcontext:
     addi    $sp, $sp, 28
 
     sub     $t0, $t0, 16        # reserve 16 byte of argument space
-    sw      $t0, 72($a0)        # save the stack base
-    lw      $t0, 120($a0)       # load address of next user context
-    sw      $t0, 8($a0)         # save the next context
+    sw      $t0, 72($a0)        # save the algned stack base
 
-    la      $t9, finish         # get address of finish
-    sw      $t9, 88($a0)        # save address of finish
+    la      $t9, finish         # helper code executed after context function returns
+    sw      $t9, 88($a0)
 
     move    $v0, $zero
     jr      $ra
 
 finish:
     move    $gp, $s3            # restore GP (global pointer)
-    move    $a0, $zero
+    move    $a0, $zero          # exit code is zero
     lw      $t9, %call16(_exit)($gp)  # exit application
     jalr    $t9
 .end make_fcontext

@@ -82,7 +82,7 @@ void test_start()
 
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-    ctx::make_fcontext( & fc1, f1, 0);
+    ctx::make_fcontext( & fc1, f1);
 
     BOOST_CHECK_EQUAL( 0, value1);
     ctx::jump_fcontext( & fcm, & fc1, 0);
@@ -97,7 +97,7 @@ void test_jump()
 
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-    ctx::make_fcontext( & fc1, f3, 0);
+    ctx::make_fcontext( & fc1, f3);
 
     BOOST_CHECK_EQUAL( 0, value1);
     ctx::jump_fcontext( & fcm, & fc1, 0);
@@ -112,7 +112,7 @@ void test_result()
 
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-    ctx::make_fcontext( & fc1, f4, 0);
+    ctx::make_fcontext( & fc1, f4);
 
     int result = ( int) ctx::jump_fcontext( & fcm, & fc1, 0);
     BOOST_CHECK_EQUAL( 7, result);
@@ -125,7 +125,7 @@ void test_arg()
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
     int i = 7;
-    ctx::make_fcontext( & fc1, f5, i);
+    ctx::make_fcontext( & fc1, f5);
 
     int result = ( int) ctx::jump_fcontext( & fcm, & fc1, i);
     BOOST_CHECK_EQUAL( i, result);
@@ -138,7 +138,7 @@ void test_transfer()
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
     std::pair< int, int > data = std::make_pair( 3, 7);
-    ctx::make_fcontext( & fc1, f6, ( intptr_t) & data);
+    ctx::make_fcontext( & fc1, f6);
 
     int result = ( int) ctx::jump_fcontext( & fcm, & fc1, ( intptr_t) & data);
     BOOST_CHECK_EQUAL( 10, result);
@@ -154,7 +154,7 @@ void test_exception()
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
     char * what = "hello world";
-    ctx::make_fcontext( & fc1, f7, ( intptr_t) what);
+    ctx::make_fcontext( & fc1, f7);
 
     ctx::jump_fcontext( & fcm, & fc1, ( intptr_t) what);
     BOOST_CHECK_EQUAL( std::string( what), value2);
@@ -167,7 +167,7 @@ void test_fp()
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
     double d = 7.13;
-    ctx::make_fcontext( & fc1, f8, ( intptr_t) & d);
+    ctx::make_fcontext( & fc1, f8);
 
     ctx::jump_fcontext( & fcm, & fc1, (intptr_t) & d);
     BOOST_CHECK_EQUAL( 10.58, value3);
