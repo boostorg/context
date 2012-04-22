@@ -16,6 +16,9 @@
 
 #include <boost/context/detail/config.hpp>
 
+#pragma warning(push)
+#pragma warning(disable:4351)
+
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_PREFIX
 #endif
@@ -72,5 +75,7 @@ struct fcontext_t
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX
 #endif
+
+#pragma warning(pop)
 
 #endif // BOOST_CTX_DETAIL_FCONTEXT_I386_H
