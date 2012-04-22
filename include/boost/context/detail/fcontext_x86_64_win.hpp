@@ -7,11 +7,20 @@
 #ifndef BOOST_CTX_DETAIL_FCONTEXT_X86_64_H
 #define BOOST_CTX_DETAIL_FCONTEXT_X86_64_H
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+# pragma once
+#endif
+
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/cstdint.hpp>
 
 #include <boost/context/detail/config.hpp>
+
+#ifdef BOOST_MSVC
+# pragma warning(push)
+# pragma warning(disable:4351)
+#endif
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_PREFIX
@@ -74,6 +83,10 @@ struct fcontext_t
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX
+#endif
+
+#ifdef BOOST_MSVC
+# pragma warning(pop)
 #endif
 
 #endif // BOOST_CTX_DETAIL_FCONTEXT_X86_64_H

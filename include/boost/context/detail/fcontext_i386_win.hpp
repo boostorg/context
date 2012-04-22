@@ -7,6 +7,10 @@
 #ifndef BOOST_CTX_DETAIL_FCONTEXT_I386H
 #define BOOST_CTX_DETAIL_FCONTEXT_I386H
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+# pragma once
+#endif
+
 #include <boost/config.hpp>
 #include <boost/cstdint.hpp>
 
