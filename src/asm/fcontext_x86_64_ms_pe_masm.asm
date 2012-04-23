@@ -107,6 +107,9 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     mov     rax,         [r10+018h] ; load fiber local storage
     mov     [rcx+060h],  rax        ; save fiber local storage
 
+    cmp     r9,          0
+    je      1f
+
     stmxcsr [rcx+068h]              ; save MMX control and status word
     fnstcw  [rcx+06ch]              ; save x87 control word
 	mov	    r10,         [rcx+070h] ; address of aligned XMM storage
@@ -120,6 +123,21 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     movaps  [r10+070h],  xmm13
     movaps  [r10+080h],  xmm14
     movaps  [r10+090h],  xmm15
+
+    ldmxcsr [rdx+068h]              ; restore MMX control and status word
+    fldcw   [rdx+06ch]              ; restore x87 control word
+	mov	    r10,         [rdx+070h] ; address of aligned XMM storage
+    movaps  xmm6,        [r10]
+    movaps  xmm7,        [r10+010h]
+    movaps  xmm8,        [r10+020h]
+    movaps  xmm9,        [r10+030h]
+    movaps  xmm10,       [r10+040h]
+    movaps  xmm11,       [r10+050h]
+    movaps  xmm12,       [r10+060h]
+    movaps  xmm13,       [r10+070h]
+    movaps  xmm14,       [r10+080h]
+    movaps  xmm15,       [r10+090h]
+1:
 
     lea     rax,         [rsp+08h]  ; exclude the return address
     mov     [rcx+040h],  rax        ; save as stack pointer
@@ -142,20 +160,6 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     mov     [r10+010h], rax         ; restore stack limit
     mov     rax,        [rdx+060h]  ; load fiber local storage
     mov     [r10+018h], rax         ; restore fiber local storage
-
-    ldmxcsr [rdx+068h]              ; restore MMX control and status word
-    fldcw   [rdx+06ch]              ; restore x87 control word
-	mov	    r10,         [rdx+070h] ; address of aligned XMM storage
-    movaps  xmm6,        [r10]
-    movaps  xmm7,        [r10+010h]
-    movaps  xmm8,        [r10+020h]
-    movaps  xmm9,        [r10+030h]
-    movaps  xmm10,       [r10+040h]
-    movaps  xmm11,       [r10+050h]
-    movaps  xmm12,       [r10+060h]
-    movaps  xmm13,       [r10+070h]
-    movaps  xmm14,       [r10+080h]
-    movaps  xmm15,       [r10+090h]
 
     mov     rsp,        [rdx+040h]  ; restore RSP
     mov     r10,        [rdx+048h]  ; fetch the address to returned to

@@ -98,6 +98,9 @@ jump_fcontext:
     stw     %r0,   84(%r3)      # save LR
     stw     %r0,   88(%r3)      # save LR as PC
 
+    cmpwi   cr7,   r6,   0      # test if fpu env should be preserved
+    beq     cr7,   1f
+
     stfd    %f14,  100(%r3)     # save F14
     stfd    %f15,  108(%r3)     # save F15
     stfd    %f16,  116(%r3)     # save F16
@@ -119,6 +122,27 @@ jump_fcontext:
     mffs    %f0                 # load FPSCR
     stfd    %f0,   244(%r3)     # save FPSCR
 
+    lfd     %f14,  100(%r4)     # restore F14
+    lfd     %f15,  108(%r4)     # restore F15
+    lfd     %f16,  116(%r4)     # restore F16
+    lfd     %f17,  124(%r4)     # restore F17
+    lfd     %f18,  132(%r4)     # restore F18
+    lfd     %f19,  140(%r4)     # restore F19
+    lfd     %f20,  148(%r4)     # restore F20
+    lfd     %f21,  156(%r4)     # restore F21
+    lfd     %f22,  164(%r4)     # restore F22
+    lfd     %f23,  172(%r4)     # restore F23
+    lfd     %f24,  180(%r4)     # restore F24
+    lfd     %f25,  188(%r4)     # restore F25
+    lfd     %f26,  196(%r4)     # restore F26
+    lfd     %f27,  204(%r4)     # restore F27
+    lfd     %f28,  212(%r4)     # restore F28
+    lfd     %f29,  220(%r4)     # restore F29
+    lfd     %f30,  228(%r4)     # restore F30
+    lfd     %f31,  236(%r4)     # restore F31
+    lfd     %f0,   244(%r4)     # load FPSCR
+    mtfsf   0xff,  %f0          # restore FPSCR
+1:
 
     lwz     %r13,  0(%r4)       # restore R13
     lwz     %r14,  4(%r4)       # restore R14
@@ -145,27 +169,6 @@ jump_fcontext:
     mtcr    %r0                 # restore CR
     lwz     %r0,   84(%r4)      # load LR
     mtlr    %r0                 # restore LR
-
-    lfd     %f14,  100(%r4)     # restore F14
-    lfd     %f15,  108(%r4)     # restore F15
-    lfd     %f16,  116(%r4)     # restore F16
-    lfd     %f17,  124(%r4)     # restore F17
-    lfd     %f18,  132(%r4)     # restore F18
-    lfd     %f19,  140(%r4)     # restore F19
-    lfd     %f20,  148(%r4)     # restore F20
-    lfd     %f21,  156(%r4)     # restore F21
-    lfd     %f22,  164(%r4)     # restore F22
-    lfd     %f23,  172(%r4)     # restore F23
-    lfd     %f24,  180(%r4)     # restore F24
-    lfd     %f25,  188(%r4)     # restore F25
-    lfd     %f26,  196(%r4)     # restore F26
-    lfd     %f27,  204(%r4)     # restore F27
-    lfd     %f28,  212(%r4)     # restore F28
-    lfd     %f29,  220(%r4)     # restore F29
-    lfd     %f30,  228(%r4)     # restore F30
-    lfd     %f31,  236(%r4)     # restore F31
-    lfd     %f0,   244(%r4)     # load FPSCR
-    mtfsf   0xff,  %f0          # restore FPSCR
 
     mr.     %r3,   %r5          # use third arg as return value after jump
                                 # and as first arg in context function

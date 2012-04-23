@@ -53,17 +53,19 @@ jump_fcontext:
     stmia   a1, {v1-v8,sp-lr}       @ save V1-V8,SP-LR
     str     lr, [a1,#40]            @ save LR as PC
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
+    cmp     a4, #0                  @ test if fpu env should be preserved
+    be      1f
+
     ldr     a4, [a1,#52]
     stmia   a4, {s16-s31}           @ save S16-S31
+
+    ldr     a4, [a2,#52]
+    ldmia   a4, {s16-s31}           @ restore S16-S31
+1:
 #endif
 
 	mov		a1, a3                  @ use third arg as return value after jump
 	                                @ and as first arg in context function
-#if (defined(__VFP_FP__) && !defined(__SOFTFP__))
-    ldr     a4, [a2,#52]
-    ldmia   a4, {s16-s31}           @ restore S16-S31
-#endif
-
     ldmia   a2, {v1-v8,sp-pc}       @ restore v1-V8,SP-PC
 .size jump_fcontext,.-jump_fcontext
 

@@ -59,14 +59,22 @@ jump_fcontext:
     sw      $ra, 96($a0)    # save RA as PC
 
 #if defined(__mips_hard_float)
+    beqz    $a3,  1f        # test if fpu env should be preserved 
     s.d     $f20, 120($a0)  # save F20
     s.d     $f22, 128($a0)  # save F22
     s.d     $f24, 136($a0)  # save F24
     s.d     $f26, 144($a0)  # save F26
     s.d     $f28, 152($a0)  # save F28
     s.d     $f30, 160($a0)  # save F30
-#endif
 
+    l.d     $f20, 120($a1)  # restore F20
+    l.d     $f22, 128($a1)  # restore F22
+    l.d     $f24, 136($a1)  # restore F24
+    l.d     $f26, 144($a1)  # restore F26
+    l.d     $f28, 152($a1)  # restore F28
+    l.d     $f30, 160($a1)  # restore F30
+1:
+#endif
 
     lw      $s0, ($a1)      # restore S0
     lw      $s1, 8($a1)     # restore S1
@@ -81,15 +89,6 @@ jump_fcontext:
     lw      $s8, 80($a1)    # restore S8
     lw      $ra, 88($a1)    # restore RA
     move    $a0, $s2        # restore void pointer as argument
-
-#if defined(__mips_hard_float)
-    l.d     $f20, 120($a1)  # restore F20
-    l.d     $f22, 128($a1)  # restore F22
-    l.d     $f24, 136($a1)  # restore F24
-    l.d     $f26, 144($a1)  # restore F26
-    l.d     $f28, 152($a1)  # restore F28
-    l.d     $f30, 160($a1)  # restore F30
-#endif
 
     move    $v0, $a2        # use third arg as return value after jump
     move    $a0, $a2        # use third arg as first arg in context function

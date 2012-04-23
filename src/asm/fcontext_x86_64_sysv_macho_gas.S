@@ -49,13 +49,20 @@ _jump_fcontext:
     movq     %r15,       0x20(%rdi)     /* save R15 */
     movq     %rbp,       0x28(%rdi)     /* save RBP */
 
+    cmp      $0,         %rcx
+    je       1f
+
     stmxcsr  0x50(%rdi)             /* save MMX control and status word */
     fnstcw   0x54(%rdi)             /* save x87 control word */
 
-    leaq     0x8(%rsp),  %rax           /* exclude the return address and save as stack pointer */
-    movq     %rax,       0x30(%rdi)     /* save as stack pointer */
-    movq     (%rsp),     %rax           /* save return address */
-    movq     %rax,       0x38(%rdi)     /* save return address as RIP */
+    ldmxcsr  0x50(%rsi)             /* restore MMX control and status word */
+    fldcw    0x54(%rsi)             /* restore x87 control word */
+1:
+
+    leaq     0x8(%rsp),  %rax       /* exclude the return address and save as stack pointer */
+    movq     %rax,       0x30(%rdi) /* save as stack pointer */
+    movq     (%rsp),     %rax       /* save return address */
+    movq     %rax,       0x38(%rdi) /* save return address as RIP */
 
     movq     (%rsi),      %rbx      /* restore RBX */
     movq     0x8(%rsi),   %r12      /* restore R12 */
@@ -63,9 +70,6 @@ _jump_fcontext:
     movq     0x18(%rsi),  %r14      /* restore R14 */
     movq     0x20(%rsi),  %r15      /* restore R15 */
     movq     0x28(%rsi),  %rbp      /* restore RBP */
-
-    ldmxcsr  0x50(%rsi)             /* restore MMX control and status word */
-    fldcw    0x54(%rsi)             /* restore x87 control word */
 
     movq     0x30(%rsi),  %rsp      /* restore RSP */
     movq     0x38(%rsi),  %rcx      /* fetch the address to return to */
