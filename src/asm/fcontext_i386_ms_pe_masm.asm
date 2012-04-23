@@ -72,15 +72,22 @@ jump_fcontext PROC EXPORT
     mov     eax,         [esp]      ; load return address
     mov     [ecx+014h],  eax        ; save return address
 
-;    stmxcsr [ecx+028h]              ; save MMX control word
-;    fnstcw  [ecx+02ch]              ; save x87 control word
+    mov     edx,        [esp+08h]   ; load address of the second fcontext_t arg
+    mov     edi,        [edx]       ; restore EDI
+    mov     esi,        [edx+04h]   ; restore ESI
+    mov     ebx,        [edx+08h]   ; restore EBX
+    mov     ebp,        [edx+0ch]   ; restore EBP
 
-    mov     ecx,        [esp+08h]   ; load address of the second fcontext_t arg
-    mov     edi,        [ecx]       ; restore EDI
-    mov     esi,        [ecx+04h]   ; restore ESI
-    mov     ebx,        [ecx+08h]   ; restore EBX
-    mov     ebp,        [ecx+0ch]   ; restore EBP
+    movl    eax,        [esp+010h]  ; check if fpu enve preserving was requested
+    cmp     0,          eax 
+    je      1f
 
+    stmxcsr [ecx+028h]              ; save MMX control word
+    fnstcw  [ecx+02ch]              ; save x87 control word
+    ldmxcsr [edx+028h]              ; restore MMX control word
+    fldcw   [edx+02ch]              ; restore x87 control word
+1:
+    mov     ecx,        edx
     assume  fs:nothing
     mov     edx,        fs:[018h]   ; load NT_TIB
     assume  fs:error
@@ -92,9 +99,6 @@ jump_fcontext PROC EXPORT
     mov     [edx+08h],  eax         ; restore stack limit
     mov     eax,        [ecx+024h]  ; load fiber local storage
     mov     [edx+010h], eax         ; restore fiber local storage
-
-;    ldmxcsr [ecx+028h]              ; restore MMX control word
-;    fldcw   [ecx+02ch]              ; restore x87 control word
 
     mov     eax,        [esp+0ch]   ; use third arg as return value after jump
 
@@ -129,8 +133,8 @@ make_fcontext PROC EXPORT
     lea  ecx,         [edx+08h]     ; load address of next SEH item
     mov  [eax+02ch],  ecx           ; save next SEH
 
-;    stmxcsr [eax+028h]              ; save MMX control word
-;    fnstcw  [eax+02ch]              ; save x87 control word
+    stmxcsr [eax+028h]              ; save MMX control word
+    fnstcw  [eax+02ch]              ; save x87 control word
 
     mov  ecx,         finish        ; address of finish
     mov  [edx],       ecx

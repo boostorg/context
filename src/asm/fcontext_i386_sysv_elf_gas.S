@@ -42,31 +42,33 @@ jump_fcontext:
     movl    %ebx,       0x8(%ecx)   /* save EBX */
     movl    %ebp,       0xc(%ecx)   /* save EBP */
 
-/*    stmxcsr  0x20(%ecx)  */            /* save MMX control and status word */
-/*    fnstcw   0x24(%ecx)  */            /* save x87 control word */
-
     leal    0x4(%esp),  %eax        /* exclude the return address */
     movl    %eax,       0x10(%ecx)  /* save as stack pointer */
     movl    (%esp),     %eax        /* load return address */
     movl    %eax,       0x14(%ecx)  /* save return address */
 
+    movl    0x8(%esp),   %edx       /* load address of the second fcontext_t arg */
+    movl    (%edx),      %edi       /* restore EDI */
+    movl    0x4(%edx),   %esi       /* restore ESI */
+    movl    0x8(%edx),   %ebx       /* restore EBX */
+    movl    0xc(%edx),   %ebp       /* restore EBP */
 
-    movl    0x8(%esp),   %ecx       /* load address of the second fcontext_t arg */
-    movl    (%ecx),      %edi       /* restore EDI */
-    movl    0x4(%ecx),   %esi       /* restore ESI */
-    movl    0x8(%ecx),   %ebx       /* restore EBX */
-    movl    0xc(%ecx),   %ebp       /* restore EBP */
+    movl    0x10(%esp),  %eax       /* check if fpu enve preserving was requested */
+    cmp     $0,          %eax
+    je      1f
 
-/*    ldmxcsr  0x20(%ecx)  */           /* restore MMX control and status word */
-/*    fldcw    0x24(%ecx)  */           /* restore x87 control word */
-
+    stmxcsr  0x20(%ecx)             /* save MMX control and status word */
+    fnstcw   0x24(%ecx)             /* save x87 control word */
+    ldmxcsr  0x20(%edx)             /* restore MMX control and status word */
+    fldcw    0x24(%edx)             /* restore x87 control word */
+1:
     movl    0xc(%esp),   %eax       /* use third arg as return value after jump */
 
-    movl    0x10(%ecx),  %esp       /* restore ESP */
+    movl    0x10(%edx),  %esp       /* restore ESP */
     movl    %eax,        0x4(%esp)  /* use third arg as first arg in context function */
-    movl    0x14(%ecx),  %ecx       /* fetch the address to return to */
+    movl    0x14(%edx),  %edx       /* fetch the address to return to */
 
-    jmp     *%ecx                   /* indirect jump to context */
+    jmp     *%edx                   /* indirect jump to context */
 .size jump_fcontext,.-jump_fcontext
 
 .text
@@ -95,8 +97,8 @@ make_fcontext:
     leal   -0x14(%edx),    %edx         /* reserve space for the last frame on stack, (ESP + 4) % 16 == 0 */
     movl   %edx,           0x10(%eax)   /* save the aligned stack base */
 
-;    stmxcsr  0x20(%eax)                 /* save MMX control and status word */
-;    fnstcw   0x24(%eax)                 /* save x87 control word */
+    stmxcsr  0x20(%eax)                 /* save MMX control and status word */
+    fnstcw   0x24(%eax)                 /* save x87 control word */
 
     call    2f
 2:  popl    %ecx                        /* address of label 2 */
