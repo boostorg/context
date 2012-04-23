@@ -40,8 +40,8 @@ exe jump
 		: jump.cpp
 		;
 
-exe link
-		: link.cpp
+exe exit
+		: exit.cpp
 		;
 
 exe transfer

@@ -51,6 +51,7 @@ int main( int argc, char * argv[])
 		ctx::jump_fcontext( & fcm, & fc1, 0);
 
 		std::cout << "main: done" << std::endl;
+        BOOST_ASSERT( false && ! "main: never returns");
 
         return EXIT_SUCCESS;
 }
