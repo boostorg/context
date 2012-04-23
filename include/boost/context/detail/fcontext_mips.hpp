@@ -53,7 +53,6 @@ struct fcontext_t
     fcontext_t() :
         fc_greg(),
         fc_stack(),
-        fc_link( 0),
         fc_fp()
     {}
 };
