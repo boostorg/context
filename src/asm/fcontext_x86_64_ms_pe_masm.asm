@@ -107,8 +107,8 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     mov     rax,         [r10+018h] ; load fiber local storage
     mov     [rcx+060h],  rax        ; save fiber local storage
 
-    cmp     r9,          0
-    je      1f
+    test    r9,          r9
+    je      nxt
 
     stmxcsr [rcx+068h]              ; save MMX control and status word
     fnstcw  [rcx+06ch]              ; save x87 control word
@@ -137,7 +137,7 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     movaps  xmm13,       [r10+070h]
     movaps  xmm14,       [r10+080h]
     movaps  xmm15,       [r10+090h]
-1:
+nxt:
 
     lea     rax,         [rsp+08h]  ; exclude the return address
     mov     [rcx+040h],  rax        ; save as stack pointer
