@@ -33,13 +33,6 @@
  *  ----------------------------------------------------------------------------------  *
  *  |   0x50  |   0x54  |                                                            |  *
  *  ----------------------------------------------------------------------------------  *
- *  |      fc_link      |                                                            |  *
- *  ----------------------------------------------------------------------------------  *
- *  ----------------------------------------------------------------------------------  *
- *  |    22   |    23   |                                                            |  *
- *  ----------------------------------------------------------------------------------  *
- *  |   0x58  |   0x5c  |                                                            |  *
- *  ----------------------------------------------------------------------------------  *
  *  | fc_mxcsr|fc_x87_cw|                                                            |  *
  *  ----------------------------------------------------------------------------------  *
  *                                                                                      *
@@ -56,8 +49,8 @@ _jump_fcontext:
     movq     %r15,       0x20(%rdi)     /* save R15 */
     movq     %rbp,       0x28(%rdi)     /* save RBP */
 
-    stmxcsr  0x58(%rdi)             /* save MMX control and status word */
-    fnstcw   0x5c(%rdi)             /* save x87 control word */
+    stmxcsr  0x50(%rdi)             /* save MMX control and status word */
+    fnstcw   0x54(%rdi)             /* save x87 control word */
 
     leaq     0x8(%rsp),  %rax           /* exclude the return address and save as stack pointer */
     movq     %rax,       0x30(%rdi)     /* save as stack pointer */
@@ -71,8 +64,8 @@ _jump_fcontext:
     movq     0x20(%rsi),  %r15      /* restore R15 */
     movq     0x28(%rsi),  %rbp      /* restore RBP */
 
-    ldmxcsr  0x58(%rsi)             /* restore MMX control and status word */
-    fldcw    0x5c(%rsi)             /* restore x87 control word */
+    ldmxcsr  0x50(%rsi)             /* restore MMX control and status word */
+    fldcw    0x54(%rsi)             /* restore x87 control word */
 
     movq     0x30(%rsi),  %rsp      /* restore RSP */
     movq     0x38(%rsi),  %rcx      /* fetch the address to return to */
@@ -99,8 +92,8 @@ _make_fcontext:
     leaq   -0x8(%rdx),           %rdx       /* reserve space for the last frame on stack, (RSP + 8) % 16 == 0 */
     movq   %rdx,                 0x30(%rdi) /* save the address */
 
-    stmxcsr  0x58(%rdi)                     /* save MMX control and status word */
-    fnstcw   0x5c(%rdi)                     /* save x87 control word */
+    stmxcsr  0x50(%rdi)                     /* save MMX control and status word */
+    fnstcw   0x54(%rdi)                     /* save x87 control word */
 
     leaq   finish(%rip),         %rcx       /* helper code executed after context function returns */
     movq   %rcx,                 (%rdx)

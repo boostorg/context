@@ -50,13 +50,11 @@ struct fcontext_t
     boost::uint32_t     fc_greg[23];
 # endif
     stack_t				fc_stack;
-    fcontext_t		*	fc_link;
     fp_t                fc_fp;
 
     fcontext_t() :
         fc_greg(),
         fc_stack(),
-        fc_link( 0),
         fc_fp()
     {}
 };

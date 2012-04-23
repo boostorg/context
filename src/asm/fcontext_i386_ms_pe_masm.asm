@@ -23,27 +23,19 @@
 ;  --------------------------------------------------------------
 ;  |  020h   |                                                  |
 ;  --------------------------------------------------------------
-;  | fc_link |                                                  |
+;  |fc_execpt|                                                  |
 ;  --------------------------------------------------------------
 ;  --------------------------------------------------------------
 ;  |    9    |                                                  |
 ;  --------------------------------------------------------------
 ;  |  024h   |                                                  |
 ;  --------------------------------------------------------------
-;  |fc_except|                                                  |
-;  --------------------------------------------------------------
-;  --------------------------------------------------------------
-;  |   10    |                                                  |
-;  --------------------------------------------------------------
-;  |  028h   |                                                  |
-;  --------------------------------------------------------------
 ;  |fc_strage|                                                  |
 ;  --------------------------------------------------------------
 ;  --------------------------------------------------------------
 ;  |   10    |    11   |                                        |
 ;  --------------------------------------------------------------
-;  |  02ch   |   030h  |                                        |
-;  --------------------------------------------------------------
+;  |  028h   |   02ch  |                                        |
 ;  --------------------------------------------------------------
 ;  | fc_mxcsr|fc_x87_cw|                                        |
 ;  --------------------------------------------------------------
@@ -54,7 +46,6 @@
 _exit PROTO, value:SDWORD 
 align_stack PROTO, vp:DWORD
 seh_fcontext PROTO, except:DWORD, frame:DWORD, context:DWORD, dispatch:DWORD
-start_fcontext PROTO, from:DWORD, to:DWORD, vp:DWORD
 .code
 
 jump_fcontext PROC EXPORT
@@ -68,21 +59,21 @@ jump_fcontext PROC EXPORT
     mov     edx,         fs:[018h]  ; load NT_TIB
     assume  fs:error
     mov     eax,         [edx]      ; load current SEH exception list
-    mov     [ecx+024h],  eax        ; save current exception list
+    mov     [ecx+020h],  eax        ; save current exception list
     mov     eax,         [edx+04h]  ; load current stack base
     mov     [ecx+018h],  eax        ; save current stack base
     mov     eax,         [edx+08h]  ; load current stack limit
     mov     [ecx+01ch],  eax        ; save current stack limit
     mov     eax,         [edx+010h] ; load fiber local storage
-    mov     [ecx+028h],  eax        ; save fiber local storage
+    mov     [ecx+024h],  eax        ; save fiber local storage
 
     lea     eax,         [esp+04h]  ; exclude the return address
     mov     [ecx+010h],  eax        ; save as stack pointer
     mov     eax,         [esp]      ; load return address
     mov     [ecx+014h],  eax        ; save return address
 
-;    stmxcsr [ecx+02ch]              ; save MMX control word
-;    fnstcw  [ecx+030h]              ; save x87 control word
+;    stmxcsr [ecx+028h]              ; save MMX control word
+;    fnstcw  [ecx+02ch]              ; save x87 control word
 
     mov     ecx,        [esp+08h]   ; load address of the second fcontext_t arg
     mov     edi,        [ecx]       ; restore EDI
@@ -93,17 +84,17 @@ jump_fcontext PROC EXPORT
     assume  fs:nothing
     mov     edx,        fs:[018h]   ; load NT_TIB
     assume  fs:error
-    mov     eax,        [ecx+024h]  ; load SEH exception list
+    mov     eax,        [ecx+020h]  ; load SEH exception list
     mov     [edx],      eax         ; restore next SEH item
     mov     eax,        [ecx+018h]  ; load stack base
     mov     [edx+04h],  eax         ; restore stack base
     mov     eax,        [ecx+01ch]  ; load stack limit
     mov     [edx+08h],  eax         ; restore stack limit
-    mov     eax,        [ecx+028h]  ; load fiber local storage
+    mov     eax,        [ecx+024h]  ; load fiber local storage
     mov     [edx+010h], eax         ; restore fiber local storage
 
-;    ldmxcsr [ecx+02ch]              ; restore MMX control word
-;    fldcw   [ecx+030h]              ; restore x87 control word
+;    ldmxcsr [ecx+028h]              ; restore MMX control word
+;    fldcw   [ecx+02ch]              ; restore x87 control word
 
     mov     eax,        [esp+0ch]   ; use third arg as return value after jump
 
@@ -128,7 +119,7 @@ make_fcontext PROC EXPORT
     pop   eax                       ; remove arg for align_stack
     pop   eax                       ; restore pointer to fcontext_t
 
-    lea  edx,         [edx-014h]    ; reserve space for last frame on stack, (ESP + 4) % 16 == 0
+    lea  edx,         [edx-014h]    ; reserve space for last frame on stack, (ESP + 4) & 15 == 0
     mov  [eax+010h],  edx           ; save the aligned stack
 
     mov  ecx,         seh_fcontext  ; set ECX to exception-handler
@@ -138,8 +129,8 @@ make_fcontext PROC EXPORT
     lea  ecx,         [edx+08h]     ; load address of next SEH item
     mov  [eax+02ch],  ecx           ; save next SEH
 
-;    stmxcsr [eax+02ch]              ; save MMX control word
-;    fnstcw  [eax+030h]              ; save x87 control word
+;    stmxcsr [eax+028h]              ; save MMX control word
+;    fnstcw  [eax+02ch]              ; save x87 control word
 
     mov  ecx,         finish        ; address of finish
     mov  [edx],       ecx

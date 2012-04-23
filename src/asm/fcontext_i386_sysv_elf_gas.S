@@ -22,16 +22,9 @@
  *  |  sbase  | slimit  |                                        |  *
  *  --------------------------------------------------------------  *
  *  --------------------------------------------------------------  *
- *  |    8    |                                                  |  *
+ *  |    8    |    9    |                                        |  *
  *  --------------------------------------------------------------  *
- *  |  0x20   |                                                  |  *
- *  --------------------------------------------------------------  *
- *  | fc_link |                                                  |  *
- *  --------------------------------------------------------------  *
- *  --------------------------------------------------------------  *
- *  |    9    |    10   |                                        |  *
- *  --------------------------------------------------------------  *
- *  |   0x24  |   0x28  |                                        |  *
+ *  |   0x20  |   0x24  |                                        |  *
  *  --------------------------------------------------------------  *
  *  | fc_mxcsr|fc_x87_cw|                                        |  *
  *  --------------------------------------------------------------  *
@@ -49,8 +42,8 @@ jump_fcontext:
     movl    %ebx,       0x8(%ecx)   /* save EBX */
     movl    %ebp,       0xc(%ecx)   /* save EBP */
 
-/*    stmxcsr  0x24(%ecx)  */            /* save MMX control and status word */
-/*    fnstcw   0x28(%ecx)  */            /* save x87 control word */
+/*    stmxcsr  0x20(%ecx)  */            /* save MMX control and status word */
+/*    fnstcw   0x24(%ecx)  */            /* save x87 control word */
 
     leal    0x4(%esp),  %eax        /* exclude the return address */
     movl    %eax,       0x10(%ecx)  /* save as stack pointer */
@@ -64,8 +57,8 @@ jump_fcontext:
     movl    0x8(%ecx),   %ebx       /* restore EBX */
     movl    0xc(%ecx),   %ebp       /* restore EBP */
 
-/*    ldmxcsr  0x24(%ecx)  */           /* restore MMX control and status word */
-/*    fldcw    0x28(%ecx)  */           /* restore x87 control word */
+/*    ldmxcsr  0x20(%ecx)  */           /* restore MMX control and status word */
+/*    fldcw    0x24(%ecx)  */           /* restore x87 control word */
 
     movl    0xc(%esp),   %eax       /* use third arg as return value after jump */
 
@@ -102,8 +95,8 @@ make_fcontext:
     leal   -0x14(%edx),    %edx         /* reserve space for the last frame on stack, (ESP + 4) % 16 == 0 */
     movl   %edx,           0x10(%eax)   /* save the aligned stack base */
 
-;    stmxcsr  0x24(%eax)                 /* save MMX control and status word */
-;    fnstcw   0x30(%eax)                 /* save x87 control word */
+;    stmxcsr  0x20(%eax)                 /* save MMX control and status word */
+;    fnstcw   0x24(%eax)                 /* save x87 control word */
 
     call    2f
 2:  popl    %ecx                        /* address of label 2 */
