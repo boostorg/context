@@ -119,7 +119,7 @@ jump_fcontext:
     std     %r0,   168(%r3)     # save LR
     std     %r0,   176(%r3)     # save LR as PC
 
-    cmpwi   cr7,   r6,   0      # test if fpu env should be preserved
+    cmpwi   cr7,   %r6,  0      # test if fpu env should be preserved
     beq     cr7,   1f
 
     stfd    %f14,  200(%r3)     # save F14
