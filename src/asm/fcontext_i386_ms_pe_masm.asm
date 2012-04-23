@@ -78,15 +78,15 @@ jump_fcontext PROC EXPORT
     mov     ebx,        [edx+08h]   ; restore EBX
     mov     ebp,        [edx+0ch]   ; restore EBP
 
-    movl    eax,        [esp+010h]  ; check if fpu enve preserving was requested
-    cmp     0,          eax 
-    je      1f
+    mov     eax,        [esp+010h]  ; check if fpu enve preserving was requested
+    test    eax,        eax 
+    je      nxt
 
     stmxcsr [ecx+028h]              ; save MMX control word
     fnstcw  [ecx+02ch]              ; save x87 control word
     ldmxcsr [edx+028h]              ; restore MMX control word
     fldcw   [edx+02ch]              ; restore x87 control word
-1:
+nxt:
     mov     ecx,        edx
     assume  fs:nothing
     mov     edx,        fs:[018h]   ; load NT_TIB
