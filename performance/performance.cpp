@@ -13,6 +13,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/bind.hpp>
+#include <boost/function.hpp>
 #include <boost/config.hpp>
 #include <boost/context/all.hpp>
 #include <boost/preprocessor/repetition/repeat_from_to.hpp>
@@ -30,6 +31,9 @@ namespace po = boost::program_options;
 
 bool preserve_fpu = true;
 
+#define CALL_FUNCTION(z,n,unused) \
+    fn();
+
 #define CALL_UCONTEXT(z,n,unused) \
     ::swapcontext( & ucm, & uc);
 
@@ -40,6 +44,9 @@ bool preserve_fpu = true;
 ucontext_t uc, ucm;
 #endif
 ctx::fcontext_t fc, fcm;
+
+static void f3()
+{ }
 
 #ifndef BOOST_WINDOWS
 static void f2()
@@ -53,6 +60,24 @@ static void f1( intptr_t)
 {
     while ( true)
         ctx::jump_fcontext( & fc, & fcm, 7, preserve_fpu);
+}
+
+cycle_t test_function( cycle_t ov)
+{
+    boost::function< void() > fn( boost::bind( f3) );
+    // cache warum-up
+BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_FUNCTION, ~)
+
+    cycle_t start( cycles() );
+BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_FUNCTION, ~)
+    cycle_t total( cycles() - start);
+
+    // we have two jumps and two measuremt-overheads
+    total -= ov; // overhead of measurement
+    total /= BOOST_PP_LIMIT_MAG; // per call
+    total /= 2; // 2x jump_to c1->c2 && c2->c1
+
+    return total;
 }
 
 #ifndef BOOST_WINDOWS
@@ -142,6 +167,8 @@ int main( int argc, char * argv[])
         res = test_ucontext( ov);
         std::cout << "ucontext: average of " << res << " cycles per switch" << std::endl;
 #endif
+        res = test_function( ov);
+        std::cout << "boost::function: average of " << res << " cycles per switch" << std::endl;
 
         return EXIT_SUCCESS;
     }

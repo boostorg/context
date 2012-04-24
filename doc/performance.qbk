@@ -15,18 +15,22 @@ to a single CPU. The code was compiled using the build options,
 'variant=release cxxflags=-DBOOST_DISABLE_ASSERTS'.
 
 The numbers in the table are the number of cycles per iteration, based upon an
-average computed over 1000 iterations.
+average computed over 256 iterations.
 
 [table Perfomance of context switch
-    [[Platform] [ucontext_t] [fcontext_t]]
+    [[Platform] [ucontext_t] [fcontext_t with fpu] [fcontext_t without fpu] [boost::function]]
     [
         [AMD Athlon 64 DualCore 4400+ (32bit Linux)]
-        [1771 cycles]
-        [146 cycles]
+        [846 cycles]
+        [65 cycles]
+        [46 cycles]
+        [43 cycles]
     ]
     [
         [Intel Core2 Quad (64bit Linux)]
         [1739 cycles]
+        [117 cycles]
+        [117 cycles]
         [117 cycles]
     ]
 ]
