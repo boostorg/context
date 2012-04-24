@@ -12,7 +12,7 @@ following table. Performance measurements were taken using `rdtsc`, with
 overhead corrections, on x86 platforms. In each case, stack protection was
 active, cache warm-up was accounted for, and the one running thread was pinned
 to a single CPU. The code was compiled using the build options,
-'variant=release cxxflags=-DBOOST_DISABLE_ASSERTS'.
+'variant = release cxxflags = -DBOOST_DISABLE_ASSERTS'.
 
 The numbers in the table are the number of cycles per iteration, based upon an
 average computed over 256 iterations.
@@ -27,11 +27,11 @@ average computed over 256 iterations.
         [43 cycles]
     ]
     [
-        [Intel Core2 Quad (64bit Linux)]
-        [1739 cycles]
-        [117 cycles]
-        [117 cycles]
-        [117 cycles]
+        [Intel Core2 Q6700 (64bit Linux)]
+        [1472 cycles]
+        [172 cycles]
+        [63 cycles]
+        [60 cycles]
     ]
 ]
 

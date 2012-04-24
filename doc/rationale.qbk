@@ -15,6 +15,20 @@ support inline assembler.
 'Inline Assembler']].
 
 
+[heading fcontext_t]
+
+__boost_context__ provides the low level API fcontext_t which is
+implemented in assembler to provide context swapping operations.
+fcontext_t is the part to port to new platforms.
+
+[note Context switches do not preserve the signal mask on UNIX systems.]
+
+Because the assembler code uses the byte layout of __fcontext__ to access 
+its members __fcontext__ must be a POD. This requires that __fcontext__ has only a
+default constructor, no visibility keywords (e.g. private, public, protected), no
+virtual methods and all members and base clases are PODs too.
+
+
 [heading Protecting the stack]
 
 Because the stack's size is fixed -- there is no support for split stacks yet -- it
@@ -25,20 +39,6 @@ overwritten. `stack_allocator` appends a guard page to the stack to help detect
 overruns. The guard page consumes no physical memory, but generates a
 segmentation fault or access violation on access to the virtual memory addresses
 within it.
-
-
-[heading fcontext_t]
-
-__boost_context__ provides the low level API fcontext_t which is
-implemented in assembler to provide context swapping operations.
-fcontext_t is the part to port to new platforms.
-
-[note Context switches do not preserve the signal mask on UNIX systems.]
-
-Because the assembler code uses the byte layout of __fcontext__ to access 
-its members __fcontext_t must be a POD. This requires that __fcontext__ has only a
-default constructor, no visibility keywords (e.g. private, public, protected), no
-virtual methods and all members and base clases are PODs too.
 
 
 [section Other APIs ]
