@@ -178,6 +178,17 @@ other context.
 If the __context_fn__ emits an exception, the application will terminate.
 
 
+[heading Preserving floating point registers]
+
+Preserving the floating point registers increases the cycle count for a context
+switch (see performance tests).
+The foruth argument of __jump_fcontext__ controls if fpu registers should be 
+preserved by the context jump.
+
+[important The use of the fpu controling argument of __jump_fcontext__ must
+be consistent in the application. Otherwise the behaviour is undefined.]
+
+
 [heading Stack unwinding]
 
 Sometimes it is necessary to unwind the stack of an unfinished context to
