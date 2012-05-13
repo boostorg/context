@@ -89,7 +89,7 @@ _make_fcontext:
 
     pushq  %rdi                             /* save pointer to fcontext_t */
     movq   %rdx,                 %rdi       /* stack pointer as arg for align_stack */
-    call   align_stack@PLT                  /* align stack */
+    call   _align_stack                     /* align stack */
     movq   %rax,                 %rdx       /* begin of aligned stack */
     popq   %rdi                             /* restore pointer to fcontext_t */
 
@@ -107,5 +107,5 @@ _make_fcontext:
 
 finish:
     xorq    %rdi,              %rdi         /* exit code is zero */
-    call   _exit@PLT                        /* exit application */
+    call   _exit                            /* exit application */
     hlt
