@@ -52,7 +52,7 @@ struct fp_t
 struct fcontext_t
 {
     boost::uint32_t     fc_greg[6];
-    stack_t				fc_stack;
+    stack_t             fc_stack;
     void            *   fc_excpt_lst;
     void            *   fc_local_storage;
     fp_t                fc_fp;

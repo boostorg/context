@@ -21,10 +21,10 @@ namespace detail {
 extern "C" BOOST_CONTEXT_DECL
 void * BOOST_CONTEXT_CALLDECL align_stack( void * vp)
 {
-	void * base = vp;
+    void * base = vp;
     if ( 0 != ( ( ( uintptr_t) base) & 15) )
         base = ( char * ) ( ( ( ( uintptr_t) base) - 15) & ~0x0F);
-	return base;
+    return base;
 }
 
 }

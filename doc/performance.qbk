@@ -15,7 +15,7 @@ to a single CPU. The code was compiled using the build options,
 'variant = release cxxflags = -DBOOST_DISABLE_ASSERTS'.
 
 The numbers in the table are the number of cycles per iteration, based upon an
-average computed over 256 iterations.
+average computed over 10 iterations.
 
 [table Perfomance of context switch
     [[Platform] [ucontext_t] [fcontext_t with fpu] [fcontext_t without fpu] [boost::function]]
