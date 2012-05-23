@@ -49,14 +49,14 @@ cycle_t cycles()
         "cpuid\n"
         ::: "%eax", "%ebx", "%ecx", "%edx"
     );
-   
+
     return ( cycle_t)hi << 32 | lo; 
 }
 #else
 # error "this compiler is not supported"
 #endif
 
-struct measure
+struct measure_cycles
 {
     cycle_t operator()()
     {
@@ -66,14 +66,14 @@ struct measure
 };
 
 inline
-cycle_t overhead()
+cycle_t overhead_cycles()
 {
     std::size_t iterations( 10);
     std::vector< cycle_t >  overhead( iterations, 0);
     for ( std::size_t i( 0); i < iterations; ++i)
         std::generate(
             overhead.begin(), overhead.end(),
-            measure() );
+            measure_cycles() );
     BOOST_ASSERT( overhead.begin() != overhead.end() );
     return std::accumulate( overhead.begin(), overhead.end(), 0) / iterations;
 }
