@@ -16,6 +16,8 @@
 #include <boost/bind.hpp>
 #include <boost/cstdint.hpp>
 
+#define BOOST_CONTEXT_CYCLE
+
 typedef boost::uint64_t cycle_t;
 
 #if _MSC_VER

@@ -66,6 +66,7 @@ static void f1( intptr_t)
         ctx::jump_fcontext( & fc, & fcm, 7, preserve_fpu);
 }
 
+#ifdef BOOST_CONTEXT_CYCLE
 cycle_t test_function_cycle( cycle_t ov)
 {
     boost::function< void() > fn( boost::bind( f3) );
@@ -136,6 +137,7 @@ BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_FCONTEXT, ~)
 
     return total;
 }
+#endif
 
 #if _POSIX_C_SOURCE >= 199309L
 zeit_t test_function_zeit( zeit_t ov)
@@ -235,6 +237,7 @@ int main( int argc, char * argv[])
         }
         bind_to_processor( 0);
 
+#ifdef BOOST_CONTEXT_CYCLE
         {
             cycle_t ov( overhead_cycles() );
             std::cout << "overhead for rdtsc == " << ov << " cycles" << std::endl;
@@ -248,6 +251,7 @@ int main( int argc, char * argv[])
             res = test_function_cycle( ov);
             std::cout << "boost::function: average of " << res << " cycles per switch" << std::endl;
         }
+#endif
 
 #if _POSIX_C_SOURCE >= 199309L
         {
