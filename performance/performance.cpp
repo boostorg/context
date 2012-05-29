@@ -31,9 +31,8 @@
 #endif
 
 namespace ctx = boost::ctx;
-namespace po = boost::program_options;
 
-bool preserve_fpu = true;
+bool preserve_fpu = false;
 
 #define CALL_FUNCTION(z,n,unused) \
     fn();
@@ -216,25 +215,6 @@ int main( int argc, char * argv[])
 {
     try
     {
-        po::options_description desc("allowed options");
-        desc.add_options()
-            ("help,h", "help message")
-            ("preserve-fpu,p", po::value< bool >( & preserve_fpu), "preserve floating point env");
-
-        po::variables_map vm;
-        po::store(
-            po::parse_command_line(
-                argc,
-                argv,
-                desc),
-            vm);
-        po::notify( vm);
-
-        if ( vm.count("help") )
-        {
-            std::cout << desc << std::endl;
-            return EXIT_SUCCESS;
-        }
         bind_to_processor( 0);
 
 #ifdef BOOST_CONTEXT_CYCLE

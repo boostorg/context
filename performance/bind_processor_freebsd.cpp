@@ -12,26 +12,18 @@ extern "C"
 #include <sys/cpuset.h>
 }
 
-#include <boost/assert.hpp>
-#include <boost/thread.hpp>
-#include <boost/system/system_error.hpp>
+#include <stdexcept>
 
 #include <boost/config/abi_prefix.hpp>
 
 void bind_to_processor( unsigned int n)
 {
-    BOOST_ASSERT( n >= 0);
-    BOOST_ASSERT( n < boost::thread::hardware_concurrency() );
-
     cpuset_t cpuset;
     CPU_ZERO( & cpuset);
     CPU_SET( n, & cpuset);
 
     if ( ::cpuset_setaffinity(  CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, sizeof( cpuset), & cpuset) == -1)
-        throw boost::system::system_error(
-                boost::system::error_code(
-                    errno,
-                    boost::system::system_category() ) );
+        throw std::runtime_error("::cpuset_setaffinity() failed");
 }
 
 #include <boost/config/abi_suffix.hpp>
