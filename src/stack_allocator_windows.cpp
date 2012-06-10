@@ -16,6 +16,7 @@ extern "C" {
 
 #include <boost/config.hpp>
 #include <boost/assert.hpp>
+#include <boost/cstdint.hpp>
 #include <boost/format.hpp>
 
 #include <boost/context/stack_utils.hpp>

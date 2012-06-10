@@ -21,7 +21,7 @@ extern "C" {
 # define SNPRINTF snprintf
 #endif
 
-static char * exception_description(
+static const char * exception_description(
     _EXCEPTION_RECORD const* record, char * description, size_t len)
 {
     const DWORD code = record->ExceptionCode;
@@ -33,7 +33,7 @@ static char * exception_description(
     {
         const char * accessType = ( info[0]) ? "writing" : "reading";
         const ULONG_PTR address = info[1];
-        SNPRINTF( description, len, "Access violation %s 0x%08lX", accessType, address);
+        SNPRINTF( description, len, "Access violation %s %p", accessType, address);
         return description;
     }
     case EXCEPTION_DATATYPE_MISALIGNMENT:    return "Datatype misalignment";
