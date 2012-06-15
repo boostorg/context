@@ -153,7 +153,7 @@ void test_exception()
 
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-    char * what = "hello world";
+    const char * what = "hello world";
     ctx::make_fcontext( & fc1, f7);
 
     ctx::jump_fcontext( & fcm, & fc1, ( intptr_t) what);

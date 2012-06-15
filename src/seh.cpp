@@ -33,7 +33,7 @@ static const char * exception_description(
     {
         const char * accessType = ( info[0]) ? "writing" : "reading";
         const ULONG_PTR address = info[1];
-        SNPRINTF( description, len, "Access violation %s %p", accessType, address);
+        SNPRINTF( description, len, "Access violation %s %p", accessType, reinterpret_cast< void * >( address) );
         return description;
     }
     case EXCEPTION_DATATYPE_MISALIGNMENT:    return "Datatype misalignment";
