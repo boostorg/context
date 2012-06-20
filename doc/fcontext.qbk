@@ -33,12 +33,10 @@ intptr_t as argument) must be initialized by function __make_fcontext__.
             void f( intptr);
 
             // creates and manages a protected stack (with guard page)
-            boost::ctx::protected_stack stack( boost::ctx::default_stacksize() );
-
-            // let fcontext_t fc use stack
-            fc.fc_stack.base = stack.address();
+            ctx::stack_allocator alloc;
+            fc.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
             fc.fc_stack.limit =
-                static_cast< char * >( fc.fc_stack.base) - stack.size();
+                static_cast< char * >( fc.fc_stack.base) - ctx::minimum_stacksize();
 
             // context fc uses f() as context function
             make_fcontext( & fc, f);
