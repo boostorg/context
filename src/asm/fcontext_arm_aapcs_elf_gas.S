@@ -52,20 +52,23 @@
 jump_fcontext:
     stmia   a1, {v1-v8,sp-lr}       @ save V1-V8,SP-LR
     str     lr, [a1,#40]            @ save LR as PC
+
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
     cmp     a4, #0                  @ test if fpu env should be preserved
-    be      1f
+    beq     1f
 
-    ldr     a4, [a1,#52]
-    stmia   a4, {s16-s31}           @ save S16-S31
+    mov     a4, a1
+    add     a4, #52
+    fstmiax a4, {d8-d15}            @ save S16-S31
 
-    ldr     a4, [a2,#52]
-    ldmia   a4, {s16-s31}           @ restore S16-S31
+    mov     a4, a2
+    add     a4, #52
+    fldmiax a4, {d8-d15}            @ restore S16-S31
 1:
 #endif
 
-	mov		a1, a3                  @ use third arg as return value after jump
-	                                @ and as first arg in context function
+    mov     a1, a3                  @ use third arg as return value after jump
+                                    @ and as first arg in context function
     ldmia   a2, {v1-v8,sp-pc}       @ restore v1-V8,SP-PC
 .size jump_fcontext,.-jump_fcontext
 
@@ -78,11 +81,11 @@ make_fcontext:
     str     a2, [a1,#40]        @ save address of the context function
     ldr     a2, [a1,#44]        @ load the stack base
 
-	push    {a1,lr}				@ save pointer to fcontext_t
-	mov     a1, a2				@ stack pointer as arg for align_stack
-	bl		align_stack@PLT     @ align stack
-	mov		a2, a1				@ begin of aligned stack 
-	pop     {a1,lr}				@ restore pointer to fcontext_t
+    push    {a1,lr}             @ save pointer to fcontext_t
+    mov     a1, a2              @ stack pointer as arg for align_stack
+    bl      align_stack@PLT     @ align stack
+    mov     a2, a1              @ begin of aligned stack
+    pop     {a1,lr}             @ restore pointer to fcontext_t
 
     str     a2, [a1,#32]        @ save the aligned stack base
 

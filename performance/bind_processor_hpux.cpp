@@ -11,17 +11,12 @@ extern "C"
 #include <sys/pthread.h>
 }
 
-#include <boost/assert.hpp>
-#include <boost/thread.hpp>
-#include <boost/system/system_error.hpp>
+#include <stdexcept>
 
 #include <boost/config/abi_prefix.hpp>
 
 void bind_to_processor( unsigned int n)
 {
-    BOOST_ASSERT( n >= 0);
-    BOOST_ASSERT( n < boost::thread::hardware_concurrency() );
-
     ::pthread_spu_t spu;
     int errno_(
         ::pthread_processor_bind_np(
@@ -30,10 +25,7 @@ void bind_to_processor( unsigned int n)
             static_cast< pthread_spu_t >( n),
             PTHREAD_SELFTID_NP) );
     if ( errno_ != 0)
-        throw boost::system::system_error(
-                boost::system::error_code(
-                    errno_,
-                    boost::system::system_category() ) );
+        throw std::runtime_error("::pthread_processor_bind_np() failed");
 }
 
 #include <boost/config/abi_suffix.hpp>

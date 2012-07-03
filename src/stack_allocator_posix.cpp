@@ -45,7 +45,7 @@ stack_allocator::allocate( std::size_t size) const
                 % maximum_stacksize() ) );
 
     const std::size_t pages( page_count( size) + 1); // add +1 for guard page
-	std::size_t size_ = pages * pagesize();
+    std::size_t size_ = pages * pagesize();
 
     const int fd( ::open("/dev/zero", O_RDONLY) );
     BOOST_ASSERT( -1 != fd);
@@ -69,8 +69,8 @@ stack_allocator::deallocate( void * vp, std::size_t size) const
 {
     if ( vp)
     {
-		const std::size_t pages( page_count( size) + 1); // add +1 for guard page
-		std::size_t size_ = pages * pagesize();
+        const std::size_t pages( page_count( size) + 1); // add +1 for guard page
+        std::size_t size_ = pages * pagesize();
         BOOST_ASSERT( 0 < size && 0 < size_);
         void * limit = static_cast< char * >( vp) - size_;
         ::munmap( limit, size_);

@@ -26,25 +26,25 @@ double value3 = 0.;
 void f1( intptr_t)
 {
     ++value1;
-	ctx::jump_fcontext( & fc1, & fcm, 0);
+    ctx::jump_fcontext( & fc1, & fcm, 0);
 }
 
 void f3( intptr_t)
 {
     ++value1;
-	ctx::jump_fcontext( & fc1, & fcm, 0);
+    ctx::jump_fcontext( & fc1, & fcm, 0);
     ++value1;
-	ctx::jump_fcontext( & fc1, & fcm, 0);
+    ctx::jump_fcontext( & fc1, & fcm, 0);
 }
 
 void f4( intptr_t)
 {
-	ctx::jump_fcontext( & fc1, & fcm, 7);
+    ctx::jump_fcontext( & fc1, & fcm, 7);
 }
 
 void f5( intptr_t arg)
 {
-	ctx::jump_fcontext( & fc1, & fcm, arg);
+    ctx::jump_fcontext( & fc1, & fcm, arg);
 }
 
 void f6( intptr_t arg)
@@ -63,7 +63,7 @@ void f7( intptr_t arg)
     { throw std::runtime_error( ( char *) arg); }
     catch ( std::runtime_error const& e)
     { value2 = e.what(); }
-	ctx::jump_fcontext( & fc1, & fcm, arg);
+    ctx::jump_fcontext( & fc1, & fcm, arg);
 }
 
 void f8( intptr_t arg)
@@ -71,7 +71,7 @@ void f8( intptr_t arg)
     double d = * ( double *) arg;
     d += 3.45;
     value3 = d;
-	ctx::jump_fcontext( & fc1, & fcm, 0);
+    ctx::jump_fcontext( & fc1, & fcm, 0);
 }
 
 void test_start()
@@ -153,7 +153,7 @@ void test_exception()
 
     fc1.fc_stack.base = alloc.allocate( ctx::minimum_stacksize() );
     fc1.fc_stack.limit = static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
-    char * what = "hello world";
+    const char * what = "hello world";
     ctx::make_fcontext( & fc1, f7);
 
     ctx::jump_fcontext( & fcm, & fc1, ( intptr_t) what);

@@ -12,22 +12,14 @@ extern "C"
 #include <sys/thread.h>
 }
 
-#include <boost/assert.hpp>
-#include <boost/thread.hpp>
-#include <boost/system/system_error.hpp>
+#include <stdexcept>
 
 #include <boost/config/abi_prefix.hpp>
 
 void bind_to_processor( unsigned int n)
 {
-    BOOST_ASSERT( n >= 0);
-    BOOST_ASSERT( n < boost::thread::hardware_concurrency() );
-
     if ( ::bindprocessor( BINDTHREAD, ::thread_self(), static_cast< cpu_t >( n) ) == -1)
-        throw boost::system::system_error(
-                boost::system::error_code(
-                    errno,
-                    boost::system::system_category() ) );
+        throw std::runtime_error("::bindprocessor() failed");
 }
 
 #include <boost/config/abi_suffix.hpp>

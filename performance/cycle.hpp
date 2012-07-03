@@ -21,8 +21,6 @@
     || defined(__I86__) || defined(__INTEL__) || defined(__IA32__) \
     || defined(_M_IX86) || defined(_I86_)
 # include "cycle_i386.hpp"
-#else
-# error "this platform is not supported"
 #endif
 
 #endif // CYCLE_H

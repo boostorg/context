@@ -49,7 +49,7 @@ struct fcontext_t
 # else
     boost::uint32_t     fc_greg[23];
 # endif
-    stack_t				fc_stack;
+    stack_t             fc_stack;
     fp_t                fc_fp;
 
     fcontext_t() :

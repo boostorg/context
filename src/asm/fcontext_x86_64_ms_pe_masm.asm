@@ -112,7 +112,7 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
 
     stmxcsr [rcx+068h]              ; save MMX control and status word
     fnstcw  [rcx+06ch]              ; save x87 control word
-	mov	    r10,         [rcx+070h] ; address of aligned XMM storage
+    mov     r10,         [rcx+070h] ; address of aligned XMM storage
     movaps  [r10],       xmm6
     movaps  [r10+010h],  xmm7
     movaps  [r10+020h],  xmm8
@@ -126,7 +126,7 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
 
     ldmxcsr [rdx+068h]              ; restore MMX control and status word
     fldcw   [rdx+06ch]              ; restore x87 control word
-	mov	    r10,         [rdx+070h] ; address of aligned XMM storage
+    mov     r10,         [rdx+070h] ; address of aligned XMM storage
     movaps  xmm6,        [r10]
     movaps  xmm7,        [r10+010h]
     movaps  xmm8,        [r10+020h]
