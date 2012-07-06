@@ -9,13 +9,13 @@
 #include <boost/context/stack_utils.hpp>
 
 extern "C" {
+#include <signal.h>
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <unistd.h>
 }
 
 #include <cmath>
-#include <csignal>
 
 #include <boost/assert.hpp>
 
