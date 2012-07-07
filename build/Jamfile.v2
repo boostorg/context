@@ -16,6 +16,9 @@ import architecture ;
 
 project boost/context
     : source-location ../src
+    : requirements
+      <os>SOLARIS:<define>_XOPEN_SOURCE=1
+      <os>SOLARIS:<define>_XOPEN_SOURCE_EXTENDED=1
     : usage-requirements
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
     ;

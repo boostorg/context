@@ -6,10 +6,6 @@
 
 #define BOOST_CONTEXT_SOURCE
 
-#if defined(sun) || defined(__sun)
-#define _XPG4_2
-#endif
-
 #include <boost/context/stack_allocator.hpp>
 
 extern "C" {
