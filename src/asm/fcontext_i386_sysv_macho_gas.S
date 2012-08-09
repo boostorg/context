@@ -82,10 +82,7 @@ _make_fcontext:
     pushl  %eax                         /* save pointer to fcontext_t */
     pushl  %ebx                         /* save EBX */
     pushl  %edx                         /* stack pointer as arg for align_stack */
-    call   1f
-1:  popl   %ebx                         /* address of label 1 */
-    addl   $_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx     /* compute address of GOT and store it in EBX */
-    call   align_stack@PLT              /* align stack */
+    call   _align_stack                 /* align stack */
     movl   %eax,           %edx         /* begin of aligned stack */
     popl   %eax                         /* remove arg for align_stack */
     popl   %ebx                         /* restore EBX */
@@ -97,22 +94,17 @@ _make_fcontext:
     stmxcsr  0x20(%eax)                 /* save MMX control and status word */
     fnstcw   0x24(%eax)                 /* save x87 control word */
 
-    call    2f
-2:  popl    %ecx                        /* address of label 2 */
-    addl    $finish-2b, %ecx            /* helper code executed after context function returns */
-    movl    %ecx, (%edx)
+    call   1f
+1:  popl   %ecx
+    addl   $finish-1b,     %ecx         /* helper code executed after context function returns */
+    movl   %ecx, (%edx)
 
-    xorl   %eax,            %eax
+    xorl   %eax,           %eax
     ret
 
 finish:
     leal   -0xc(%esp),    %esp
-
-    call    3f
-3:  popl    %ebx                                    /* address of label 3 */
-    addl    $_GLOBAL_OFFSET_TABLE_+[.-3b], %ebx     /* compute address of GOT and store it in EBX */
-
     xorl    %eax,           %eax
     pushl   %eax                        /* exit code is zero */
-    call   _exit@PLT                    /* exit application */
+    call   _exit                        /* exit application */
     hlt
