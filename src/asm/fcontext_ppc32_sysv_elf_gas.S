@@ -184,9 +184,8 @@ jump_fcontext:
 .align 2
 .type make_fcontext,@function
 make_fcontext:
-    stw     %r3, 0(%r3)         # save the current context
-    stw     %r4, 88(%r3)        # save the address of the context function
-    lwz     %r0, 92(%r3)        # load the stack base
+    stw     %r4, 88(%r3)        # save address of context function
+    lwz     %r0, 92(%r3)        # load address of context stack base
 
     li      %r4, 28
     subf    %r1, %r4, %r1       # reserve space on stack
@@ -208,10 +207,10 @@ make_fcontext:
     mflr    %r0                 # load LR
     bl      1f                  # jump to label 1
 1:
-    mflr    %r4                 # load LR
+    mflr    %r4                      # load LR
     addi    %r4, %r4, finish - 1b    # address of finish; called after context function returns
-    mtlr    %r0                 # restore LR
-    stw     %r4, 84(%r3)
+    mtlr    %r0                      # restore LR
+    stw     %r4, 84(%r3)             # save address of finish
 
     li      %r3,  0
     blr

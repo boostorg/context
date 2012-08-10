@@ -38,13 +38,11 @@ int main( int argc, char * argv[])
         ctx::stack_allocator alloc1, alloc2;
 
         fc1.fc_stack.base = alloc1.allocate(ctx::minimum_stacksize());
-        fc1.fc_stack.limit =
-            static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
+        fc1.fc_stack.size = ctx::minimum_stacksize();
         ctx::make_fcontext( & fc1, f1);
 
         fc2.fc_stack.base = alloc2.allocate(ctx::minimum_stacksize());
-        fc2.fc_stack.limit =
-            static_cast< char * >( fc2.fc_stack.base) - ctx::minimum_stacksize();
+        fc2.fc_stack.size = ctx::minimum_stacksize();
         ctx::make_fcontext( & fc2, f2);
 
         std::cout << "main: call start_fcontext( & fcm, & fc1, 0)" << std::endl;

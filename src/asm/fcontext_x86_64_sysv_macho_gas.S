@@ -83,18 +83,17 @@ _jump_fcontext:
 .globl _make_fcontext
 .align 8
 _make_fcontext:
-    movq   %rdi,                 (%rdi)     /* save the address of current context */
-    movq   %rsi,                 0x38(%rdi) /* save the address of the function supposed to run */
-    movq   0x40(%rdi),           %rdx       /* load the stack base */
+    movq   %rsi,                 0x38(%rdi) /* save address of context function */
+    movq   0x40(%rdi),           %rdx       /* load address of context stack base */
 
     pushq  %rdi                             /* save pointer to fcontext_t */
-    movq   %rdx,                 %rdi       /* stack pointer as arg for align_stack */
-    call   _align_stack                     /* align stack */
-    movq   %rax,                 %rdx       /* begin of aligned stack */
+    movq   %rdx,                 %rdi       /* context stack pointer as arg for align_stack */
+    call   _align_stack                     /* call align_stack */
+    movq   %rax,                 %rdx       /* begin of aligned context stack */
     popq   %rdi                             /* restore pointer to fcontext_t */
 
-    leaq   -0x8(%rdx),           %rdx       /* reserve space for the last frame on stack, (RSP + 8) % 16 == 0 */
-    movq   %rdx,                 0x30(%rdi) /* save the address */
+    leaq   -0x8(%rdx),           %rdx       /* reserve space for the last frame on context stack, (RSP + 8) % 16 == 0 */
+    movq   %rdx,                 0x30(%rdi) /* save the algined context stack base */
 
     stmxcsr  0x50(%rdi)                     /* save MMX control and status word */
     fnstcw   0x54(%rdi)                     /* save x87 control word */

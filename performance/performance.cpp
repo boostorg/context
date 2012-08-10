@@ -116,8 +116,7 @@ cycle_t test_fcontext_cycle( cycle_t ov)
 {
     ctx::stack_allocator alloc;
     fc.fc_stack.base = alloc.allocate(ctx::default_stacksize());
-    fc.fc_stack.limit =
-        static_cast< char * >( fc.fc_stack.base) - ctx::default_stacksize();
+    fc.fc_stack.size = ctx::default_stacksize();
     ctx::make_fcontext( & fc, f1);
 
     ctx::jump_fcontext( & fcm, & fc, 7, preserve_fpu);
@@ -189,8 +188,7 @@ zeit_t test_fcontext_zeit( zeit_t ov)
 {
     ctx::stack_allocator alloc;
     fc.fc_stack.base = alloc.allocate(ctx::default_stacksize());
-    fc.fc_stack.limit =
-        static_cast< char * >( fc.fc_stack.base) - ctx::default_stacksize();
+    fc.fc_stack.size = ctx::default_stacksize();
     ctx::make_fcontext( & fc, f1);
 
     ctx::jump_fcontext( & fcm, & fc, 7, preserve_fpu);

@@ -11,7 +11,8 @@
 # pragma once
 #endif
 
-#include <boost/assert.hpp>
+#include <cstddef>
+
 #include <boost/config.hpp>
 #include <boost/cstdint.hpp>
 
@@ -37,9 +38,10 @@ struct stack_t
 {
     void    *   base;
     void    *   limit;
+    std::size_t size;
 
     stack_t() :
-        base( 0), limit( 0)
+        base( 0), limit( 0), size( 0)
     {}
 };
 

@@ -28,10 +28,10 @@ extern "C" {
 struct stack_t
 {
     void    *   base;
-    void    *   limit;
+    std::size_t size;
 
     stack_t() :
-        base( 0), limit( 0)
+        base( 0), size( 0)
     {}
 };
 

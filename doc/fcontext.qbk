@@ -35,14 +35,13 @@ intptr_t as argument) must be initialized by function __make_fcontext__.
             // creates and manages a protected stack (with guard page)
             ctx::stack_allocator alloc;
             fc.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
-            fc.fc_stack.limit =
-                static_cast< char * >( fc.fc_stack.base) - ctx::minimum_stacksize();
+            fc.fc_stack.size = ctx::minimum_stacksize();
 
             // context fc uses f() as context function
             make_fcontext( & fc, f);
 
 __fcontext__ requires a pointer to the top of the stack (__fc_base__) as well
-as a pointer to the lower bound of the stack (__fc_limit__).
+as the size of the stack.
 
 Calling __jump_fcontext__ invokes the __context_fn__ in a newly created context
 complete with registers, flags, stack and instruction pointers.  When control
@@ -78,13 +77,11 @@ new state of the original context.
                 ctx::stack_allocator alloc1, alloc2;
 
                 fc1.fc_stack.base = alloc1.allocate(ctx::minimum_stacksize());
-                fc1.fc_stack.limit =
-                    static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
+                fc1.fc_stack.size = ctx::minimum_stacksize();
                 ctx::make_fcontext( & fc1, f1);
 
                 fc2.fc_stack.base = alloc2.allocate(ctx::minimum_stacksize());
-                fc2.fc_stack.limit =
-                    static_cast< char * >( fc2.fc_stack.base) - ctx::minimum_stacksize();
+                fc2.fc_stack.size = ctx::minimum_stacksize();
                 ctx::make_fcontext( & fc2, f2);
 
                 std::cout << "main: call jump_fcontext( & fcm, & fc1, 0)" << std::endl;
@@ -147,8 +144,7 @@ other context.
             ctx::stack_allocator alloc;
 
             fc1.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
-            fc1.fc_stack.limit =
-                static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
+            fc1.fc_stack.size = ctx::minimum_stacksize();
             fc1.fc_link = & fcm;
             pair_t p( std::make_pair( 2, 7) );
             ctx::make_fcontext( & fc1, f1);
@@ -199,7 +195,7 @@ pattern). The user is responsible for this task.
         struct stack_t
         {
             void    *   base;
-            void    *   limit;
+            std::size_t size;
         };
 
         struct fcontext_t
@@ -217,9 +213,9 @@ pattern). The user is responsible for this task.
 [[Member:] [Pointer to the top of the stack.]]
 ]
 
-[heading `limit`]
+[heading `size`]
 [variablelist
-[[Member:] [Pointer to the bottom of the stack.]]
+[[Member:] [Size of the stack in bytes.]]
 ]
 
 [heading `fc_stack`]

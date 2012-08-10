@@ -6,6 +6,11 @@
 
 #define BOOST_CONTEXT_SOURCE
 
+# if defined(BOOST_MSVC)
+# pragma warning(push)
+# pragma warning(disable:4996)
+# endif
+
 extern "C" {
 
 #include <stddef.h>
@@ -79,5 +84,9 @@ EXCEPTION_DISPOSITION seh_fcontext(
 
     return ExceptionContinueSearch; // never reached
 }
+
+# if defined(BOOST_MSVC)
+# pragma warning(pop)
+# endif
 
 }

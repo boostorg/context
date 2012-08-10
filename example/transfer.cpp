@@ -33,8 +33,7 @@ int main( int argc, char * argv[])
     ctx::stack_allocator alloc;
 
     fc1.fc_stack.base = alloc.allocate(ctx::minimum_stacksize());
-    fc1.fc_stack.limit =
-        static_cast< char * >( fc1.fc_stack.base) - ctx::minimum_stacksize();
+    fc1.fc_stack.size = ctx::minimum_stacksize();
     ctx::make_fcontext( & fc1, f1);
 
     pair_t p( std::make_pair( 2, 7) );

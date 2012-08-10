@@ -21,14 +21,14 @@ extern "C" {
 
 #include <boost/context/stack_utils.hpp>
 
-#ifdef BOOST_HAS_ABI_HEADERS
-#  include BOOST_ABI_PREFIX
-#endif
-
 # if defined(BOOST_MSVC)
 # pragma warning(push)
 # pragma warning(disable:4244 4267)
 # endif
+
+#ifdef BOOST_HAS_ABI_HEADERS
+#  include BOOST_ABI_PREFIX
+#endif
 
 namespace boost {
 namespace ctx {
@@ -77,10 +77,10 @@ stack_allocator::deallocate( void * vp, std::size_t size) const
 
 }}
 
-# if defined(BOOST_MSVC)
-# pragma warning(pop)
-# endif
-
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
 #endif
+
+# if defined(BOOST_MSVC)
+# pragma warning(pop)
+# endif

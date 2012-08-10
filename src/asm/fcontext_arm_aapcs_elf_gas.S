@@ -77,17 +77,16 @@ jump_fcontext:
 .align 2
 .type make_fcontext,%function
 make_fcontext:
-    str     a1, [a1,#0]         @ save the address of passed context
-    str     a2, [a1,#40]        @ save address of the context function
-    ldr     a2, [a1,#44]        @ load the stack base
+    str     a2, [a1,#40]        @ save address of context function
+    ldr     a2, [a1,#44]        @ load address of context stack base
 
     push    {a1,lr}             @ save pointer to fcontext_t
-    mov     a1, a2              @ stack pointer as arg for align_stack
-    bl      align_stack@PLT     @ align stack
-    mov     a2, a1              @ begin of aligned stack
+    mov     a1, a2              @ context stack pointer as arg for align_stack
+    bl      align_stack@PLT     @ call align_stack
+    mov     a2, a1              @ begin of aligned context stack
     pop     {a1,lr}             @ restore pointer to fcontext_t
 
-    str     a2, [a1,#32]        @ save the aligned stack base
+    str     a2, [a1,#32]        @ save the aligned context stack base
 
     adr     a2, finish          @ address of finish; called after context function returns
     str     a2, [a1,#36]
