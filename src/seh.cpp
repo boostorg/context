@@ -6,11 +6,6 @@
 
 #define BOOST_CONTEXT_SOURCE
 
-# if defined(BOOST_MSVC)
-# pragma warning(push)
-# pragma warning(disable:4996)
-# endif
-
 extern "C" {
 
 #include <stddef.h>
@@ -25,6 +20,11 @@ extern "C" {
 #else
 # define SNPRINTF snprintf
 #endif
+
+#if defined(_MSC_VER)
+# pragma warning(push)
+# pragma warning(disable:4996)
+# endif
 
 static const char * exception_description(
     _EXCEPTION_RECORD const* record, char * description, size_t len)
