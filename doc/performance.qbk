@@ -23,8 +23,8 @@ average computed over 10 iterations.
         [AMD Athlon 64 DualCore 4400+ (32bit Linux)]
         [846 cycles]
         [65 cycles]
-        [46 cycles]
         [43 cycles]
+        [15 cycles]
     ]
     [
         [Intel Core2 Q6700 (64bit Linux)]
