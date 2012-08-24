@@ -28,10 +28,10 @@ average computed over 10 iterations.
     ]
     [
         [Intel Core2 Q6700 (64bit Linux)]
-        [1472 cycles]
+        [1481 cycles]
         [172 cycles]
         [63 cycles]
-        [60 cycles]
+        [25 cycles]
     ]
 ]
 
