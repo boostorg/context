@@ -19,6 +19,10 @@ extern "C" {
 
 #include <boost/assert.hpp>
 
+#if !defined (SIGSTKSZ)
+# define SIGSTKSZ (8 * 1024)
+#endif
+
 namespace {
 
 static rlimit stacksize_limit_()

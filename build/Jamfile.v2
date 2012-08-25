@@ -40,11 +40,24 @@ actions masm64
 }
 
 
+rule configure ( properties * )
+{
+	local result  ;
+
+	return $(result) ;
+}
+
 # ARM
 alias asm_context_sources
    : asm/fcontext_arm_aapcs_elf_gas.S
    : <architecture>arm
 	 <toolset>gcc
+   ;
+
+alias asm_context_sources
+   : asm/fcontext_arm_aapcs_elf_gas.S
+   : <architecture>arm
+	 <toolset>qcc
    ;
 
 alias asm_context_sources
@@ -60,6 +73,12 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
+   : asm/fcontext_mips32_o32_elf_gas.S
+   : <architecture>mips1
+	 <toolset>qcc
+   ;
+
+alias asm_context_sources
    : [ make asm/fcontext_mips32_o32_elf_gas.o : asm/fcontext_mips32_o32_elf_gas.S : @gas ]
    : <architecture>mips1
    ;
@@ -70,6 +89,13 @@ alias asm_context_sources
    : <address-model>32
      <architecture>power
 	 <toolset>gcc
+   ;
+
+alias asm_context_sources
+   : asm/fcontext_ppc32_sysv_elf_gas.S
+   : <address-model>32
+     <architecture>power
+	 <toolset>qcc
    ;
 
 alias asm_context_sources
@@ -87,6 +113,13 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
+   : asm/fcontext_ppc64_sysv_elf_gas.S
+   : <address-model>64
+     <architecture>power
+	 <toolset>qcc
+   ;
+
+alias asm_context_sources
    : [ make asm/fcontext_ppc64_sysv_elf_gas.o : asm/fcontext_ppc64_sysv_elf_gas.S : @gas ]
    : <address-model>64
      <architecture>power
@@ -98,6 +131,13 @@ alias asm_context_sources
    : <address-model>32
      <architecture>x86
 	 <toolset>gcc
+   ;
+
+alias asm_context_sources
+   : asm/fcontext_i386_sysv_elf_gas.S
+   : <address-model>32
+     <architecture>x86
+	 <toolset>qcc
    ;
 
 alias asm_context_sources
@@ -166,6 +206,13 @@ alias asm_context_sources
    : <address-model>64
      <architecture>x86
 	 <toolset>gcc
+   ;
+
+alias asm_context_sources
+   : asm/fcontext_x86_64_sysv_elf_gas.S
+   : <address-model>64
+     <architecture>x86
+	 <toolset>qcc
    ;
 
 alias asm_context_sources
