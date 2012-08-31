@@ -26,7 +26,7 @@
  *  -------------------------------------------------------------  *
  *  | 0x2c| 0x30|                                               |  *
  *  -------------------------------------------------------------  *
- *  |sbase|slimit|                                              |  *
+ *  |  sp | size|                                               |  *
  *  -------------------------------------------------------------  *
  *  -------------------------------------------------------------  *
  *  |  13 |  14 | 15 |  16 |  17 |  18 |  19 |  20 |  21 |  22  |  *
@@ -79,6 +79,8 @@ jump_fcontext:
 make_fcontext:
     str     a2, [a1,#40]        @ save address of context function
     ldr     a2, [a1,#44]        @ load address of context stack base
+    ldr     a3, [a1,#48]        @ load size of context stack
+    add     a2, a3              @ compute start address of context stack
 
     push    {a1,lr}             @ save pointer to fcontext_t
     mov     a1, a2              @ context stack pointer as arg for align_stack

@@ -30,7 +30,7 @@
 ;  ----------------------------------------------------------------------------------
 ;  |   0x50  |   0x54  |   0x58  |   0x5c  |   0x60   |   0x64  |                   |
 ;  ----------------------------------------------------------------------------------
-;  |       base        |       limit       |        size        |                   |
+;  |        sp         |       size        |        base        |                   |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
 ;  |    26   |   27    |                                                            |
@@ -101,9 +101,9 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
 
     mov     r10,         gs:[030h]  ; load NT_TIB
     mov     rax,         [r10+08h]  ; load current stack base
-    mov     [rcx+050h],  rax        ; save current stack base
+    mov     [rcx+060h],  rax        ; save current stack base
     mov     rax,         [r10+010h] ; load current stack limit
-    mov     [rcx+058h],  rax        ; save current stack limit
+    mov     [rcx+050h],  rax        ; save current stack limit
     mov     rax,         [r10+018h] ; load fiber local storage
     mov     [rcx+068h],  rax        ; save fiber local storage
 
@@ -112,7 +112,7 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
 
     stmxcsr [rcx+070h]              ; save MMX control and status word
     fnstcw  [rcx+074h]              ; save x87 control word
-	mov	    r10,         [rcx+078h] ; address of aligned XMM storage
+    mov     r10,         [rcx+078h] ; address of aligned XMM storage
     movaps  [r10],       xmm6
     movaps  [r10+010h],  xmm7
     movaps  [r10+020h],  xmm8
@@ -126,7 +126,7 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
 
     ldmxcsr [rdx+070h]              ; restore MMX control and status word
     fldcw   [rdx+074h]              ; restore x87 control word
-	mov	    r10,         [rdx+078h] ; address of aligned XMM storage
+    mov     r10,         [rdx+078h] ; address of aligned XMM storage
     movaps  xmm6,        [r10]
     movaps  xmm7,        [r10+010h]
     movaps  xmm8,        [r10+020h]
@@ -154,9 +154,9 @@ nxt:
     mov     rbp,        [rdx+038h]  ; restore RBP
 
     mov     r10,        gs:[030h]   ; load NT_TIB
-    mov     rax,        [rdx+050h]  ; load stack base
+    mov     rax,        [rdx+060h]  ; load stack base
     mov     [r10+08h],  rax         ; restore stack base
-    mov     rax,        [rdx+058h]  ; load stack limit
+    mov     rax,        [rdx+050h]  ; load stack limit
     mov     [r10+010h], rax         ; restore stack limit
     mov     rax,        [rdx+068h]  ; load fiber local storage
     mov     [r10+018h], rax         ; restore fiber local storage
@@ -170,40 +170,44 @@ nxt:
     jmp     r10                     ; indirect jump to caller
 jump_fcontext ENDP
 
-make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and unwind information in    E
+make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and unwind information in
     .endprolog                   ; .xdata for a function's structured exception handling unwind behavior
 
-    mov  [rcx+048h], rdx         ; save address of context function
-    mov  rdx,        [rcx+050h]  ; load address of context stack base
-    mov  r8,         [rcx+060h]  ; load context stack size
-    neg  r8                      ; negate r8 for LEA 
-    lea  r8,         [rdx+r8]    ; compute the address of context stack limit
-    mov  [rcx+058h], r8          ; save the address of context stack limit
+    push rbp                     ; save previous frame pointer; get the stack 16 byte aligned
+    mov  rbp,        rsp         ; set RBP to RSP
+    sub  rsp,        040h        ; allocate shadow space
 
-    push  rcx                    ; save pointer to fcontext_t
-    sub   rsp,       028h        ; reserve shadow space for align_stack
+    mov  [rcx+048h], rdx         ; save address of context function
+    mov  rdx,        [rcx+050h]  ; load address of context stack pointer (limit)
+    mov  r8,         [rcx+058h]  ; load context stack size
+    lea  rdx,        [rdx+r8]    ; compute top address of context stack (base)
+    mov  [rcx+060h], rdx         ; save top address of context stack (base)
+
+    mov   [rbp-08h], rcx         ; save pointer to fcontext_t
     mov   rcx,       rdx         ; context stack pointer as arg for align_stack
-    mov   [rsp+8],   rcx
     call  align_stack            ; call align_stack
     mov   rdx,       rax         ; begin of aligned context stack
-    add   rsp,       028h
-    pop   rcx                    ; restore pointer to fcontext_t
-
-    lea  rdx,        [rdx-028h]  ; reserve 32byte shadow space + return address on stack, (RSP + 8) % 16 == 0
-    mov  [rcx+040h], rdx         ; save the address where the context stack begins
+    mov   rcx,       [rbp-08h]   ; restore pointer to fcontext_t
 
     stmxcsr [rcx+070h]           ; save MMX control and status word
     fnstcw  [rcx+074h]           ; save x87 control word
 
-    lea  rax,       finish       ; helper code executed after fn() returns
-    mov  [rdx],     rax          ; store address off the helper function as return address
+    lea  rdx,        [rdx-028h]  ; reserve 32byte shadow space + return address on stack, (RSP - 0x8) % 16 == 0
+    mov  [rcx+040h], rdx         ; save address in RDX as stack pointer for context function
 
-    xor  rax,       rax          ; set RAX to zero
+    lea  rax,        finish      ; compute abs address of label finish
+    mov  [rdx],      rax         ; save address of finish as return address for context function
+                                 ; entered after context function returns
+
+    add  rsp,        040h        ; deallocate shadow space
+    pop  rbp                     ; restore previous frame pointer
+
+    xor  rax,        rax
     ret
 
 finish:
-    xor   rcx,        rcx
-    mov   [rsp+08h],  rcx
+    ; RSP == stack pointer in fcontext + 0x8
+    xor   rcx,       rcx         ; exit code is zero
     call  _exit                  ; exit application
     hlt
 make_fcontext ENDP

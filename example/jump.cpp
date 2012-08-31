@@ -37,11 +37,11 @@ int main( int argc, char * argv[])
 {
         ctx::stack_allocator alloc1, alloc2;
 
-        fc1.fc_stack.base = alloc1.allocate(ctx::minimum_stacksize());
+        fc1.fc_stack.sp = alloc1.allocate(ctx::minimum_stacksize());
         fc1.fc_stack.size = ctx::minimum_stacksize();
         ctx::make_fcontext( & fc1, f1);
 
-        fc2.fc_stack.base = alloc2.allocate(ctx::minimum_stacksize());
+        fc2.fc_stack.sp = alloc2.allocate(ctx::minimum_stacksize());
         fc2.fc_stack.size = ctx::minimum_stacksize();
         ctx::make_fcontext( & fc2, f2);
 

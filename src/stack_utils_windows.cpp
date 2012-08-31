@@ -5,6 +5,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #define BOOST_CONTEXT_SOURCE
+#define NOMINMAX
 
 #include <boost/context/stack_utils.hpp>
 
@@ -32,45 +33,29 @@ static SYSTEM_INFO system_info()
     return si;
 }
 
+static std::size_t compute_default_stacksize_()
+{
+    std::size_t size = 256 * 1024; // 256 kB
+    if ( boost::ctx::is_stack_unbound() )
+        return std::max( size, boost::ctx::minimum_stacksize() );
+    
+    BOOST_ASSERT( boost::ctx::maximum_stacksize() >= boost::ctx::minimum_stacksize() );
+    return boost::ctx::maximum_stacksize() == boost::ctx::minimum_stacksize()
+        ? boost::ctx::minimum_stacksize()
+        : std::min( size, boost::ctx::maximum_stacksize() );
+}
+
 }
 
 namespace boost {
 namespace ctx {
 
 BOOST_CONTEXT_DECL
-std::size_t default_stacksize()
-{
-    static std::size_t size = 256 * 1024;
-    return size;
-}
-
-BOOST_CONTEXT_DECL
-std::size_t minimum_stacksize()
-{
-    static std::size_t stacksize(
-        static_cast< std::size_t >( system_info().dwAllocationGranularity) );
-    return stacksize;
-}
-
-BOOST_CONTEXT_DECL
-std::size_t maximum_stacksize()
-{
-    BOOST_ASSERT( ! is_stack_unbound() );
-    static std::size_t stacksize = 8 * 1024 * 1024;
-    return stacksize;
-}
-
-// Windows seams not to provide a limit for the stacksize
-BOOST_CONTEXT_DECL
-bool is_stack_unbound()
-{ return true; }
-
-BOOST_CONTEXT_DECL
 std::size_t pagesize()
 {
-    static std::size_t pagesize(
-        static_cast< std::size_t >( system_info().dwPageSize) );
-    return pagesize;
+    static std::size_t size =
+        static_cast< std::size_t >( system_info().dwPageSize);
+    return size;
 }
 
 BOOST_CONTEXT_DECL
@@ -79,6 +64,36 @@ std::size_t page_count( std::size_t stacksize)
     return static_cast< std::size_t >(
         std::ceil(
             static_cast< float >( stacksize) / pagesize() ) );
+}
+
+// Windows seams not to provide a limit for the stacksize
+BOOST_CONTEXT_DECL
+bool is_stack_unbound()
+{ return true; }
+
+BOOST_CONTEXT_DECL
+std::size_t maximum_stacksize()
+{
+    BOOST_ASSERT( ! is_stack_unbound() );
+    static std::size_t size = 1 * 1024 * 1024 * 1024; // 1GB
+    return size;
+}
+
+BOOST_CONTEXT_DECL
+std::size_t minimum_stacksize()
+{
+    // space for guard page added
+    static std::size_t size =
+        static_cast< std::size_t >( system_info().dwAllocationGranularity)
+        + pagesize();
+    return size;
+}
+
+BOOST_CONTEXT_DECL
+std::size_t default_stacksize()
+{
+    static std::size_t size = compute_default_stacksize_();
+    return size;
 }
 
 }}

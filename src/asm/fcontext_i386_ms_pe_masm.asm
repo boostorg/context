@@ -16,7 +16,7 @@
 ;  --------------------------------------------------------------
 ;  |   018h  |   01ch  |   020h  |                              |
 ;  --------------------------------------------------------------
-;  |   base  |  limit  |   size  |                              |
+;  |    sp   |   size  |   base  |                              |
 ;  --------------------------------------------------------------
 ;  --------------------------------------------------------------
 ;  |    9    |                                                  |
@@ -61,9 +61,9 @@ jump_fcontext PROC EXPORT
     mov     eax,         [edx]      ; load current SEH exception list
     mov     [ecx+024h],  eax        ; save current exception list
     mov     eax,         [edx+04h]  ; load current stack base
-    mov     [ecx+018h],  eax        ; save current stack base
+    mov     [ecx+020h],  eax        ; save current stack base
     mov     eax,         [edx+08h]  ; load current stack limit
-    mov     [ecx+01ch],  eax        ; save current stack limit
+    mov     [ecx+018h],  eax        ; save current stack limit
     mov     eax,         [edx+010h] ; load fiber local storage
     mov     [ecx+028h],  eax        ; save fiber local storage
 
@@ -93,9 +93,9 @@ nxt:
     assume  fs:error
     mov     eax,        [ecx+024h]  ; load SEH exception list
     mov     [edx],      eax         ; restore next SEH item
-    mov     eax,        [ecx+018h]  ; load stack base
+    mov     eax,        [ecx+020h]  ; load stack base
     mov     [edx+04h],  eax         ; restore stack base
-    mov     eax,        [ecx+01ch]  ; load stack limit
+    mov     eax,        [ecx+018h]  ; load stack limit
     mov     [edx+08h],  eax         ; restore stack limit
     mov     eax,        [ecx+028h]  ; load fiber local storage
     mov     [edx+010h], eax         ; restore fiber local storage
@@ -110,44 +110,51 @@ nxt:
 jump_fcontext ENDP
 
 make_fcontext PROC EXPORT
-    mov  eax,         [esp+04h]     ; load address of the fcontext_t
-    mov  ecx,         [esp+08h]     ; load address of the context function
-    mov  [eax+014h],  ecx           ; save address of the context function
-    mov  edx,         [eax+018h]    ; load address of context stack base
-    mov  ecx,         [eax+020h]    ; load context stack size
-    neg  ecx                        ; negate stacksize for LEA 
-    lea  ecx,         [edx+ecx]     ; compute context stack limit
-    mov  [eax+01ch],  ecx           ; save context stack limit
+    push ebp                        ; save previous frame pointer; get the stack 16 byte aligned
+    mov  ebp,         esp           ; set EBP to ESP 
+    sub  esp,         010h          ; allocate stack space
 
-    push  eax                       ; save pointer to fcontext_t
-    push  edx                       ; context stack as arg for align_stack
+    mov  eax,         [ebp+08h]     ; load address of fcontext_t
+    mov  ecx,         [ebp+0ch]     ; load address of context function
+    mov  [eax+014h],  ecx           ; save address of context function
+    mov  edx,         [eax+018h]    ; load address of context stack (limit)
+    mov  ecx,         [eax+01ch]    ; load context stack size
+    lea  edx,         [edx+ecx]     ; compute top address of context stack (base)
+    mov  [eax+020h],  edx           ; save top address of context stack (base)
+
+    mov   [esp+04h],  eax           ; save pointer to fcontext_t
+    mov   [esp],      edx           ; context stack as arg for align_stack
     call  align_stack               ; call align_stack
     mov   edx,        eax           ; begin of aligned context stack
-    pop   eax                       ; remove arg for align_stack
-    pop   eax                       ; restore pointer to fcontext_t
-
-    lea  edx,         [edx-014h]    ; reserve space for last frame on context stack, (ESP + 4) & 15 == 0
-    mov  [eax+010h],  edx           ; save the aligned stack
-
-    mov  ecx,         seh_fcontext  ; set ECX to exception-handler
-    mov  [edx+0ch],   ecx           ; save ECX as SEH handler
-    mov  ecx,         0ffffffffh    ; set ECX to -1
-    mov  [edx+08h],   ecx           ; save ECX as next SEH item
-    lea  ecx,         [edx+08h]     ; load address of next SEH item
-    mov  [eax+024h],  ecx           ; save next SEH
-
+    mov   eax,        [esp+04h]     ; restore pointer to fcontext_t
+    
     stmxcsr [eax+02ch]              ; save MMX control word
     fnstcw  [eax+030h]              ; save x87 control word
 
-    mov  ecx,         finish        ; address of finish
-    mov  [edx],       ecx
+    lea  edx,         [edx-01ch]    ; reserve space for last frame and seh on context stack, (ESP - 0x4) % 16 == 0
+    mov  [eax+010h],  edx           ; save address in EDX as stack pointer for context stack
+
+    mov  ecx,         seh_fcontext  ; set ECX to exception-handler
+    mov  [edx+018h],  ecx           ; save ECX as SEH handler
+    mov  ecx,         0ffffffffh    ; set ECX to -1
+    mov  [edx+014h],  ecx           ; save ECX as next SEH item
+    lea  ecx,         [edx+014h]    ; load address of next SEH item
+    mov  [eax+024h],  ecx           ; save next SEH
+
+    mov  ecx,         finish        ; abs address of finish
+    mov  [edx],       ecx           ; save address of finish as return address for context function
+                                    ; entered after context function returns
+
+    add  esp,         010h          ; deallocate stack space
+    pop  ebp
 
     xor  eax,         eax
     ret
 
 finish:
+    ; ESP == stack pointer of context function + 0x4
     xor   eax,        eax
-    push  eax                       ; exit code is zero
+    mov   [esp],      eax           ; exit code is zero
     call  _exit                     ; exit application
     hlt
 make_fcontext ENDP

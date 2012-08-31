@@ -46,10 +46,11 @@ stack_allocator::allocate( std::size_t size) const
             boost::str( boost::format("invalid stack size: must not be larger than %d bytes")
                 % maximum_stacksize() ) );
 
-    const std::size_t pages( page_count( size) + 1); // add +1 for guard page
-    std::size_t size_ = pages * pagesize();
+    const std::size_t pages( page_count( size) );
+    BOOST_ASSERT( 2 <= pages); // one page is reserved for protection
+    const std::size_t size_ = pages * pagesize();
+    BOOST_ASSERT( 0 < size && 0 < size_);
 
-#ifndef BOOST_CONTEXT_FIBER
     void * limit = ::VirtualAlloc( 0, size_, MEM_COMMIT, PAGE_READWRITE);
     if ( ! limit) throw std::bad_alloc();
 
@@ -58,8 +59,7 @@ stack_allocator::allocate( std::size_t size) const
         limit, pagesize(), PAGE_READWRITE | PAGE_GUARD /*PAGE_NOACCESS*/, & old_options);
     BOOST_ASSERT( FALSE != result);
 
-    return static_cast< char * >( limit) + size_;
-#endif
+    return limit;
 }
 
 void
@@ -67,11 +67,10 @@ stack_allocator::deallocate( void * vp, std::size_t size) const
 {
     if ( vp)
     {
-        const std::size_t pages( page_count( size) + 1); // add +1 for guard page
-        std::size_t size_ = pages * pagesize();
+        const std::size_t pages = page_count( size);
+        const std::size_t size_ = pages * pagesize();
         BOOST_ASSERT( 0 < size && 0 < size_);
-        void * limit = static_cast< char * >( vp) - size_;
-        ::VirtualFree( limit, 0, MEM_RELEASE);
+        ::VirtualFree( vp, 0, MEM_RELEASE);
     }
 }
 

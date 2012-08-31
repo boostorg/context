@@ -6,6 +6,8 @@
 
 #define BOOST_CONTEXT_SOURCE
 
+#include <algorithm>
+
 #include <boost/context/stack_utils.hpp>
 
 extern "C" {
@@ -39,21 +41,41 @@ static rlimit stacksize_limit()
     return limit;
 }
 
+static std::size_t compute_default_stacksize_()
+{
+    std::size_t size = 256 * 1024; // 256 kB
+    if ( boost::ctx::is_stack_unbound() )
+        return std::max( size, boost::ctx::minimum_stacksize() );
+    
+    BOOST_ASSERT( boost::ctx::maximum_stacksize() >= boost::ctx::minimum_stacksize() );
+    return boost::ctx::maximum_stacksize() == boost::ctx::minimum_stacksize()
+        ? boost::ctx::minimum_stacksize()
+        : std::min( size, boost::ctx::maximum_stacksize() );
+}
+
 }
 
 namespace boost {
 namespace ctx {
 
 BOOST_CONTEXT_DECL
-std::size_t default_stacksize()
+std::size_t pagesize()
 {
-    static std::size_t size = 256 * 1024;
+    static std::size_t size = ::getpagesize();
     return size;
 }
 
 BOOST_CONTEXT_DECL
-std::size_t minimum_stacksize()
-{ return SIGSTKSZ; }
+std::size_t page_count( std::size_t stacksize)
+{
+    return static_cast< std::size_t >( 
+        std::ceil(
+            static_cast< float >( stacksize) / pagesize() ) );
+}
+
+BOOST_CONTEXT_DECL
+bool is_stack_unbound()
+{ return RLIM_INFINITY == stacksize_limit().rlim_max; }
 
 BOOST_CONTEXT_DECL
 std::size_t maximum_stacksize()
@@ -63,22 +85,18 @@ std::size_t maximum_stacksize()
 }
 
 BOOST_CONTEXT_DECL
-bool is_stack_unbound()
-{ return RLIM_INFINITY == stacksize_limit().rlim_max; }
-
-BOOST_CONTEXT_DECL
-std::size_t pagesize()
+std::size_t minimum_stacksize()
 {
-    static std::size_t pagesize( ::getpagesize() );
-    return pagesize;
+    // space for guard page added
+    static std::size_t size = SIGSTKSZ + pagesize();
+    return size;
 }
 
 BOOST_CONTEXT_DECL
-std::size_t page_count( std::size_t stacksize)
+std::size_t default_stacksize()
 {
-    return static_cast< std::size_t >( 
-        std::ceil(
-            static_cast< float >( stacksize) / pagesize() ) );
+    static std::size_t size = compute_default_stacksize_();
+    return size;
 }
 
 }}

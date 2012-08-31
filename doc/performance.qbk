@@ -14,6 +14,9 @@ active, cache warm-up was accounted for, and the one running thread was pinned
 to a single CPU. The code was compiled using the build options,
 'variant = release cxxflags = -DBOOST_DISABLE_ASSERTS'.
 
+Applying `-DBOOST_USE_UCONTEXT` to cxxflags the performance of `ucontext` will
+be measured too.
+
 The numbers in the table are the number of cycles per iteration, based upon an
 average computed over 10 iterations.
 

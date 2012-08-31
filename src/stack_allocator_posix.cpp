@@ -44,8 +44,10 @@ stack_allocator::allocate( std::size_t size) const
             boost::str( boost::format("invalid stack size: must not be larger than %d bytes")
                 % maximum_stacksize() ) );
 
-    const std::size_t pages( page_count( size) + 1); // add +1 for guard page
-    std::size_t size_ = pages * pagesize();
+    const std::size_t pages( page_count( size) );
+    BOOST_ASSERT( 2 <= pages); // one page is reserved for protection
+    const std::size_t size_( pages * pagesize() );
+    BOOST_ASSERT( 0 < size && 0 < size_);
 
     const int fd( ::open("/dev/zero", O_RDONLY) );
     BOOST_ASSERT( -1 != fd);
@@ -61,7 +63,7 @@ stack_allocator::allocate( std::size_t size) const
     const int result( ::mprotect( limit, pagesize(), PROT_NONE) );
     BOOST_ASSERT( 0 == result);
 
-    return static_cast< char * >( limit) + size_;
+    return limit;
 }
 
 void
@@ -69,11 +71,10 @@ stack_allocator::deallocate( void * vp, std::size_t size) const
 {
     if ( vp)
     {
-        const std::size_t pages( page_count( size) + 1); // add +1 for guard page
-        std::size_t size_ = pages * pagesize();
+        const std::size_t pages = page_count( size);
+        const std::size_t size_ = pages * pagesize();
         BOOST_ASSERT( 0 < size && 0 < size_);
-        void * limit = static_cast< char * >( vp) - size_;
-        ::munmap( limit, size_);
+        ::munmap( vp, size_);
     }
 }
 

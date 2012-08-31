@@ -26,7 +26,7 @@
  *  ----------------------------------------------------------------------------------  *
  *  |  0x40   |  0x44   |  0x48   |   0x4c  |                                        |  *
  *  ----------------------------------------------------------------------------------  *
- *  |       sbase       |        slimit     |                                        |  *
+ *  |        sp         |       size        |                                        |  *
  *  ----------------------------------------------------------------------------------  *
  *  ----------------------------------------------------------------------------------  *
  *  |    20   |    21   |                                                            |  *
@@ -86,30 +86,41 @@ jump_fcontext:
 .type make_fcontext,@function
 .align 16
 make_fcontext:
-    movq   %rsi,                 0x38(%rdi) /* save address of context function */
-    movq   0x40(%rdi),           %rdx       /* load address of context stack base */
+    pushq   %rbp                       /* save previous frame pointer; get the stack 16 byte aligned */
+    movq    %rsp,           %rbp       /* set RBP to RSP */
+    subq    $0x10,          %rsp       /* allocate stack space */ 
 
-    pushq  %rdi                             /* save pointer to fcontext_t */
-    movq   %rdx,                 %rdi       /* context stack pointer as arg for align_stack */
-    call   align_stack@PLT                  /* align context stack */
-    movq   %rax,                 %rdx       /* begin of aligned context stack */
-    popq   %rdi                             /* restore pointer to fcontext_t */
+    movq   %rsi,            0x38(%rdi) /* save address of context function */
+    movq   0x40(%rdi),      %rdx       /* load address of context stack base */
+    movq   0x48(%rdi),      %rax       /* load size of context stack */
+    leaq   (%rdx,%rax),     %rdx       /* compute top address of context stack */
 
-    leaq   -0x8(%rdx),           %rdx       /* reserve space for the last frame on context stack, (RSP + 8) & 15 == 0 */
-    movq   %rdx,                 0x30(%rdi) /* save the algined context stack base */
+    movq   %rdi,            (%rsp)     /* save pointer to fcontext_t */
+    movq   %rdx,            %rdi       /* context stack pointer as arg for align_stack */
+    call   align_stack@PLT             /* align context stack */
+    movq   %rax,            %rdx       /* begin of aligned context stack */
+    movq   (%rsp),          %rdi       /* restore pointer to fcontext_t */
 
-    stmxcsr  0x50(%rdi)                     /* save MMX control and status word */
-    fnstcw   0x54(%rdi)                     /* save x87 control word */
+    stmxcsr  0x50(%rdi)                /* save MMX control and status word */
+    fnstcw   0x54(%rdi)                /* save x87 control word */
 
-    leaq   finish(%rip),         %rcx       /* address of finish; called after context function returns */
-    movq   %rcx,                 (%rdx)
+    leaq   -0x8(%rdx),      %rdx       /* reserve space for the last frame on context stack, (RSP - 0x8) % 16 == 0 */
+    movq   %rdx,            0x30(%rdi) /* save address in RDX as stack pointer for context function */
 
-    xorq   %rax,                 %rax
+    leaq   finish(%rip),    %rcx       /* compute abs address of label finish */
+    movq   %rcx,            (%rdx)     /* save address of finish as return address for context function */
+                                       /* entered after context function returns */
+
+    addq   $0x10,           %rsp       /* deallocate shadow space */      
+    popq   %rbp                        /* restore previous frame pointer */
+
+    xorq   %rax,            %rax
     ret
 
 finish:
-    xorq    %rdi,              %rdi         /* exit code is zero */
-    call   _exit@PLT                        /* exit application */
+    /* RSP == stack pointer of context function + 0x8 */
+    xorq    %rdi,           %rdi       /* exit code is zero */
+    call   _exit@PLT                   /* exit application */
     hlt
 .size make_fcontext,.-make_fcontext
 

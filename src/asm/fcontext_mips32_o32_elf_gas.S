@@ -26,7 +26,7 @@
  *  -------------------------------------------------------------  *
  *  | 104 | 112 |                                               |  *
  *  -------------------------------------------------------------  *
- *  |sbase|slimt|                                               |  *
+ *  |  sp | size|                                               |  *
  *  -------------------------------------------------------------  *
  *  -------------------------------------------------------------  *
  *  |  15 |  16 |  17 |  18 |  19 |  20 |                       |  *
@@ -112,6 +112,8 @@ make_fcontext:
     sw      $gp, 24($a0)        # save global pointer
     sw      $a1, 96($a0)        # save address of context function
     lw      $t0, 104($a0)       # load address of context stack base
+    lw      $t1, 112($a0)       # load size of context stack
+    add     $t0, $t1, $t0       # compute start address of context stack
 
     sub     $sp, $sp, 28
     sw      $ra, 24($sp)

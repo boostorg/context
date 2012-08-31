@@ -33,7 +33,7 @@
  *  -------------------------------------------------------------  *
  *  |  92 |  96 |                                               |  *
  *  -------------------------------------------------------------  *
- *  |sbase|slimt|                                               |  *
+ *  |  sp | size|                                               |  *
  *  -------------------------------------------------------------  *
  *  -------------------------------------------------------------  *
  *  |  25 |  26 |  27 |  28 |  29 |  30 |  31 |  32 |  33 |  34 |  *
@@ -186,6 +186,8 @@ jump_fcontext:
 make_fcontext:
     stw     %r4, 88(%r3)        # save address of context function
     lwz     %r0, 92(%r3)        # load address of context stack base
+    lwz     %r4, 96(%r3)        # load size of context stack
+    add     %r0, %r4, %r0       # compute start address of context stack
 
     li      %r4, 28
     subf    %r1, %r4, %r1       # reserve space on stack

@@ -47,7 +47,7 @@
  *  -------------------------------------------------------------  *
  *  | 184 | 188 | 192 | 196 |                                   |  *
  *  -------------------------------------------------------------  *
- *  |   sbase   |   slimt   |                                   |  *
+ *  |    sp     |    size   |                                   |  *
  *  -------------------------------------------------------------  *
  *  -------------------------------------------------------------  *
  *  |  50 |  51 |  52 |  53 |  54 |  55 |  56 |  57 |  58 |  59 |  *
@@ -214,6 +214,8 @@ make_fcontext:
 .make_fcontext:
     std     %r4, 176(%r3)       # save address of context function
     ld      %r0, 184(%r3)       # load address of context stack base
+    ld      %r4, 192(%r3)       # load size of context stack
+    add     %r0, %r4, %r0       # compute start address of context stack
 
     li      %r4, 56
     subf    %r1, %r4, %r1       # reserve space on stack
