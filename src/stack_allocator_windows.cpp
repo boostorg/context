@@ -12,6 +12,7 @@ extern "C" {
 #include <windows.h>
 }
 
+#include <cstring>
 #include <stdexcept>
 
 #include <boost/config.hpp>
@@ -54,12 +55,14 @@ stack_allocator::allocate( std::size_t size) const
     void * limit = ::VirtualAlloc( 0, size_, MEM_COMMIT, PAGE_READWRITE);
     if ( ! limit) throw std::bad_alloc();
 
+    std::memset( limit, size_, '\0');
+
     DWORD old_options;
     const BOOL result = ::VirtualProtect(
         limit, pagesize(), PAGE_READWRITE | PAGE_GUARD /*PAGE_NOACCESS*/, & old_options);
     BOOST_ASSERT( FALSE != result);
 
-    return limit;
+    return static_cast< char * >( limit) + size_;
 }
 
 void
@@ -70,7 +73,8 @@ stack_allocator::deallocate( void * vp, std::size_t size) const
         const std::size_t pages = page_count( size);
         const std::size_t size_ = pages * pagesize();
         BOOST_ASSERT( 0 < size && 0 < size_);
-        ::VirtualFree( vp, 0, MEM_RELEASE);
+        void * limit = static_cast< char * >( vp) - size_;
+        ::VirtualFree( limit, 0, MEM_RELEASE);
     }
 }
 

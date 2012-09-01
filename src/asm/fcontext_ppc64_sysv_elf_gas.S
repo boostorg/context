@@ -212,23 +212,18 @@ make_fcontext:
 .type .make_fcontext,@function
 .globl .make_fcontext
 .make_fcontext:
-    std     %r4, 176(%r3)       # save address of context function
-    ld      %r0, 184(%r3)       # load address of context stack base
-    ld      %r4, 192(%r3)       # load size of context stack
-    add     %r0, %r4, %r0       # compute start address of context stack
+    mflr    %r0                 # save return address into R0
+    stw     %r0, 8(%r1)         # save return address on stack, set up stack frame
+    stwu    %r1, -64(%r1)       # allocate stack space, SP % 16 == 0
 
-    li      %r4, 56
-    subf    %r1, %r4, %r1       # reserve space on stack
-    stw     %r3, 48(%r1)        # store pointer to fcontext_t on stack
-    mflr    %r4                 # load LR
-    stw     %r4, 40(%r1)        # store LR on stack
+    std     %r4, 176(%r3)       # save address of context function
+    ld      %r0, 184(%r3)       # load address of context stack pointer (base)
+
+    stw     %r3, 16(%r1)        # store pointer to fcontext_t on stack
     mr.     %r3, %r0            # context stack as arg to align_stack
     bl      align_stack@plt     # call align_stack
     mr.     %r0, %r3            # load result into R0
-    lwz     %r4, 40(%r1)        # pop LR from stack
-    mtlr    %r4                 # restore LR
-    lwz     %r3, 48(%r1)        # pop pointer to fcontext_t from stack
-    addi    %r1, %r1, 56        # release space on stack
+    lwz     %r3, 16(%r1)        # pop pointer to fcontext_t from stack
 
     li      %r4, 64
     subf    %r0, %r4, %r0       # 64 bytes on stack for parameter area (== 8 registers)
@@ -237,15 +232,25 @@ make_fcontext:
     mflr    %r0                 # load LR
     bl      1f                  # jump to label 1
 1:
-    mflr    %r4                      # load LR
-    addi    %r4, %r4, finish - 1b    # calulate absolute address of finish
+    mflr    %r4                      # load LR into R4
+    addi    %r4, %r4, finish - 1b    # compute abs address of label finish
     mtlr    %r0                      # restore LR
-    std     %r4, 168(%r3)            # save address of finish
+    std     %r4, 168(%r3)            # save address of finish as return address for context function
+                                     # entered after context function returns
 
-    li      %r3,  0             # set return value to zero
+    addi    %r1, %r1, 64        # deallocate stack space
+    lwz     %r0, 8(%r1)         # load return address from stack, destroy stack frame
+    mtlr    %r0                 # restore return address
+
+    li      %r3,  0
     blr
 
 finish:
+    # SP points to same address as SP on entry of context function
+    mflr    %r0                 # save return address into R0
+    stw     %r0, 8(%r1)         # save return address on stack, set up stack frame
+    stwu    %r1, -32(%r1)       # allocate stack space, SP % 16 == 0
+
     li      %r3,  0             # set return value to zero
     bl      _exit@plt           # exit application
 .size .make_fcontext, .-.make_fcontext

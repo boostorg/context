@@ -30,7 +30,7 @@
 ;  ----------------------------------------------------------------------------------
 ;  |   0x50  |   0x54  |   0x58  |   0x5c  |   0x60   |   0x64  |                   |
 ;  ----------------------------------------------------------------------------------
-;  |        sp         |       size        |        base        |                   |
+;  |        sp         |       size        |        limit       |                   |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
 ;  |    26   |   27    |                                                            |
@@ -101,9 +101,9 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
 
     mov     r10,         gs:[030h]  ; load NT_TIB
     mov     rax,         [r10+08h]  ; load current stack base
-    mov     [rcx+060h],  rax        ; save current stack base
+    mov     [rcx+050h],  rax        ; save current stack base
     mov     rax,         [r10+010h] ; load current stack limit
-    mov     [rcx+050h],  rax        ; save current stack limit
+    mov     [rcx+060h],  rax        ; save current stack limit
     mov     rax,         [r10+018h] ; load fiber local storage
     mov     [rcx+068h],  rax        ; save fiber local storage
 
@@ -154,9 +154,9 @@ nxt:
     mov     rbp,        [rdx+038h]  ; restore RBP
 
     mov     r10,        gs:[030h]   ; load NT_TIB
-    mov     rax,        [rdx+060h]  ; load stack base
+    mov     rax,        [rdx+050h]  ; load stack base
     mov     [r10+08h],  rax         ; restore stack base
-    mov     rax,        [rdx+050h]  ; load stack limit
+    mov     rax,        [rdx+060h]  ; load stack limit
     mov     [r10+010h], rax         ; restore stack limit
     mov     rax,        [rdx+068h]  ; load fiber local storage
     mov     [r10+018h], rax         ; restore fiber local storage
@@ -175,13 +175,15 @@ make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and u
 
     push rbp                     ; save previous frame pointer; get the stack 16 byte aligned
     mov  rbp,        rsp         ; set RBP to RSP
-    sub  rsp,        040h        ; allocate shadow space
+    sub  rsp,        040h        ; allocate stack space (contains shadow space for subroutines)
 
     mov  [rcx+048h], rdx         ; save address of context function
-    mov  rdx,        [rcx+050h]  ; load address of context stack pointer (limit)
+    mov  rdx,        [rcx+050h]  ; load address of context stack pointer (base)
     mov  r8,         [rcx+058h]  ; load context stack size
-    lea  rdx,        [rdx+r8]    ; compute top address of context stack (base)
-    mov  [rcx+060h], rdx         ; save top address of context stack (base)
+    neg  r8                      ; negate stack size for LEA instruction (== substraction)
+    lea  rdx,        [rdx+r8]    ; compute bottom address of context stack
+    mov  [rcx+060h], rdx         ; save bottom address of context stack (limit)
+    mov  rdx,        [rcx+050h]  ; load address of context stack pointer (base)
 
     mov   [rbp-08h], rcx         ; save pointer to fcontext_t
     mov   rcx,       rdx         ; context stack pointer as arg for align_stack
@@ -206,7 +208,7 @@ make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and u
     ret
 
 finish:
-    ; RSP == stack pointer in fcontext + 0x8
+    ; RSP points to same address as RSP on entry of context function + 0x8 
     xor   rcx,       rcx         ; exit code is zero
     call  _exit                  ; exit application
     hlt

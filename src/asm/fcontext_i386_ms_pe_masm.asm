@@ -16,7 +16,7 @@
 ;  --------------------------------------------------------------
 ;  |   018h  |   01ch  |   020h  |                              |
 ;  --------------------------------------------------------------
-;  |    sp   |   size  |   base  |                              |
+;  |    sp   |   size  |  limit  |                              |
 ;  --------------------------------------------------------------
 ;  --------------------------------------------------------------
 ;  |    9    |                                                  |
@@ -61,9 +61,9 @@ jump_fcontext PROC EXPORT
     mov     eax,         [edx]      ; load current SEH exception list
     mov     [ecx+024h],  eax        ; save current exception list
     mov     eax,         [edx+04h]  ; load current stack base
-    mov     [ecx+020h],  eax        ; save current stack base
+    mov     [ecx+018h],  eax        ; save current stack base
     mov     eax,         [edx+08h]  ; load current stack limit
-    mov     [ecx+018h],  eax        ; save current stack limit
+    mov     [ecx+020h],  eax        ; save current stack limit
     mov     eax,         [edx+010h] ; load fiber local storage
     mov     [ecx+028h],  eax        ; save fiber local storage
 
@@ -93,9 +93,9 @@ nxt:
     assume  fs:error
     mov     eax,        [ecx+024h]  ; load SEH exception list
     mov     [edx],      eax         ; restore next SEH item
-    mov     eax,        [ecx+020h]  ; load stack base
+    mov     eax,        [ecx+018h]  ; load stack base
     mov     [edx+04h],  eax         ; restore stack base
-    mov     eax,        [ecx+018h]  ; load stack limit
+    mov     eax,        [ecx+020h]  ; load stack limit
     mov     [edx+08h],  eax         ; restore stack limit
     mov     eax,        [ecx+028h]  ; load fiber local storage
     mov     [edx+010h], eax         ; restore fiber local storage
@@ -117,10 +117,12 @@ make_fcontext PROC EXPORT
     mov  eax,         [ebp+08h]     ; load address of fcontext_t
     mov  ecx,         [ebp+0ch]     ; load address of context function
     mov  [eax+014h],  ecx           ; save address of context function
-    mov  edx,         [eax+018h]    ; load address of context stack (limit)
+    mov  edx,         [eax+018h]    ; load address of context stack (base)
     mov  ecx,         [eax+01ch]    ; load context stack size
-    lea  edx,         [edx+ecx]     ; compute top address of context stack (base)
-    mov  [eax+020h],  edx           ; save top address of context stack (base)
+    neg  ecx                        ; negate stack size for LEA instruction (== substraction)
+    lea  edx,         [edx+ecx]     ; compute top address of context stack
+    mov  [eax+020h],  edx           ; save bottom address of context stack (limit)
+    mov  edx,         [eax+018h]    ; load address of context stack (base)
 
     mov   [esp+04h],  eax           ; save pointer to fcontext_t
     mov   [esp],      edx           ; context stack as arg for align_stack
@@ -152,7 +154,7 @@ make_fcontext PROC EXPORT
     ret
 
 finish:
-    ; ESP == stack pointer of context function + 0x4
+    ; ESP points to same address as ESP on entry of context function + 0x4
     xor   eax,        eax
     mov   [esp],      eax           ; exit code is zero
     call  _exit                     ; exit application

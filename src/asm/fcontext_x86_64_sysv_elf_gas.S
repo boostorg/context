@@ -92,8 +92,6 @@ make_fcontext:
 
     movq   %rsi,            0x38(%rdi) /* save address of context function */
     movq   0x40(%rdi),      %rdx       /* load address of context stack base */
-    movq   0x48(%rdi),      %rax       /* load size of context stack */
-    leaq   (%rdx,%rax),     %rdx       /* compute top address of context stack */
 
     movq   %rdi,            (%rsp)     /* save pointer to fcontext_t */
     movq   %rdx,            %rdi       /* context stack pointer as arg for align_stack */
@@ -118,7 +116,7 @@ make_fcontext:
     ret
 
 finish:
-    /* RSP == stack pointer of context function + 0x8 */
+    /* RSP points to same address as RSP on entry of context function + 0x8 */
     xorq    %rdi,           %rdi       /* exit code is zero */
     call   _exit@PLT                   /* exit application */
     hlt

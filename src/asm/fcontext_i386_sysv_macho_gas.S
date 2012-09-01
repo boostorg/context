@@ -81,8 +81,6 @@ _make_fcontext:
     movl   0xc(%ebp),      %ecx         /* load address of context function */
     movl   %ecx,           0x14(%eax)   /* save address of context function */
     movl   0x18(%eax),     %edx         /* load address of context stack base */
-    movl   0x1c(%eax),     %ecx         /* load size of context stack */
-    leal   (%edx,%ecx),    %edx         /* compute top address of context stack */
 
     movl   %eax,           0x4(%esp)    /* save pointer to fcontext_t */
     movl   %edx,           (%esp)       /* context stack pointer as arg for align_stack */
@@ -109,7 +107,7 @@ _make_fcontext:
     ret
 
 finish:
-    /* ESP == stack pointer of context function + 0x4 */
+    /* ESP points to same address as ESP on entry of context function + 0x4 */
     xorl    %eax,  %eax
     movl    %eax,  (%esp)               /* exit code is zero */
     call   _exit                        /* exit application */

@@ -78,25 +78,25 @@ jump_fcontext:
 .type make_fcontext,%function
 make_fcontext:
     str     a2, [a1,#40]        @ save address of context function
-    ldr     a2, [a1,#44]        @ load address of context stack base
-    ldr     a3, [a1,#48]        @ load size of context stack
-    add     a2, a3              @ compute start address of context stack
+    ldr     a2, [a1,#44]        @ load address of context stack pointer (base)
 
-    push    {a1,lr}             @ save pointer to fcontext_t
+    push    {a1,lr}             @ save pointer to fcontext_t and return address, SP % 8 == 0
     mov     a1, a2              @ context stack pointer as arg for align_stack
     bl      align_stack@PLT     @ call align_stack
     mov     a2, a1              @ begin of aligned context stack
-    pop     {a1,lr}             @ restore pointer to fcontext_t
+    pop     {a1,lr}             @ restore pointer to fcontext_t and return address
 
-    str     a2, [a1,#32]        @ save the aligned context stack base
+    str     a2, [a1,#32]        @ save address in A2 as stack pointer for context function
 
-    adr     a2, finish          @ address of finish; called after context function returns
-    str     a2, [a1,#36]
+    adr     a2, finish          @ compute abs address of label finish
+    str     a2, [a1,#36]        @ save address of finish as return address for context function
+                                @ entered after context function returns
 
     mov     a1, #0
     bx      lr
 
 finish:
+    @ SP points to same address as SP on entry of context function
     mov     a1, #0              @ exit code is zero
     bl      _exit@PLT           @ exit application
 .size make_fcontext,.-make_fcontext

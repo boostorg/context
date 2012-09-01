@@ -95,6 +95,7 @@ jump_fcontext:
 
     lw      $t9, 96($a1)    # load PC
     jr      $t9             # jump to context
+    nop
 .end jump_fcontext
 .size jump_fcontext, .-jump_fcontext
 
@@ -109,37 +110,41 @@ make_fcontext:
 .cpload $t9
 .set    reorder
 #endif
+    addiu   $sp, $sp, -40       # allocate stack space (contains shadow space for subroutines)
+    sw      $ra, 36($sp)        # save return address
+
     sw      $gp, 24($a0)        # save global pointer
     sw      $a1, 96($a0)        # save address of context function
-    lw      $t0, 104($a0)       # load address of context stack base
-    lw      $t1, 112($a0)       # load size of context stack
-    add     $t0, $t1, $t0       # compute start address of context stack
+    lw      $t0, 104($a0)       # load address of context stack pointer (base)
 
-    sub     $sp, $sp, 28
-    sw      $ra, 24($sp)
-    sw      $a0, 20($sp)
+    sw      $a0, 28($sp)        # save pointer to fcontext_t
     move    $a0, $t0                       # context stack pointer as arg for align_stack
     lw      $t9, %call16(align_stack)($gp) # address of align_stack
     jalr    $t9                            # call align_stack
-    nop
     move    $t0, $v0            # begin of aligned context stack
-    lw      $ra, 24($sp)
-    lw      $a0, 20($sp)
-    addi    $sp, $sp, 28
+    lw      $a0, 28($sp)        # restore pointer to fcontext_t
 
-    sub     $t0, $t0, 16        # reserve 16 byte of argument space
-    sw      $t0, 72($a0)        # save the algned stack base
+    addiu   $t0, $t0, -40       # reserve 16 byte (includes 4 byte shadow space), T0 % 16 == 0
+    sw      $t0, 72($a0)        # save address in T0 as stack pointer for context function, SP % 16 == 0
 
-    la      $t9, finish         # helper code executed after context function returns
-    sw      $t9, 88($a0)
+    la      $t9, finish         # compute abs address of label finish
+    sw      $t9, 88($a0)        # save address of finish as return address for context function
+                                # entered after context function returns
+
+    lw      $ra, 36($sp)        # restore return address
+    addiu   $sp, $sp, 40        # deallocate stack space
 
     move    $v0, $zero
     jr      $ra
 
 finish:
-    move    $gp, $s3            # restore GP (global pointer)
-    move    $a0, $zero          # exit code is zero
-    lw      $t9, %call16(_exit)($gp)  # exit application
-    jalr    $t9
+    # SP points to same adddress as SP on entry of context function
+    addiu   $sp, $sp, -32       # allocate stack space (contains shadow space for subroutines)
+    sw      $ra, 28($sp)        # save return address
+
+    move    $gp, $s3                  # restore GP (global pointer)
+    move    $a0, $zero                # exit code is zero
+    lw      $t9, %call16(_exit)($gp)  # address of exit
+    jalr    $t9                       # exit application
 .end make_fcontext
 .size make_fcontext, .-make_fcontext

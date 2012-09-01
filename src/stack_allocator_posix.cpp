@@ -16,6 +16,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <cstring>
 #include <stdexcept>
 
 #include <boost/config.hpp>
@@ -60,10 +61,12 @@ stack_allocator::allocate( std::size_t size) const
     ::close( fd);
     if ( ! limit) throw std::bad_alloc();
 
+    std::memset( limit, size_, '\0');
+
     const int result( ::mprotect( limit, pagesize(), PROT_NONE) );
     BOOST_ASSERT( 0 == result);
 
-    return limit;
+    return static_cast< char * >( limit) + size_;
 }
 
 void
@@ -74,7 +77,8 @@ stack_allocator::deallocate( void * vp, std::size_t size) const
         const std::size_t pages = page_count( size);
         const std::size_t size_ = pages * pagesize();
         BOOST_ASSERT( 0 < size && 0 < size_);
-        ::munmap( vp, size_);
+        void * limit = static_cast< char * >( vp) - size_;
+        ::munmap( limit, size_);
     }
 }
 

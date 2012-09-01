@@ -45,6 +45,10 @@ results in undefined behaviour.]
 [note The stack is not required to be aligned; alignment takes place inside
 `make_fcontext()`.]
 
+[note Depending on the architecture `allocate()` returns an address from the
+top of the stack (growing downwards) or the bottom of the stack (growing
+upwards).]
+
 
 [section:stack_allocator Class `stack_allocator`]
 
