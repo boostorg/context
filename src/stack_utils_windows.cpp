@@ -15,6 +15,7 @@ extern "C" {
 
 #include <cmath>
 #include <csignal>
+#include <algorithm>
 
 #include <boost/assert.hpp>
 
