@@ -10,27 +10,94 @@
 
 extern "C" {
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <unistd.h>
 }
 
+#include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <stdexcept>
 
-#include <boost/config.hpp>
 #include <boost/assert.hpp>
+#include <boost/config.hpp>
 #include <boost/format.hpp>
 
-#include <boost/context/stack_utils.hpp>
+#if !defined (SIGSTKSZ)
+# define SIGSTKSZ (8 * 1024)
+#endif
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
 #endif
 
+namespace {
+
+static rlimit stacksize_limit_()
+{
+    rlimit limit;
+    const int result = ::getrlimit( RLIMIT_STACK, & limit);
+    BOOST_ASSERT( 0 == result);
+    return limit;
+}
+
+static rlimit stacksize_limit()
+{
+    static rlimit limit = stacksize_limit_();
+    return limit;
+}
+
+static std::size_t pagesize()
+{
+    static std::size_t size = ::getpagesize();
+    return size;
+}
+
+static std::size_t page_count( std::size_t stacksize)
+{
+    return static_cast< std::size_t >( 
+        std::ceil(
+            static_cast< float >( stacksize) / pagesize() ) );
+}
+
+}
+
 namespace boost {
 namespace ctx {
+
+bool
+stack_allocator::is_stack_unbound()
+{ return RLIM_INFINITY == stacksize_limit().rlim_max; }
+
+std::size_t
+stack_allocator::maximum_stacksize()
+{
+    BOOST_ASSERT( ! is_stack_unbound() );
+    return static_cast< std::size_t >( stacksize_limit().rlim_max);
+}
+
+std::size_t
+stack_allocator::minimum_stacksize()
+{ return SIGSTKSZ; }
+
+std::size_t
+stack_allocator::default_stacksize()
+{
+    std::size_t size = 64 * 1024; // 64 kB
+    if ( is_stack_unbound() )
+        return std::max( size, minimum_stacksize() );
+    
+    BOOST_ASSERT( maximum_stacksize() >= minimum_stacksize() );
+    return maximum_stacksize() == minimum_stacksize()
+        ? minimum_stacksize()
+        : std::min( size, maximum_stacksize() );
+}
 
 void *
 stack_allocator::allocate( std::size_t size) const
@@ -45,8 +112,7 @@ stack_allocator::allocate( std::size_t size) const
             boost::str( boost::format("invalid stack size: must not be larger than %d bytes")
                 % maximum_stacksize() ) );
 
-    const std::size_t pages( page_count( size) );
-    BOOST_ASSERT( 2 <= pages); // one page is reserved for protection
+    const std::size_t pages( page_count( size) + 1); // add one guard page
     const std::size_t size_( pages * pagesize() );
     BOOST_ASSERT( 0 < size && 0 < size_);
 
@@ -74,7 +140,7 @@ stack_allocator::deallocate( void * vp, std::size_t size) const
 {
     if ( vp)
     {
-        const std::size_t pages = page_count( size);
+        const std::size_t pages = page_count( size) + 1;
         const std::size_t size_ = pages * pagesize();
         BOOST_ASSERT( 0 < size && 0 < size_);
         void * limit = static_cast< char * >( vp) - size_;

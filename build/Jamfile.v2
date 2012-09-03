@@ -408,14 +408,12 @@ alias context_sources
    : fcontext.cpp
      seh.cpp
      stack_allocator_windows.cpp
-     stack_utils_windows.cpp
    : <target-os>windows
    ;
 
 alias context_sources
    : fcontext.cpp
      stack_allocator_posix.cpp
-     stack_utils_posix.cpp
    ;
 
 explicit context_sources ;

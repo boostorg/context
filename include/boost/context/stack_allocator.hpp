@@ -23,6 +23,14 @@ namespace ctx {
 class BOOST_CONTEXT_DECL stack_allocator
 {
 public:
+    static bool is_stack_unbound();
+
+    static std::size_t default_stacksize();
+
+    static std::size_t minimum_stacksize();
+
+    static std::size_t maximum_stacksize();
+
     void * allocate( std::size_t) const;
 
     void deallocate( void *, std::size_t) const;
