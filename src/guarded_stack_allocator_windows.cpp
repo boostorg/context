@@ -7,7 +7,7 @@
 #define BOOST_CONTEXT_SOURCE
 #define NOMINMAX
 
-#include <boost/context/stack_allocator.hpp>
+#include <boost/context/guarded_stack_allocator.hpp>
 
 extern "C" {
 #include <windows.h>
@@ -19,10 +19,11 @@ extern "C" {
 #include <cstring>
 #include <stdexcept>
 
-#include <boost/config.hpp>
 #include <boost/assert.hpp>
+#include <boost/config.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/format.hpp>
+
+#include <boost/context/utils.hpp>
 
 # if defined(BOOST_MSVC)
 # pragma warning(push)
@@ -35,7 +36,10 @@ extern "C" {
 #if defined(__x86_64__) || defined(__x86_64) \
     || defined(__amd64__) || defined(__amd64) \
     || defined(_M_X64) || defined(_M_AMD64)
-# define MIN_STACKSIZE  9 * 1024 // 8kB will cause an excpetion on x64 Windows (exception handling)
+
+// Windows seams not to provide a constant or function
+// telling the minimal stacksize
+# define MIN_STACKSIZE  8 * 1024
 #else
 # define MIN_STACKSIZE  4 * 1024
 #endif
@@ -59,14 +63,11 @@ static SYSTEM_INFO system_info()
     return si;
 }
 
-static std::size_t pagesize()
-{ return static_cast< std::size_t >( system_info().dwPageSize); }
-
 static std::size_t page_count( std::size_t stacksize)
 {
     return static_cast< std::size_t >(
         std::ceil(
-            static_cast< float >( stacksize) / pagesize() ) );
+            static_cast< float >( stacksize) / boost::ctx::pagesize() ) );
 }
 
 }
@@ -76,13 +77,13 @@ namespace ctx {
 
 // Windows seams not to provide a limit for the stacksize
 bool
-stack_allocator::is_stack_unbound()
+guarded_stack_allocator::is_stack_unbound()
 { return true; }
 
 // because Windows seams not to provide a limit for maximum stacksize
 // maximum_stacksize() can never be called (pre-condition ! is_stack_unbound() )
 std::size_t
-stack_allocator::maximum_stacksize()
+guarded_stack_allocator::maximum_stacksize()
 {
     BOOST_ASSERT( ! is_stack_unbound() );
     return  1 * 1024 * 1024 * 1024; // 1GB
@@ -90,11 +91,11 @@ stack_allocator::maximum_stacksize()
 
 // because Windows seams not to provide a limit for minimum stacksize
 std::size_t
-stack_allocator::minimum_stacksize()
+guarded_stack_allocator::minimum_stacksize()
 { return MIN_STACKSIZE; }
 
 std::size_t
-stack_allocator::default_stacksize()
+guarded_stack_allocator::default_stacksize()
 {
     std::size_t size = 64 * 1024; // 64 kB
     if ( is_stack_unbound() )
@@ -107,17 +108,10 @@ stack_allocator::default_stacksize()
 }
 
 void *
-stack_allocator::allocate( std::size_t size) const
+guarded_stack_allocator::allocate( std::size_t size) const
 {
-    if ( minimum_stacksize() > size)
-        throw std::invalid_argument(
-            boost::str( boost::format("invalid stack size: must be at least %d bytes")
-                % minimum_stacksize() ) );
-
-    if ( ! is_stack_unbound() && ( maximum_stacksize() < size) )
-        throw std::invalid_argument(
-            boost::str( boost::format("invalid stack size: must not be larger than %d bytes")
-                % maximum_stacksize() ) );
+    BOOST_ASSERT( minimum_stacksize() <= size);
+    BOOST_ASSERT( is_stack_unbound() || ( maximum_stacksize() >= size) );
 
     const std::size_t pages( page_count( size) + 1); // add one guard page
     const std::size_t size_ = pages * pagesize();
@@ -137,16 +131,17 @@ stack_allocator::allocate( std::size_t size) const
 }
 
 void
-stack_allocator::deallocate( void * vp, std::size_t size) const
+guarded_stack_allocator::deallocate( void * vp, std::size_t size) const
 {
-    if ( vp)
-    {
-        const std::size_t pages = page_count( size) + 1;
-        const std::size_t size_ = pages * pagesize();
-        BOOST_ASSERT( 0 < size && 0 < size_);
-        void * limit = static_cast< char * >( vp) - size_;
-        ::VirtualFree( limit, 0, MEM_RELEASE);
-    }
+    BOOST_ASSERT( vp);
+    BOOST_ASSERT( minimum_stacksize() <= size);
+    BOOST_ASSERT( is_stack_unbound() || ( maximum_stacksize() >= size) );
+
+    const std::size_t pages = page_count( size) + 1;
+    const std::size_t size_ = pages * pagesize();
+    BOOST_ASSERT( 0 < size && 0 < size_);
+    void * limit = static_cast< char * >( vp) - size_;
+    ::VirtualFree( limit, 0, MEM_RELEASE);
 }
 
 }}

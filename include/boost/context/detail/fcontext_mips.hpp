@@ -48,7 +48,7 @@ struct fp_t
 
 struct fcontext_t
 {
-    boost::uint64_t     fc_greg[13];
+    boost::uint32_t     fc_greg[12];
     stack_t             fc_stack;
     fp_t                fc_fp;
 

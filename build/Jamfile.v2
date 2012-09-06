@@ -407,13 +407,15 @@ alias select_asm_context_sources
 alias context_sources
    : fcontext.cpp
      seh.cpp
-     stack_allocator_windows.cpp
+     guarded_stack_allocator_windows.cpp
+     utils_windows.cpp
    : <target-os>windows
    ;
 
 alias context_sources
    : fcontext.cpp
-     stack_allocator_posix.cpp
+     guarded_stack_allocator_posix.cpp
+     utils_posix.cpp
    ;
 
 explicit context_sources ;

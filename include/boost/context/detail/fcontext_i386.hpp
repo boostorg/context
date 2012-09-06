@@ -27,33 +27,25 @@ extern "C" {
 
 struct stack_t
 {
-    void    *   sp;
-    std::size_t size;
+    boost::uint32_t     code;
+    void            *   sp;
+    std::size_t         size;
 
     stack_t() :
-        sp( 0), size( 0)
-    {}
-};
-
-struct fp_t
-{
-    boost::uint32_t     fc_freg[2];
-
-    fp_t() :
-        fc_freg()
+        code( 0), sp( 0), size( 0)
     {}
 };
 
 struct fcontext_t
 {
-    boost::uint32_t     fc_greg[6];
     stack_t             fc_stack;
-    fp_t                fc_fp;
+    boost::uint32_t     fc_greg[6];
+    boost::uint32_t     fc_freg[2];
 
     fcontext_t() :
-        fc_greg(),
         fc_stack(),
-        fc_fp()
+        fc_greg(),
+        fc_freg()
     {}
 };
 

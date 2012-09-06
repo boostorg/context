@@ -8,6 +8,8 @@
 #define BOOST_CTX_ALL_H
 
 #include <boost/context/fcontext.hpp>
-#include <boost/context/stack_allocator.hpp>
+#include <boost/context/guarded_stack_allocator.hpp>
+#include <boost/context/simple_stack_allocator.hpp>
+#include <boost/context/utils.hpp>
 
 #endif // BOOST_CTX_ALL_H

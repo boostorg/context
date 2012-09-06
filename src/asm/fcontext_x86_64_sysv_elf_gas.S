@@ -88,32 +88,36 @@ jump_fcontext:
 make_fcontext:
     pushq   %rbp                       /* save previous frame pointer; get the stack 16 byte aligned */
     movq    %rsp,           %rbp       /* set RBP to RSP */
-    subq    $0x10,          %rsp       /* allocate stack space */ 
+    subq    $0x20,          %rsp       /* allocate stack space */
 
-    movq   %rsi,            0x38(%rdi) /* save address of context function */
-    movq   0x40(%rdi),      %rdx       /* load address of context stack base */
+    movq   %rdx,            0x10(%rsp) /* save 3. arg of make_fcontext, pointer to context function */
+    movq   %rsi,            0x8(%rsp)  /* save 2. arg of make_fcontext, context stack size */
+    movq   %rdi,            (%rsp)     /* save 1. arg of make_fcontext, pointer to context stack (base) */
+    leaq   -0x58(%rdi),     %rdi       /* reserve space for fcontext_t at top of context stack */
+    call   align_stack@PLT             /* align context stack, RAX contains address at 16 byte boundary afte return */
+                                       /* == pointer to fcontext_t and address of context stack */
+    movq   (%rsp),          %rdi       /* restore pointer to context stack (base) */
+    movq   0x8(%rsp),       %rsi       /* restore context stack size */
+    movq   0x10(%rsp),      %rdx       /* restore pointer to context function */
 
-    movq   %rdi,            (%rsp)     /* save pointer to fcontext_t */
-    movq   %rdx,            %rdi       /* context stack pointer as arg for align_stack */
-    call   align_stack@PLT             /* align context stack */
-    movq   %rax,            %rdx       /* begin of aligned context stack */
-    movq   (%rsp),          %rdi       /* restore pointer to fcontext_t */
+    movq   %rdi,            0x40(%rax) /* save address of context stack pointer (base) in fcontext_t */
+    movq   %rsi,            0x48(%rax) /* save context stack size in fcontext_t */
+    movq   %rdx,            0x38(%rax) /* save address of context function in fcontext_t */
 
-    stmxcsr  0x50(%rdi)                /* save MMX control and status word */
-    fnstcw   0x54(%rdi)                /* save x87 control word */
+    stmxcsr  0x50(%rax)                /* save MMX control and status word */
+    fnstcw   0x54(%rax)                /* save x87 control word */
 
-    leaq   -0x8(%rdx),      %rdx       /* reserve space for the last frame on context stack, (RSP - 0x8) % 16 == 0 */
-    movq   %rdx,            0x30(%rdi) /* save address in RDX as stack pointer for context function */
+    leaq   -0x8(%rax),      %rdx       /* reserve space for the return address on context stack, (RSP - 0x8) % 16 == 0 */
+    movq   %rdx,            0x30(%rax) /* save address in RDX as stack pointer for context function */
 
     leaq   finish(%rip),    %rcx       /* compute abs address of label finish */
     movq   %rcx,            (%rdx)     /* save address of finish as return address for context function */
                                        /* entered after context function returns */
 
-    addq   $0x10,           %rsp       /* deallocate shadow space */      
+    addq   $0x20,           %rsp       /* deallocate shadow space */      
     popq   %rbp                        /* restore previous frame pointer */
 
-    xorq   %rax,            %rax
-    ret
+    ret                                /* return pointer to fcontext_t placed on context stack */
 
 finish:
     /* RSP points to same address as RSP on entry of context function + 0x8 */

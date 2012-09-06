@@ -7,7 +7,7 @@
 
 [section:todo Todo]
 
-* provide support for SPARC, SuperH( SH4), S/390
+* provide support for SPARC, SuperH (SH4), S/390
 * support split-stack feature from gcc/gold linker
 
 [endsect]

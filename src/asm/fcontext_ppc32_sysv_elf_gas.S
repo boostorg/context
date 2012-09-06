@@ -186,20 +186,25 @@ jump_fcontext:
 make_fcontext:
     mflr    %r0                 # save return address into R0
     stw     %r0, 4(%r1)         # save return address on stack, set up stack frame
-    stwu    %r1, -32(%r1)       # allocate stack space, SP % 16 == 0
+    stwu    %r1, -48(%r1)       # allocate stack space, SP % 16 == 0
 
-    stw     %r4, 88(%r3)        # save address of context function
-    lwz     %r0, 92(%r3)        # load address of context stack pointer (base)
+    stw     %r5, 32(%r1)        # save 3. arg of make_fcontext, pointer to context function 
+    stw     %r4, 28(%r1)        # save 2. arg of make_fcontext, context stack size 
+    stw     %r3, 24(%r1)        # save 1. arg of make_fcontext, pointer to context stack (base) 
 
-    stw     %r3, 8(%r1)         # store pointer to fcontext_t on stack
-    mr.     %r3, %r0            # context stack as arg to align_stack
-    bl      align_stack@plt     # call align_stack
-    mr.     %r0, %r3            # load result into R0
-    lwz     %r3, 8(%r1)         # pop pointer to fcontext_t from stack
+    subi    %r3, %r3, 252       # reserve space for fcontext_t at top of context stack
+    bl      align_stack@plt     # call align_stack, R3 contains address at 16 byte boundary after return
+                                # == pointer to fcontext_t and address of context stack
+    lwz     %r4, 24(%r1)        # restore pointer to context stack (base)
+    lwz     %r5, 28(%r1)        # restore context stack size
+    lwz     %r6, 32(%r1)        # restore pointer to context function
 
-    li      %r4, 56
-    subf    %r0, %r4, %r0       # reserve 24 bytes lingage + 32 bytes parameter area on context stack
-    stw     %r0, 76(%r3)        # save the aligned stack base
+    stw     %r4, 92(%r3)        # save address of context stack (base) in fcontext_t
+    stw     %r5, 96(%r3)        # save context stack size in fcontext_t
+    stw     %r6, 88(%r3)        # save address of context function in fcontext_t
+
+    subi    %r0, %r3, 64        # reserve 64 bytes (linkage + parameter area), R0 % 16 == 0
+    stw     %r0, 76(%r3)        # save address in R0 as stack pointer for context function
 
     mflr    %r0                 # load LR
     bl      1f                  # jump to label 1
@@ -210,11 +215,10 @@ make_fcontext:
     stw     %r4, 84(%r3)             # save address of finish as return address for context function
                                      # entered after context function returns
 
-    addi    %r1, %r1, 32        # deallocate stack space
+    addi    %r1, %r1, 48        # deallocate stack space
     lwz     %r0, 4(%r1)         # load return address from stack, destroy stack frame
     mtlr    %r0                 # restore return address
 
-    li      %r3,  0
     blr
 
 finish:

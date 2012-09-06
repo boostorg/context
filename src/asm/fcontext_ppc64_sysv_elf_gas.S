@@ -213,20 +213,25 @@ make_fcontext:
 .globl .make_fcontext
 .make_fcontext:
     mflr    %r0                 # save return address into R0
-    stw     %r0, 8(%r1)         # save return address on stack, set up stack frame
-    stwu    %r1, -64(%r1)       # allocate stack space, SP % 16 == 0
+    std     %r0, 8(%r1)         # save return address on stack, set up stack frame
+    stdu    %r1, -96(%r1)       # allocate stack space, SP % 16 == 0
 
-    std     %r4, 176(%r3)       # save address of context function
-    ld      %r0, 184(%r3)       # load address of context stack pointer (base)
+    std     %r5, 64(%r1)        # save 3. arg of make_fcontext, pointer to context function 
+    std     %r4, 56(%r1)        # save 2. arg of make_fcontext, context stack size 
+    std     %r3, 48(%r1)        # save 1. arg of make_fcontext, pointer to context stack (base) 
 
-    stw     %r3, 16(%r1)        # store pointer to fcontext_t on stack
-    mr.     %r3, %r0            # context stack as arg to align_stack
-    bl      align_stack@plt     # call align_stack
-    mr.     %r0, %r3            # load result into R0
-    lwz     %r3, 16(%r1)        # pop pointer to fcontext_t from stack
+    subi    %r3, %r3, 352       # reserve space for fcontext_t at top of context stack
+    bl      align_stack@plt     # call align_stack, R3 contains address at 16 byte boundary after return
+                                # == pointer to fcontext_t and address of context stack
+    ld      %r4, 48(%r1)        # restore pointer to context stack (base)
+    ld      %r5, 56(%r1)        # restore context stack size
+    ld      %r6, 64(%r1)        # restore pointer to context function
 
-    li      %r4, 64
-    subf    %r0, %r4, %r0       # 64 bytes on stack for parameter area (== 8 registers)
+    std     %r4, 184(%r3)       # save address of context stack (base) in fcontext_t
+    std     %r5, 192(%r3)       # save context stack size in fcontext_t
+    std     %r6, 176(%r3)       # save address of context function in fcontext_t
+
+    subf    %r0, %r3, 64        # 64 bytes on stack for parameter area (== 8 registers)
     std     %r0, 152(%r3)       # save the stack base
 
     mflr    %r0                 # load LR
@@ -242,7 +247,6 @@ make_fcontext:
     lwz     %r0, 8(%r1)         # load return address from stack, destroy stack frame
     mtlr    %r0                 # restore return address
 
-    li      %r3,  0
     blr
 
 finish:

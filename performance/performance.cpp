@@ -34,7 +34,7 @@ namespace ctx = boost::ctx;
 
 bool pres_fpu = false;
 
-#define CALL_FCONTEXT(z,n,unused) ctx::jump_fcontext( & fcm, & fc, 7, pres_fpu);
+#define CALL_FCONTEXT(z,n,unused) ctx::jump_fcontext( & fcm, fc, 7, pres_fpu);
 
 #ifdef BOOST_USE_UCONTEXT
 # define CALL_UCONTEXT(z,n,unused) ::swapcontext( & ucm, & uc);
@@ -43,7 +43,7 @@ bool pres_fpu = false;
 #define CALL_FUNCTION(z,n,unused) fn();
 
 
-ctx::fcontext_t fc, fcm;
+ctx::fcontext_t fcm, * fc;
 
 #ifdef BOOST_USE_UCONTEXT
 ucontext_t uc, ucm;
@@ -51,7 +51,7 @@ ucontext_t uc, ucm;
 
 
 static void f1( intptr_t)
-{ while ( true) ctx::jump_fcontext( & fc, & fcm, 7, pres_fpu); }
+{ while ( true) ctx::jump_fcontext( fc, & fcm, 7, pres_fpu); }
 
 #ifdef BOOST_USE_UCONTEXT
 static void f2()
@@ -65,12 +65,13 @@ static void f3()
 #ifdef BOOST_CONTEXT_CYCLE
 cycle_t test_fcontext_cycle( cycle_t ov)
 {
-    ctx::stack_allocator alloc;
-    fc.fc_stack.sp = alloc.allocate(ctx::default_stacksize());
-    fc.fc_stack.size = ctx::default_stacksize();
-    ctx::make_fcontext( & fc, f1);
+    ctx::guarded_stack_allocator alloc;
+    fc = ctx::make_fcontext(
+        alloc.allocate(ctx::guarded_stack_allocator::default_stacksize()),
+        ctx::guarded_stack_allocator::default_stacksize(),
+        f1);
 
-    ctx::jump_fcontext( & fcm, & fc, 7, pres_fpu);
+    ctx::jump_fcontext( & fcm, fc, 7, pres_fpu);
 
     // cache warum-up
 BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_FCONTEXT, ~)
@@ -90,11 +91,11 @@ BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_FCONTEXT, ~)
 # ifdef BOOST_USE_UCONTEXT
 cycle_t test_ucontext_cycle( cycle_t ov)
 {
-    ctx::stack_allocator alloc;
+    ctx::guarded_stack_allocator alloc;
 
     ::getcontext( & uc);
-    uc.uc_stack.ss_sp = alloc.allocate(ctx::default_stacksize());
-    uc.uc_stack.ss_size = ctx::default_stacksize();
+    uc.uc_stack.ss_sp = alloc.allocate(ctx::guarded_stack_allocator_stacksize());
+    uc.uc_stack.ss_size = ctx::guarded_stack_allocator_stacksize();
     ::makecontext( & uc, f2, 7);
 
     // cache warum-up
@@ -136,12 +137,13 @@ BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_FUNCTION, ~)
 #if _POSIX_C_SOURCE >= 199309L
 zeit_t test_fcontext_zeit( zeit_t ov)
 {
-    ctx::stack_allocator alloc;
-    fc.fc_stack.sp = alloc.allocate(ctx::default_stacksize());
-    fc.fc_stack.size = ctx::default_stacksize();
-    ctx::make_fcontext( & fc, f1);
+    ctx::guarded_stack_allocator alloc;
+    fc = ctx::make_fcontext(
+        alloc.allocate(ctx::guarded_stack_allocator::default_stacksize()),
+        ctx::guarded_stack_allocator::default_stacksize(),
+        f1);
 
-    ctx::jump_fcontext( & fcm, & fc, 7, pres_fpu);
+    ctx::jump_fcontext( & fcm, fc, 7, pres_fpu);
 
     // cache warum-up
 BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_FCONTEXT, ~)
@@ -161,11 +163,11 @@ BOOST_PP_REPEAT_FROM_TO( 0, BOOST_PP_LIMIT_MAG, CALL_FCONTEXT, ~)
 # ifdef BOOST_USE_UCONTEXT
 zeit_t test_ucontext_zeit( zeit_t ov)
 {
-    ctx::stack_allocator alloc;
+    ctx::guarded_stack_allocator alloc;
 
     ::getcontext( & uc);
-    uc.uc_stack.ss_sp = alloc.allocate(ctx::default_stacksize());
-    uc.uc_stack.ss_size = ctx::default_stacksize();
+    uc.uc_stack.ss_sp = alloc.allocate(ctx::guarded_stack_allocator_stacksize());
+    uc.uc_stack.ss_size = ctx::guarded_stack_allocator_stacksize();
     ::makecontext( & uc, f2, 7);
 
     // cache warum-up

@@ -80,26 +80,29 @@ make_fcontext:
     movl   %esp,           %ebp         /* set EBP to ESP */
     subl   $0x10,          %esp         /* allocate stack space */
 
-    movl   0x8(%ebp),      %eax         /* load address of fcontext_t */
-    movl   0xc(%ebp),      %ecx         /* load address of context function */
-    movl   %ecx,           0x14(%eax)   /* save address of context function */
-    movl   0x18(%eax),     %edx         /* load address of context stack base */
+    movl   %ebx,           0x4(%esp)    /* save EBX */
+    movl   0x8(%ebp),      %eax         /* load 1. arg of make_fcontext, pointer to context stack (base) */
+    leal   -0x28(%eax),    %eax         /* reserve space for fcontext_t at top of context stack */
+    movl   %eax,           (%esp)       /* address in EAX becomes 1. arg of align_stack */
 
-    movl  %ebx,            0x8(%esp)    /* save EBX */
-    movl  %eax,            0x4(%esp)    /* save pointer to fcontext_t */
-    movl  %edx,            (%esp)       /* context stack pointer as arg for align_stack */
     call   1f
 1:  popl   %ebx                                    /* address of label 1 */
     addl   $_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx     /* compute address of GOT and store it in EBX */
-    call   align_stack@PLT                         /* call align_stack */
-    movl   %eax,           %edx                    /* begin of aligned context stack */
-    movl   0x4(%esp),      %eax                    /* restore pointer to fcontext_t */
-    movl   0x8(%esp),      %ebx                    /* restore EBX */
+    call   align_stack@PLT                         /* call align_stack, EAX contains address at 16 byte boundary after return */
+                                                   /* == pointer to fcontext_t and address of context stack */
+    movl   0x4(%esp),      %ebx                    /* restore EBX */
+
+    movl   0x8(%ebp),      %edx         /* load 1. arg of make_fcontext, pointer to context stack (base) */
+    movl   %edx,           0x18(%eax)   /* save address of context stack (base) in fcontext_t */
+    movl   0xc(%ebp),      %edx         /* load 2. arg of make_fcontext, context stack size */
+    movl   %edx,           0x1c(%eax)   /* save stack size in fcontext_t */
+    movl   0x10(%ebp),     %edx         /* load 3. arg of make_fcontext, pointer to context function */
+    movl   %edx,           0x14(%eax)   /* save address of context function in fcontext_t */
 
     stmxcsr  0x20(%eax)                 /* save MMX control and status word */
     fnstcw   0x24(%eax)                 /* save x87 control word */
 
-    leal   -0xc(%edx),     %edx         /* reserve space for the last frame on context stack; (ESP - 0x4) % 16 == 0 */
+    leal   -0xc(%eax),     %edx         /* reserve space for the last frame on context stack; (ESP - 0x4) % 16 == 0 */
     movl   %edx,           0x10(%eax)   /* save address in EDX as stack pointer for context function */
 
     call   2f
@@ -111,7 +114,6 @@ make_fcontext:
     addl   $0x10,          %esp        /* deallocate stack space */
     pop    %ebp
 
-    xorl    %eax,          %eax
     ret
 
 finish:
