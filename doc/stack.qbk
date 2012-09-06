@@ -180,4 +180,18 @@ the highest/lowest address of the stack.]]
 
 [endsect]
 
+
+[section:pagesize Frre function `pagesize()`]
+
+        std::size_t pagesize();
+
+[heading `std::size_t pagesize()`]
+[variablelist
+[[Returns:] [Returns the size of a page in bytes.]]
+]
+
+This function
+
+[endsect]
+
 [endsect]

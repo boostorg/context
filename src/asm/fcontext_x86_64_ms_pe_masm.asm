@@ -177,7 +177,7 @@ make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and u
     mov  rbp,        rsp         ; set RBP to RSP
     sub  rsp,        040h        ; allocate stack space (contains shadow space for subroutines)
 
-	mov  [rbp-08h],  r8          ; save 3. arg of make_fcontext, pointer to context function
+    mov  [rbp-08h],  r8          ; save 3. arg of make_fcontext, pointer to context function
     mov  [rbp-010h], rdx         ; save 2. arg of make_fcontext, context stack size
     mov  [rbp-018h], rcx         ; save 1. arg of make_fcontext, pointer to context stack (base)
     lea  rcx,        [rcx-0180h] ; reserve space for fcontext_t at top of context stack

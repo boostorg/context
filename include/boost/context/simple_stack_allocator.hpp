@@ -40,7 +40,7 @@ public:
     {
         BOOST_ASSERT( minimum_stacksize() <= size);
         BOOST_ASSERT( maximum_stacksize() >= size);
-   
+
         void * limit = std::calloc( size, sizeof( char) );
         if ( ! limit) throw std::bad_alloc();
 
