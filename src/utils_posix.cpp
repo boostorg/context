@@ -12,7 +12,7 @@ extern "C" {
 #include <unistd.h>
 }
 
-#if _POSIX_C_SOURCE >= 200112L
+//#if _POSIX_C_SOURCE >= 200112L
 
 #include <boost/config.hpp>
 
@@ -36,4 +36,4 @@ std::size_t pagesize()
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif
+//#endif

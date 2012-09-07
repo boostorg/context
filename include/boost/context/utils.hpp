@@ -15,7 +15,7 @@ extern "C" {
 }
 #endif
 
-#if defined (BOOST_WINDOWS) || _POSIX_C_SOURCE >= 200112L
+//#if defined (BOOST_WINDOWS) || _POSIX_C_SOURCE >= 200112L
 
 #include <cstddef>
 
@@ -36,6 +36,6 @@ BOOST_CONTEXT_DECL std::size_t pagesize();
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif
+//#endif
 
 #endif // BOOST_CTX_UTILS_H

@@ -19,7 +19,7 @@ extern "C" {
 #include <unistd.h>
 }
 
-#if _POSIX_C_SOURCE >= 200112L
+//#if _POSIX_C_SOURCE >= 200112L
 
 #include <algorithm>
 #include <cmath>
@@ -149,4 +149,4 @@ guarded_stack_allocator::deallocate( void * vp, std::size_t size) const
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif
+//#endif
