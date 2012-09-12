@@ -27,24 +27,23 @@ extern "C" {
 
 struct stack_t
 {
-    boost::uint32_t     code;
     void            *   sp;
     std::size_t         size;
 
     stack_t() :
-        code( 0), sp( 0), size( 0)
+        sp( 0), size( 0)
     {}
 };
 
 struct fcontext_t
 {
-    stack_t             fc_stack;
     boost::uint32_t     fc_greg[6];
+    stack_t             fc_stack;
     boost::uint32_t     fc_freg[2];
 
     fcontext_t() :
-        fc_stack(),
         fc_greg(),
+        fc_stack(),
         fc_freg()
     {}
 };
