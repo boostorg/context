@@ -30,7 +30,7 @@
 #include "zeit.hpp"
 #endif
 
-namespace ctx = boost::ctx;
+namespace ctx = boost::context;
 
 bool pres_fpu = false;
 

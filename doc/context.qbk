@@ -60,7 +60,7 @@
 [def __stack_helper__ ['stack_helper]]
 [def __yield__ ['yield]]
 
-[def __context_ns__ ['boost::ctx]]
+[def __context_ns__ ['boost::context]]
 
 [include overview.qbk]
 [include requirements.qbk]

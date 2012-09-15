@@ -46,33 +46,6 @@
  * *****************************************************************/
 
 .text
-.globl jump_fcontext
-.align 2
-.type jump_fcontext,%function
-jump_fcontext:
-    stmia   a1, {v1-v8,sp-lr}       @ save V1-V8,SP-LR
-    str     lr, [a1,#40]            @ save LR as PC
-
-#if (defined(__VFP_FP__) && !defined(__SOFTFP__))
-    cmp     a4, #0                  @ test if fpu env should be preserved
-    beq     1f
-
-    mov     a4, a1
-    add     a4, #52
-    fstmiax a4, {d8-d15}            @ save S16-S31
-
-    mov     a4, a2
-    add     a4, #52
-    fldmiax a4, {d8-d15}            @ restore S16-S31
-1:
-#endif
-
-    mov     a1, a3                  @ use third arg as return value after jump
-                                    @ and as first arg in context function
-    ldmia   a2, {v1-v8,sp-pc}       @ restore v1-V8,SP-PC
-.size jump_fcontext,.-jump_fcontext
-
-.text
 .globl make_fcontext
 .align 2
 .type make_fcontext,%function

@@ -15,7 +15,7 @@
 #endif
 
 namespace boost {
-namespace ctx {
+namespace context {
 namespace detail {
 
 extern "C" BOOST_CONTEXT_DECL

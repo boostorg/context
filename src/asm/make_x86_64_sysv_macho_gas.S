@@ -26,7 +26,7 @@
  *  ----------------------------------------------------------------------------------  *
  *  |  0x40   |  0x44   |  0x48   |   0x4c  |                                        |  *
  *  ----------------------------------------------------------------------------------  *
- *  |        sp         |       size        |                                        |  *
+ *  |        sp         |        size       |                                        |  *
  *  ----------------------------------------------------------------------------------  *
  *  ----------------------------------------------------------------------------------  *
  *  |    20   |    21   |                                                            |  *
@@ -39,53 +39,9 @@
  * **************************************************************************************/
 
 .text
-.globl jump_fcontext
-.type jump_fcontext,@function
-.align 16
-jump_fcontext:
-    movq     %rbx,       (%rdi)         /* save RBX */
-    movq     %r12,       0x8(%rdi)      /* save R12 */
-    movq     %r13,       0x10(%rdi)     /* save R13 */
-    movq     %r14,       0x18(%rdi)     /* save R14 */
-    movq     %r15,       0x20(%rdi)     /* save R15 */
-    movq     %rbp,       0x28(%rdi)     /* save RBP */
-
-    cmp      $0,         %rcx
-    je       1f
-
-    stmxcsr  0x50(%rdi)             /* save MMX control and status word */
-    fnstcw   0x54(%rdi)             /* save x87 control word */
-
-    ldmxcsr  0x50(%rsi)             /* restore MMX control and status word */
-    fldcw    0x54(%rsi)             /* restore x87 control word */
-1:
-
-    leaq     0x8(%rsp),  %rax       /* exclude the return address and save as stack pointer */
-    movq     %rax,       0x30(%rdi) /* save as stack pointer */
-    movq     (%rsp),     %rax       /* save return address */
-    movq     %rax,       0x38(%rdi) /* save return address as RIP */
-
-    movq     (%rsi),      %rbx      /* restore RBX */
-    movq     0x8(%rsi),   %r12      /* restore R12 */
-    movq     0x10(%rsi),  %r13      /* restore R13 */
-    movq     0x18(%rsi),  %r14      /* restore R14 */
-    movq     0x20(%rsi),  %r15      /* restore R15 */
-    movq     0x28(%rsi),  %rbp      /* restore RBP */
-
-    movq     0x30(%rsi),  %rsp      /* restore RSP */
-    movq     0x38(%rsi),  %rcx      /* fetch the address to return to */
-
-    movq     %rdx,        %rax      /* use third arg as return value after jump */
-    movq     %rdx,        %rdi      /* use third arg as first arg in context function */
-
-    jmp      *%rcx                  /* indirect jump to context */
-.size jump_fcontext,.-jump_fcontext
-
-.text
-.globl make_fcontext
-.type make_fcontext,@function
-.align 16
-make_fcontext:
+.globl _make_fcontext
+.align 8
+_make_fcontext:
     pushq   %rbp                       /* save previous frame pointer; get the stack 16 byte aligned */
     movq    %rsp,           %rbp       /* set RBP to RSP */
     subq    $0x20,          %rsp       /* allocate stack space */
@@ -94,14 +50,14 @@ make_fcontext:
     movq   %rsi,            0x8(%rsp)  /* save 2. arg of make_fcontext, context stack size */
     movq   %rdi,            (%rsp)     /* save 1. arg of make_fcontext, pointer to context stack (base) */
     leaq   -0x58(%rdi),     %rdi       /* reserve space for fcontext_t at top of context stack */
-    call   align_stack@PLT             /* align context stack, RAX contains address at 16 byte boundary afte return */
+    call   _align_stack                /* align context stack, RAX contains address at 16 byte boundary */
                                        /* == pointer to fcontext_t and address of context stack */
     movq   (%rsp),          %rdi       /* restore pointer to context stack (base) */
     movq   0x8(%rsp),       %rsi       /* restore context stack size */
     movq   0x10(%rsp),      %rdx       /* restore pointer to context function */
 
-    movq   %rdi,            0x40(%rax) /* save address of context stack pointer (base) in fcontext_t */
-    movq   %rsi,            0x48(%rax) /* save context stack size in fcontext_t */
+    movq   %rdi,            0x40(%rax) /* save address of stack pointer (base) in fcontext_t */
+    movq   %rsi,            0x48(%rax) /* save stack size in fcontext_t */
     movq   %rdx,            0x38(%rax) /* save address of context function in fcontext_t */
 
     stmxcsr  0x50(%rax)                /* save MMX control and status word */
@@ -122,7 +78,5 @@ make_fcontext:
 finish:
     /* RSP points to same address as RSP on entry of context function + 0x8 */
     xorq    %rdi,           %rdi       /* exit code is zero */
-    call   _exit@PLT                   /* exit application */
+    call   _exit                       /* exit application */
     hlt
-.size make_fcontext,.-make_fcontext
-

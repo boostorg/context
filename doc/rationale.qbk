@@ -13,6 +13,8 @@ Some newer compiler (for instance MSVC 10 for x86_64 and itanium) do not
 support inline assembler.
 [footnote [@http://msdn.microsoft.com/en-us/library/4ks26t93.aspx MSDN article
 'Inline Assembler']].
+Inlined assembler generates code bloating which his not welcome on embedded
+systems.
 
 
 [heading fcontext_t]
@@ -26,7 +28,7 @@ fcontext_t is the part to port to new platforms.
 Because the assembler code uses the byte layout of __fcontext__ to access 
 its members __fcontext__ must be a POD. This requires that __fcontext__ has only a
 default constructor, no visibility keywords (e.g. private, public, protected), no
-virtual methods and all members and base clases are PODs too.
+virtual methods and all members and base classes are PODs too.
 
 
 [heading Protecting the stack]
@@ -64,10 +66,10 @@ arguments which is undefined in C99
 [footnote ISO/IEC 9899:1999, 2005, J.2].
 
 The arguments in the var-arg list are required to be integers, passing pointers
-in var-arg list is not guarantied to work, especially it will fail for
+in var-arg list is not guaranteed to work, especially it will fail for
 architectures where pointers are larger than integers.
 
-`ucontext_t` preserves signal mask between context switches which involes system
+`ucontext_t` preserves signal mask between context switches which involves system
 calls consuming a lot of CPU cycles (ucontext_t is slower by
 perfomance_link[factor 13x] relative to `fcontext_t`).
 
@@ -110,7 +112,7 @@ by any procedure that needs to modify them ..."
 
 [heading Windows]
 
-MxCsr - "A callee that modifies any of the nonvolatile fields within MxCsr must restore
+MxCsr - "A callee that modifies any of the non-volatile fields within MxCsr must restore
 them before returning to its caller. Furthermore, a caller that has modified any
 of these fields must restore them to their standard values before invoking a callee ..."
 [footnote [@http://http://msdn.microsoft.com/en-us/library/yxty7t75.aspx MSDN article

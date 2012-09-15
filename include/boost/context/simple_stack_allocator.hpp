@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CTX_SIMPLE_STACK_ALLOCATOR_H
-#define BOOST_CTX_SIMPLE_STACK_ALLOCATOR_H
+#ifndef BOOST_CONTEXT_SIMPLE_STACK_ALLOCATOR_H
+#define BOOST_CONTEXT_SIMPLE_STACK_ALLOCATOR_H
 
 #include <cstddef>
 #include <cstdlib>
@@ -21,7 +21,7 @@
 #endif
 
 namespace boost {
-namespace ctx {
+namespace context {
 
 template< std::size_t Max, std::size_t Default, std::size_t Min >
 class simple_stack_allocator
@@ -64,4 +64,4 @@ public:
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_CTX_SIMPLE_STACK_ALLOCATOR_H
+#endif // BOOST_CONTEXT_SIMPLE_STACK_ALLOCATOR_H

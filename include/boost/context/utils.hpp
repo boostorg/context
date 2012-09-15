@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CTX_UTILS_H
-#define BOOST_CTX_UTILS_H
+#ifndef BOOST_CONTEXT_UTILS_H
+#define BOOST_CONTEXT_UTILS_H
 
 #include <boost/config.hpp>
 
@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 namespace boost {
-namespace ctx {
+namespace context {
 
 BOOST_CONTEXT_DECL std::size_t pagesize();
 
@@ -38,4 +38,4 @@ BOOST_CONTEXT_DECL std::size_t pagesize();
 
 //#endif
 
-#endif // BOOST_CTX_UTILS_H
+#endif // BOOST_CONTEXT_UTILS_H

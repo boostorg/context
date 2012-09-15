@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 namespace boost {
-namespace ctx {
+namespace context {
 
 std::size_t pagesize()
 {

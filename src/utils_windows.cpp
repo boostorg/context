@@ -36,7 +36,7 @@ static SYSTEM_INFO system_info()
 }
 
 namespace boost {
-namespace ctx {
+namespace context {
 
 std::size_t pagesize()
 { return static_cast< std::size_t >( system_info().dwPageSize); }

@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CTX_GUARDED_STACK_ALLOCATOR_H
-#define BOOST_CTX_GUARDED_STACK_ALLOCATOR_H
+#ifndef BOOST_CONTEXT_GUARDED_STACK_ALLOCATOR_H
+#define BOOST_CONTEXT_GUARDED_STACK_ALLOCATOR_H
 
 #include <boost/config.hpp>
 
@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 namespace boost {
-namespace ctx {
+namespace context {
 
 class BOOST_CONTEXT_DECL guarded_stack_allocator
 {
@@ -52,4 +52,4 @@ public:
 
 //#endif
 
-#endif // BOOST_CTX_GUARDED_STACK_ALLOCATOR_H
+#endif // BOOST_CONTEXT_GUARDED_STACK_ALLOCATOR_H

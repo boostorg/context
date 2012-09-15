@@ -67,13 +67,13 @@ static std::size_t page_count( std::size_t stacksize)
 {
     return static_cast< std::size_t >(
         std::ceil(
-            static_cast< float >( stacksize) / boost::ctx::pagesize() ) );
+            static_cast< float >( stacksize) / boost::context::pagesize() ) );
 }
 
 }
 
 namespace boost {
-namespace ctx {
+namespace context {
 
 // Windows seams not to provide a limit for the stacksize
 bool

@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CTX_DETAIL_FCONTEXT_X86_64_H
-#define BOOST_CTX_DETAIL_FCONTEXT_X86_64_H
+#ifndef BOOST_CONTEXT_DETAIL_FCONTEXT_X86_64_H
+#define BOOST_CONTEXT_DETAIL_FCONTEXT_X86_64_H
 
 #include <cstddef>
 
@@ -19,7 +19,7 @@
 #endif
 
 namespace boost {
-namespace ctx {
+namespace context {
 
 extern "C" {
 
@@ -65,4 +65,4 @@ struct fcontext_t
 # include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_CTX_DETAIL_FCONTEXT_X86_64_H
+#endif // BOOST_CONTEXT_DETAIL_FCONTEXT_X86_64_H

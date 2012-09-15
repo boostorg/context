@@ -16,7 +16,7 @@ ucontext_t].
 __fcontext__ and its functions are located in __context_ns__ and the functions
 are declared as extern "C". 
 
-[warning If __fcontext__ is used in a multithreaded application, it can migrated
+[warning If __fcontext__ is used in a multi threaded application, it can migrated
 between threads, but must not reference __tls__.]
 
 [important The low level API is the part to port to new platforms.]
@@ -52,7 +52,7 @@ pointers) is saved and the original context information is restored. Calling
 __jump_fcontext__ again resumes execution in the second context after saving the
 new state of the original context.
 
-        namespace ctx = boost::ctx;
+        namespace ctx = boost::context;
 
         ctx::fcontext_t fcm, * fc1, * fc2;
 
@@ -124,7 +124,7 @@ In all following invocations of __jump_fcontext__ the intptr_t passed to
 __jump_fcontext__, in one context, is returned by __jump_fcontext__ in the
 other context. 
 
-        namespace ctx = boost::ctx;
+        namespace ctx = boost::context;
 
         ctx::fcontext_t fcm, * fc;
 
@@ -178,7 +178,7 @@ switch (see performance tests).
 The foruth argument of __jump_fcontext__ controls if fpu registers should be 
 preserved by the context jump.
 
-[important The use of the fpu controling argument of __jump_fcontext__ must
+[important The use of the fpu controlling argument of __jump_fcontext__ must
 be consistent in the application. Otherwise the behaviour is undefined.]
 
 

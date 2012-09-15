@@ -13,7 +13,7 @@
 #include <boost/assert.hpp>
 #include <boost/context/all.hpp>
 
-namespace ctx = boost::ctx;
+namespace ctx = boost::context;
 
 ctx::fcontext_t fcm;
 ctx::fcontext_t * fc1;
