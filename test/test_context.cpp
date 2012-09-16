@@ -76,6 +76,21 @@ void f8( intptr_t arg)
     ctx::jump_fcontext( fc, & fcm, 0);
 }
 
+void test_stack()
+{
+    ctx::guarded_stack_allocator alloc;
+
+    bool unbound = ctx::guarded_stack_allocator::is_stack_unbound();
+    std::size_t min = ctx::guarded_stack_allocator::minimum_stacksize();
+    std::size_t def = ctx::guarded_stack_allocator::default_stacksize();
+    BOOST_CHECK( min <= def);
+    if ( ! unbound)
+    {
+        std::size_t max = ctx::guarded_stack_allocator::maximum_stacksize();
+        BOOST_CHECK( max >= def);
+    }
+}
+
 void test_setup()
 {
     ctx::guarded_stack_allocator alloc;
@@ -205,6 +220,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     boost::unit_test::test_suite * test =
         BOOST_TEST_SUITE("Boost.Context: context test suite");
 
+    test->add( BOOST_TEST_CASE( & test_stack) );
     test->add( BOOST_TEST_CASE( & test_setup) );
     test->add( BOOST_TEST_CASE( & test_start) );
     test->add( BOOST_TEST_CASE( & test_jump) );
