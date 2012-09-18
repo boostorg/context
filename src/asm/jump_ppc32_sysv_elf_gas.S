@@ -33,7 +33,7 @@
  *  -------------------------------------------------------------  *
  *  |  92 |  96 |                                               |  *
  *  -------------------------------------------------------------  *
- *  |sbase|slimt|                                               |  *
+ *  |  sp | size|                                               |  *
  *  -------------------------------------------------------------  *
  *  -------------------------------------------------------------  *
  *  |  25 |  26 |  27 |  28 |  29 |  30 |  31 |  32 |  33 |  34 |  *
@@ -178,45 +178,3 @@ jump_fcontext:
 
     bctr                        # jump to context
 .size jump_fcontext, .-jump_fcontext
-
-.text
-.globl make_fcontext
-.align 2
-.type make_fcontext,@function
-make_fcontext:
-    stw     %r3, 0(%r3)         # save the current context
-    stw     %r4, 88(%r3)        # save the address of the context function
-    lwz     %r0, 92(%r3)        # load the stack base
-
-    li      %r4, 28
-    subf    %r1, %r4, %r1       # reserve space on stack
-    stw     %r3, 24(%r1)        # store pointer to fcontext_t on stack
-    mflr    %r4                 # load LR
-    stw     %r4, 20(%r1)        # store LR on stack
-    mr.     %r3, %r0            # context stack as arg to align_stack
-    bl      align_stack@plt     # call align_stack
-    mr.     %r0, %r3            # load result into R0
-    lwz     %r4, 20(%r1)        # pop LR from stack
-    mtlr    %r4                 # restore LR
-    lwz     %r3, 24(%r1)        # pop pointer to fcontext_t from stack
-    addi    %r1, %r1, 28        # release space on stack
-
-    li      %r4, 32
-    subf    %r0, %r4, %r0       # 32 bytes on stack for parameter area(== 8 registers)
-    stw     %r0, 76(%r3)        # save the aligned stack base
-
-    mflr    %r0                 # load LR
-    bl      1f                  # jump to label 1
-1:
-    mflr    %r4                 # load LR
-    addi    %r4, %r4, finish - 1b    # address of finish; called after context function returns
-    mtlr    %r0                 # restore LR
-    stw     %r4, 84(%r3)
-
-    li      %r3,  0
-    blr
-
-finish:
-    li      %r3,  0             # exit code is zero
-    bl      _exit@plt           # exit application
-.size make_fcontext, .-make_fcontext

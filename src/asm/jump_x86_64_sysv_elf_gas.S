@@ -26,7 +26,7 @@
  *  ----------------------------------------------------------------------------------  *
  *  |  0x40   |  0x44   |  0x48   |   0x4c  |                                        |  *
  *  ----------------------------------------------------------------------------------  *
- *  |       sbase       |        slimit     |                                        |  *
+ *  |        sp         |       size        |                                        |  *
  *  ----------------------------------------------------------------------------------  *
  *  ----------------------------------------------------------------------------------  *
  *  |    20   |    21   |                                                            |  *
@@ -80,37 +80,3 @@ jump_fcontext:
 
     jmp      *%rcx                  /* indirect jump to context */
 .size jump_fcontext,.-jump_fcontext
-
-.text
-.globl make_fcontext
-.type make_fcontext,@function
-.align 16
-make_fcontext:
-    movq   %rdi,                 (%rdi)     /* save the address of passed context */
-    movq   %rsi,                 0x38(%rdi) /* save the address of the context function */
-    movq   0x40(%rdi),           %rdx       /* load the stack base */
-
-    pushq  %rdi                             /* save pointer to fcontext_t */
-    movq   %rdx,                 %rdi       /* stack pointer as arg for align_stack */
-    call   align_stack@PLT                  /* align stack */
-    movq   %rax,                 %rdx       /* begin of aligned stack */
-    popq   %rdi                             /* restore pointer to fcontext_t */
-
-    leaq   -0x8(%rdx),           %rdx       /* reserve space for the last frame on stack, (RSP + 8) & 15 == 0 */
-    movq   %rdx,                 0x30(%rdi) /* save the algined stack base */
-
-    stmxcsr  0x50(%rdi)                     /* save MMX control and status word */
-    fnstcw   0x54(%rdi)                     /* save x87 control word */
-
-    leaq   finish(%rip),         %rcx       /* address of finish; called after context function returns */
-    movq   %rcx,                 (%rdx)
-
-    xorq   %rax,                 %rax
-    ret
-
-finish:
-    xorq    %rdi,              %rdi         /* exit code is zero */
-    call   _exit@PLT                        /* exit application */
-    hlt
-.size make_fcontext,.-make_fcontext
-

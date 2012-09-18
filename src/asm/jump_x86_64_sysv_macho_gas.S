@@ -26,7 +26,7 @@
  *  ----------------------------------------------------------------------------------  *
  *  |  0x40   |  0x44   |  0x48   |   0x4c  |                                        |  *
  *  ----------------------------------------------------------------------------------  *
- *  |       sbase       |        slimit     |                                        |  *
+ *  |        sp         |        size       |                                        |  *
  *  ----------------------------------------------------------------------------------  *
  *  ----------------------------------------------------------------------------------  *
  *  |    20   |    21   |                                                            |  *
@@ -78,34 +78,3 @@ _jump_fcontext:
     movq     %rdx,        %rdi      /* use third arg as first arg in context function */
 
     jmp      *%rcx                  /* indirect jump to context */
-
-.text
-.globl _make_fcontext
-.align 8
-_make_fcontext:
-    movq   %rdi,                 (%rdi)     /* save the address of current context */
-    movq   %rsi,                 0x38(%rdi) /* save the address of the function supposed to run */
-    movq   0x40(%rdi),           %rdx       /* load the stack base */
-
-    pushq  %rdi                             /* save pointer to fcontext_t */
-    movq   %rdx,                 %rdi       /* stack pointer as arg for align_stack */
-    call   _align_stack                     /* align stack */
-    movq   %rax,                 %rdx       /* begin of aligned stack */
-    popq   %rdi                             /* restore pointer to fcontext_t */
-
-    leaq   -0x8(%rdx),           %rdx       /* reserve space for the last frame on stack, (RSP + 8) % 16 == 0 */
-    movq   %rdx,                 0x30(%rdi) /* save the address */
-
-    stmxcsr  0x50(%rdi)                     /* save MMX control and status word */
-    fnstcw   0x54(%rdi)                     /* save x87 control word */
-
-    leaq   finish(%rip),         %rcx       /* helper code executed after context function returns */
-    movq   %rcx,                 (%rdx)
-
-    xorq   %rax,                 %rax       /* set RAX to zero */
-    ret
-
-finish:
-    xorq    %rdi,              %rdi         /* exit code is zero */
-    call   _exit                            /* exit application */
-    hlt

@@ -47,7 +47,7 @@
  *  -------------------------------------------------------------  *
  *  | 184 | 188 | 192 | 196 |                                   |  *
  *  -------------------------------------------------------------  *
- *  |   sbase   |   slimt   |                                   |  *
+ *  |    sp     |    size   |                                   |  *
  *  -------------------------------------------------------------  *
  *  -------------------------------------------------------------  *
  *  |  50 |  51 |  52 |  53 |  54 |  55 |  56 |  57 |  58 |  59 |  *
@@ -199,52 +199,3 @@ jump_fcontext:
 
     bctr                        # jump to context
 .size .jump_fcontext, .-.jump_fcontext
-
-.section ".text"
-.align 2
-.globl make_fcontext
-.section ".opd","aw"
-.align 3
-make_fcontext:
-.quad .make_fcontext,.TOC.@tocbase,0
-.previous
-.size make_fcontext,24
-.type .make_fcontext,@function
-.globl .make_fcontext
-.make_fcontext:
-    std     %r3, 0(%r3)         # save the current context
-    std     %r4, 176(%r3)       # save the address of the function supposed to be run
-    ld      %r0, 184(%r3)       # load the stack base
-
-    li      %r4, 56
-    subf    %r1, %r4, %r1       # reserve space on stack
-    stw     %r3, 48(%r1)        # store pointer to fcontext_t on stack
-    mflr    %r4                 # load LR
-    stw     %r4, 40(%r1)        # store LR on stack
-    mr.     %r3, %r0            # context stack as arg to align_stack
-    bl      align_stack@plt     # call align_stack
-    mr.     %r0, %r3            # load result into R0
-    lwz     %r4, 40(%r1)        # pop LR from stack
-    mtlr    %r4                 # restore LR
-    lwz     %r3, 48(%r1)        # pop pointer to fcontext_t from stack
-    addi    %r1, %r1, 56        # release space on stack
-
-    li      %r4, 64
-    subf    %r0, %r4, %r0       # 64 bytes on stack for parameter area (== 8 registers)
-    std     %r0, 152(%r3)       # save the stack base
-
-    mflr    %r0                 # load LR
-    bl      1f                  # jump to label 1
-1:
-    mflr    %r4                 # load LR
-    addi    %r4, %r4, finish - 1b    # calulate absolute address of finish
-    mtlr    %r0                 # restore LR
-    std     %r4, 168(%r3)       # save address of finish
-
-    li      %r3,  0             # set return value to zero
-    blr
-
-finish:
-    li      %r3,  0             # set return value to zero
-    bl      _exit@plt           # exit application
-.size .make_fcontext, .-.make_fcontext

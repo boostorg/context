@@ -51,7 +51,6 @@
 
 [def __bad_alloc__ ['std::bad_alloc]]
 [def __fc_base__ ['fc_base]]
-[def __fc_limit__ ['fc_limit]]
 [def __fc_link__ ['fc_link]]
 [def __jump_fcontext__ ['jump_fcontext()]]
 [def __make_fcontext__ ['make_fcontext()]]
@@ -61,14 +60,13 @@
 [def __stack_helper__ ['stack_helper]]
 [def __yield__ ['yield]]
 
-[def __context_ns__ ['boost::ctx]]
+[def __context_ns__ ['boost::context]]
 
 [include overview.qbk]
 [include requirements.qbk]
 [include fcontext.qbk]
 [include stack.qbk]
 [include performance.qbk]
-[include tested.qbk]
 [include rationale.qbk]
 [include reference.qbk]
 [include todo.qbk]

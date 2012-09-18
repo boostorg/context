@@ -23,61 +23,61 @@
 ;  ----------------------------------------------------------------------------------
 ;  |   0x40  |   0x44  |   0x48  |   0x4c  |                                        |
 ;  ----------------------------------------------------------------------------------
-;  |        RSP        |       RIP         |                                        |
+;  |        RSP        |        RIP        |                                        |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |    20   |    21   |    22   |    23   |                                        |
+;  |    20   |    21   |    22   |    23   |    24    |    25   |                   |
 ;  ----------------------------------------------------------------------------------
-;  |   0x50  |   0x54  |   0x58  |   0x5c  |                                        |
+;  |   0x50  |   0x54  |   0x58  |   0x5c  |   0x60   |   0x64  |                   |
 ;  ----------------------------------------------------------------------------------
-;  |       sbase       |       slimit      |                                        |
+;  |        sp         |       size        |        limit       |                   |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |    24   |   25    |                                                            |
+;  |    26   |   27    |                                                            |
 ;  ----------------------------------------------------------------------------------
-;  |   0x60  |   0x64  |                                                            |
+;  |   0x68  |   0x6c  |                                                            |
 ;  ----------------------------------------------------------------------------------
 ;  |      fbr_strg     |                                                            |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |    26   |   27    |    28   |    29   |                                        |
+;  |    28   |   29    |    30   |    31   |                                        |
 ;  ----------------------------------------------------------------------------------
-;  |   0x68  |   0x6c  |   0x70  |   0x74  |                                        |
+;  |   0x70  |   0x74  |   0x78  |   0x7c  |                                        |
 ;  ----------------------------------------------------------------------------------
-;  | fc_mxcsr|fc_x87_cw|       fc_xmm      |                                        |
+;  | fc_mxcsr|fc_x87_cw|     <padding>     |                                        |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |   30    |   31    |    32    |   33   |   34    |   35    |   36     |   37    |
+;  |    32    |   33   |   34    |   35    |   36     |   37    |    38   |    39   |
 ;  ----------------------------------------------------------------------------------
-;  |  0x78   |  0x7c   |   0x80   |  0x84  |  0x88   |  0x8c   |   0x90   |   0x94  |
+;  |   0x80   |  0x84  |  0x88   |  0x8c   |   0x90   |   0x94  |   0x98  |   0x9c  |
 ;  ----------------------------------------------------------------------------------
 ;  |                  XMM6                 |                   XMM7                 |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |   38    |   39    |    40    |   41   |   42    |   43    |    44    |   45    |
+;  |    40    |   41   |   42    |   43    |    44    |   45    |    46   |    47   | 
 ;  ----------------------------------------------------------------------------------
-;  |  0x98   |  0x9c   |  0x100  |  0x104  |  0x108  |  0x10c  |   0x110  |  0x114  |
+;  |   0x100  |  0x104  |  0x108  |  0x10c |   0x110  |  0x114  |  0x118  |  0x11c  |
 ;  ----------------------------------------------------------------------------------
 ;  |                  XMM8                 |                   XMM9                 |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |   46    |   47    |    48    |   49   |   50    |   51    |    52    |   53    |
+;  |    48    |   49   |   50    |   51    |    52    |   53    |    54   |    55   |
 ;  ----------------------------------------------------------------------------------
-;  |  0x118  |  0x11c  |  0x120  |  0x124  |  0x128  |  0x12c  |   0x130  |  0x134  |
+;  |   0x120  |  0x124 |  0x128  |  0x12c  |   0x130  |  0x134  |   0x138 |   0x13c |
 ;  ----------------------------------------------------------------------------------
 ;  |                 XMM10                 |                  XMM11                 |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |   54    |   55    |    56    |   57   |   58    |   59    |    60    |   61    |
+;  |    56    |   57   |   58    |   59    |    60   |    61   |    62    |    63   |
 ;  ----------------------------------------------------------------------------------
-;  |  0x138  |  0x13c  |  0x140  |  0x144  |  0x148  |  0x14c  |   0x150  |  0x154  |
+;  |  0x140  |  0x144  |  0x148  |  0x14c  |   0x150  |  0x154 |   0x158  |   0x15c |
 ;  ----------------------------------------------------------------------------------
 ;  |                 XMM12                 |                  XMM13                 |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |   62    |   63    |    64    |   65   |   66    |   67    |    68    |   69    |
+;  |    64    |   65   |   66    |   67    |    68    |   69    |    70   |    71   |
 ;  ----------------------------------------------------------------------------------
-;  |  0x158  |  0x15c  |  0x160  |  0x164  |  0x168  |  0x16c  |   0x170  |  0x174  |
+;  |  0x160  |  0x164  |  0x168  |  0x16c  |   0x170  |  0x174  |  0x178  |   0x17c |
 ;  ----------------------------------------------------------------------------------
 ;  |                 XMM14                 |                  XMM15                 |
 ;  ----------------------------------------------------------------------------------
@@ -103,40 +103,40 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     mov     rax,         [r10+08h]  ; load current stack base
     mov     [rcx+050h],  rax        ; save current stack base
     mov     rax,         [r10+010h] ; load current stack limit
-    mov     [rcx+058h],  rax        ; save current stack limit
+    mov     [rcx+060h],  rax        ; save current stack limit
     mov     rax,         [r10+018h] ; load fiber local storage
-    mov     [rcx+060h],  rax        ; save fiber local storage
+    mov     [rcx+068h],  rax        ; save fiber local storage
 
     test    r9,          r9
     je      nxt
 
-    stmxcsr [rcx+068h]              ; save MMX control and status word
-    fnstcw  [rcx+06ch]              ; save x87 control word
-    mov     r10,         [rcx+070h] ; address of aligned XMM storage
-    movaps  [r10],       xmm6
-    movaps  [r10+010h],  xmm7
-    movaps  [r10+020h],  xmm8
-    movaps  [r10+030h],  xmm9
-    movaps  [r10+040h],  xmm10
-    movaps  [r10+050h],  xmm11
-    movaps  [r10+060h],  xmm12
-    movaps  [r10+070h],  xmm13
-    movaps  [r10+080h],  xmm14
-    movaps  [r10+090h],  xmm15
+    stmxcsr [rcx+070h]              ; save MMX control and status word
+    fnstcw  [rcx+074h]              ; save x87 control word
+    ; save XMM storage
+    movaps  [rcx+080h],   xmm6
+    movaps  [rcx+090h],   xmm7
+    movaps  [rcx+0100h],  xmm8
+    movaps  [rcx+0110h],  xmm9
+    movaps  [rcx+0120h],  xmm10
+    movaps  [rcx+0130h],  xmm11
+    movaps  [rcx+0140h],  xmm12
+    movaps  [rcx+0150h],  xmm13
+    movaps  [rcx+0160h],  xmm14
+    movaps  [rcx+0170h],  xmm15
 
-    ldmxcsr [rdx+068h]              ; restore MMX control and status word
-    fldcw   [rdx+06ch]              ; restore x87 control word
-    mov     r10,         [rdx+070h] ; address of aligned XMM storage
-    movaps  xmm6,        [r10]
-    movaps  xmm7,        [r10+010h]
-    movaps  xmm8,        [r10+020h]
-    movaps  xmm9,        [r10+030h]
-    movaps  xmm10,       [r10+040h]
-    movaps  xmm11,       [r10+050h]
-    movaps  xmm12,       [r10+060h]
-    movaps  xmm13,       [r10+070h]
-    movaps  xmm14,       [r10+080h]
-    movaps  xmm15,       [r10+090h]
+    ldmxcsr [rdx+070h]              ; restore MMX control and status word
+    fldcw   [rdx+074h]              ; restore x87 control word
+    ; restore XMM storage
+    movaps  xmm6,        [rdx+080h]
+    movaps  xmm7,        [rdx+090h]
+    movaps  xmm8,        [rdx+0100h]
+    movaps  xmm9,        [rdx+0110h]
+    movaps  xmm10,       [rdx+0120h]
+    movaps  xmm11,       [rdx+0130h]
+    movaps  xmm12,       [rdx+0140h]
+    movaps  xmm13,       [rdx+0150h]
+    movaps  xmm14,       [rdx+0160h]
+    movaps  xmm15,       [rdx+0170h]
 nxt:
 
     lea     rax,         [rsp+08h]  ; exclude the return address
@@ -156,9 +156,9 @@ nxt:
     mov     r10,        gs:[030h]   ; load NT_TIB
     mov     rax,        [rdx+050h]  ; load stack base
     mov     [r10+08h],  rax         ; restore stack base
-    mov     rax,        [rdx+058h]  ; load stack limit
+    mov     rax,        [rdx+060h]  ; load stack limit
     mov     [r10+010h], rax         ; restore stack limit
-    mov     rax,        [rdx+060h]  ; load fiber local storage
+    mov     rax,        [rdx+068h]  ; load fiber local storage
     mov     [r10+018h], rax         ; restore fiber local storage
 
     mov     rsp,        [rdx+040h]  ; restore RSP
@@ -169,39 +169,4 @@ nxt:
 
     jmp     r10                     ; indirect jump to caller
 jump_fcontext ENDP
-
-make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and unwind information in    E
-    .endprolog                   ; .xdata for a function's structured exception handling unwind behavior
-
-    mov  [rcx],      rcx         ; store the address of current context
-    mov  [rcx+048h], rdx         ; save the address of the function supposed to run
-    mov  rdx,        [rcx+050h]  ; load the address where the context stack beginns
-
-    push  rcx                    ; save pointer to fcontext_t
-    sub   rsp,       028h        ; reserve shadow space for align_stack
-    mov   rcx,       rdx         ; stack pointer as arg for align_stack
-    mov   [rsp+8],   rcx
-    call  align_stack   ; align stack
-    mov   rdx,       rax         ; begin of aligned stack
-    add   rsp,       028h
-    pop   rcx                    ; restore pointer to fcontext_t
-
-    lea  rdx,        [rdx-028h]  ; reserve 32byte shadow space + return address on stack, (RSP + 8) % 16 == 0
-    mov  [rcx+040h], rdx         ; save the address where the context stack beginns
-
-    stmxcsr [rcx+068h]           ; save MMX control and status word
-    fnstcw  [rcx+06ch]           ; save x87 control word
-
-    lea  rax,       finish       ; helper code executed after fn() returns
-    mov  [rdx],     rax          ; store address off the helper function as return address
-
-    xor  rax,       rax          ; set RAX to zero
-    ret
-
-finish:
-    xor   rcx,        rcx
-    mov   [rsp+08h],  rcx
-    call  _exit                  ; exit application
-    hlt
-make_fcontext ENDP
 END

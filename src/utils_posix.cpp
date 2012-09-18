@@ -6,9 +6,15 @@
 
 #define BOOST_CONTEXT_SOURCE
 
-#include <boost/context/fcontext.hpp>
+#include <boost/context/guarded_stack_allocator.hpp>
 
-#include <cstddef>
+extern "C" {
+#include <unistd.h>
+}
+
+//#if _POSIX_C_SOURCE >= 200112L
+
+#include <boost/config.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -16,17 +22,12 @@
 
 namespace boost {
 namespace context {
-namespace detail {
 
-extern "C" BOOST_CONTEXT_DECL
-void * BOOST_CONTEXT_CALLDECL align_stack( void * vp)
+std::size_t pagesize()
 {
-    void * base = vp;
-    if ( 0 != ( ( ( uintptr_t) base) & 15) )
-        base = ( char * ) ( ( ( ( uintptr_t) base) - 15) & ~0x0F);
-    return base;
-}
-
+    // conform to POSIX.1-2001
+    static std::size_t size = ::sysconf( _SC_PAGESIZE);
+    return size;
 }
 
 }}
@@ -34,3 +35,5 @@ void * BOOST_CONTEXT_CALLDECL align_stack( void * vp)
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
 #endif
+
+//#endif

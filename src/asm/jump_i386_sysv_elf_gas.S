@@ -19,7 +19,7 @@
  *  --------------------------------------------------------------  *
  *  |   0x18  |   0x1c  |                                        |  *
  *  --------------------------------------------------------------  *
- *  |  sbase  | slimit  |                                        |  *
+ *  |    sp   |  size   |                                        |  *
  *  --------------------------------------------------------------  *
  *  --------------------------------------------------------------  *
  *  |    8    |    9    |                                        |  *
@@ -32,9 +32,10 @@
  * *****************************************************************/
 
 .text
-.globl _jump_fcontext
+.globl jump_fcontext
 .align 2
-_jump_fcontext:
+.type jump_fcontext,@function
+jump_fcontext:
     movl    0x4(%esp), %ecx         /* load address of the first fcontext_t arg */
     movl    %edi,       (%ecx)      /* save EDI */
     movl    %esi,       0x4(%ecx)   /* save ESI */
@@ -68,51 +69,4 @@ _jump_fcontext:
     movl    0x14(%edx),  %edx       /* fetch the address to return to */
 
     jmp     *%edx                   /* indirect jump to context */
-
-.text
-.globl _make_fcontext
-.align 2
-_make_fcontext:
-    movl   0x4(%esp),      %eax         /* load address of the fcontext_t */
-    movl   %eax,           (%eax)       /* save the address of current context */
-    movl   0x8(%esp),      %ecx         /* load the address of the context function */
-    movl   %ecx,           0x14(%eax)   /* save the address of the context function */
-    movl   0x18(%eax),     %edx         /* load the stack base */
-
-    pushl  %eax                         /* save pointer to fcontext_t */
-    pushl  %ebx                         /* save EBX */
-    pushl  %edx                         /* stack pointer as arg for align_stack */
-    call   1f
-1:  popl   %ebx                         /* address of label 1 */
-    addl   $_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx     /* compute address of GOT and store it in EBX */
-    call   align_stack@PLT              /* align stack */
-    movl   %eax,           %edx         /* begin of aligned stack */
-    popl   %eax                         /* remove arg for align_stack */
-    popl   %ebx                         /* restore EBX */
-    popl   %eax                         /* restore pointer to fcontext_t */
-
-    leal   -0x14(%edx),    %edx         /* reserve space for the last frame on stack, (ESP + 4) % 16 == 0 */
-    movl   %edx,           0x10(%eax)   /* save the aligned stack base */
-
-    stmxcsr  0x20(%eax)                 /* save MMX control and status word */
-    fnstcw   0x24(%eax)                 /* save x87 control word */
-
-    call    2f
-2:  popl    %ecx                        /* address of label 2 */
-    addl    $finish-2b, %ecx            /* helper code executed after context function returns */
-    movl    %ecx, (%edx)
-
-    xorl   %eax,            %eax
-    ret
-
-finish:
-    leal   -0xc(%esp),    %esp
-
-    call    3f
-3:  popl    %ebx                                    /* address of label 3 */
-    addl    $_GLOBAL_OFFSET_TABLE_+[.-3b], %ebx     /* compute address of GOT and store it in EBX */
-
-    xorl    %eax,           %eax
-    pushl   %eax                        /* exit code is zero */
-    call   _exit@PLT                    /* exit application */
-    hlt
+.size jump_fcontext,.-jump_fcontext

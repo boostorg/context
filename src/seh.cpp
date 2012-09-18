@@ -21,6 +21,11 @@ extern "C" {
 # define SNPRINTF snprintf
 #endif
 
+#if defined(_MSC_VER)
+# pragma warning(push)
+# pragma warning(disable:4996)
+# endif
+
 static const char * exception_description(
     _EXCEPTION_RECORD const* record, char * description, size_t len)
 {
@@ -79,5 +84,9 @@ EXCEPTION_DISPOSITION seh_fcontext(
 
     return ExceptionContinueSearch; // never reached
 }
+
+# if defined(BOOST_MSVC)
+# pragma warning(pop)
+# endif
 
 }

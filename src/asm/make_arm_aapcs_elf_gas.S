@@ -26,7 +26,7 @@
  *  -------------------------------------------------------------  *
  *  | 0x2c| 0x30|                                               |  *
  *  -------------------------------------------------------------  *
- *  |sbase|slimit|                                              |  *
+ *  |  sp | size|                                               |  *
  *  -------------------------------------------------------------  *
  *  -------------------------------------------------------------  *
  *  |  13 |  14 | 15 |  16 |  17 |  18 |  19 |  20 |  21 |  22  |  *
@@ -46,56 +46,30 @@
  * *****************************************************************/
 
 .text
-.globl jump_fcontext
-.align 2
-.type jump_fcontext,%function
-jump_fcontext:
-    stmia   a1, {v1-v8,sp-lr}       @ save V1-V8,SP-LR
-    str     lr, [a1,#40]            @ save LR as PC
-
-#if (defined(__VFP_FP__) && !defined(__SOFTFP__))
-    cmp     a4, #0                  @ test if fpu env should be preserved
-    beq     1f
-
-    mov     a4, a1
-    add     a4, #52
-    fstmiax a4, {d8-d15}            @ save S16-S31
-
-    mov     a4, a2
-    add     a4, #52
-    fldmiax a4, {d8-d15}            @ restore S16-S31
-1:
-#endif
-
-    mov     a1, a3                  @ use third arg as return value after jump
-                                    @ and as first arg in context function
-    ldmia   a2, {v1-v8,sp-pc}       @ restore v1-V8,SP-PC
-.size jump_fcontext,.-jump_fcontext
-
-.text
 .globl make_fcontext
 .align 2
 .type make_fcontext,%function
 make_fcontext:
-    str     a1, [a1,#0]         @ save the address of passed context
-    str     a2, [a1,#40]        @ save address of the context function
-    ldr     a2, [a1,#44]        @ load the stack base
+    stmfd   sp!, {a1-a3,lr}     @ save arguments of make_fcontext and return address on stack, SP % 8 == 0
+    sub     a1, #116            @ reserve space for fcontext_t at top of context stack
+    bl      align_stack@PLT     @ call align_stack, A1 contains address at 16 byte boundary after return
+                                @ == pointer to fcontext_t and address of context stack
 
-    push    {a1,lr}             @ save pointer to fcontext_t
-    mov     a1, a2              @ stack pointer as arg for align_stack
-    bl      align_stack@PLT     @ align stack
-    mov     a2, a1              @ begin of aligned stack
-    pop     {a1,lr}             @ restore pointer to fcontext_t
+    ldmfd   sp!, {a2-a4,lr}     @ restore arguments of make_fcontext and return address from stack
+    str     a2, [a1,#44]        @ save address of context stack (base) in fcontext_t
+    str     a3, [a1,#48]        @ save context stack size in fcontext_t
+    str     a4, [a1,#40]        @ save address of context function in fcontext_t
 
-    str     a2, [a1,#32]        @ save the aligned stack base
+    str     a1, [a1,#32]        @ save address in A1 as stack pointer for context function
 
-    adr     a2, finish          @ address of finish; called after context function returns
-    str     a2, [a1,#36]
+    adr     a2, finish          @ compute abs address of label finish
+    str     a2, [a1,#36]        @ save address of finish as return address for context function
+                                @ entered after context function returns
 
-    mov     a1, #0
     bx      lr
 
 finish:
+    @ SP points to same address as SP on entry of context function
     mov     a1, #0              @ exit code is zero
     bl      _exit@PLT           @ exit application
 .size make_fcontext,.-make_fcontext
