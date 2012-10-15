@@ -17,6 +17,7 @@ extern "C" {
 #include <cmath>
 #include <csignal>
 #include <cstring>
+#include <new>
 #include <stdexcept>
 
 #include <boost/assert.hpp>
@@ -100,7 +101,7 @@ guarded_stack_allocator::default_stacksize()
     std::size_t size = 64 * 1024; // 64 kB
     if ( is_stack_unbound() )
         return std::max( size, minimum_stacksize() );
-    
+
     BOOST_ASSERT( maximum_stacksize() >= minimum_stacksize() );
     return maximum_stacksize() == minimum_stacksize()
         ? minimum_stacksize()

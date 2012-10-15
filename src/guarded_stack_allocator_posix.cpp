@@ -24,6 +24,7 @@ extern "C" {
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <new>
 #include <stdexcept>
 
 #include <boost/assert.hpp>
