@@ -54,7 +54,7 @@
 ;  |                  XMM6                 |                   XMM7                 |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |    40    |   41   |   42    |   43    |    44    |   45    |    46   |    47   | 
+;  |    40    |   41   |   42    |   43    |    44    |   45    |    46   |    47   |
 ;  ----------------------------------------------------------------------------------
 ;  |   0x100  |  0x104  |  0x108  |  0x10c |   0x110  |  0x114  |  0x118  |  0x11c  |
 ;  ----------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and u
     ret
 
 finish:
-    ; RSP points to same address as RSP on entry of context function + 0x8 
+    ; RSP points to same address as RSP on entry of context function + 0x8
     xor   rcx,       rcx         ; exit code is zero
     call  _exit                  ; exit application
     hlt

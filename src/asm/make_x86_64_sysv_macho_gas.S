@@ -78,5 +78,5 @@ _make_fcontext:
 finish:
     /* RSP points to same address as RSP on entry of context function + 0x8 */
     xorq    %rdi,           %rdi       /* exit code is zero */
-    call   _exit                       /* exit application */
+    call   __exit                      /* exit application */
     hlt
