@@ -35,9 +35,9 @@
 .globl _make_fcontext
 .align 2
 _make_fcontext:
-    pushl  %ebp                         /* save previous frame pointer; get the stack 16 byte aligned */
+    pushl  %ebp                         /* save previous frame pointer */
     movl   %esp,           %ebp         /* set EBP to ESP */
-    subl   $0x10,          %esp         /* allocate stack space */
+    subl   $0x8,           %esp         /* allocate stack space */
 
     movl   0x8(%ebp),      %eax         /* load 1. arg of make_fcontext, pointer to context stack (base) */
     leal   -0x28(%eax),    %eax         /* reserve space for fcontext_t at top of context stack */
@@ -55,17 +55,17 @@ _make_fcontext:
     stmxcsr  0x20(%eax)                 /* save MMX control and status word */
     fnstcw   0x24(%eax)                 /* save x87 control word */
 
-    leal   -0xc(%eax),     %edx         /* reserve space for the last frame on context stack, (ESP - 0x4) % 16 == 0 */
+    leal   -0x14(%eax),    %edx         /* reserve space for the last frame on context stack */
     movl   %edx,           0x10(%eax)   /* save address in EDX as stack pointer for context function */
 
     call   1f
 1:  popl   %ecx                         /* address of label 1 */
     addl   $finish-1b,     %ecx         /* compute abs address of label finish */
-    movl    %ecx, (%edx)                /* save address of finish as return address for context function */
+    movl   %ecx, (%edx)                 /* save address of finish as return address for context function */
                                         /* entered after context function returns */
 
-    addl   $0x10,          %esp         /* deallocate stack space */
-    pop    %ebp
+    addl   $0x8,           %esp         /* deallocate stack space */
+    popl   %ebp
 
     ret
 
@@ -73,5 +73,5 @@ finish:
     /* ESP points to same address as ESP on entry of context function + 0x4 */
     xorl    %eax,  %eax
     movl    %eax,  (%esp)               /* exit code is zero */
-    call   _exit                        /* exit application */
+    call   __exit                       /* exit application */
     hlt
