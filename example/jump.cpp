@@ -12,7 +12,15 @@
 #include <boost/assert.hpp>
 #include <boost/context/all.hpp>
 
+#include "simple_stack_allocator.hpp"
+
 namespace ctx = boost::context;
+
+typedef ctx::simple_stack_allocator<
+    8 * 1024 * 1024, // 8MB
+    64 * 1024, // 64kB
+    8 * 1024 // 8kB
+>       stack_allocator;
 
 ctx::fcontext_t fcm;
 ctx::fcontext_t * fc1 = 0;
@@ -37,21 +45,21 @@ void f2( intptr_t)
 
 int main( int argc, char * argv[])
 {
-        ctx::guarded_stack_allocator alloc;
+        stack_allocator alloc;
 
-        void * base1 = alloc.allocate(ctx::guarded_stack_allocator::default_stacksize());
+        void * base1 = alloc.allocate( stack_allocator::default_stacksize());
         BOOST_ASSERT( base1);
-        fc1 = ctx::make_fcontext( base1, ctx::guarded_stack_allocator::default_stacksize(), f1);
+        fc1 = ctx::make_fcontext( base1, stack_allocator::default_stacksize(), f1);
         BOOST_ASSERT( fc1);
         BOOST_ASSERT( base1 == fc1->fc_stack.sp);
-        BOOST_ASSERT( ctx::guarded_stack_allocator::default_stacksize() == fc1->fc_stack.size);
+        BOOST_ASSERT( stack_allocator::default_stacksize() == fc1->fc_stack.size);
 
-        void * base2 = alloc.allocate(ctx::guarded_stack_allocator::default_stacksize());
+        void * base2 = alloc.allocate( stack_allocator::default_stacksize());
         BOOST_ASSERT( base2);
-        fc2 = ctx::make_fcontext( base2, ctx::guarded_stack_allocator::default_stacksize(), f2);
+        fc2 = ctx::make_fcontext( base2, stack_allocator::default_stacksize(), f2);
         BOOST_ASSERT( fc2);
         BOOST_ASSERT( base2 == fc2->fc_stack.sp);
-        BOOST_ASSERT( ctx::guarded_stack_allocator::default_stacksize() == fc2->fc_stack.size);
+        BOOST_ASSERT( stack_allocator::default_stacksize() == fc2->fc_stack.size);
 
         std::cout << "main: call start_fcontext( & fcm, fc1, 0)" << std::endl;
         ctx::jump_fcontext( & fcm, fc1, 0);

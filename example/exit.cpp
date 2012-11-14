@@ -12,7 +12,15 @@
 #include <boost/assert.hpp>
 #include <boost/context/all.hpp>
 
+#include "simple_stack_allocator.hpp"
+
 namespace ctx = boost::context;
+
+typedef ctx::simple_stack_allocator<
+    8 * 1024 * 1024, // 8MB
+    64 * 1024, // 64kB
+    8 * 1024 // 8kB
+>       stack_allocator;
 
 ctx::fcontext_t * fc1;
 ctx::fcontext_t * fc2;
@@ -36,13 +44,13 @@ void f2( intptr_t)
 int main( int argc, char * argv[])
 {
         ctx::fcontext_t fcm;
-        ctx::guarded_stack_allocator alloc;
+        stack_allocator alloc;
 
-        void * sp1 = alloc.allocate(ctx::guarded_stack_allocator::default_stacksize());
-        fc1 = ctx::make_fcontext( sp1, ctx::guarded_stack_allocator::default_stacksize(), f1);
+        void * sp1 = alloc.allocate( stack_allocator::default_stacksize());
+        fc1 = ctx::make_fcontext( sp1, stack_allocator::default_stacksize(), f1);
 
-        void * sp2 = alloc.allocate(ctx::guarded_stack_allocator::default_stacksize());
-        fc2 = ctx::make_fcontext( sp2, ctx::guarded_stack_allocator::default_stacksize(), f2);
+        void * sp2 = alloc.allocate( stack_allocator::default_stacksize());
+        fc2 = ctx::make_fcontext( sp2, stack_allocator::default_stacksize(), f2);
 
         std::cout << "main: call start_fcontext( & fcm, fc1, 0)" << std::endl;
         ctx::jump_fcontext( & fcm, fc1, 0);

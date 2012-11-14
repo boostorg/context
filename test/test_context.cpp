@@ -17,7 +17,15 @@
 
 #include <boost/context/all.hpp>
 
+#include "../example/simple_stack_allocator.hpp"
+
 namespace ctx = boost::context;
+
+typedef ctx::simple_stack_allocator<
+    8 * 1024 * 1024, // 8MB
+    64 * 1024, // 64kB
+    8 * 1024 // 8kB
+>       stack_allocator;
 
 ctx::fcontext_t fcm;
 ctx::fcontext_t * fc = 0;
@@ -76,43 +84,28 @@ void f8( intptr_t arg)
     ctx::jump_fcontext( fc, & fcm, 0);
 }
 
-void test_stack()
-{
-    ctx::guarded_stack_allocator alloc;
-
-    bool unbound = ctx::guarded_stack_allocator::is_stack_unbound();
-    std::size_t min = ctx::guarded_stack_allocator::minimum_stacksize();
-    std::size_t def = ctx::guarded_stack_allocator::default_stacksize();
-    BOOST_CHECK( min <= def);
-    if ( ! unbound)
-    {
-        std::size_t max = ctx::guarded_stack_allocator::maximum_stacksize();
-        BOOST_CHECK( max >= def);
-    }
-}
-
 void test_setup()
 {
-    ctx::guarded_stack_allocator alloc;
+    stack_allocator alloc;
 
-    void * sp = alloc.allocate( ctx::guarded_stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, ctx::guarded_stack_allocator::minimum_stacksize(), f1);
+    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
+    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f1);
     BOOST_CHECK( fc);
     BOOST_CHECK_EQUAL( sp, fc->fc_stack.sp);
-    BOOST_CHECK_EQUAL( ctx::guarded_stack_allocator::minimum_stacksize(), fc->fc_stack.size);
+    BOOST_CHECK_EQUAL( stack_allocator::minimum_stacksize(), fc->fc_stack.size);
 }
 
 void test_start()
 {
     value1 = 0;
 
-    ctx::guarded_stack_allocator alloc;
+    stack_allocator alloc;
 
-    void * sp = alloc.allocate( ctx::guarded_stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, ctx::guarded_stack_allocator::minimum_stacksize(), f1);
+    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
+    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f1);
     BOOST_CHECK( fc);
     BOOST_CHECK_EQUAL( sp, fc->fc_stack.sp);
-    BOOST_CHECK_EQUAL( ctx::guarded_stack_allocator::minimum_stacksize(), fc->fc_stack.size);
+    BOOST_CHECK_EQUAL( stack_allocator::minimum_stacksize(), fc->fc_stack.size);
 
     BOOST_CHECK_EQUAL( 0, value1);
     ctx::jump_fcontext( & fcm, fc, 0);
@@ -123,13 +116,13 @@ void test_jump()
 {
     value1 = 0;
 
-    ctx::guarded_stack_allocator alloc;
+    stack_allocator alloc;
 
-    void * sp = alloc.allocate( ctx::guarded_stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, ctx::guarded_stack_allocator::minimum_stacksize(), f3);
+    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
+    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f3);
     BOOST_CHECK( fc);
     BOOST_CHECK_EQUAL( sp, fc->fc_stack.sp);
-    BOOST_CHECK_EQUAL( ctx::guarded_stack_allocator::minimum_stacksize(), fc->fc_stack.size);
+    BOOST_CHECK_EQUAL( stack_allocator::minimum_stacksize(), fc->fc_stack.size);
 
     BOOST_CHECK_EQUAL( 0, value1);
     ctx::jump_fcontext( & fcm, fc, 0);
@@ -140,13 +133,13 @@ void test_jump()
 
 void test_result()
 {
-    ctx::guarded_stack_allocator alloc;
+    stack_allocator alloc;
 
-    void * sp = alloc.allocate( ctx::guarded_stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, ctx::guarded_stack_allocator::minimum_stacksize(), f4);
+    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
+    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f4);
     BOOST_CHECK( fc);
     BOOST_CHECK_EQUAL( sp, fc->fc_stack.sp);
-    BOOST_CHECK_EQUAL( ctx::guarded_stack_allocator::minimum_stacksize(), fc->fc_stack.size);
+    BOOST_CHECK_EQUAL( stack_allocator::minimum_stacksize(), fc->fc_stack.size);
 
     int result = ( int) ctx::jump_fcontext( & fcm, fc, 0);
     BOOST_CHECK_EQUAL( 7, result);
@@ -154,14 +147,14 @@ void test_result()
 
 void test_arg()
 {
-    ctx::guarded_stack_allocator alloc;
+    stack_allocator alloc;
 
     int i = 7;
-    void * sp = alloc.allocate( ctx::guarded_stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, ctx::guarded_stack_allocator::minimum_stacksize(), f5);
+    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
+    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f5);
     BOOST_CHECK( fc);
     BOOST_CHECK_EQUAL( sp, fc->fc_stack.sp);
-    BOOST_CHECK_EQUAL( ctx::guarded_stack_allocator::minimum_stacksize(), fc->fc_stack.size);
+    BOOST_CHECK_EQUAL( stack_allocator::minimum_stacksize(), fc->fc_stack.size);
 
     int result = ( int) ctx::jump_fcontext( & fcm, fc, i);
     BOOST_CHECK_EQUAL( i, result);
@@ -169,14 +162,14 @@ void test_arg()
 
 void test_transfer()
 {
-    ctx::guarded_stack_allocator alloc;
+    stack_allocator alloc;
 
     std::pair< int, int > data = std::make_pair( 3, 7);
-    void * sp = alloc.allocate( ctx::guarded_stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, ctx::guarded_stack_allocator::minimum_stacksize(), f6);
+    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
+    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f6);
     BOOST_CHECK( fc);
     BOOST_CHECK_EQUAL( sp, fc->fc_stack.sp);
-    BOOST_CHECK_EQUAL( ctx::guarded_stack_allocator::minimum_stacksize(), fc->fc_stack.size);
+    BOOST_CHECK_EQUAL( stack_allocator::minimum_stacksize(), fc->fc_stack.size);
 
     int result = ( int) ctx::jump_fcontext( & fcm, fc, ( intptr_t) & data);
     BOOST_CHECK_EQUAL( 10, result);
@@ -187,14 +180,14 @@ void test_transfer()
 
 void test_exception()
 {
-    ctx::guarded_stack_allocator alloc;
+    stack_allocator alloc;
 
     const char * what = "hello world";
-    void * sp = alloc.allocate( ctx::guarded_stack_allocator::default_stacksize() );
-    fc = ctx::make_fcontext( sp, ctx::guarded_stack_allocator::default_stacksize(), f7);
+    void * sp = alloc.allocate( stack_allocator::default_stacksize() );
+    fc = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f7);
     BOOST_CHECK( fc);
     BOOST_CHECK_EQUAL( sp, fc->fc_stack.sp);
-    BOOST_CHECK_EQUAL( ctx::guarded_stack_allocator::default_stacksize(), fc->fc_stack.size);
+    BOOST_CHECK_EQUAL( stack_allocator::default_stacksize(), fc->fc_stack.size);
 
     ctx::jump_fcontext( & fcm, fc, ( intptr_t) what);
     BOOST_CHECK_EQUAL( std::string( what), value2);
@@ -202,14 +195,14 @@ void test_exception()
 
 void test_fp()
 {
-    ctx::guarded_stack_allocator alloc;
+    stack_allocator alloc;
 
     double d = 7.13;
-    void * sp = alloc.allocate( ctx::guarded_stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, ctx::guarded_stack_allocator::minimum_stacksize(), f8);
+    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
+    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f8);
     BOOST_CHECK( fc);
     BOOST_CHECK_EQUAL( sp, fc->fc_stack.sp);
-    BOOST_CHECK_EQUAL( ctx::guarded_stack_allocator::minimum_stacksize(), fc->fc_stack.size);
+    BOOST_CHECK_EQUAL( stack_allocator::minimum_stacksize(), fc->fc_stack.size);
 
     ctx::jump_fcontext( & fcm, fc, (intptr_t) & d);
     BOOST_CHECK_EQUAL( 10.58, value3);
@@ -220,7 +213,6 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     boost::unit_test::test_suite * test =
         BOOST_TEST_SUITE("Boost.Context: context test suite");
 
-    test->add( BOOST_TEST_CASE( & test_stack) );
     test->add( BOOST_TEST_CASE( & test_setup) );
     test->add( BOOST_TEST_CASE( & test_start) );
     test->add( BOOST_TEST_CASE( & test_jump) );

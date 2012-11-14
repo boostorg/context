@@ -41,7 +41,6 @@
 [def __threads__ ['threads]]
 [def __tls__ ['thread-local storage]]
 [def __stack_allocator__ ['StackAllocator]]
-[def __stack_allocator_concept__ ['StackAllocator concept]]
 
 [def __fcontext__ ['fcontext_t]]
 [def __ucontext__ ['ucontext_t]]
