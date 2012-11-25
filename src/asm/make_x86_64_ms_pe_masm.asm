@@ -44,7 +44,7 @@
 ;  ----------------------------------------------------------------------------------
 ;  |   0x70  |   0x74  |   0x78  |   0x7c  |                                        |
 ;  ----------------------------------------------------------------------------------
-;  | fc_mxcsr|fc_x87_cw|     <padding>     |                                        |
+;  | fc_mxcsr|fc_x87_cw|      fc_xmm       |                                        |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
 ;  |    32    |   33   |   34    |   35    |   36     |   37    |    38   |    39   |
@@ -115,6 +115,14 @@ make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and u
 
     stmxcsr [rax+070h]           ; save MMX control and status word
     fnstcw  [rax+074h]           ; save x87 control word
+
+
+	mov  r8,         rax         ; preserve pointer to fcontext_t
+	lea  rcx,        [rax+090h]  ; beginning of XMM block
+	call align_stack             ; align XMM pointer on 16byte boundary
+	mov  [r8 + 078h], rax        ; store address of XMM block in fc_xmm
+	mov  rax,        r8          ; restore pointer to fcontext_t in RAX
+
 
     lea  rdx,        [rax-028h]  ; reserve 32byte shadow space + return address on stack, (RSP - 0x8) % 16 == 0
     mov  [rax+040h], rdx         ; save address in RDX as stack pointer for context function

@@ -55,11 +55,7 @@ struct fp_t
         fc_freg(),
         fc_xmm( 0),
         fc_buffer()
-    {
-        fc_xmm = fc_buffer;
-        if ( 0 != ( ( ( uintptr_t) fc_xmm) & 15) )
-            fc_xmm = ( char *) ( ( ( ( uintptr_t) fc_xmm) + 15) & ~0x0F);
-    }
+	{}
 };
 
 struct fcontext_t
