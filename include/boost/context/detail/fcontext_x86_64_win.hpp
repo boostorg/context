@@ -45,25 +45,12 @@ struct stack_t
     {}
 };
 
-struct fp_t
-{
-    boost::uint32_t     fc_freg[2];
-    void            *   fc_xmm;
-    char                fc_buffer[175];
-
-    fp_t() :
-        fc_freg(),
-        fc_xmm( 0),
-        fc_buffer()
-	{}
-};
-
 struct fcontext_t
 {
     boost::uint64_t     fc_greg[10];
     stack_t             fc_stack;
     void            *   fc_local_storage;
-    fp_t                fc_fp;
+    boost::uint64_t     fc_fp[24];
 
     fcontext_t() :
         fc_greg(),

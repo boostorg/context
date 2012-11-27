@@ -50,26 +50,27 @@
 .align 2
 .type make_fcontext,%function
 make_fcontext:
-    stmfd   sp!, {a1-a3,lr}     @ save arguments of make_fcontext and return address on stack, SP % 8 == 0
-    sub     a1, #116            @ reserve space for fcontext_t at top of context stack
-    bl      align_stack@PLT     @ call align_stack, A1 contains address at 16 byte boundary after return
-                                @ == pointer to fcontext_t and address of context stack
+    mov     a4, a1          @ save address of context stack (base) A4
+    sub     a1, #116        @ reserve space for fcontext_t at top of context stack
 
-    ldmfd   sp!, {a2-a4,lr}     @ restore arguments of make_fcontext and return address from stack
-    str     a2, [a1,#44]        @ save address of context stack (base) in fcontext_t
-    str     a3, [a1,#48]        @ save context stack size in fcontext_t
-    str     a4, [a1,#40]        @ save address of context function in fcontext_t
+    @ shift address in A1 to lower 16 byte boundary
+    @ == pointer to fcontext_t and address of context stack
+    bic     a1, a1, #15
 
-    str     a1, [a1,#32]        @ save address in A1 as stack pointer for context function
+    str     a4, [a1,#44]    @ save address of context stack (base) in fcontext_t
+    str     a2, [a1,#48]    @ save context stack size in fcontext_t
+    str     a3, [a1,#40]    @ save address of context function in fcontext_t
 
-    adr     a2, finish          @ compute abs address of label finish
-    str     a2, [a1,#36]        @ save address of finish as return address for context function
-                                @ entered after context function returns
+    str     a1, [a1,#32]    @ save address in A4 as stack pointer for context function
+
+    adr     a2, finish      @ compute abs address of label finish
+    str     a2, [a1,#36]    @ save address of finish as return address for context function
+                            @ entered after context function returns
 
     bx      lr
 
 finish:
-    @ SP points to same address as SP on entry of context function
-    mov     a1, #0              @ exit code is zero
-    bl      _exit@PLT           @ exit application
+    @ SP points to same addras SP on entry of context function
+    mov     a1, #0          @ exit code is zero
+    bl      _exit@PLT       @ exit application
 .size make_fcontext,.-make_fcontext

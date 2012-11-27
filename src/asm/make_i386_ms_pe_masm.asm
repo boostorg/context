@@ -43,30 +43,26 @@
 .386
 .XMM
 .model flat, c
-_exit PROTO, value:SDWORD 
-align_stack PROTO, vp:DWORD
+_exit PROTO, value:SDWORD
 seh_fcontext PROTO, except:DWORD, frame:DWORD, context:DWORD, dispatch:DWORD
 .code
 
 make_fcontext PROC EXPORT
-    push ebp                        ; save previous frame pointer; get the stack 16 byte aligned
-    mov  ebp,         esp           ; set EBP to ESP 
-    sub  esp,         010h          ; allocate stack space
-
-    mov  eax,         [ebp+08h]     ; load 1. arg of make_fcontext, pointer to context stack (base)
+    mov  eax,         [esp+04h]     ; load 1. arg of make_fcontext, pointer to context stack (base)
     lea  eax,         [eax-034h]    ; reserve space for fcontext_t at top of context stack
-    mov  [esp],       eax           ; address in EAX becomes 1.arg of align_stack
-    call  align_stack               ; call align_stack, EAX contains address at 16 byte boundary after return
-                                    ; == pointer to fcontext_t and address of context stack
 
-    mov  ecx,         [ebp+08h]     ; load 1. arg of make_fcontext, pointer to context stack (base)
+    ; shift address in EAX to lower 16 byte boundary
+    ; == pointer to fcontext_t and address of context stack
+    and    eax,       -0fh
+
+    mov  ecx,         [esp+04h]     ; load 1. arg of make_fcontext, pointer to context stack (base)
     mov  [eax+018h],  ecx           ; save address of context stack (base) in fcontext_t
-    mov  edx,         [ebp+0ch]     ; load 2. arg of make_fcontext, context stack size
+    mov  edx,         [esp+08h]     ; load 2. arg of make_fcontext, context stack size
     mov  [eax+01ch],  edx           ; save context stack size in fcontext_t
     neg  edx                        ; negate stack size for LEA instruction (== substraction)
     lea  ecx,         [ecx+edx]     ; compute bottom address of context stack (limit)
     mov  [eax+020h],  ecx           ; save address of context stack (limit) in fcontext_t
-    mov  ecx,         [ebp+010h]    ; load 3. arg of make_fcontext, pointer to context function
+    mov  ecx,         [esp+0ch]     ; load 3. arg of make_fcontext, pointer to context function
     mov  [eax+014h],  ecx           ; save address of context function in fcontext_t
 
     stmxcsr [eax+02ch]              ; save MMX control word
@@ -85,9 +81,6 @@ make_fcontext PROC EXPORT
     mov  ecx,         finish        ; abs address of finish
     mov  [edx],       ecx           ; save address of finish as return address for context function
                                     ; entered after context function returns
-
-    add  esp,         010h          ; deallocate stack space
-    pop  ebp
 
     ret
 

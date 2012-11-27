@@ -35,21 +35,18 @@
 .globl _make_fcontext
 .align 2
 _make_fcontext:
-    pushl  %ebp                         /* save previous frame pointer */
-    movl   %esp,           %ebp         /* set EBP to ESP */
-    subl   $0x8,           %esp         /* allocate stack space */
-
-    movl   0x8(%ebp),      %eax         /* load 1. arg of make_fcontext, pointer to context stack (base) */
+    movl   0x4(%esp),      %eax         /* load 1. arg of make_fcontext, pointer to context stack (base) */
     leal   -0x28(%eax),    %eax         /* reserve space for fcontext_t at top of context stack */
-    movl   %eax,           (%esp)       /* address in EAX becomes 1. arg of align_stack */
-    call   _align_stack                 /* call align_stack, EAX contains address at 16 byte boundary after return */
-                                        /* ==pointer to fcontext_t and address of context stack */
 
-    movl   0x8(%ebp),      %edx         /* load 1. arg of make_fcontext, pointer to context stack (base) */
+    /* shift address in EAX to lower 16 byte boundary */
+    /* == pointer to fcontext_t and address of context stack */
+    andl   $-0xf,           %eax
+
+    movl   0x4(%esp),      %edx         /* load 1. arg of make_fcontext, pointer to context stack (base) */
     movl   %edx,           0x18(%eax)   /* save address of stack pointer (base) in fcontext_t */
-    movl   0xc(%ebp),      %edx         /* load 2. arg of make_fcontext, context stack size */
+    movl   0x8(%esp),      %edx         /* load 2. arg of make_fcontext, context stack size */
     movl   %edx,           0x1c(%eax)   /* save stack size in fcontext_t */
-    movl   0x10(%ebp),     %edx         /* load 3. arg of make_fcontext, pointer to context function */
+    movl   0xc(%esp),      %edx         /* load 3. arg of make_fcontext, pointer to context function */
     movl   %edx,           0x14(%eax)   /* save address of context fcuntion in fcontext_t */
 
     stmxcsr  0x20(%eax)                 /* save MMX control and status word */
@@ -60,12 +57,9 @@ _make_fcontext:
 
     call   1f
 1:  popl   %ecx                         /* address of label 1 */
-    addl   $finish-1b,     %ecx         /* compute abs address of label finish */
+    addl   $finish-2b,     %ecx         /* compute abs address of label finish */
     movl   %ecx, (%edx)                 /* save address of finish as return address for context function */
                                         /* entered after context function returns */
-
-    addl   $0x8,           %esp         /* deallocate stack space */
-    popl   %ebp
 
     ret
 

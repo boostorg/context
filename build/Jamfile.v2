@@ -281,7 +281,8 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : asm/make_i386_ms_pe_masm.asm
+   : seh.cpp
+     asm/make_i386_ms_pe_masm.asm
      asm/jump_i386_ms_pe_masm.asm
    : <abi>ms
      <address-model>32
@@ -292,7 +293,8 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : asm/make_i386_ms_pe_masm.asm
+   : seh.cpp
+     asm/make_i386_ms_pe_masm.asm
      asm/jump_i386_ms_pe_masm.asm
    : <abi>ms
      <address-model>32
@@ -303,7 +305,8 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : [ make asm/make_i386_ms_pe_masm.o : asm/make_i386_ms_pe_masm.asm : @masm ]
+   : seh.cpp
+     [ make asm/make_i386_ms_pe_masm.o : asm/make_i386_ms_pe_masm.asm : @masm ]
      [ make asm/jump_i386_ms_pe_masm.o : asm/jump_i386_ms_pe_masm.asm : @masm ]
    : <abi>ms
      <address-model>32
@@ -385,7 +388,8 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : asm/make_x86_64_ms_pe_masm.asm
+   : seh.cpp
+     asm/make_x86_64_ms_pe_masm.asm
      asm/jump_x86_64_ms_pe_masm.asm
    : <abi>ms
      <address-model>64
@@ -396,7 +400,8 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : asm/make_x86_64_ms_pe_masm.asm
+   : seh.cpp
+     asm/make_x86_64_ms_pe_masm.asm
      asm/jump_x86_64_ms_pe_masm.asm
    : <abi>ms
      <address-model>64
@@ -407,7 +412,8 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : [ make asm/make_x86_64_ms_pe_masm.o : asm/make_x86_64_ms_pe_masm.asm : @masm64 ]
+   : seh.cpp
+     [ make asm/make_x86_64_ms_pe_masm.o : asm/make_x86_64_ms_pe_masm.asm : @masm64 ]
      [ make asm/jump_x86_64_ms_pe_masm.o : asm/jump_x86_64_ms_pe_masm.asm : @masm64 ]
    : <abi>ms
      <address-model>64
@@ -418,32 +424,17 @@ alias asm_context_sources
 
 explicit asm_context_sources ;
 
-
 alias select_asm_context_sources
   : asm_context_sources
   : [ architecture.architecture ]
     [ architecture.address-model ]
   ;
 
-
-alias context_sources
-   : fcontext.cpp
-     seh.cpp
-   : <target-os>windows
-   ;
-
-alias context_sources
-   : fcontext.cpp
-   ;
-
 explicit context_sources ;
-
 
 lib boost_context
    : select_asm_context_sources
-     context_sources
    : <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
    ;
-
 
 boost-install boost_context ;

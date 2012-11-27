@@ -40,70 +40,59 @@
 ;  |      fbr_strg     |                                                            |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |    28   |   29    |    30   |    31   |                                        |
+;  |    28   |   29    |    30   |    31   |    32    |    33   |   34    |   35    |
 ;  ----------------------------------------------------------------------------------
-;  |   0x70  |   0x74  |   0x78  |   0x7c  |                                        |
+;  |   0x70  |   0x74  |   0x78  |   0x7c  |   0x80   |   0x84  |  0x88   |  0x8c   |
 ;  ----------------------------------------------------------------------------------
-;  | fc_mxcsr|fc_x87_cw|      fc_xmm       |                                        |
-;  ----------------------------------------------------------------------------------
-;  ----------------------------------------------------------------------------------
-;  |    32    |   33   |   34    |   35    |   36     |   37    |    38   |    39   |
-;  ----------------------------------------------------------------------------------
-;  |   0x80   |  0x84  |  0x88   |  0x8c   |   0x90   |   0x94  |   0x98  |   0x9c  |
-;  ----------------------------------------------------------------------------------
-;  |                  XMM6                 |                   XMM7                 |
+;  | fc_mxcsr|fc_x87_cw|      fc_xmm       |      SEE registers (XMM6-XMM15)        |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |    40    |   41   |   42    |   43    |    44    |   45    |    46   |    47   |
+;  |   36    |    37   |    38   |    39   |    40    |    41   |   42    |   43    |
 ;  ----------------------------------------------------------------------------------
-;  |   0x100  |  0x104  |  0x108  |  0x10c |   0x110  |  0x114  |  0x118  |  0x11c  |
+;  |  0x90   |   0x94  |   0x98  |   0x9c  |   0x100  |  0x104  |  0x108  |  0x10c  |
 ;  ----------------------------------------------------------------------------------
-;  |                  XMM8                 |                   XMM9                 |
-;  ----------------------------------------------------------------------------------
-;  ----------------------------------------------------------------------------------
-;  |    48    |   49   |   50    |   51    |    52    |   53    |    54   |    55   |
-;  ----------------------------------------------------------------------------------
-;  |   0x120  |  0x124 |  0x128  |  0x12c  |   0x130  |  0x134  |   0x138 |   0x13c |
-;  ----------------------------------------------------------------------------------
-;  |                 XMM10                 |                  XMM11                 |
+;  |                          SEE registers (XMM6-XMM15)                            |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |    56    |   57   |   58    |   59    |    60   |    61   |    62    |    63   |
+;  |    44    |   45    |    46   |    47  |    48    |    49   |   50    |   51    |
 ;  ----------------------------------------------------------------------------------
-;  |  0x140  |  0x144  |  0x148  |  0x14c  |   0x150  |  0x154 |   0x158  |   0x15c |
+;  |   0x110  |  0x114  |  0x118  |  0x11c |   0x120  |   0x124 |  0x128  |  0x12c  |
 ;  ----------------------------------------------------------------------------------
-;  |                 XMM12                 |                  XMM13                 |
+;  |                          SEE registers (XMM6-XMM15)                            |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |    64    |   65   |   66    |   67    |    68    |   69    |    70   |    71   |
+;  |    52    |   53    |    54   |    55  |    56    |    57   |   58    |   59    |
 ;  ----------------------------------------------------------------------------------
-;  |  0x160  |  0x164  |  0x168  |  0x16c  |   0x170  |  0x174  |  0x178  |   0x17c |
+;  |   0x130  |  0x134  |   0x138 |   0x13c|   0x140  |  0x144  |  0x148  |  0x14c  |
 ;  ----------------------------------------------------------------------------------
-;  |                 XMM14                 |                  XMM15                 |
+;  |                          SEE registers (XMM6-XMM15)                            |
+;  ----------------------------------------------------------------------------------
+;  ----------------------------------------------------------------------------------
+;  |    60   |    61   |    62    |    63  |    64    |    65   |   66    |   67    |
+;  ----------------------------------------------------------------------------------
+;  |  0x150  |  0x154  |   0x158  |  0x15c |   0x160  |  0x164  |  0x168  |  0x16c  |
+;  ----------------------------------------------------------------------------------
+;  |                          SEE registers (XMM6-XMM15)                            |
+;  ----------------------------------------------------------------------------------
+;  ----------------------------------------------------------------------------------
+;  |    68   |    69   |    70    |    71  |    72    |    73   |   74    |   75    |
+;  ----------------------------------------------------------------------------------
+;  |  0x170  |  0x174  |   0x178  |  0x17c |   0x180  |  0x184  |  0x188  |  0x18c  |
+;  ----------------------------------------------------------------------------------
+;  |                          SEE registers (XMM6-XMM15)                            |
 ;  ----------------------------------------------------------------------------------
 
 EXTERN  _exit:PROC            ; standard C library function
-EXTERN  align_stack:PROC      ; stack alignment
-EXTERN  seh_fcontext:PROC     ; exception handler
 .code
 
 make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and unwind information in
     .endprolog                   ; .xdata for a function's structured exception handling unwind behavior
 
-    push rbp                     ; save previous frame pointer; get the stack 16 byte aligned
-    mov  rbp,        rsp         ; set RBP to RSP
-    sub  rsp,        040h        ; allocate stack space (contains shadow space for subroutines)
+    lea  rax,        [rcx-0130h] ; reserve space for fcontext_t at top of context stack
 
-    mov  [rbp-08h],  r8          ; save 3. arg of make_fcontext, pointer to context function
-    mov  [rbp-010h], rdx         ; save 2. arg of make_fcontext, context stack size
-    mov  [rbp-018h], rcx         ; save 1. arg of make_fcontext, pointer to context stack (base)
-    lea  rcx,        [rcx-0180h] ; reserve space for fcontext_t at top of context stack
-    call align_stack             ; align context stack, RAX contains address at 16 byte boundary
-                                 ; == pointer to fcontext_t and address of context stack
-
-    mov  r8,         [rbp-08h]   ; restore pointer to context function
-    mov  rdx,        [rbp-010h]  ; restore context stack size
-    mov  rcx,        [rbp-018h]  ; restore pointer to context stack (base)
+    ; shift address in RAX to lower 16 byte boundary
+    ; == pointer to fcontext_t and address of context stack
+    and  rax,        -0fh
 
     mov  [rax+048h], r8          ; save address of context function in fcontext_t
     mov  [rax+058h], rdx         ; save context stack size in fcontext_t
@@ -116,23 +105,12 @@ make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and u
     stmxcsr [rax+070h]           ; save MMX control and status word
     fnstcw  [rax+074h]           ; save x87 control word
 
-
-	mov  r8,         rax         ; preserve pointer to fcontext_t
-	lea  rcx,        [rax+090h]  ; beginning of XMM block
-	call align_stack             ; align XMM pointer on 16byte boundary
-	mov  [r8 + 078h], rax        ; store address of XMM block in fc_xmm
-	mov  rax,        r8          ; restore pointer to fcontext_t in RAX
-
-
     lea  rdx,        [rax-028h]  ; reserve 32byte shadow space + return address on stack, (RSP - 0x8) % 16 == 0
     mov  [rax+040h], rdx         ; save address in RDX as stack pointer for context function
 
     lea  rcx,        finish      ; compute abs address of label finish
     mov  [rdx],      rcx         ; save address of finish as return address for context function
                                  ; entered after context function returns
-
-    add  rsp,        040h        ; deallocate shadow space
-    pop  rbp                     ; restore previous frame pointer
 
     ret
 

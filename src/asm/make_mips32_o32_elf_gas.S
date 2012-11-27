@@ -49,22 +49,16 @@ make_fcontext:
 .cpload $t9
 .set    reorder
 #endif
-    addiu   $sp, $sp, -48       # allocate stack space (contains shadow space for subroutines)
-    sw      $ra, 44($sp)        # save return address
-    sw      $fp, 40($sp)        # save frame pointer
+    move    $v0, $a0
+    addiu   $v0, $v0, -104      # reserve space for fcontext_t at top of context stack
 
-    sw      $a2, 48($sp)        # save 3. arg of make_fcontnext, pointer to context function
-    sw      $a1, 52($sp)        # save 2. arg of make_fcontext, context stack size
-    sw      $a0, 56($sp)        # save 1. arg of make_fcontext, pointer to context stack (base)
-    addiu   $a0, $a0, -104      # reserve space for fcontext_t at top of context stack
-    lw      $t9, %call16(align_stack)($gp) # compute adddress of align_stack via global pointer
-    jalr    $t9                 # call align_stack, V0 contains address at 16 byte boundary after return
-                                # == pointer to fcontext_t and address of context stack
-    lw      $a0, 56($sp)        # restore pointer to context stack (base)
-    lw      $a1, 52($sp)        # restore context stack size
-    lw      $a2, 48($sp)        # restore pointer to context function
+    # shift address in V0 to lower 16 byte boundary
+    # == pointer to fcontext_t and address of context stack
+    move    $v1, $v0
+    li      $v0, -16            # 0xfffffffffffffff0
+    and     $v0, $v1, $v0
 
-    sw      $a0, 48($v0)        # save address of context stack (base) in fcontext_t 
+    sw      $a0, 48($v0)        # save address of context stack (base) in fcontext_t
     sw      $a1, 52($v0)        # save context stack size in fcontext_t 
     sw      $a2, 44($v0)        # save address of context function in fcontext_t 
     sw      $gp, ($v0)          # save global pointer in fcontext_t, S0 will contain address of global pointer
@@ -75,10 +69,6 @@ make_fcontext:
     la      $t9, finish         # compute abs address of label finish
     sw      $t9, 40($v0)        # save address of finish as return address for context function
                                 # entered after context function returns
-
-    lw      $fp, 40($sp)        # restore frame pointer
-    lw      $ra, 44($sp)        # restore return address
-    addiu   $sp, $sp, 48        # deallocate stack space
 
     jr      $ra
 
