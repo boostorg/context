@@ -43,23 +43,15 @@
 .type make_fcontext,@function
 .align 16
 make_fcontext:
-    pushq   %rbp                       /* save previous frame pointer; get the stack 16 byte aligned */
-    movq    %rsp,           %rbp       /* set RBP to RSP */
-    subq    $0x20,          %rsp       /* allocate stack space */
+    leaq   -0x58(%rdi),    %rax        /* reserve space for fcontext_t at top of context stack */
 
-    movq   %rdx,            0x10(%rsp) /* save 3. arg of make_fcontext, pointer to context function */
-    movq   %rsi,            0x8(%rsp)  /* save 2. arg of make_fcontext, context stack size */
-    movq   %rdi,            (%rsp)     /* save 1. arg of make_fcontext, pointer to context stack (base) */
-    leaq   -0x58(%rdi),     %rdi       /* reserve space for fcontext_t at top of context stack */
-    call   align_stack@PLT             /* align context stack, RAX contains address at 16 byte boundary afte return */
-                                       /* == pointer to fcontext_t and address of context stack */
-    movq   (%rsp),          %rdi       /* restore pointer to context stack (base) */
-    movq   0x8(%rsp),       %rsi       /* restore context stack size */
-    movq   0x10(%rsp),      %rdx       /* restore pointer to context function */
+    /* shift address in RAX to lower 16 byte boundary */
+    /* == pointer to fcontext_t and address of context stack */
+    andq   $-0xf,          %rax
 
-    movq   %rdi,            0x40(%rax) /* save address of context stack pointer (base) in fcontext_t */
-    movq   %rsi,            0x48(%rax) /* save context stack size in fcontext_t */
-    movq   %rdx,            0x38(%rax) /* save address of context function in fcontext_t */
+    movq   %rdi,           0x40(%rax) /* save address of context stack pointer (base) in fcontext_t */
+    movq   %rsi,           0x48(%rax) /* save context stack size in fcontext_t */
+    movq   %rdx,           0x38(%rax) /* save address of context function in fcontext_t */
 
     stmxcsr  0x50(%rax)                /* save MMX control and status word */
     fnstcw   0x54(%rax)                /* save x87 control word */
@@ -70,9 +62,6 @@ make_fcontext:
     leaq   finish(%rip),    %rcx       /* compute abs address of label finish */
     movq   %rcx,            (%rdx)     /* save address of finish as return address for context function */
                                        /* entered after context function returns */
-
-    addq   $0x20,           %rsp       /* deallocate shadow space */      
-    popq   %rbp                        /* restore previous frame pointer */
 
     ret                                /* return pointer to fcontext_t placed on context stack */
 

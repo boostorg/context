@@ -191,7 +191,7 @@ jump_fcontext:
     ld      %r0,   168(%r4)     # load LR
     mtlr    %r0                 # restore LR
 
-    mr.     %r3,   %r5          # use third arg as return value after jump
+    mr      %r3,   %r5          # use third arg as return value after jump
                                 # and as first arg in context function
 
     ld      %r0,   176(%r4)     # load PC

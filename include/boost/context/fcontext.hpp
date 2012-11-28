@@ -61,11 +61,6 @@
 
 namespace boost {
 namespace context {
-namespace detail {
-
-extern "C" BOOST_CONTEXT_DECL void * BOOST_CONTEXT_CALLDECL align_stack( void * vp);
-
-}
 
 extern "C" BOOST_CONTEXT_DECL
 intptr_t BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t * ofc, fcontext_t const* nfc, intptr_t vp, bool preserve_fpu = true);
