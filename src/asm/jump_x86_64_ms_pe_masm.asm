@@ -116,7 +116,7 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     lea     r10,          [rcx+090h]
     ; shift address in R10 to lower 16 byte boundary
     ; == pointer to SEE register block
-    and     r10,         -0fh
+    and     r10,         -16
 
     movaps  [r10],       xmm6
     movaps  [r10+010h],  xmm7
@@ -136,7 +136,7 @@ jump_fcontext PROC EXPORT FRAME:seh_fcontext
     lea     r10,          [rdx+090h]
     ; shift address in R10 to lower 16 byte boundary
     ; == pointer to SEE register block
-    and     r10,         -0fh
+    and     r10,         -16
 
     movaps  xmm6,        [r10]
     movaps  xmm7,        [r10+010h]

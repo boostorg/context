@@ -41,7 +41,7 @@ make_fcontext:
 
     /* shift address in EAX to lower 16 byte boundary */
     /* == pointer to fcontext_t and address of context stack */
-    andl   $-0xf,          %eax
+    andl   $-16,           %eax
 
     movl   0x4(%esp),      %edx         /* load 1. arg of make_fcontext, pointer to context stack (base) */
     movl   %edx,           0x18(%eax)   /* save address of context stack (base) in fcontext_t */
@@ -56,9 +56,9 @@ make_fcontext:
     leal   -0x8(%eax),     %edx         /* reserve space for the last frame on context stack; (ESP - 0x4) % 16 == 0 */
     movl   %edx,           0x10(%eax)   /* save address in EDX as stack pointer for context function */
 
-    call   2f
-2:  popl   %ecx                        /* address of label 2 */
-    addl   $finish-2b, %ecx            /* compute abs address of label finish */
+    call   1f
+1:  popl   %ecx                        /* address of label 2 */
+    addl   $finish-1b, %ecx            /* compute abs address of label finish */
     movl   %ecx, (%edx)                /* save address of finish as return address for context functions */
                                        /* entered after context function returns */
 
@@ -66,9 +66,9 @@ make_fcontext:
 
 finish:
     /* ESP points to same address as ESP on entry of context function + 0x4 */
-    call    3f
-3:  popl    %ebx                                    /* address of label 3 */
-    addl    $_GLOBAL_OFFSET_TABLE_+[.-3b], %ebx     /* compute address of GOT and store it in EBX */
+    call    2f
+2:  popl    %ebx                                    /* address of label 3 */
+    addl    $_GLOBAL_OFFSET_TABLE_+[.-2b], %ebx     /* compute address of GOT and store it in EBX */
 
     xorl    %eax,  %eax
     movl    %eax,  (%esp)               /* exit code is zero */

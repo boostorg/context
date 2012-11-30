@@ -92,7 +92,7 @@ make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and u
 
     ; shift address in RAX to lower 16 byte boundary
     ; == pointer to fcontext_t and address of context stack
-    and  rax,        -0fh
+    and  rax,        -16
 
     mov  [rax+048h], r8          ; save address of context function in fcontext_t
     mov  [rax+058h], rdx         ; save context stack size in fcontext_t
