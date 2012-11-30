@@ -40,7 +40,7 @@ _make_fcontext:
 
     /* shift address in EAX to lower 16 byte boundary */
     /* == pointer to fcontext_t and address of context stack */
-    andl   $-0xf,           %eax
+    andl   $-16,           %eax
 
     movl   0x4(%esp),      %edx         /* load 1. arg of make_fcontext, pointer to context stack (base) */
     movl   %edx,           0x18(%eax)   /* save address of stack pointer (base) in fcontext_t */
@@ -57,7 +57,7 @@ _make_fcontext:
 
     call   1f
 1:  popl   %ecx                         /* address of label 1 */
-    addl   $finish-2b,     %ecx         /* compute abs address of label finish */
+    addl   $finish-1b,     %ecx         /* compute abs address of label finish */
     movl   %ecx, (%edx)                 /* save address of finish as return address for context function */
                                         /* entered after context function returns */
 

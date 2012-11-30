@@ -53,7 +53,7 @@ make_fcontext PROC EXPORT
 
     ; shift address in EAX to lower 16 byte boundary
     ; == pointer to fcontext_t and address of context stack
-    and    eax,       -0fh
+    and    eax,       -16
 
     mov  ecx,         [esp+04h]     ; load 1. arg of make_fcontext, pointer to context stack (base)
     mov  [eax+018h],  ecx           ; save address of context stack (base) in fcontext_t
