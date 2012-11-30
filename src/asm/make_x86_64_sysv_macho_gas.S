@@ -46,7 +46,7 @@ _make_fcontext:
 
     /* shift address in RAX to lower 16 byte boundary */
     /* == pointer to fcontext_t and address of context stack */
-    moveabs $-16,           %r8
+    movabs  $-16,           %r8
     andq    %r8,            %rax
 
     movq   %rdi,            0x40(%rax) /* save address of stack pointer (base) in fcontext_t */
