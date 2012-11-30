@@ -42,11 +42,12 @@
 .globl _make_fcontext
 .align 8
 _make_fcontext:
-    leaq   -0x58(%rdi),     %r8        /* reserve space for fcontext_t at top of context stack */
+    leaq   -0x58(%rdi),     %rax        /* reserve space for fcontext_t at top of context stack */
 
     /* shift address in RAX to lower 16 byte boundary */
     /* == pointer to fcontext_t and address of context stack */
-    andq   $-16,            %rax
+    moveabs $-16,           %r8
+    andq    %r8,            %rax
 
     movq   %rdi,            0x40(%rax) /* save address of stack pointer (base) in fcontext_t */
     movq   %rsi,            0x48(%rax) /* save stack size in fcontext_t */
@@ -68,4 +69,4 @@ finish:
     /* RSP points to same address as RSP on entry of context function + 0x8 */
     xorq    %rdi,           %rdi       /* exit code is zero */
     call   __exit                      /* exit application */
-    hlt
+    
