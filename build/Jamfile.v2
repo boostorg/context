@@ -422,6 +422,10 @@ alias asm_context_sources
      <target-os>windows
    ;
 
+alias asm_context_sources
+   : unsupported.cpp
+   ;
+
 explicit asm_context_sources ;
 
 alias select_asm_context_sources
