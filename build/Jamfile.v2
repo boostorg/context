@@ -430,8 +430,6 @@ alias select_asm_context_sources
     [ architecture.address-model ]
   ;
 
-explicit context_sources ;
-
 lib boost_context
    : select_asm_context_sources
    : <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
