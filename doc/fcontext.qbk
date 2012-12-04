@@ -168,14 +168,16 @@ other context.
 
 [heading Exceptions in __context_fn__]
 
-If the __context_fn__ emits an exception, the application will terminate.
+If the __context_fn__ emits an exception, the behaviour is undefined.
+
+[important __context_fn__ should wrap the code in a try/catch block.]
 
 
 [heading Preserving floating point registers]
 
 Preserving the floating point registers increases the cycle count for a context
 switch (see performance tests).
-The foruth argument of __jump_fcontext__ controls if fpu registers should be 
+The fourth argument of __jump_fcontext__ controls if fpu registers should be 
 preserved by the context jump.
 
 [important The use of the fpu controlling argument of __jump_fcontext__ must
