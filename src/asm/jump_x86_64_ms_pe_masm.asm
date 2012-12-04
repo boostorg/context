@@ -83,10 +83,9 @@
 ;  ----------------------------------------------------------------------------------
 
 EXTERN  _exit:PROC            ; standard C library function
-EXTERN  seh_fcontext:PROC     ; exception handler
 .code
 
-jump_fcontext PROC EXPORT FRAME:seh_fcontext
+jump_fcontext PROC EXPORT FRAME
     .endprolog
 
     mov     [rcx],       r12        ; save R12

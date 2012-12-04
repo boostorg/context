@@ -281,8 +281,7 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : seh.cpp
-     asm/make_i386_ms_pe_masm.asm
+   : asm/make_i386_ms_pe_masm.asm
      asm/jump_i386_ms_pe_masm.asm
    : <abi>ms
      <address-model>32
@@ -293,8 +292,7 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : seh.cpp
-     asm/make_i386_ms_pe_masm.asm
+   : asm/make_i386_ms_pe_masm.asm
      asm/jump_i386_ms_pe_masm.asm
    : <abi>ms
      <address-model>32
@@ -305,8 +303,7 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : seh.cpp
-     [ make asm/make_i386_ms_pe_masm.o : asm/make_i386_ms_pe_masm.asm : @masm ]
+   : [ make asm/make_i386_ms_pe_masm.o : asm/make_i386_ms_pe_masm.asm : @masm ]
      [ make asm/jump_i386_ms_pe_masm.o : asm/jump_i386_ms_pe_masm.asm : @masm ]
    : <abi>ms
      <address-model>32
@@ -388,8 +385,7 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : seh.cpp
-     asm/make_x86_64_ms_pe_masm.asm
+   : asm/make_x86_64_ms_pe_masm.asm
      asm/jump_x86_64_ms_pe_masm.asm
    : <abi>ms
      <address-model>64
@@ -400,8 +396,7 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : seh.cpp
-     asm/make_x86_64_ms_pe_masm.asm
+   : asm/make_x86_64_ms_pe_masm.asm
      asm/jump_x86_64_ms_pe_masm.asm
    : <abi>ms
      <address-model>64
@@ -412,8 +407,7 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : seh.cpp
-     [ make asm/make_x86_64_ms_pe_masm.o : asm/make_x86_64_ms_pe_masm.asm : @masm64 ]
+   : [ make asm/make_x86_64_ms_pe_masm.o : asm/make_x86_64_ms_pe_masm.asm : @masm64 ]
      [ make asm/jump_x86_64_ms_pe_masm.o : asm/jump_x86_64_ms_pe_masm.asm : @masm64 ]
    : <abi>ms
      <address-model>64

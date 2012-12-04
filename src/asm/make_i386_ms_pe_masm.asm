@@ -44,7 +44,6 @@
 .XMM
 .model flat, c
 _exit PROTO, value:SDWORD
-seh_fcontext PROTO, except:DWORD, frame:DWORD, context:DWORD, dispatch:DWORD
 .code
 
 make_fcontext PROC EXPORT
@@ -53,7 +52,7 @@ make_fcontext PROC EXPORT
 
     ; shift address in EAX to lower 16 byte boundary
     ; == pointer to fcontext_t and address of context stack
-    and    eax,       -16
+    and  eax,         -16
 
     mov  ecx,         [esp+04h]     ; load 1. arg of make_fcontext, pointer to context stack (base)
     mov  [eax+018h],  ecx           ; save address of context stack (base) in fcontext_t
@@ -71,16 +70,35 @@ make_fcontext PROC EXPORT
     lea  edx,         [eax-01ch]    ; reserve space for last frame and seh on context stack, (ESP - 0x4) % 16 == 0
     mov  [eax+010h],  edx           ; save address in EDX as stack pointer for context function
 
-    mov  ecx,         seh_fcontext  ; set ECX to exception-handler
-    mov  [edx+018h],  ecx           ; save ECX as SEH handler
+    mov  ecx,         finish        ; abs address of finish
+    mov  [edx],       ecx           ; save address of finish as return address for context function
+                                    ; entered after context function returns
+
+    ; traverse current seh chain to get the last exception handler installed by Windows
+    ; note that on Windows Server 2008 and 2008 R2, SEHOP is activated by default
+    ; the exception handler chain is tested for the presence of ntdll.dll!FinalExceptionHandler
+    ; at its end by RaiseException all seh andlers are disregarded if not present and the
+    ; program is aborted
+    assume  fs:nothing
+    mov     ecx,      fs:[018h]     ; load NT_TIB into ECX
+    assume  fs:error
+
+walk:
+    mov  edx,         [ecx]         ; load 'next' member of current SEH into EDX
+    inc  edx                        ; test if 'next' of current SEH is last (== 0xffffffff)
+    jz   found
+    dec  edx
+    xchg edx,         ecx           ; exchange content; ECX contains address of next SEH
+    jmp  walk                       ; inspect next SEH
+
+found:
+    mov  ecx,         [ecx+04h]     ; load 'handler' member of SEH == address of last SEH handler installed by Windows
+    mov  edx,         [eax+010h]    ; load address of stack pointer for context function
+    mov  [edx+018h],  ecx           ; save address in ECX as SEH handler for context
     mov  ecx,         0ffffffffh    ; set ECX to -1
     mov  [edx+014h],  ecx           ; save ECX as next SEH item
     lea  ecx,         [edx+014h]    ; load address of next SEH item
     mov  [eax+024h],  ecx           ; save next SEH
-
-    mov  ecx,         finish        ; abs address of finish
-    mov  [edx],       ecx           ; save address of finish as return address for context function
-                                    ; entered after context function returns
 
     ret
 
