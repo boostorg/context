@@ -46,10 +46,9 @@
  * *****************************************************************/
 
 .text
-.globl jump_fcontext
+.globl _jump_fcontext
 .align 2
-.type jump_fcontext,%function
-jump_fcontext:
+_jump_fcontext:
     stmia   a1, {v1-v8,sp-lr}       @ save V1-V8,SP-LR
     str     lr, [a1,#40]            @ save LR as PC
 
@@ -70,4 +69,3 @@ jump_fcontext:
     mov     a1, a3                  @ use third arg as return value after jump
                                     @ and as first arg in context function
     ldmia   a2, {v1-v8,sp-pc}       @ restore v1-V8,SP-PC
-.size jump_fcontext,.-jump_fcontext
