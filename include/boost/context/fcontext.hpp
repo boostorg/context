@@ -44,7 +44,7 @@
 # endif
 // arm
 #elif defined(__arm__) || defined(__thumb__) || defined(__TARGET_ARCH_ARM) \
-    || defined(__TARGET_ARCH_THUMB) || defined(_ARM)
+    || defined(__TARGET_ARCH_THUMB) || defined(_ARM) || defined(_M_ARM)
 # include <boost/context/detail/fcontext_arm.hpp>
 // mips
 #elif (defined(__mips) && __mips == 1) || defined(_MIPS_ISA_MIPS1) \

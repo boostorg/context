@@ -68,6 +68,11 @@ actions gas
     as -o "$(<)" "$(>)"
 }
 
+actions armasm
+{
+    armasm "$(<)" "$(>)"
+}
+
 actions masm
 {
     ml /c /Fo"$(<)" "$(>)"
@@ -117,6 +122,13 @@ alias asm_context_sources
    : <architecture>arm
      <binary-format>mach-o
      <toolset>darwin
+   ;
+
+alias asm_context_sources
+   : [ make asm/make_arm_aapcs_pe_armasm.o : asm/make_arm_aapcs_pe_armasm.S : @armasm ]
+     [ make asm/jump_arm_aapcs_pe_armasm.o : asm/jump_arm_aapcs_pe_armasm.S : @armasm ]
+   : <architecture>arm
+     <binary-format>pe
    ;
 
 alias asm_context_sources
