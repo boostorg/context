@@ -51,7 +51,7 @@
 .type make_fcontext,%function
 make_fcontext:
     mov     a4, a1          @ save address of context stack (base) A4
-    sub     a1, #116        @ reserve space for fcontext_t at top of context stack
+    sub     a1, a1, #116    @ reserve space for fcontext_t at top of context stack
 
     @ shift address in A1 to lower 16 byte boundary
     @ == pointer to fcontext_t and address of context stack

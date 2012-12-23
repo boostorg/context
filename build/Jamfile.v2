@@ -125,8 +125,8 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
-   : [ make asm/make_arm_aapcs_pe_armasm.o : asm/make_arm_aapcs_pe_armasm.S : @armasm ]
-     [ make asm/jump_arm_aapcs_pe_armasm.o : asm/jump_arm_aapcs_pe_armasm.S : @armasm ]
+   : [ make asm/make_arm_aapcs_pe_armasm.o : asm/make_arm_aapcs_pe_armasm.asm : @armasm ]
+     [ make asm/jump_arm_aapcs_pe_armasm.o : asm/jump_arm_aapcs_pe_armasm.asm : @armasm ]
    : <architecture>arm
      <binary-format>pe
    ;

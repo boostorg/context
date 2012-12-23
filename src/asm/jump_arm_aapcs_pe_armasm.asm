@@ -45,36 +45,17 @@
 ; *                                                                 *
 ; * *****************************************************************/
 
-
     AREA |.text|, CODE
-    ALGIN 4
-    EXPORT make_fcontext
-    IMPORT _exit
+    ALIGN 4
+    EXPORT jump_fcontext
 
-make_fcontext PROC
-    mov     a4, a1          ; save address of context stack (base) A4
-    sub     a1, #116        ; reserve space for fcontext_t at top of context stack
+jump_fcontext PROC
+    stmia   a1, {r4-r11,sp-lr}      ; save V1-V8,SP-LR
+    str     lr, [a1,#40]            ; save LR as PC
 
-    ; shift address in A1 to lower 16 byte boundary
-    ; == pointer to fcontext_t and address of context stack
-    bic     a1, a1, #15
-
-    str     a4, [a1,#44]    ; save address of context stack (base) in fcontext_t
-    str     a2, [a1,#48]    ; save context stack size in fcontext_t
-    str     a3, [a1,#40]    ; save address of context function in fcontext_t
-
-    str     a1, [a1,#32]    ; save address in A4 as stack pointer for context function
-
-    adr     a2, finish      ; compute abs address of label finish
-    str     a2, [a1,#36]    ; save address of finish as return address for context function
-                            ; entered after context function returns
-
-    bx      lr
-
-finish
-    ; SP points to same addras SP on entry of context function
-    mov     a1, #0          ; exit code is zero
-    bl      _exit           ; exit application
+    mov     a1, a3                  ; use third arg as return value after jump
+                                    ; and as first arg in context function
+    ldmia   a2, {r4-r11,sp-pc}      ; restore v1-V8,SP-PC
 
     ENDP
     END
