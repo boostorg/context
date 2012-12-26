@@ -7,7 +7,7 @@
 #ifndef BOOST_CONTEXT_FCONTEXT_H
 #define BOOST_CONTEXT_FCONTEXT_H
 
-#if defined(__PGI)
+#if defined(__PGI) || defined(_WIN32_WCE)
 #include <stdint.h>
 #endif
 
