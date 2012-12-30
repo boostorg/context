@@ -7,8 +7,12 @@
 #ifndef BOOST_CONTEXT_FCONTEXT_H
 #define BOOST_CONTEXT_FCONTEXT_H
 
-#if defined(__PGI) || defined(_WIN32_WCE)
+#if defined(__PGI)
 #include <stdint.h>
+#endif
+
+#if defined(_WIN32_WCE)
+typedef int intptr_t;
 #endif
 
 #include <boost/config.hpp>
