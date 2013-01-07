@@ -378,6 +378,7 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_x86_64_ms_pe_masm.asm
      asm/jump_x86_64_ms_pe_masm.asm
+     dummy.cpp
    : <address-model>64
      <architecture>x86
      <binary-format>pe
@@ -388,6 +389,7 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_x86_64_ms_pe_masm.asm
      asm/jump_x86_64_ms_pe_masm.asm
+     dummy.cpp
    : <address-model>64
      <architecture>x86
      <binary-format>pe
@@ -398,6 +400,7 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_x86_64_ms_pe_masm.o : asm/make_x86_64_ms_pe_masm.asm : @masm64 ]
      [ make asm/jump_x86_64_ms_pe_masm.o : asm/jump_x86_64_ms_pe_masm.asm : @masm64 ]
+     dummy.cpp
    : <address-model>64
      <architecture>x86
      <binary-format>pe
