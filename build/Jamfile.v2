@@ -70,7 +70,7 @@ actions gas
 
 actions armasm
 {
-    armasm "$(<)" "$(>)"
+    armasm "$(>)" "$(<)"
 }
 
 actions masm
