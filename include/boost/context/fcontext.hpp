@@ -59,6 +59,9 @@ typedef int intptr_t;
     || defined(__ppc__) || defined(_ARCH_PPC) || defined(__POWERPC__) \
     || defined(__PPCGECKO__) || defined(__PPCBROADWAY) || defined(_XENON)
 # include <boost/context/detail/fcontext_ppc.hpp>
+#elif defined(__sparc__) || defined(__sparc)
+// sparc or sparc64
+# include <boost/context/detail/fcontext_sparc.hpp>
 #else
 # error "platform not supported"
 #endif
