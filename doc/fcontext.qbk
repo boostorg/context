@@ -177,7 +177,7 @@ If the __context_fn__ emits an exception, the behaviour is undefined.
 
 Preserving the floating point registers increases the cycle count for a context
 switch (see performance tests).
-The fourth argument of __jump_fcontext__ controls if fpu registers should be 
+The fourth argument of __jump_fcontext__ controls if fpu registers should be
 preserved by the context jump.
 
 [important The use of the fpu controlling argument of __jump_fcontext__ must

@@ -51,21 +51,25 @@ rule deduce-architecture ( properties * )
     }
     else
     {
-        if [ configure.builds /boost/architecture//x86 : $(properties) : x86 ]
-        {
-            return <architecture>x86 ;
-        }
-        else if [ configure.builds /boost/architecture//power : $(properties) : power ]
-        {
-            return <architecture>power ;
-        }
-        else if [ configure.builds /boost/architecture//arm : $(properties) : arm ]
+        if [ configure.builds /boost/architecture//arm : $(properties) : arm ]
         {
             return <architecture>arm ;
         }
         else if [ configure.builds /boost/architecture//mips1 : $(properties) : mips1 ]
         {
             return <architecture>mips1 ;
+        }
+        else if [ configure.builds /boost/architecture//power : $(properties) : power ]
+        {
+            return <architecture>power ;
+        }
+        else if [ configure.builds /boost/architecture//sparc : $(properties) : sparc ]
+        {
+            return <architecture>sparc ;
+        }
+        else if [ configure.builds /boost/architecture//x86 : $(properties) : x86 ]
+        {
+            return <architecture>x86 ;
         }
     }
 }
