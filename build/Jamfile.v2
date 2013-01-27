@@ -17,7 +17,8 @@ import architecture ;
 project boost/context
     : source-location ../src
     : requirements
-      <os>SOLARIS:<define>_XOPEN_SOURCE=600
+      <os>SOLARIS:<define>_XOPEN_SOURCE=1
+      <os>SOLARIS:<define>_XOPEN_SOURCE_EXTENDED=1
     : usage-requirements
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
     ;
@@ -69,7 +70,7 @@ actions gas
 
 actions armasm
 {
-    armasm "$(>)" "$(<)"
+    armasm "$(<)" "$(>)"
 }
 
 actions masm
@@ -137,7 +138,7 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-# MIPS
+# MIPS 32bit
 alias asm_context_sources
    : asm/make_mips32_o32_elf_gas.S
      asm/jump_mips32_o32_elf_gas.S
@@ -161,7 +162,7 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-# POWERPC
+# POWERPC 32bit
 alias asm_context_sources
    : asm/make_ppc32_sysv_elf_gas.S
      asm/jump_ppc32_sysv_elf_gas.S
@@ -188,7 +189,7 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-# POWERPC_64
+# POWERPC 64bit
 alias asm_context_sources
    : asm/make_ppc64_sysv_elf_gas.S
      asm/jump_ppc64_sysv_elf_gas.S
@@ -215,43 +216,7 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-# SPARC
-alias asm_context_sources
-   : asm/make_sparc_sysv_elf_gas.S
-     asm/jump_sparc_sysv_elf_gas.S
-   : <address-model>32
-     <architecture>sparc
-     <binary-format>elf
-     <toolset>gcc
-   ;
-
-alias asm_context_sources
-   : [ make asm/make_sparc_sysv_elf_gas.o : asm/make_sparc_sysv_elf_gas.S : @gas ]
-     [ make asm/jump_sparc_sysv_elf_gas.o : asm/jump_sparc_sysv_elf_gas.S : @gas ]
-   : <address-model>32
-     <architecture>sparc
-     <binary-format>elf
-   ;
-
-# SPARC_64
-alias asm_context_sources
-   : asm/make_sparc64_sysv_elf_gas.S
-     asm/jump_sparc64_sysv_elf_gas.S
-   : <address-model>64
-     <architecture>sparc
-     <binary-format>elf
-     <toolset>gcc
-   ;
-
-alias asm_context_sources
-   : [ make asm/make_sparc64_sysv_elf_gas.o : asm/make_sparc64_sysv_elf_gas.S : @gas ]
-     [ make asm/jump_sparc64_sysv_elf_gas.o : asm/jump_sparc64_sysv_elf_gas.S : @gas ]
-   : <address-model>64
-     <architecture>sparc
-     <binary-format>elf
-   ;
-
-# X86
+# I386
 alias asm_context_sources
    : asm/make_i386_sysv_elf_gas.S
      asm/jump_i386_sysv_elf_gas.S
