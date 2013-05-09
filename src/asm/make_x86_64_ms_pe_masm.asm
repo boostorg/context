@@ -81,6 +81,13 @@
 ;  ----------------------------------------------------------------------------------
 ;  |                          SEE registers (XMM6-XMM15)                            |
 ;  ----------------------------------------------------------------------------------
+;  ----------------------------------------------------------------------------------
+;  |    76   |   77    |                                                            |
+;  ----------------------------------------------------------------------------------
+;  |  0x130  |  0x134  |                                                            |
+;  ----------------------------------------------------------------------------------
+;  |     fc_dealloc    |                                                            |
+;  ----------------------------------------------------------------------------------
 
 EXTERN  _exit:PROC            ; standard C library function
 .code
@@ -88,7 +95,7 @@ EXTERN  _exit:PROC            ; standard C library function
 make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and unwind information in
     .endprolog                   ; .xdata for a function's structured exception handling unwind behavior
 
-    lea  rax,        [rcx-0130h] ; reserve space for fcontext_t at top of context stack
+    lea  rax,        [rcx-0138h] ; reserve space for fcontext_t at top of context stack
 
     ; shift address in RAX to lower 16 byte boundary
     ; == pointer to fcontext_t and address of context stack
@@ -99,8 +106,9 @@ make_fcontext PROC EXPORT FRAME  ; generate function table entry in .pdata and u
     mov  [rax+050h], rcx         ; save address of context stack pointer (base) in fcontext_t
 
     neg  rdx                     ; negate stack size for LEA instruction (== substraction)
-    lea  rcx,        [rcx+rdx]   ; compute bottom address of context stack (limit)
-    mov  [rax+060h], rcx         ; save bottom address of context stack (limit) in fcontext_t
+    lea  rcx,         [rcx+rdx]  ; compute bottom address of context stack (limit)
+    mov  [rax+060h],  rcx        ; save bottom address of context stack (limit) in fcontext_t
+    mov  [rax+0130h], rcx        ; save address of context stack limit as 'dealloction stack'
 
     stmxcsr [rax+070h]           ; save MMX control and status word
     fnstcw  [rax+074h]           ; save x87 control word

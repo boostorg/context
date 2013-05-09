@@ -81,6 +81,13 @@
 ;  ----------------------------------------------------------------------------------
 ;  |                          SEE registers (XMM6-XMM15)                            |
 ;  ----------------------------------------------------------------------------------
+;  ----------------------------------------------------------------------------------
+;  |    76   |   77    |                                                            |
+;  ----------------------------------------------------------------------------------
+;  |  0x130  |  0x134  |                                                            |
+;  ----------------------------------------------------------------------------------
+;  |    fc_dealloc     |                                                            |
+;  ----------------------------------------------------------------------------------
 
 EXTERN  _exit:PROC            ; standard C library function
 .code
@@ -88,22 +95,24 @@ EXTERN  _exit:PROC            ; standard C library function
 jump_fcontext PROC EXPORT FRAME
     .endprolog
 
-    mov     [rcx],       r12        ; save R12
-    mov     [rcx+08h],   r13        ; save R13
-    mov     [rcx+010h],  r14        ; save R14
-    mov     [rcx+018h],  r15        ; save R15
-    mov     [rcx+020h],  rdi        ; save RDI
-    mov     [rcx+028h],  rsi        ; save RSI
-    mov     [rcx+030h],  rbx        ; save RBX
-    mov     [rcx+038h],  rbp        ; save RBP
+    mov     [rcx],       r12          ; save R12
+    mov     [rcx+08h],   r13          ; save R13
+    mov     [rcx+010h],  r14          ; save R14
+    mov     [rcx+018h],  r15          ; save R15
+    mov     [rcx+020h],  rdi          ; save RDI
+    mov     [rcx+028h],  rsi          ; save RSI
+    mov     [rcx+030h],  rbx          ; save RBX
+    mov     [rcx+038h],  rbp          ; save RBP
 
-    mov     r10,         gs:[030h]  ; load NT_TIB
-    mov     rax,         [r10+08h]  ; load current stack base
-    mov     [rcx+050h],  rax        ; save current stack base
-    mov     rax,         [r10+010h] ; load current stack limit
-    mov     [rcx+060h],  rax        ; save current stack limit
-    mov     rax,         [r10+018h] ; load fiber local storage
-    mov     [rcx+068h],  rax        ; save fiber local storage
+    mov     r10,         gs:[030h]    ; load NT_TIB
+    mov     rax,         [r10+08h]    ; load current stack base
+    mov     [rcx+050h],  rax          ; save current stack base
+    mov     rax,         [r10+010h]   ; load current stack limit
+    mov     [rcx+060h],  rax          ; save current stack limit
+    mov     rax,         [r10+01478h] ; load current deallocation stack
+    mov     [rcx+0130h], rax          ; save current deallocation stack
+    mov     rax,         [r10+018h]   ; load fiber local storage
+    mov     [rcx+068h],  rax          ; save fiber local storage
 
     test    r9,          r9
     je      nxt
@@ -163,13 +172,15 @@ nxt:
     mov     rbx,        [rdx+030h]  ; restore RBX
     mov     rbp,        [rdx+038h]  ; restore RBP
 
-    mov     r10,        gs:[030h]   ; load NT_TIB
-    mov     rax,        [rdx+050h]  ; load stack base
-    mov     [r10+08h],  rax         ; restore stack base
-    mov     rax,        [rdx+060h]  ; load stack limit
-    mov     [r10+010h], rax         ; restore stack limit
-    mov     rax,        [rdx+068h]  ; load fiber local storage
-    mov     [r10+018h], rax         ; restore fiber local storage
+    mov     r10,          gs:[030h]   ; load NT_TIB
+    mov     rax,          [rdx+050h]  ; load stack base
+    mov     [r10+08h],    rax         ; restore stack base
+    mov     rax,          [rdx+060h]  ; load stack limit
+    mov     [r10+010h],   rax         ; restore stack limit
+    mov     rax,          [rdx+0130h] ; load deallocation stack
+    mov     [r10+01478h], rax         ; restore deallocation stack
+    mov     rax,          [rdx+068h]  ; load fiber local storage
+    mov     [r10+018h],   rax         ; restore fiber local storage
 
     mov     rsp,        [rdx+040h]  ; restore RSP
     mov     r10,        [rdx+048h]  ; fetch the address to returned to

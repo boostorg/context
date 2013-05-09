@@ -99,13 +99,13 @@ make_fcontext:
 
     # call align_stack, R3 contains address at 16 byte boundary after return
     # == pointer to fcontext_t and address of context stack
-    rlwinm  %r3, %r3, 0, 0, 59
+    clrrdi  %r3, %r3, 4
 
     std     %r0, 184(%r3)       # save address of context stack (base) in fcontext_t
     std     %r4, 192(%r3)       # save context stack size in fcontext_t
     std     %r5, 176(%r3)       # save address of context function in fcontext_t
 
-    subf    %r0, %r3, 64        # 64 bytes on stack for parameter area (== 8 registers)
+    subi    %r0, %r3, 64        # 64 bytes on stack for parameter area (== 8 registers)
     std     %r0, 152(%r3)       # save the stack base
 
     mflr    %r0                 # load LR
@@ -128,5 +128,6 @@ finish:
     stwu    %r1, -32(%r1)       # allocate stack space, SP % 16 == 0
 
     li      %r3,  0             # set return value to zero
-    bl      _exit@plt           # exit application
+    bl      _exit               # exit application
+    nop
 .size .make_fcontext, .-.make_fcontext
