@@ -239,7 +239,8 @@ have to be preserved.]]
 
 [heading `fcontext_t * make_fcontext( void * sp, std::size_t size, void(*fn)(intptr_t))`]
 [variablelist
-[[Precondition:] [Stack `sp` function pointer `fn` are valid and `size` > 0.]]
+[[Precondition:] [Stack `sp` function pointer `fn` are valid (depending on the architecture
+`sp` points to the top or bottom of the stack) and `size` > 0.]]
 [[Effects:] [Creates an fcontext_t at the beginning of the stack and prepares the stack
 to execute the __context_fn__ `fn`.]]
 [[Returns:][Returns a pointer to fcontext_t which is placed on the stack.]]
