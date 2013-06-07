@@ -53,7 +53,7 @@ make_fcontext:
     stmxcsr  0x20(%eax)                 /* save MMX control and status word */
     fnstcw   0x24(%eax)                 /* save x87 control word */
 
-    leal   -0x8(%eax),     %edx         /* reserve space for the last frame on context stack; (ESP - 0x4) % 16 == 0 */
+    leal   -0x14(%eax),    %edx         /* reserve space for the last frame on context stack; (ESP - 0x4) % 16 == 0 */
     movl   %edx,           0x10(%eax)   /* save address in EDX as stack pointer for context function */
 
     call   1f

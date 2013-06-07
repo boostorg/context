@@ -75,7 +75,7 @@ make_fcontext PROC EXPORT
     stmxcsr [eax+02ch]              ; save MMX control word
     fnstcw  [eax+030h]              ; save x87 control word
 
-    lea  edx,         [eax-01ch]    ; reserve space for last frame and seh on context stack, (ESP - 0x4) % 16 == 0
+    lea  edx,         [eax-024h]    ; reserve space for last frame and seh on context stack, (ESP - 0x4) % 16 == 0
     mov  [eax+010h],  edx           ; save address in EDX as stack pointer for context function
 
     mov  ecx,         finish        ; abs address of finish
