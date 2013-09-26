@@ -7,7 +7,7 @@
 #ifndef BOOST_CONTEXT_DETAIL_FCONTEXT_I386H
 #define BOOST_CONTEXT_DETAIL_FCONTEXT_I386H
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#if defined(_MSC_VER)
 # pragma once
 #endif
 
