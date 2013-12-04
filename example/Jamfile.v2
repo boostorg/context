@@ -46,3 +46,8 @@ exe exit
 exe transfer
     : transfer.cpp
     ;
+
+exe exception
+    : exception.cpp
+    ;
+
