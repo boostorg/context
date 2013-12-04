@@ -42,6 +42,12 @@
  *  -------------------------------------------------------------  *
  *  | s26 | s27 | s28 | s29 | s30 | s31 |                       |  *
  *  -------------------------------------------------------------  *
+ *  |  29 |                                                     |  *
+ *  -------------------------------------------------------------  *
+ *  | 0x74|                                                     |  *
+ *  -------------------------------------------------------------  *
+ *  | sjlj|                                                     |  *
+ *  -------------------------------------------------------------  *
  *                                                                 *
  * *****************************************************************/
 
@@ -65,6 +71,14 @@ _jump_fcontext:
     vldmia  a4, {d8-d15}            @ restore S16-S31
 1:
 #endif
+
+    mrc     p15, 0, a4, c13, c0, #3 @ locate TLS to save/restore SjLj handler
+    bic     a4, a4, #3
+
+    ldr     v1, [a4, #72]           @ load TLS[__PTK_LIBC_DYLD_Unwind_SjLj_Key]
+    str     v1, [a1, #116]          @ save SjLj unwind top handler
+    ldr     v1, [a2, #116]          @ load new SjLj handler
+    str     v1, [a4, #72]           @ store it to TLS
 
     mov     a1, a3                  @ use third arg as return value after jump
                                     @ and as first arg in context function

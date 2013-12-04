@@ -42,6 +42,12 @@
  *  -------------------------------------------------------------  *
  *  | s26 | s27 | s28 | s29 | s30 | s31 |                       |  *
  *  -------------------------------------------------------------  *
+ *  |  29 |                                                     |  *
+ *  -------------------------------------------------------------  *
+ *  | 0x74|                                                     |  *
+ *  -------------------------------------------------------------  *
+ *  | sjlj|                                                     |  *
+ *  -------------------------------------------------------------  *
  *                                                                 *
  * *****************************************************************/
 
@@ -50,7 +56,7 @@
 .align 2
 _make_fcontext:
     mov     a4, a1          @ save address of context stack (base) A4
-    sub     a1, a1, #116    @ reserve space for fcontext_t at top of context stack
+    sub     a1, a1, #120    @ reserve space for fcontext_t at top of context stack
 
     @ shift address in A1 to lower 16 byte boundary
     @ == pointer to fcontext_t and address of context stack
@@ -60,7 +66,7 @@ _make_fcontext:
     str     a2, [a1,#48]    @ save context stack size in fcontext_t
     str     a3, [a1,#40]    @ save address of context function in fcontext_t
 
-    str     a1, [a1,#32]    @ save address in A4 as stack pointer for context function
+    str     a1, [a1,#32]    @ save address in A1 as stack pointer for context function
 
     adr     a2, finish      @ compute abs address of label finish
     str     a2, [a1,#36]    @ save address of finish as return address for context function
