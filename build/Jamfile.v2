@@ -29,6 +29,7 @@ local rule default_binary_format ( )
     local tmp = elf ;
     if [ os.name ] = "MACOSX" { tmp = mach-o ; }
     if [ os.name ] = "NT" { tmp = pe ; }
+    if [ os.name ] = "AIX" { tmp = xcoff ; }
     return $(tmp) ;
 }
 
@@ -36,6 +37,7 @@ feature.feature binary-format
    : elf
      mach-o
      pe
+     xcoff
    : propagated
    ;
 feature.set-default binary-format : [ default_binary_format ] ;
@@ -190,6 +192,14 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
+alias asm_context_sources
+   : [ make asm/make_ppc32_sysv_xcoff_gas.o : asm/make_ppc32_sysv_xcoff_gas.S : @gas ]
+     [ make asm/jump_ppc32_sysv_xcoff_gas.o : asm/jump_ppc32_sysv_xcoff_gas.S : @gas ]
+   : <address-model>32
+     <architecture>power
+     <binary-format>xcoff
+   ;
+
 # POWERPC_64
 alias asm_context_sources
    : asm/make_ppc64_sysv_elf_gas.S
@@ -215,6 +225,14 @@ alias asm_context_sources
    : <address-model>64
      <architecture>power
      <binary-format>elf
+   ;
+
+alias asm_context_sources
+   : [ make asm/make_ppc64_sysv_xcoff_gas.o : asm/make_ppc64_sysv_xcoff_gas.S : @gas ]
+     [ make asm/jump_ppc64_sysv_xcoff_gas.o : asm/jump_ppc64_sysv_xcoff_gas.S : @gas ]
+   : <address-model>64
+     <architecture>power
+     <binary-format>xcoff
    ;
 
 # SPARC
