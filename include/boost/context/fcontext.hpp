@@ -49,7 +49,9 @@ typedef int intptr_t;
 // arm
 #elif defined(__arm__) || defined(__thumb__) || defined(__TARGET_ARCH_ARM) \
     || defined(__TARGET_ARCH_THUMB) || defined(_ARM) || defined(_M_ARM)
-# if defined(__MACH__) && defined(__APPLE__)
+# if defined(BOOST_WINDOWS)
+#  include <boost/context/detail/fcontext_arm_win.hpp>
+# elif defined(__MACH__) && defined(__APPLE__)
 #  include <boost/context/detail/fcontext_arm_mac.hpp>
 # else 
 #  include <boost/context/detail/fcontext_arm.hpp>
