@@ -61,6 +61,7 @@ feature.feature abi
      o32
      o64
      sysv
+     x32
    : propagated
    ;
 feature.set-default abi : [ default_abi ] ;
@@ -409,6 +410,15 @@ alias asm_context_sources
    : <address-model>64
      <architecture>x86
      <binary-format>elf
+   ;
+
+alias asm_context_sources
+   : [ make asm/make_x86_64_x32_elf_gas.o : asm/make_x86_64_x32_elf_gas.S : @gas ]
+     [ make asm/jump_x86_64_x32_elf_gas.o : asm/jump_x86_64_x32_elf_gas.S : @gas ]
+   : <address-model>32
+     <architecture>x86
+     <binary-format>elf
+     <abi>x32
    ;
 
 alias asm_context_sources
