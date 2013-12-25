@@ -80,18 +80,35 @@
  *                                                                 *
  * *****************************************************************/
 
-.section ".text"
-.align 2
 .globl make_fcontext
-.section ".opd","aw"
-.align 3
+#if _CALL_ELF == 2
+	.text
+	.align 2
 make_fcontext:
-.quad .make_fcontext,.TOC.@tocbase,0
-.previous
-.size make_fcontext,24
-.type .make_fcontext,@function
-.globl .make_fcontext
+	addis	%r2, %r12, .TOC.-make_fcontext@ha
+	addi	%r2, %r2, .TOC.-make_fcontext@l
+	.localentry make_fcontext, . - make_fcontext
+#else
+	.section ".opd","aw"
+	.align 3
+make_fcontext:
+# ifdef _CALL_LINUX
+	.quad	.L.make_fcontext,.TOC.@tocbase,0
+	.type	make_fcontext,@function
+	.text
+	.align 2
+.L.make_fcontext:
+# else
+	.hidden	.make_fcontext
+	.globl	.make_fcontext
+	.quad	.make_fcontext,.TOC.@tocbase,0
+	.size	make_fcontext,24
+	.type	.make_fcontext,@function
+	.text
+	.align 2
 .make_fcontext:
+# endif
+#endif
     mflr    %r6                 # save return address into R6
 
     mr      %r0, %r3
@@ -130,7 +147,15 @@ finish:
     li      %r3,  0             # set return value to zero
     bl      _exit               # exit application
     nop
-.size .make_fcontext, .-.make_fcontext
+#if _CALL_ELF == 2
+	.size make_fcontext, .-make_fcontext
+#else
+# ifdef _CALL_LINUX
+	.size .make_fcontext, .-.L.make_fcontext
+# else
+	.size .make_fcontext, .-.make_fcontext
+# endif
+#endif
 
 /* Mark that we don't need executable stack.  */
 .section .note.GNU-stack,"",%progbits

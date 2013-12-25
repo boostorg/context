@@ -80,18 +80,35 @@
  *                                                                 *
  * *****************************************************************/
 
-.section ".text"
-.align 2
 .globl jump_fcontext
-.section ".opd","aw"
-.align 3
+#if _CALL_ELF == 2
+	.text
+	.align 2
 jump_fcontext:
-.quad .jump_fcontext,.TOC.@tocbase,0
-.previous
-.size jump_fcontext,24
-.type .jump_fcontext,@function
-.globl .jump_fcontext
+        addis   %r2, %r12, .TOC.-jump_fcontext@ha
+        addi    %r2, %r2, .TOC.-jump_fcontext@l
+        .localentry jump_fcontext, . - jump_fcontext
+#else
+	.section ".opd","aw"
+	.align 3
+jump_fcontext:
+# ifdef _CALL_LINUX
+        .quad   .L.jump_fcontext,.TOC.@tocbase,0
+        .type   jump_fcontext,@function
+        .text
+        .align 2
+.L.jump_fcontext:
+# else
+        .hidden .jump_fcontext
+        .globl  .jump_fcontext
+        .quad   .jump_fcontext,.TOC.@tocbase,0
+        .size   jump_fcontext,24
+        .type   .jump_fcontext,@function
+        .text
+        .align 2
 .jump_fcontext:
+# endif
+#endif
     std     %r13,  0(%r3)       # save R13
     std     %r14,  8(%r3)       # save R14
     std     %r15,  16(%r3)      # save R15
@@ -194,11 +211,20 @@ jump_fcontext:
     mr      %r3,   %r5          # use third arg as return value after jump
                                 # and as first arg in context function
 
-    ld      %r0,   176(%r4)     # load PC
-    mtctr   %r0                 # restore CTR
+    ld      %r12,  176(%r4)     # load PC
+    mtctr   %r12                # restore CTR
 
     bctr                        # jump to context
-.size .jump_fcontext, .-.jump_fcontext
+#if _CALL_ELF == 2
+	.size jump_fcontext, .-jump_fcontext
+#else
+# ifdef _CALL_LINUX
+	.size .jump_fcontext, .-.L.jump_fcontext
+# else
+	.size .jump_fcontext, .-.jump_fcontext
+# endif
+#endif
+
 
 /* Mark that we don't need executable stack.  */
 .section .note.GNU-stack,"",%progbits
