@@ -34,6 +34,10 @@ rule deduce-address-model ( properties * )
         {
             return <address-model>64 ;
         }
+        else if [ configure.builds /boost/architecture//combined : $(properties) : combined ]
+        {
+            return <architecture>combined ;
+        }
     }
 }
 
