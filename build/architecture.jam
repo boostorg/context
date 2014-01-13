@@ -34,10 +34,6 @@ rule deduce-address-model ( properties * )
         {
             return <address-model>64 ;
         }
-        else if [ configure.builds /boost/architecture//combined : $(properties) : combined ]
-        {
-            return <architecture>combined ;
-        }
     }
 }
 
@@ -74,6 +70,10 @@ rule deduce-architecture ( properties * )
         else if [ configure.builds /boost/architecture//x86 : $(properties) : x86 ]
         {
             return <architecture>x86 ;
+        }
+        else if [ configure.builds /boost/architecture//combined : $(properties) : combined ]
+        {
+            return <architecture>combined ;
         }
     }
 }
