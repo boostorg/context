@@ -13,52 +13,49 @@ import modules ;
 import os ;
 import toolset ;
 
-project boost/context/performance
+project boost/context/performance/winfiber
     : requirements
+      <library>/boost/chrono//boost_chrono
       <library>/boost/context//boost_context
+      <library>/boost/program_options//boost_program_options
       <link>static
       <linkflags>"-lrt" 
-      <threading>single
+      <threading>multi
     ;
 
 alias sources
-   : performance.cpp
-     bind_processor_aix.cpp
+   : ../bind_processor_aix.cpp
    : <target-os>aix
    ;
 
 alias sources
-   : performance.cpp
-     bind_processor_freebsd.cpp
+   : ../bind_processor_freebsd.cpp
    : <target-os>freebsd
    ;
 
 alias sources
-   : performance.cpp
-     bind_processor_hpux.cpp
+   : ../bind_processor_hpux.cpp
    : <target-os>hpux
    ;
 
 alias sources
-   : performance.cpp
-     bind_processor_linux.cpp
+   : ../bind_processor_linux.cpp
    : <target-os>linux
    ;
 
 alias sources
-   : performance.cpp
-     bind_processor_solaris.cpp
+   : ../bind_processor_solaris.cpp
    : <target-os>solaris
    ;
 
 alias sources
-   : performance.cpp
-     bind_processor_windows.cpp
+   : ../bind_processor_windows.cpp
    : <target-os>windows
    ;
 
 explicit sources ;
 
-exe performance
+exe performance_winfiber
    : sources
+     performance_winfiber.cpp
    ;
