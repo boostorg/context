@@ -92,7 +92,7 @@ int main( int argc, char * argv[])
         }
 
         fm = ::ConvertThreadToFiber( 0); 
-        fc = ::CreateFiber( stack_alloc::default_stacksize(), fn, 0);
+        fc = ::CreateFiber( stack_allocator::default_stacksize(), fn, 0);
 
         boost::uint64_t res = measure_time().count();
         std::cout << "average of " << res << " nano seconds" << std::endl;
