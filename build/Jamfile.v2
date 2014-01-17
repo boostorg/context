@@ -270,6 +270,7 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
+# note: the x32 ABI is equivalent (at least calling convention) to sysv API
 alias asm_context_sources
    : [ make asm/make_x86_64_x32_elf_gas.o : asm/make_x86_64_x32_elf_gas.S : @gas ]
      [ make asm/jump_x86_64_x32_elf_gas.o : asm/jump_x86_64_x32_elf_gas.S : @gas ]
