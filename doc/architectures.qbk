@@ -5,7 +5,7 @@
           http://www.boost.org/LICENSE_1_0.txt
 ]
 
-[section:architextues Architectures]
+[section:architectues Architectures]
 
 __boost_context__ supports following architectures:
 

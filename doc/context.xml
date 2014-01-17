@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2014/01/17 16:28:10 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2014/01/17 16:33:51 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -612,12 +612,12 @@
       </tgroup>
     </table>
   </section>
-  <section id="context.architextues">
-    <title><link linkend="context.architextues">Architectures</link></title>
+  <section id="context.architectues">
+    <title><link linkend="context.architectues">Architectures</link></title>
     <para>
       <emphasis role="bold">Boost.Context</emphasis> supports following architectures:
     </para>
-    <table frame="all" id="context.architextues.supported_architectures___abi_binary_format__">
+    <table frame="all" id="context.architectues.supported_architectures___abi_binary_format__">
       <title>Supported architectures (&lt;ABI|binary format&gt;)</title>
       <tgroup cols="5">
         <thead>
