@@ -67,6 +67,7 @@
 [include fcontext.qbk]
 [include stack.qbk]
 [include performance.qbk]
+[include architectures.qbk]
 [include rationale.qbk]
 [include reference.qbk]
 [include todo.qbk]
