@@ -7,8 +7,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <utility>
-#include <vector>
 
 #include <boost/assert.hpp>
 #include <boost/context/all.hpp>
@@ -23,8 +21,8 @@ typedef ctx::simple_stack_allocator<
     8 * 1024 // 8kB
 >       stack_allocator;
 
-ctx::fcontext_t fcm;
-ctx::fcontext_t * fc1;
+ctx::fcontext_t fcm = 0;
+ctx::fcontext_t fc1 = 0;
 
 typedef std::pair< int, int >   pair_t;
 
@@ -32,9 +30,9 @@ void f1( intptr_t param)
 {
     pair_t * p = ( pair_t *) param;
 
-    p = ( pair_t *) ctx::jump_fcontext( fc1, & fcm, ( intptr_t) ( p->first + p->second) );
+    p = ( pair_t *) ctx::jump_fcontext( & fc1, fcm, ( intptr_t) ( p->first + p->second) );
 
-    ctx::jump_fcontext( fc1, & fcm, ( intptr_t) ( p->first + p->second) );
+    ctx::jump_fcontext( & fc1, fcm, ( intptr_t) ( p->first + p->second) );
 }
 
 int main( int argc, char * argv[])
@@ -42,7 +40,7 @@ int main( int argc, char * argv[])
     stack_allocator alloc;
 
     void * sp = alloc.allocate( stack_allocator::default_stacksize() );
-    fc1 = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f1);
+    fc1 = ctx::make_fcontext( sp, f1);
 
     pair_t p( std::make_pair( 2, 7) );
     int res = ( int) ctx::jump_fcontext( & fcm, fc1, ( intptr_t) & p);

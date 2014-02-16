@@ -5,15 +5,10 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <cstdlib>
-#include <cstring>
 #include <iostream>
-#include <string>
-#include <vector>
 
-#include <boost/assert.hpp>
 #include <boost/context/all.hpp>
 #include <boost/exception_ptr.hpp>
-#include <boost/throw_exception.hpp>
 
 #include "simple_stack_allocator.hpp"
 
@@ -25,8 +20,8 @@ typedef ctx::simple_stack_allocator<
     8 * 1024 // 8kB
 >       stack_allocator;
 
-ctx::fcontext_t fcm;
-ctx::fcontext_t * fc = 0;
+ctx::fcontext_t fcm = 0;
+ctx::fcontext_t fc = 0;
 boost::exception_ptr except;
 
 void f( intptr_t arg)
@@ -35,7 +30,7 @@ void f( intptr_t arg)
     { throw std::runtime_error( ( char *) arg); }
     catch ( std::runtime_error const& e)
     { except = boost::current_exception(); }
-    ctx::jump_fcontext( fc, & fcm, arg);
+    ctx::jump_fcontext( & fc, fcm, arg);
 }
 
 int main( int argc, char * argv[])
@@ -43,11 +38,7 @@ int main( int argc, char * argv[])
     stack_allocator alloc;
 
     void * base = alloc.allocate( stack_allocator::default_stacksize());
-    BOOST_ASSERT( base);
-    fc = ctx::make_fcontext( base, stack_allocator::default_stacksize(), f);
-    BOOST_ASSERT( fc);
-    BOOST_ASSERT( base == fc->fc_stack.sp);
-    BOOST_ASSERT( stack_allocator::default_stacksize() == fc->fc_stack.size);
+    fc = ctx::make_fcontext( base, f);
 
     std::cout << "main: call start_fcontext( & fcm, fc, 0)" << std::endl;
     const char * what = "hello world";
