@@ -69,8 +69,8 @@ make_fcontext PROC EXPORT
 
     ; compute abs address of label finish
     mov  ecx, finish
-    /* save address of finish as return-address for context-function */
-    /* will be entered after context-function returns */
+    ; save address of finish as return-address for context-function
+    ; will be entered after context-function returns
     mov  [eax+030h], ecx
 
     ; traverse current seh chain to get the last exception handler installed by Windows
