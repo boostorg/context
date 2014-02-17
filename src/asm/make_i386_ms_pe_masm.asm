@@ -47,13 +47,15 @@ make_fcontext PROC EXPORT
 
     ; first arg of make_fcontext() == top of context-stack
     mov  ecx, [esp+04h]
+    ; save top address of context stack as 'base'
+    mov  [eax+014h], ecx
     ; second arg of make_fcontext() == size of context-stack
     mov  edx, [esp+08h]
     ; negate stack size for LEA instruction (== substraction)
     neg  edx
     ; compute bottom address of context stack (limit)
     lea  ecx, [ecx+edx]
-    ; save address of context stack (limit) in fcontext_t
+    ; save bottom address of context stack as 'limit'
     mov  [eax+010h], ecx
     ; save address of context stack limit as 'dealloction stack'
     mov  [eax+0ch], ecx
