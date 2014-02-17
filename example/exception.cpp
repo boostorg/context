@@ -38,7 +38,7 @@ int main( int argc, char * argv[])
     stack_allocator alloc;
 
     void * base = alloc.allocate( stack_allocator::default_stacksize());
-    fc = ctx::make_fcontext( base, f);
+    fc = ctx::make_fcontext( base, stack_allocator::default_stacksize(), f);
 
     std::cout << "main: call start_fcontext( & fcm, fc, 0)" << std::endl;
     const char * what = "hello world";

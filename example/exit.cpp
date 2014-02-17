@@ -47,10 +47,10 @@ int main( int argc, char * argv[])
     stack_allocator alloc;
 
     void * sp1 = alloc.allocate( stack_allocator::default_stacksize());
-    fc1 = ctx::make_fcontext( sp1, f1);
+    fc1 = ctx::make_fcontext( sp1, stack_allocator::default_stacksize(), f1);
 
     void * sp2 = alloc.allocate( stack_allocator::default_stacksize());
-    fc2 = ctx::make_fcontext( sp2, f2);
+    fc2 = ctx::make_fcontext( sp2, stack_allocator::default_stacksize(), f2);
 
     std::cout << "main: call start_fcontext( & fcm, fc1, 0)" << std::endl;
     ctx::jump_fcontext( & fcm, fc1, 0);

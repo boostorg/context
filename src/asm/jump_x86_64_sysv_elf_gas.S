@@ -43,25 +43,25 @@ jump_fcontext:
     cmp  $0, %rcx
     je  1f
 
-    /* save MMX control and status word */
+    /* save MMX control- and status-word */
     stmxcsr  (%rsp)
-    /* save x87 control word */
+    /* save x87 control-word */
     fnstcw   0x4(%rsp)
 
 1:
-    /* store RSP pointing to context-data in RDI */
+    /* store RSP (pointing to context-data) in RDI */
     movq  %rsp, (%rdi)
 
-    /* restore RSP pointing to context-data from RSI */
+    /* restore RSP (pointing to context-data) from RSI */
     movq  %rsi, %rsp
 
     /* test for flag preserve_fpu */
     cmp  $0, %rcx
     je  2f
 
-    /* restore MMX control and status word */
+    /* restore MMX control- and status-word */
     ldmxcsr  (%rsp)
-    /* restore x87 control word */
+    /* restore x87 control-word */
     fldcw  0x4(%rsp)
 
 2:
@@ -75,10 +75,10 @@ jump_fcontext:
     popq  %rbx  /* restrore RBX */
     popq  %rbp  /* restrore RBP */
 
-    /* restore returns address */
+    /* restore return-address */
     popq  %r8
 
-    /* use third arg as return value after jump */
+    /* use third arg as return-value after jump */
     movq  %rdx, %rax
     /* use third arg as first arg in context function */
     movq  %rdx, %rdi

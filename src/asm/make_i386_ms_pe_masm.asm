@@ -4,48 +4,20 @@
 ;     (See accompanying file LICENSE_1_0.txt or copy at
 ;           http://www.boost.org/LICENSE_1_0.txt)
 
-;  --------------------------------------------------------------
-;  |    0    |    1    |    2    |    3    |    4     |    5    |
-;  --------------------------------------------------------------
-;  |    0h   |   04h   |   08h   |   0ch   |   010h   |   014h  |
-;  --------------------------------------------------------------
-;  |   EDI   |   ESI   |   EBX   |   EBP   |   ESP    |   EIP   |
-;  --------------------------------------------------------------
-;  --------------------------------------------------------------
-;  |    6    |    7    |    8    |                              |
-;  --------------------------------------------------------------
-;  |   018h  |   01ch  |   020h  |                              |
-;  --------------------------------------------------------------
-;  |    sp   |   size  |  limit  |                              |
-;  --------------------------------------------------------------
-;  --------------------------------------------------------------
-;  |    9    |                                                  |
-;  --------------------------------------------------------------
-;  |  024h   |                                                  |
-;  --------------------------------------------------------------
-;  |fc_execpt|                                                  |
-;  --------------------------------------------------------------
-;  --------------------------------------------------------------
-;  |   10    |                                                  |
-;  --------------------------------------------------------------
-;  |  028h   |                                                  |
-;  --------------------------------------------------------------
-;  |fc_strage|                                                  |
-;  --------------------------------------------------------------
-;  --------------------------------------------------------------
-;  |   11    |    12   |                                        |
-;  --------------------------------------------------------------
-;  |  02ch   |   030h  |                                        |
-;  --------------------------------------------------------------
-;  | fc_mxcsr|fc_x87_cw|                                        |
-;  --------------------------------------------------------------
-;  --------------------------------------------------------------
-;  |   13    |                                                  |
-;  --------------------------------------------------------------
-;  |  034h   |                                                  |
-;  --------------------------------------------------------------
-;  |fc_deallo|                                                  |
-;  --------------------------------------------------------------
+;  -------------------------------------------------------------
+;  |    0    |    1    |    2    |    3    |    4    |    5    |
+;  -------------------------------------------------------------
+;  |    0h   |   04h   |   08h   |   0ch   |   010h  |   014h  |
+;  -------------------------------------------------------------
+;  | fc_mxcsr|fc_x87_cw|fc_deallo|fc_strage|fc_execpt|  limit  |
+;  -------------------------------------------------------------
+;  -------------------------------------------------------------
+;  |    6    |    7    |    8    |    9    |   10    |   11    |
+;  -------------------------------------------------------------
+;  |   018h  |   01ch  |   020h  |  024h   |  028h   |  02ch   |
+;  -------------------------------------------------------------
+;  |   EDI   |   ESI   |   EBX   |   EBP   |   ESP   |   EIP   |
+;  -------------------------------------------------------------
 
 .386
 .XMM
@@ -54,23 +26,25 @@ _exit PROTO, value:SDWORD
 .code
 
 make_fcontext PROC EXPORT
-    mov  eax,         [esp+04h]     ; load 1. arg of make_fcontext, pointer to context stack (base)
-    lea  eax,         [eax-038h]    ; reserve space for fcontext_t at top of context stack
+    ; first arg of make_fcontext() == top of context-stack
+    mov  eax, [esp+04h]
 
     ; shift address in EAX to lower 16 byte boundary
-    ; == pointer to fcontext_t and address of context stack
-    and  eax,         -16
+    and  eax, -16
 
-    mov  ecx,         [esp+04h]     ; load 1. arg of make_fcontext, pointer to context stack (base)
-    mov  [eax+018h],  ecx           ; save address of context stack (base) in fcontext_t
+    ; reserve space for context-data on context-stack
+    ; size for fc_mxcsr .. EIP + return-address for context-function
+    lea  eax, [eax-034h]
+
+    ; second arg of make_fcontext() == size of context-stack
     mov  edx,         [esp+08h]     ; load 2. arg of make_fcontext, context stack size
-    mov  [eax+01ch],  edx           ; save context stack size in fcontext_t
     neg  edx                        ; negate stack size for LEA instruction (== substraction)
     lea  ecx,         [ecx+edx]     ; compute bottom address of context stack (limit)
     mov  [eax+020h],  ecx           ; save address of context stack (limit) in fcontext_t
     mov  [eax+034h],  ecx           ; save address of context stack limit as 'dealloction stack'
-    mov  ecx,         [esp+0ch]     ; load 3. arg of make_fcontext, pointer to context function
-    mov  [eax+014h],  ecx           ; save address of context function in fcontext_t
+    ; third arg of make_fcontext() == address of context-function
+    mov  ecx, [esp+0ch]
+    mov  [eax+02ch], ecx
 
     stmxcsr [eax+02ch]              ; save MMX control word
     fnstcw  [eax+030h]              ; save x87 control word

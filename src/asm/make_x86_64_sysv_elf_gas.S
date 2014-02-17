@@ -33,26 +33,24 @@ make_fcontext:
     movq  %rdi, %rax
 
     /* shift address in RAX to lower 16 byte boundary */
-    /* == pointer to context-data */
     andq  $-16, %rax
 
     /* reserve space for context-data on context-stack */
-    /* size for fc_mxcsr .. RIP + return address for coroutine-function */
-    /* address of exit() == return address for coroutine-function */
+    /* size for fc_mxcsr .. RIP + return-address for context-function */
     leaq  -0x48(%rax), %rax
 
-    /* second arg of make_fcontext() == address of context-function */
-    movq  %rsi, 0x38(%rax)
+    /* third arg of make_fcontext() == address of context-function */
+    movq  %rdx, 0x38(%rax)
 
-    /* save MMX control and status word */
+    /* save MMX control- and status-word */
     stmxcsr  (%rax)
-    /* save x87 control word */
+    /* save x87 control-word */
     fnstcw   0x4(%rax)
 
     /* compute abs address of label finish */
     leaq  finish(%rip), %rcx
-    /* save address of finish as return address for context-function */
-    /* entered after context-function returns */
+    /* save address of finish as return-address for context-function */
+    /* will be entered after context-function returns */
     movq  %rcx, 0x40(%rax)
 
     ret /* return pointer to context-data */
