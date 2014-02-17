@@ -9,14 +9,21 @@
 ;  -------------------------------------------------------------
 ;  |    0h   |   04h   |   08h   |   0ch   |   010h  |   014h  |
 ;  -------------------------------------------------------------
-;  | fc_mxcsr|fc_x87_cw|fc_deallo|fc_strage|fc_execpt|  limit  |
+;  | fc_mxcsr|fc_x87_cw|fc_strage|fc_deallo|  limit  |   base  |
 ;  -------------------------------------------------------------
 ;  -------------------------------------------------------------
-;  |    6    |    7    |    8    |    9    |   10    |   11    |
+;  |    6    |    7    |    8    |    9    |   10    |    11   |
 ;  -------------------------------------------------------------
-;  |   018h  |   01ch  |   020h  |  024h   |  028h   |  02ch   |
+;  |   018h  |   01ch  |   020h  |  024h   |  028h   |   02ch  |
 ;  -------------------------------------------------------------
-;  |   EDI   |   ESI   |   EBX   |   EBP   |   ESP   |   EIP   |
+;  |  fc_seh |   EDI   |   ESI   |   EBX   |   EBP   |   EIP   |
+;  -------------------------------------------------------------
+;  -------------------------------------------------------------
+;  |    12   |    13   |    14   |                             |
+;  -------------------------------------------------------------
+;  |   030h  |   034h  |   038h  |                             |
+;  -------------------------------------------------------------
+;  |   EXIT  | SEH NXT |SEH HNDLR|                             |
 ;  -------------------------------------------------------------
 
 .386
@@ -34,61 +41,82 @@ make_fcontext PROC EXPORT
 
     ; reserve space for context-data on context-stack
     ; size for fc_mxcsr .. EIP + return-address for context-function
-    lea  eax, [eax-034h]
+    ; on context-function entry: (ESP -0x4) % 16 == 0
+    ; additional space is required for SEH
+    lea  eax, [eax-03ch]
 
+    ; first arg of make_fcontext() == top of context-stack
+    mov  ecx, [esp+04h]
     ; second arg of make_fcontext() == size of context-stack
-    mov  edx,         [esp+08h]     ; load 2. arg of make_fcontext, context stack size
-    neg  edx                        ; negate stack size for LEA instruction (== substraction)
-    lea  ecx,         [ecx+edx]     ; compute bottom address of context stack (limit)
-    mov  [eax+020h],  ecx           ; save address of context stack (limit) in fcontext_t
-    mov  [eax+034h],  ecx           ; save address of context stack limit as 'dealloction stack'
+    mov  edx, [esp+08h]
+    ; negate stack size for LEA instruction (== substraction)
+    neg  edx
+    ; compute bottom address of context stack (limit)
+    lea  ecx, [ecx+edx]
+    ; save address of context stack (limit) in fcontext_t
+    mov  [eax+010h], ecx
+    ; save address of context stack limit as 'dealloction stack'
+    mov  [eax+0ch], ecx
+
     ; third arg of make_fcontext() == address of context-function
     mov  ecx, [esp+0ch]
     mov  [eax+02ch], ecx
 
-    stmxcsr [eax+02ch]              ; save MMX control word
-    fnstcw  [eax+030h]              ; save x87 control word
+    ; save MMX control- and status-word
+    stmxcsr  [eax]
+    ; save x87 control-word
+    fnstcw  [eax+04h]
 
-    lea  edx,         [eax-024h]    ; reserve space for last frame and seh on context stack, (ESP - 0x4) % 16 == 0
-    mov  [eax+010h],  edx           ; save address in EDX as stack pointer for context function
-
-    mov  ecx,         finish        ; abs address of finish
-    mov  [edx],       ecx           ; save address of finish as return address for context function
-                                    ; entered after context function returns
+    ; compute abs address of label finish
+    mov  ecx, finish
+    /* save address of finish as return-address for context-function */
+    /* will be entered after context-function returns */
+    mov  [eax+030h], ecx
 
     ; traverse current seh chain to get the last exception handler installed by Windows
     ; note that on Windows Server 2008 and 2008 R2, SEHOP is activated by default
     ; the exception handler chain is tested for the presence of ntdll.dll!FinalExceptionHandler
-    ; at its end by RaiseException all seh andlers are disregarded if not present and the
+    ; at its end by RaiseException all seh-handlers are disregarded if not present and the
     ; program is aborted
     assume  fs:nothing
-    mov     ecx,      fs:[018h]     ; load NT_TIB into ECX
+    ; load NT_TIB into ECX
+    mov  ecx, fs:[018h]
     assume  fs:error
 
 walk:
-    mov  edx,         [ecx]         ; load 'next' member of current SEH into EDX
-    inc  edx                        ; test if 'next' of current SEH is last (== 0xffffffff)
-    jz   found
+    ; load 'next' member of current SEH into EDX
+    mov  edx, [ecx]
+    ; test if 'next' of current SEH is last (== 0xffffffff)
+    inc  edx
+    jz  found
     dec  edx
-    xchg edx,         ecx           ; exchange content; ECX contains address of next SEH
-    jmp  walk                       ; inspect next SEH
+    ; exchange content; ECX contains address of next SEH
+    xchg edx, ecx
+    ; inspect next SEH
+    jmp  walk
 
 found:
-    mov  ecx,         [ecx+04h]     ; load 'handler' member of SEH == address of last SEH handler installed by Windows
-    mov  edx,         [eax+010h]    ; load address of stack pointer for context function
-    mov  [edx+018h],  ecx           ; save address in ECX as SEH handler for context
-    mov  ecx,         0ffffffffh    ; set ECX to -1
-    mov  [edx+014h],  ecx           ; save ECX as next SEH item
-    lea  ecx,         [edx+014h]    ; load address of next SEH item
-    mov  [eax+024h],  ecx           ; save next SEH
+    ; load 'handler' member of SEH == address of last SEH handler installed by Windows
+    mov  ecx, [ecx+04h]
+    ; save address in ECX as SEH handler for context
+    mov  [eax+038h], ecx
+    ; set ECX to -1
+    mov  ecx, 0ffffffffh
+    ; save ECX as next SEH item
+    mov  [eax+034h], ecx
+    ; load address of next SEH item
+    lea  ecx, [eax+034h]
+    ; save next SEH
+    mov  [eax+018h], ecx
 
-    ret
+    ret ; return pointer to context-data
 
 finish:
-    ; ESP points to same address as ESP on entry of context function + 0x4
-    xor   eax,        eax
-    mov   [esp],      eax           ; exit code is zero
-    call  _exit                     ; exit application
+    ; exit code is zero
+    xor  eax, eax
+    mov  [esp], eax
+    ; exit application
+    call  _exit
     hlt
 make_fcontext ENDP
 END
