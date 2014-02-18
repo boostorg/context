@@ -44,14 +44,14 @@
 ;  ----------------------------------------------------------------------------------
 ;  |   0xa0  |   0xa4  |   0xa8  |   0xac  |   0xb0   |   0xb4  |   0xb8  |   0xbc  |
 ;  ----------------------------------------------------------------------------------
-;  |       <pad>       | fc_mxcsr|fc_x87_cw|      fbr_strg     |      fc_dealloc    |
+;  | fc_mxcsr|fc_x87_cw|                   |       fbr_strg     |      fc_dealloc   |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
 ;  |    48   |    49   |    50   |   51    |    52    |    53   |    54   |    55   |
 ;  ----------------------------------------------------------------------------------
 ;  |   0xc0  |   0xc4  |   0xc8  |  0xcc   |   0xd0   |   0xd4  |   0xd8  |   0xdc  |
 ;  ----------------------------------------------------------------------------------
-;  |       limit       |       base        |       R12         |         R13        |
+;  |      limit        |       base        |       R12         |         R13        |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
 ;  |    56   |    57   |    58   |    59   |    60   |    61    |    62   |    63   |
@@ -61,11 +61,11 @@
 ;  |        R14        |        R15        |        RDI        |        RSI         |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
-;  |    64   |    65   |    66   |   67    |    68    |   69    |    70   |    71   |
+;  |    64   |    65   |    66   |   67    |    68    |   69    |    70   |  71     |
 ;  ----------------------------------------------------------------------------------
 ;  |  0x100  |  0x104  |  0x108  |  0x10c  |  0x110   |  0x114  |  0x118  |  0x11c  |
 ;  ----------------------------------------------------------------------------------
-;  |        RBX        |        RBP        |        RIP        |       EXIT         |
+;  |        RBX        |        RBP        |        RIP         |       EXIT        |
 ;  ----------------------------------------------------------------------------------
 
 .code
@@ -98,16 +98,16 @@ jump_fcontext PROC EXPORT FRAME
     push  rax
 
     ; prepare stack for FPU
-    lea rsp, [rsp-0b0h]
+    lea rsp, [rsp-0a8h]
 
     ; test for flag preserve_fpu
     test  r9, r9
     je  nxt1
 
     ; save MMX control- and status-word
-    stmxcsr  [rsp+0a8h]
+    stmxcsr  [rsp+0a0h]
     ; save x87 control-word
-    fnstcw  [rsp+0ach]
+    fnstcw  [rsp+0a4h]
 
     ; save XMM storage
     movaps  [rsp], xmm6
@@ -123,14 +123,19 @@ jump_fcontext PROC EXPORT FRAME
 
 nxt1:
     ; store RSP (pointing to context-data) in RCX
-    movq  %rsp, (%rcx)
+    mov  [rcx], rsp
 
     ; restore RSP (pointing to context-data) from RDX
-    movq  %rdx, %rsp
+    mov  rsp, rdx
 
     ; test for flag preserve_fpu
     test  r9, r9
     je  nxt2
+
+    ; restore MMX control- and status-word
+    ldmxcsr  [rdx+0a0h]
+    ; save x87 control-word
+    fldcw   [rdx+0a4h]
 
     ; restore XMM storage
     movaps  xmm6, [rsp]
@@ -144,11 +149,6 @@ nxt1:
     movaps  xmm14, [rsp+080h]
     movaps  xmm15, [rsp+090h]
 
-    ; restore MMX control- and status-word
-    ldmxcsr  [rdx+0a8h]
-    ; save x87 control-word
-    fldcw   [rdx+0ach]
-
 nxt2:
     ; prepare stack for FPU
     lea rsp, [rsp+0b0h]
@@ -156,16 +156,16 @@ nxt2:
     ; load NT_TIB
     mov  r10, gs:[030h]
     ; restore fiber local storage
-    pop  eax
+    pop  rax
     mov  [r10+018h], rax
     ; restore deallocation stack
-    pop  eax
+    pop  rax
     mov  [r10+01478h], rax
     ; restore stack limit
-    pop  eax
+    pop  rax
     mov  [r10+010h], rax
     ; restore stack base
-    pop  eax
+    pop  rax
     mov  [r10+08h], rax
 
     pop  r12  ; restore R12
