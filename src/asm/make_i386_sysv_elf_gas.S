@@ -30,8 +30,8 @@ make_fcontext:
 
     /* reserve space for context-data on context-stack */
     /* size for fc_mxcsr .. EIP + return-address for context-function */
-    /* on context-function entry: (ESP -0x4) % 16 == 0 */
-    leal  -0x28(%eax), %eax
+    /* on context-function entry: (ESP -0x4) % 8 == 0 */
+    leal  -0x20(%eax), %eax
 
     /* third arg of make_fcontext() == address of context-function */
     movl  0xc(%esp), %edx

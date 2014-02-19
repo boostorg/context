@@ -5,6 +5,13 @@
 ;           http://www.boost.org/LICENSE_1_0.txt)
 
 ;  ----------------------------------------------------------------------------------
+;  |    0    |    1    |                                                            |
+;  ----------------------------------------------------------------------------------
+;  |   0x0   |   0x4   |                                                            |
+;  ----------------------------------------------------------------------------------
+;  |    <indicator>    |                                                            |
+;  ----------------------------------------------------------------------------------
+;  ----------------------------------------------------------------------------------
 ;  |    0    |    1    |    2    |    3    |    4     |    5    |    6    |    7    |
 ;  ----------------------------------------------------------------------------------
 ;  |   0x0   |   0x4   |   0x8   |   0xc   |   0x10   |   0x14  |   0x18  |   0x1c  |
@@ -44,7 +51,7 @@
 ;  ----------------------------------------------------------------------------------
 ;  |   0xa0  |   0xa4  |   0xa8  |   0xac  |   0xb0   |   0xb4  |   0xb8  |   0xbc  |
 ;  ----------------------------------------------------------------------------------
-;  | fc_mxcsr|fc_x87_cw|                   |       fbr_strg     |      fc_dealloc   |
+;  | fc_mxcsr|fc_x87_cw|    <alignment>    |       fbr_strg     |      fc_dealloc   |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
 ;  |    48   |    49   |    50   |   51    |    52    |    53   |    54   |    55   |
@@ -122,20 +129,28 @@ jump_fcontext PROC EXPORT FRAME
     movaps  [rsp+090h], xmm15
 
 nxt1:
+    ; set R10 to zero
+    xor  r10, r10
+    ; set indicator
+    push  r10
+
     ; store RSP (pointing to context-data) in RCX
     mov  [rcx], rsp
 
     ; restore RSP (pointing to context-data) from RDX
     mov  rsp, rdx
 
+    ; load indicator
+    pop  r10
+
     ; test for flag preserve_fpu
     test  r9, r9
     je  nxt2
 
     ; restore MMX control- and status-word
-    ldmxcsr  [rdx+0a0h]
+    ldmxcsr  [rsp+0a0h]
     ; save x87 control-word
-    fldcw   [rdx+0a4h]
+    fldcw   [rsp+0a4h]
 
     ; restore XMM storage
     movaps  xmm6, [rsp]
@@ -150,8 +165,18 @@ nxt1:
     movaps  xmm15, [rsp+090h]
 
 nxt2:
+    ; set offset of stack
+    mov  rcx, 0a8h
+
+    ; test for indicator
+    test  r10, r10
+    je  nxt3
+
+    add  rcx, 08h
+
+nxt3:
     ; prepare stack for FPU
-    lea rsp, [rsp+0b0h]
+    lea rsp, [rsp+rcx]
 
     ; load NT_TIB
     mov  r10, gs:[030h]

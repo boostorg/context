@@ -42,7 +42,7 @@ make_fcontext PROC EXPORT
 
     ; reserve space for context-data on context-stack
     ; size for fc_mxcsr .. EIP + return-address for context-function
-    ; on context-function entry: (ESP -0x4) % 16 == 0
+    ; on context-function entry: (ESP -0x4) % 8 == 0
     ; additional space is required for SEH
     lea  eax, [eax-03ch]
 
