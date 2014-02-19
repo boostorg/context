@@ -104,13 +104,20 @@ rule configure ( properties * )
 }
 
 # ARM
-# toolset darwin only
 alias asm_context_sources
    : asm/make_arm_aapcs_macho_gas.S
      asm/jump_arm_aapcs_macho_gas.S
    : <architecture>arm
      <target-os>iphone
      <toolset>darwin
+   ;
+
+alias asm_context_sources
+   : asm/make_arm_aapcs_elf_gas.S
+     asm/jump_arm_aapcs_elf_gas.S
+   : <architecture>arm
+     <binary-format>elf
+     <toolset>gcc
    ;
 
 alias asm_context_sources
@@ -128,6 +135,13 @@ alias asm_context_sources
    ;
 
 # MIPS
+alias asm_context_sources
+   : [ make asm/make_mips32_o32_elf_gas.o : asm/make_mips32_o32_elf_gas.S : @gas ]
+     [ make asm/jump_mips32_o32_elf_gas.o : asm/jump_mips32_o32_elf_gas.S : @gas ]
+   : <architecture>mips1
+     <binary-format>elf
+   ;
+
 alias asm_context_sources
    : [ make asm/make_mips32_o32_elf_gas.o : asm/make_mips32_o32_elf_gas.S : @gas ]
      [ make asm/jump_mips32_o32_elf_gas.o : asm/jump_mips32_o32_elf_gas.S : @gas ]

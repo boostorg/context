@@ -38,10 +38,6 @@
  *                                                     *
  * *****************************************************/
 
-#define FC_LR #96
-#define FC_PC #100
-#define FC_SZ #104
-
 .text
 .globl make_fcontext
 .align 2
@@ -51,16 +47,16 @@ make_fcontext:
     bic  a1, a1, #15
 
     @ reserve space for context-data on context-stack
-    sub  a1, a1, FC_SZ
+    sub  a1, a1, #104
 
     @ third arg of make_fcontext() == address of context-function
-    str  a3, [a1,FC_PC]
+    str  a3, [a1,#100]
 
     @ compute abs address of label finish
     adr  a2, finish
     @ save address of finish as return-address for context-function
     @ will be entered after context-function returns
-    str  a2, [a1,FC_LR]
+    str  a2, [a1,#96]
 
     bx  lr @ return pointer to context-data
 
@@ -71,5 +67,5 @@ finish:
     bl  _exit@PLT
 .size make_fcontext,.-make_fcontext
 
-/* Mark that we don't need executable stack.  */
+@ Mark that we don't need executable stack.
 .section .note.GNU-stack,"",%progbits

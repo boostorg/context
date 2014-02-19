@@ -43,12 +43,13 @@
 .align 2
 .type jump_fcontext,%function
 jump_fcontext:
-
-    @ save V1-V8,LR and LR as PC
-    push {v1-v8,lr,lr}
+    @ save LR as PC
+    push {lr}
+    @ save V1-V8,LR
+    push {v1-v8,lr}
 
     @ prepare stack for FPU
-    sub  sp, sp, #60
+    sub  sp, sp, #64
 
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
     @ test if fpu env should be preserved
@@ -78,15 +79,15 @@ jump_fcontext:
 #endif
 
     @ prepare stack for FPU
-    add  sp, sp, #60
+    add  sp, sp, #64
 
     @ use third arg as return value after jump
     @ and as first arg in context function
     mov  a1, a3
     
     @ restore v1-V8,LR,PC
-    pop {v1-v8,lr-pc}
+    pop {v1-v8,lr,pc}
 .size jump_fcontext,.-jump_fcontext
 
-/* Mark that we don't need executable stack.  */
+@ Mark that we don't need executable stack.
 .section .note.GNU-stack,"",%progbits
