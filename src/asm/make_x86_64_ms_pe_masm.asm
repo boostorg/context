@@ -75,14 +75,6 @@
 ;  |        RBX        |         RBP        |        RIP        |       EXIT        |
 ;  ----------------------------------------------------------------------------------
 
-#define FC_BASE     0d0h
-#define FC_DEALLOC  0c0h
-#define FC_EXIT     0120h
-#define FC_LIMIT    0c8h
-#define FC_MMX      0a8h
-#define FC_RET      0118h
-#define FC_X87      0ach
-
 ; standard C library function
 EXTERN  _exit:PROC
 .code
@@ -105,31 +97,31 @@ make_fcontext PROC EXPORT FRAME
     lea  rax, [rax-0128h]
 
     ; third arg of make_fcontext() == address of context-function
-    mov  [rax+FC_RET], r8
+    mov  [rax+0118h], r8
 
     ; first arg of make_fcontext() == top of context-stack
     ; save top address of context stack as 'base'
-    mov  [rax+FC_BASE], rcx
+    mov  [rax+0d0h], rcx
     ; second arg of make_fcontext() == size of context-stack
     ; negate stack size for LEA instruction (== substraction)
     neg  rdx
     ; compute bottom address of context stack (limit)
     lea  rcx, [rcx+rdx]
     ; save bottom address of context stack as 'limit'
-    mov  [rax+FC_LIMIT], rcx
+    mov  [rax+0c8h], rcx
     ; save address of context stack limit as 'dealloction stack'
-    mov  [rax+FC_DEALLOC], rcx
+    mov  [rax+0c0h], rcx
 
     ; save MMX control- and status-word
-    stmxcsr  [rax+FC_MMX]
+    stmxcsr  [rax+0a8h]
     ; save x87 control-word
-    fnstcw  [rax+FC_X87]
+    fnstcw  [rax+0ach]
 
     ; compute abs address of label finish
     lea  rcx, finish
     ; save address of finish as return-address for context-function
     ; will be entered after context-function returns
-    mov  [rax+FC_EXIT], rcx
+    mov  [rax+0120h], rcx
 
     ; set indicator
     mov  rcx, 1
