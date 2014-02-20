@@ -145,7 +145,6 @@ alias asm_context_sources
    ;
 
 # POWERPC
-# toolset darwin only
 alias asm_context_sources
    : asm/make_ppc32_sysv_macho_gas.S
      asm/jump_ppc32_sysv_macho_gas.S
@@ -155,6 +154,17 @@ alias asm_context_sources
      <binary-format>mach-o
      <target-os>darwin
      <toolset>darwin
+   ;
+
+alias asm_context_sources
+   : asm/make_ppc32_sysv_macho_gas.S
+     asm/jump_ppc32_sysv_macho_gas.S
+     untested.cpp
+   : <address-model>32
+     <architecture>power
+     <binary-format>mach-o
+     <target-os>darwin
+     <toolset>clang
    ;
 
 alias asm_context_sources
@@ -175,7 +185,6 @@ alias asm_context_sources
    ;
 
 # POWERPC_64
-# toolset darwin only
 alias asm_context_sources
    : asm/make_ppc64_sysv_macho_gas.S
      asm/jump_ppc64_sysv_macho_gas.S
@@ -185,6 +194,17 @@ alias asm_context_sources
      <binary-format>mach-o
      <target-os>darwin
      <toolset>darwin
+   ;
+
+alias asm_context_sources
+   : asm/make_ppc64_sysv_macho_gas.S
+     asm/jump_ppc64_sysv_macho_gas.S
+     untested.cpp
+   : <address-model>64
+     <architecture>power
+     <binary-format>mach-o
+     <target-os>darwin
+     <toolset>clang
    ;
 
 alias asm_context_sources
@@ -238,7 +258,6 @@ alias asm_context_sources
    ;
 
 # X86
-# toolset darwin only
 alias asm_context_sources
    : asm/make_i386_sysv_macho_gas.S
      asm/jump_i386_sysv_macho_gas.S
@@ -247,6 +266,16 @@ alias asm_context_sources
      <binary-format>mach-o
      <target-os>darwin
      <toolset>darwin
+   ;
+
+alias asm_context_sources
+   : asm/make_i386_sysv_macho_gas.S
+     asm/jump_i386_sysv_macho_gas.S
+   : <address-model>32
+     <architecture>x86
+     <binary-format>mach-o
+     <target-os>darwin
+     <toolset>clang
    ;
 
 alias asm_context_sources
@@ -268,7 +297,6 @@ alias asm_context_sources
    ;
 
 # X86_64
-# toolset darwin only
 alias asm_context_sources
    : asm/make_x86_64_sysv_macho_gas.S
      asm/jump_x86_64_sysv_macho_gas.S
@@ -277,6 +305,16 @@ alias asm_context_sources
      <binary-format>mach-o
      <target-os>darwin
      <toolset>darwin
+   ;
+
+alias asm_context_sources
+   : asm/make_x86_64_sysv_macho_gas.S
+     asm/jump_x86_64_sysv_macho_gas.S
+   : <address-model>64
+     <architecture>x86
+     <binary-format>mach-o
+     <target-os>darwin
+     <toolset>clang
    ;
 
 alias asm_context_sources
