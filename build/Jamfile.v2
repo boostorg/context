@@ -107,6 +107,7 @@ rule configure ( properties * )
 alias asm_context_sources
    : asm/make_arm_aapcs_macho_gas.S
      asm/jump_arm_aapcs_macho_gas.S
+     untested.cpp
    : <architecture>arm
      <target-os>iphone
      <toolset>darwin
@@ -130,6 +131,7 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_arm_aapcs_pe_armasm.o : asm/make_arm_aapcs_pe_armasm.asm : @armasm ]
      [ make asm/jump_arm_aapcs_pe_armasm.o : asm/jump_arm_aapcs_pe_armasm.asm : @armasm ]
+     untested.cpp
    : <architecture>arm
      <binary-format>pe
    ;
@@ -142,18 +144,12 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-alias asm_context_sources
-   : [ make asm/make_mips32_o32_elf_gas.o : asm/make_mips32_o32_elf_gas.S : @gas ]
-     [ make asm/jump_mips32_o32_elf_gas.o : asm/jump_mips32_o32_elf_gas.S : @gas ]
-   : <architecture>mips1
-     <binary-format>elf
-   ;
-
 # POWERPC
 # toolset darwin only
 alias asm_context_sources
    : asm/make_ppc32_sysv_macho_gas.S
      asm/jump_ppc32_sysv_macho_gas.S
+     untested.cpp
    : <address-model>32
      <architecture>power
      <binary-format>mach-o
@@ -172,6 +168,7 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_ppc32_sysv_xcoff_gas.o : asm/make_ppc32_sysv_xcoff_gas.S : @gas ]
      [ make asm/jump_ppc32_sysv_xcoff_gas.o : asm/jump_ppc32_sysv_xcoff_gas.S : @gas ]
+     untested.cpp
    : <address-model>32
      <architecture>power
      <binary-format>xcoff
@@ -182,6 +179,7 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_ppc64_sysv_macho_gas.S
      asm/jump_ppc64_sysv_macho_gas.S
+     untested.cpp
    : <address-model>64
      <architecture>power
      <binary-format>mach-o
@@ -192,6 +190,7 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_ppc64_sysv_elf_gas.o : asm/make_ppc64_sysv_elf_gas.S : @gas ]
      [ make asm/jump_ppc64_sysv_elf_gas.o : asm/jump_ppc64_sysv_elf_gas.S : @gas ]
+     untested.cpp
    : <address-model>64
      <architecture>power
      <binary-format>elf
@@ -200,6 +199,7 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_ppc64_sysv_xcoff_gas.o : asm/make_ppc64_sysv_xcoff_gas.S : @gas ]
      [ make asm/jump_ppc64_sysv_xcoff_gas.o : asm/jump_ppc64_sysv_xcoff_gas.S : @gas ]
+     untested.cpp
    : <address-model>64
      <architecture>power
      <binary-format>xcoff
@@ -209,6 +209,7 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_ppc32_ppc64_sysv_macho_gas.S
      asm/jump_ppc32_ppc64_sysv_macho_gas.S
+     untested.cpp
    : <address-model>32_64
      <architecture>power
      <binary-format>mach-o
@@ -220,6 +221,7 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_sparc_sysv_elf_gas.o : asm/make_sparc_sysv_elf_gas.S : @gas ]
      [ make asm/jump_sparc_sysv_elf_gas.o : asm/jump_sparc_sysv_elf_gas.S : @gas ]
+     untested.cpp
    : <address-model>32
      <architecture>sparc
      <binary-format>elf
@@ -229,6 +231,7 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_sparc64_sysv_elf_gas.o : asm/make_sparc64_sysv_elf_gas.S : @gas ]
      [ make asm/jump_sparc64_sysv_elf_gas.o : asm/jump_sparc64_sysv_elf_gas.S : @gas ]
+     untested.cpp
    : <address-model>64
      <architecture>sparc
      <binary-format>elf
@@ -284,10 +287,10 @@ alias asm_context_sources
      <binary-format>elf
    ;
 
-# note: the x32 ABI is equivalent (at least calling convention) to sysv API
 alias asm_context_sources
    : [ make asm/make_x86_64_x32_elf_gas.o : asm/make_x86_64_x32_elf_gas.S : @gas ]
      [ make asm/jump_x86_64_x32_elf_gas.o : asm/jump_x86_64_x32_elf_gas.S : @gas ]
+     untested.cpp
    : <address-model>32
      <architecture>x86
      <binary-format>elf
@@ -318,6 +321,7 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_combined_sysv_macho_gas.S
      asm/jump_combined_sysv_macho_gas.S
+     untested.cpp
    : <address-model>32
      <architecture>combined
      <binary-format>mach-o
@@ -328,6 +332,7 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_combined_sysv_macho_gas.S
      asm/jump_combined_sysv_macho_gas.S
+     untested.cpp
    : <address-model>64
      <architecture>combined
      <binary-format>mach-o
@@ -338,6 +343,7 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_combined_sysv_macho_gas.S
      asm/jump_combined_sysv_macho_gas.S
+     untested.cpp
    : <address-model>32_64
      <architecture>combined
      <binary-format>mach-o
