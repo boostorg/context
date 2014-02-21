@@ -24,10 +24,11 @@ typedef boost::context::simple_stack_allocator<
 
 bool preserve_fpu = false;
 boost::uint64_t jobs = 1000;
-boost::context::fcontext_t fcm, * fc;
+boost::context::fcontext_t fcm = 0;
+boost::context::fcontext_t fc = 0;
 
 static void fn( intptr_t)
-{ while ( true) boost::context::jump_fcontext( fc, & fcm, 7, preserve_fpu); }
+{ while ( true) boost::context::jump_fcontext( & fc, fcm, 7, preserve_fpu); }
 
 duration_type measure_time()
 {
@@ -94,7 +95,6 @@ int main( int argc, char * argv[])
         stack_allocator stack_alloc;
         fc = boost::context::make_fcontext(
                 stack_alloc.allocate( stack_allocator::default_stacksize() ),
-                stack_allocator::default_stacksize(),
                 fn);
 
         boost::uint64_t res = measure_time().count();
