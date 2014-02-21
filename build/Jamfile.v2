@@ -241,7 +241,7 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_sparc_sysv_elf_gas.o : asm/make_sparc_sysv_elf_gas.S : @gas ]
      [ make asm/jump_sparc_sysv_elf_gas.o : asm/jump_sparc_sysv_elf_gas.S : @gas ]
-     untested.cpp
+     unsupported.cpp
    : <address-model>32
      <architecture>sparc
      <binary-format>elf
@@ -251,7 +251,7 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_sparc64_sysv_elf_gas.o : asm/make_sparc64_sysv_elf_gas.S : @gas ]
      [ make asm/jump_sparc64_sysv_elf_gas.o : asm/jump_sparc64_sysv_elf_gas.S : @gas ]
-     untested.cpp
+     unsupported.cpp
    : <address-model>64
      <architecture>sparc
      <binary-format>elf
