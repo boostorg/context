@@ -23,25 +23,24 @@ typedef ctx::simple_stack_allocator<
 
 ctx::fcontext_t fcm = 0;
 ctx::fcontext_t fc1 = 0;
-ctx::fcontext_t fc2 = 0;
 
 void f1( intptr_t)
 {
-        std::cout << "f1: entered" << std::endl;
-        ctx::jump_fcontext( & fc1, fcm, 0, false);
+    std::cout << "f1: entered" << std::endl;
+    ctx::jump_fcontext( & fc1, fcm, 0, false);
 }
 
 int main( int argc, char * argv[])
 {
-        stack_allocator alloc;
+    stack_allocator alloc;
 
-        void * base1 = alloc.allocate( stack_allocator::default_stacksize());
-        fc1 = ctx::make_fcontext( base1, stack_allocator::default_stacksize(), f1);
+    void * base1 = alloc.allocate( stack_allocator::default_stacksize());
+    fc1 = ctx::make_fcontext( base1, stack_allocator::default_stacksize(), f1);
 
-        std::cout << "main: call start_fcontext( & fcm, fc1, 0)" << std::endl;
-        ctx::jump_fcontext( & fcm, fc1, 0, false);
+    std::cout << "main: call start_fcontext( & fcm, fc1, 0)" << std::endl;
+    ctx::jump_fcontext( & fcm, fc1, 0, false);
 
-        std::cout << "main: done" << std::endl;
+    std::cout << "main: done" << std::endl;
 
-        return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
