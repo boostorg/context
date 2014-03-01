@@ -50,6 +50,10 @@ exe exception
     : exception.cpp
     ;
 
+exe stacked
+    : stacked.cpp
+    ;
+
 exe echosse
     : echosse.cpp
     : <conditional>@configure
