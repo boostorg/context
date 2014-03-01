@@ -134,7 +134,8 @@ make_fcontext PROC EXPORT FRAME
 
 finish:
     ; reserve 32byte shadow-space for _exit
-    sub  rsp, 028h
+    ; after CALL RSP must be (RSP -0x8) % 16 == 0
+    sub  rsp, 030
     ; exit code is zero
     xor  rcx, rcx
     ; exit application
