@@ -133,6 +133,8 @@ make_fcontext PROC EXPORT FRAME
     ret ; return pointer to context-data
 
 finish:
+    ; reserve 32byte shadow-space for _exit
+    lea  rax, [rax-028h]
     ; exit code is zero
     xor  rcx, rcx
     ; exit application
