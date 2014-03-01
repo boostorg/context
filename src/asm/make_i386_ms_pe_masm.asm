@@ -30,6 +30,10 @@ make_fcontext PROC EXPORT
     ; first arg of make_fcontext() == top of context-stack
     mov  eax, [esp+04h]
 
+    ; reserve space for first argument of context-function
+    ; rax might already point to a 16byte border
+    lea  eax, [eax-08h]
+
     ; shift address in EAX to lower 16 byte boundary
     and  eax, -16
 

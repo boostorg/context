@@ -25,6 +25,10 @@ make_fcontext:
     /* first arg of make_fcontext() == top of context-stack */
     movl  0x4(%esp), %eax
 
+    /* reserve space for first argument of context-function
+       rax might already point to a 16byte border */
+    leal  -0x8(%eax), %eax
+
     /* shift address in EAX to lower 16 byte boundary */
     andl  $-16, %eax
 
