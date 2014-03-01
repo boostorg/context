@@ -12,11 +12,11 @@
 ;  | fc_mxcsr|fc_x87_cw| fc_strg |fc_deallo|  limit  |   base  |  fc_seh |   EDI   |
 ;  ---------------------------------------------------------------------------------
 ;  ---------------------------------------------------------------------------------
-;  |    8    |    9    |   10    |    11   |    12   |    13   |    14   |         |
+;  |    8    |    9    |   10    |    11   |    12   |    13   |    14   |    15   |
 ;  ---------------------------------------------------------------------------------
-;  |   020h  |  024h   |  028h   |   02ch  |   030h  |   034h  |   038h  |         |
+;  |   020h  |  024h   |  028h   |   02ch  |   030h  |   034h  |   038h  |   03ch  |
 ;  ---------------------------------------------------------------------------------
-;  |   ESI   |   EBX   |   EBP   |   EIP   |   EXIT  | SEH NXT |SEH HNDLR|         |
+;  |   ESI   |   EBX   |   EBP   |   EIP   |   EXIT  |         | SEH NXT |SEH HNDLR|
 ;  ---------------------------------------------------------------------------------
 
 .386
@@ -80,7 +80,7 @@ make_fcontext PROC EXPORT
     ; program is aborted
     assume  fs:nothing
     ; load NT_TIB into ECX
-    mov  ecx, fs:[018h]
+    mov  ecx, fs:[0h]
     assume  fs:error
 
 walk:
@@ -99,13 +99,13 @@ found:
     ; load 'handler' member of SEH == address of last SEH handler installed by Windows
     mov  ecx, [ecx+04h]
     ; save address in ECX as SEH handler for context
-    mov  [eax+038h], ecx
+    mov  [eax+03ch], ecx
     ; set ECX to -1
     mov  ecx, 0ffffffffh
     ; save ECX as next SEH item
-    mov  [eax+034h], ecx
+    mov  [eax+038h], ecx
     ; load address of next SEH item
-    lea  ecx, [eax+034h]
+    lea  ecx, [eax+038h]
     ; save next SEH
     mov  [eax+018h], ecx
 
