@@ -29,6 +29,8 @@ typedef ctx::simple_stack_allocator<
 
 ctx::fcontext_t fcm = 0;
 ctx::fcontext_t fc = 0;
+ctx::fcontext_t fc1 = 0;
+ctx::fcontext_t fc2 = 0;
 int value1 = 0;
 std::string value2;
 double value3 = 0.;
@@ -82,6 +84,23 @@ void f8( intptr_t arg)
     d += 3.45;
     value3 = d;
     ctx::jump_fcontext( & fc, fcm, 0);
+}
+
+void f10( intptr_t)
+{
+    value1 = 3;
+    ctx::jump_fcontext( & fc2, fc1, 0);
+}
+
+void f9( intptr_t)
+{
+    std::cout << "f1: entered" << std::endl;
+
+    stack_allocator alloc;
+    void * sp = alloc.allocate( stack_allocator::default_stacksize());
+    fc2 = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f10);
+    ctx::jump_fcontext( & fc1, fc2, 0);
+    ctx::jump_fcontext( & fc1, fcm, 0);
 }
 
 void test_setup()
@@ -192,6 +211,16 @@ void test_fp()
     BOOST_CHECK_EQUAL( 10.58, value3);
 }
 
+void test_stacked()
+{
+    value1 = 0;
+    stack_allocator alloc;
+    void * sp = alloc.allocate( stack_allocator::default_stacksize());
+    fc1 = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f9);
+    ctx::jump_fcontext( & fcm, fc1, 0);
+    BOOST_CHECK_EQUAL( 3, value1);
+}
+
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
@@ -205,6 +234,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_transfer) );
     test->add( BOOST_TEST_CASE( & test_exception) );
     test->add( BOOST_TEST_CASE( & test_fp) );
+    test->add( BOOST_TEST_CASE( & test_stacked) );
 
     return test;
 }
