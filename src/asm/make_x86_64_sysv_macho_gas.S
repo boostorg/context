@@ -38,6 +38,10 @@ _make_fcontext:
     /* first arg of make_fcontext() == top of context-stack */
     movq  %rdi, %rax
 
+    /* reserve space for first argument of context-function
+       rax might already point to a 16byte border */
+    leaq  -0x10(%rax), %rax
+
     /* shift address in RAX to lower 16 byte boundary */
     movabs  $-16,           %r8
     andq    %r8,            %rax

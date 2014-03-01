@@ -87,6 +87,10 @@ make_fcontext PROC EXPORT FRAME
     ; first arg of make_fcontext() == top of context-stack
     mov  rax, rcx
 
+    ; reserve space for first argument of context-function
+    ; rax might already point to a 16byte border
+    lea  rax, [rax-010h]
+
     ; shift address in RAX to lower 16 byte boundary
     ; == pointer to fcontext_t and address of context stack
     and  rax, -16
