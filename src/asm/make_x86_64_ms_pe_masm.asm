@@ -88,7 +88,7 @@ make_fcontext PROC EXPORT FRAME
     mov  rax, rcx
 
     ; reserve 32byte shadow-space for context-function
-    lea  rax, [rax-028h]
+    sub  rax, 028h
 
     ; shift address in RAX to lower 16 byte boundary
     ; == pointer to fcontext_t and address of context stack
@@ -97,7 +97,7 @@ make_fcontext PROC EXPORT FRAME
     ; reserve space for context-data on context-stack
     ; size for fc_mxcsr .. RIP + return-address for context-function
     ; on context-function entry: (RSP -0x8) % 16 == 0
-    lea  rax, [rax-0128h]
+    sub  rax, 0128h
 
     ; third arg of make_fcontext() == address of context-function
     mov  [rax+0118h], r8
@@ -134,7 +134,7 @@ make_fcontext PROC EXPORT FRAME
 
 finish:
     ; reserve 32byte shadow-space for _exit
-    lea  rsp, [rsp-028h]
+    sub  rsp, 028h
     ; exit code is zero
     xor  rcx, rcx
     ; exit application
