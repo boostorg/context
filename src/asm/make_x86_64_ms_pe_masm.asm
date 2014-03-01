@@ -133,9 +133,8 @@ make_fcontext PROC EXPORT FRAME
     ret ; return pointer to context-data
 
 finish:
-    ; reserve 32byte shadow-space for _exit
-    ; after CALL RSP must be (RSP -0x8) % 16 == 0
-    sub  rsp, 030
+    ; 32byte shadow-space for _exit() are
+    ; already reserved by make_fcontext()
     ; exit code is zero
     xor  rcx, rcx
     ; exit application
