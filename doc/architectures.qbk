@@ -16,7 +16,7 @@ __boost_context__ supports following architectures:
     [[mips1]        [O32|ELF]        [-]        [-]           [-]]
     [[ppc32]        [SYSV|ELF,XCOFF] [-]        [SYSV|MACH-O] [-]]
     [[ppc64]        [SYSV|ELF,XCOFF] [-]        [SYSV|MACH-O] [-]]
-    [[sparc]        [SYSV|ELF]       [-]        [-]           [-]]
+    [[sparc]        [-]              [-]        [-]           [-]]
     [[x86_64]       [SYSV,X32|ELF]   [MS|PE]    [SYSV|MACH-O] [-]]
 ]
 
