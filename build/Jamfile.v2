@@ -164,7 +164,6 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_ppc64_sysv_elf_gas.o : asm/make_ppc64_sysv_elf_gas.S : @gas ]
      [ make asm/jump_ppc64_sysv_elf_gas.o : asm/jump_ppc64_sysv_elf_gas.S : @gas ]
-     untested.cpp
    : <address-model>64
      <architecture>power
      <binary-format>elf
