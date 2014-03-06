@@ -40,7 +40,7 @@
  *  -------------------------------------------------  *
  *  | 128 | 132 | 136 | 140 | 144 | 148 | 152 | 156 |  *
  *  -------------------------------------------------  *
- *  |    F30    |    F31    |   fpscr   |    R13    |  *
+ *  |    F30    |    F31    |   fpscr   |    TOC    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  40 |  41 |  42 |  43 |  44 |  45 |  46 |  47 |  *
@@ -120,16 +120,27 @@ make_fcontext:
     # save return address into R6
     mflr  %r6
 
-    # first arg of make_fcontext() == top address of context-function
+    # first arg of make_fcontext() == top address of context-stack
     # shift address in R3 to lower 16 byte boundary
-    clrrwi  %r3, %r3, 4
+    clrrdi  %r3, %r3, 4
 
     # reserve space for context-data on context-stack
     # including 64 byte of linkage + parameter area (R1 % 16 == 0)
     subi  %r3, %r3, 392
 
     # third arg of make_fcontext() == address of context-function
-    stw  %r5, 320(%r3)
+    # entry point (ELFv2) or descriptor (ELFv1)
+#if _CALL_ELF == 2
+    # save address of context-function entry point
+    std  %r5, 320(%r3)
+#else
+    # save address of context-function entry point
+    ld   %r4, 0(%r5)
+    std  %r4, 320(%r3)
+    # save TOC of context-function
+    ld   %r4, 8(%r5)
+    std  %r4, 152(%r3)
+#endif
 
     # load LR
     mflr  %r0
@@ -144,7 +155,7 @@ make_fcontext:
     mtlr  %r0
     # save address of finish as return-address for context-function
     # will be entered after context-function returns
-    stw  %r4, 312(%r3)
+    std  %r4, 312(%r3)
 
     # restore return address from R6
     mtlr  %r6
@@ -155,9 +166,9 @@ finish:
     # save return address into R0
     mflr  %r0
     # save return address on stack, set up stack frame
-    stw  %r0, 8(%r1)
+    std  %r0, 8(%r1)
     # allocate stack space, R1 % 16 == 0
-    stwu  %r1, -32(%r1)
+    stdu  %r1, -32(%r1)
 
     # exit code is zero
     li  %r3, 0
