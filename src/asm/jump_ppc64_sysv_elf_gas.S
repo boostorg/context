@@ -40,7 +40,7 @@
  *  -------------------------------------------------  *
  *  | 128 | 132 | 136 | 140 | 144 | 148 | 152 | 156 |  *
  *  -------------------------------------------------  *
- *  |    F30    |    F31    |   fpscr   |    R13    |  *
+ *  |    F30    |    F31    |   fpscr   |    TOC    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  40 |  41 |  42 |  43 |  44 |  45 |  46 |  47 |  *
@@ -120,7 +120,9 @@ jump_fcontext:
     # reserve space on stack
     subi  %r1, %r1, 328
 
-    std  %r13, 152(%r1)  # save R13
+#if _CALL_ELF != 2
+    std  %r2,  152(%r1)  # save TOC
+#endif
     std  %r14, 160(%r1)  # save R14
     std  %r15, 168(%r1)  # save R15
     std  %r16, 176(%r1)  # save R16
@@ -176,7 +178,7 @@ jump_fcontext:
 
 1:
     # store RSP (pointing to context-data) in R3
-    stw  %r1, 0(%r3)
+    std  %r1, 0(%r3)
 
     # restore RSP (pointing to context-data) from R4
     mr  %r1, %r4
@@ -207,7 +209,9 @@ jump_fcontext:
     mtfsf  0xff, %f0  # restore FPSCR
 
 2:
-    ld  %r13, 152(%r1)  # restore R13
+#if _CALL_ELF != 2
+    ld  %r2,  152(%r1)  # restore TOC
+#endif
     ld  %r14, 160(%r1)  # restore R14
     ld  %r15, 168(%r1)  # restore R15
     ld  %r16, 176(%r1)  # restore R16
@@ -235,9 +239,9 @@ jump_fcontext:
     mtlr  %r0
 
     # load PC
-    ld  %r0, 320(%r1)
+    ld  %r12, 320(%r1)
     # restore CTR
-    mtctr  %r0
+    mtctr  %r12
 
     # adjust stack
     addi  %r1, %r1, 328
