@@ -69,7 +69,7 @@ feature.set-default abi : [ default_abi ] ;
 
 actions gas
 {
-    cpp -x assembler-with-cpp "$(>)" | as -am -o "$(<)"
+    cpp -x assembler-with-cpp "$(>)" | as -o "$(<)"
 }
 
 actions armasm
