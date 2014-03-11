@@ -120,6 +120,14 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
+   : asm/make_arm_aapcs_macho_gas.S
+     asm/jump_arm_aapcs_macho_gas.S
+   : <architecture>arm
+     <binary-format>mach-o
+     <toolset>clang
+   ;
+
+alias asm_context_sources
    : [ make asm/make_arm_aapcs_macho_gas.o : asm/make_arm_aapcs_macho_gas.S : @gas ]
      [ make asm/jump_arm_aapcs_macho_gas.o : asm/jump_arm_aapcs_macho_gas.S : @gas ]
    : <architecture>arm
@@ -161,6 +169,15 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
+   : asm/make_ppc32_sysv_macho_gas.S
+     asm/jump_ppc32_sysv_macho_gas.S
+   : <address-model>32
+     <architecture>power
+     <binary-format>mach-o
+     <toolset>clang
+   ;
+
+alias asm_context_sources
    : [ make asm/make_ppc32_sysv_macho_gas.o : asm/make_ppc32_sysv_macho_gas.S : @gas ]
      [ make asm/jump_ppc32_sysv_macho_gas.o : asm/jump_ppc32_sysv_macho_gas.S : @gas ]
    : <address-model>32
@@ -197,6 +214,16 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
+   : asm/make_ppc64_sysv_macho_gas.S
+     asm/jump_ppc64_sysv_macho_gas.S
+     untested.cpp
+   : <address-model>64
+     <architecture>power
+     <binary-format>mach-o
+     <toolset>clang
+   ;
+
+alias asm_context_sources
    : [ make asm/make_ppc64_sysv_macho_gas.o : asm/make_ppc64_sysv_macho_gas.S : @gas ]
      [ make asm/jump_ppc64_sysv_macho_gas.o : asm/jump_ppc64_sysv_macho_gas.S : @gas ]
      untested.cpp
@@ -223,6 +250,16 @@ alias asm_context_sources
      <architecture>power
      <binary-format>mach-o
      <toolset>darwin
+   ;
+
+alias asm_context_sources
+   : asm/make_ppc32_ppc64_sysv_macho_gas.S
+     asm/jump_ppc32_ppc64_sysv_macho_gas.S
+     untested.cpp
+   : <address-model>32_64
+     <architecture>power
+     <binary-format>mach-o
+     <toolset>clang
    ;
 
 alias asm_context_sources
@@ -273,6 +310,15 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
+   : asm/make_i386_sysv_macho_gas.S
+     asm/jump_i386_sysv_macho_gas.S
+   : <address-model>32
+     <architecture>x86
+     <binary-format>mach-o
+     <toolset>clang
+   ;
+
+alias asm_context_sources
    : [ make asm/make_i386_sysv_macho_gas.o : asm/make_i386_sysv_macho_gas.S : @gas ]
      [ make asm/jump_i386_sysv_macho_gas.o : asm/jump_i386_sysv_macho_gas.S : @gas ]
    : <address-model>32
@@ -318,6 +364,15 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
+   : asm/make_x86_64_sysv_macho_gas.S
+     asm/jump_x86_64_sysv_macho_gas.S
+   : <address-model>64
+     <architecture>x86
+     <binary-format>mach-o
+     <toolset>clang
+   ;
+
+alias asm_context_sources
    : [ make asm/make_x86_64_sysv_macho_gas.o : asm/make_x86_64_sysv_macho_gas.S : @gas ]
      [ make asm/jump_x86_64_sysv_macho_gas.o : asm/jump_x86_64_sysv_macho_gas.S : @gas ]
    : <address-model>64
@@ -346,6 +401,16 @@ alias asm_context_sources
    ;
 
 alias asm_context_sources
+   : asm/make_i386_x86_64_sysv_macho_gas.S
+     asm/jump_i386_x86_64_sysv_macho_gas.S
+     untested.cpp
+   : <address-model>32_64
+     <architecture>x86
+     <binary-format>mach-o
+     <toolset>clang
+   ;
+
+alias asm_context_sources
    : [ make asm/make_i386_x86_64_sysv_macho_gas.o : asm/make_i386_x86_64_sysv_macho_gas.S : @gas ]
      [ make asm/jump_i386_x86_64_sysv_macho_gas.o : asm/jump_i386_x86_64_sysv_macho_gas.S : @gas ]
      untested.cpp
@@ -362,6 +427,15 @@ alias asm_context_sources
    : <architecture>combined
      <binary-format>mach-o
      <toolset>darwin
+   ;
+
+alias asm_context_sources
+   : asm/make_combined_sysv_macho_gas.S
+     asm/jump_combined_sysv_macho_gas.S
+     untested.cpp
+   : <architecture>combined
+     <binary-format>mach-o
+     <toolset>clang
    ;
 
 alias asm_context_sources
