@@ -185,17 +185,6 @@ alias asm_context_sources
      <address-model>32
      <architecture>power
      <binary-format>mach-o
-     <toolset>darwin
-   ;
-
-alias asm_context_sources
-   : asm/make_ppc32_sysv_macho_gas.S
-     asm/jump_ppc32_sysv_macho_gas.S
-   : <abi>sysv
-     <address-model>32
-     <architecture>power
-     <binary-format>mach-o
-     <toolset>clang
    ;
 
 alias asm_context_sources
@@ -226,18 +215,6 @@ alias asm_context_sources
      <address-model>64
      <architecture>power
      <binary-format>mach-o
-     <toolset>darwin
-   ;
-
-alias asm_context_sources
-   : asm/make_ppc64_sysv_macho_gas.S
-     asm/jump_ppc64_sysv_macho_gas.S
-     untested.cpp
-   : <abi>sysv
-     <address-model>64
-     <architecture>power
-     <binary-format>mach-o
-     <toolset>clang
    ;
 
 alias asm_context_sources
@@ -259,18 +236,6 @@ alias asm_context_sources
      <address-model>32_64
      <architecture>power
      <binary-format>mach-o
-     <toolset>darwin
-   ;
-
-alias asm_context_sources
-   : asm/make_ppc32_ppc64_sysv_macho_gas.S
-     asm/jump_ppc32_ppc64_sysv_macho_gas.S
-     untested.cpp
-   : <abi>sysv
-     <address-model>32_64
-     <architecture>power
-     <binary-format>mach-o
-     <toolset>clang
    ;
 
 # SPARC
@@ -312,17 +277,6 @@ alias asm_context_sources
      <address-model>32
      <architecture>x86
      <binary-format>mach-o
-     <toolset>darwin
-   ;
-
-alias asm_context_sources
-   : asm/make_i386_sysv_macho_gas.S
-     asm/jump_i386_sysv_macho_gas.S
-   : <abi>sysv
-     <address-model>32
-     <architecture>x86
-     <binary-format>mach-o
-     <toolset>clang
    ;
 
 alias asm_context_sources
@@ -362,17 +316,6 @@ alias asm_context_sources
      <address-model>64
      <architecture>x86
      <binary-format>mach-o
-     <toolset>darwin
-   ;
-
-alias asm_context_sources
-   : asm/make_x86_64_sysv_macho_gas.S
-     asm/jump_x86_64_sysv_macho_gas.S
-   : <abi>sysv
-     <address-model>64
-     <architecture>x86
-     <binary-format>mach-o
-     <toolset>clang
    ;
 
 alias asm_context_sources
@@ -393,17 +336,6 @@ alias asm_context_sources
      <address-model>32_64
      <architecture>x86
      <binary-format>mach-o
-     <toolset>darwin
-   ;
-
-alias asm_context_sources
-   : asm/make_i386_x86_64_sysv_macho_gas.S
-     asm/jump_i386_x86_64_sysv_macho_gas.S
-   : <abi>sysv
-     <address-model>32_64
-     <architecture>x86
-     <binary-format>mach-o
-     <toolset>clang
    ;
 
 # COMBINED
@@ -414,17 +346,6 @@ alias asm_context_sources
    : <abi>sysv
      <architecture>combined
      <binary-format>mach-o
-     <toolset>darwin
-   ;
-
-alias asm_context_sources
-   : asm/make_combined_sysv_macho_gas.S
-     asm/jump_combined_sysv_macho_gas.S
-     untested.cpp
-   : <abi>sysv
-     <architecture>combined
-     <binary-format>mach-o
-     <toolset>clang
    ;
 
 
