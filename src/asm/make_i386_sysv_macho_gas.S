@@ -46,9 +46,9 @@ _make_fcontext:
     fnstcw  0x4(%eax)
 
     /* compute abs address of label finish */
-    call  1f
+    call  l1
     /* address of label 1 */
-1:  popl  %ecx
+l1:  popl  %ecx
     /* compute abs address of label finish */
     addl  $finish-1b, %ecx
     /* save address of finish as return-address for context-function */

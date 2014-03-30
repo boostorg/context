@@ -34,14 +34,14 @@ _jump_fcontext:
 
     /* test for flag preserve_fpu */
     test  %ecx, %ecx
-    je  1f
+    je  l1
 
     /* save MMX control- and status-word */
     stmxcsr  (%esp)
     /* save x87 control-word */
     fnstcw  0x4(%esp)
 
-1:
+l1:
     /* first arg of jump_fcontext() == context jumping from */
     movl  0x1c(%esp), %eax
 
@@ -59,13 +59,13 @@ _jump_fcontext:
 
     /* test for flag preserve_fpu */
     test  %ecx, %ecx
-    je  2f
+    je  l2
 
     /* restore MMX control- and status-word */
     ldmxcsr  (%esp)
     /* restore x87 control-word */
     fldcw  0x4(%esp)
-2:
+l2:
     /* prepare stack for FPU */
     leal  0x8(%esp), %esp
 
