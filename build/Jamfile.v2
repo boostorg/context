@@ -682,8 +682,8 @@ alias asm_context_sources
    ;
 # X86_64/SYSV/MACH-O
 alias asm_context_sources
-   : [ make asm/make_x86_64_sysv_macho_gas.o : asm/make_x86_64_sysv_macho_gas.S : @gasx64 ]
-     [ make asm/jump_x86_64_sysv_macho_gas.o : asm/jump_x86_64_sysv_macho_gas.S : @gasx64 ]
+   : [ make asm/make_x86_64_sysv_macho_gas.o : asm/make_x86_64_sysv_macho_gas.S : @gas64 ]
+     [ make asm/jump_x86_64_sysv_macho_gas.o : asm/jump_x86_64_sysv_macho_gas.S : @gas64 ]
    : <abi>sysv
      <address-model>64
      <architecture>x86
