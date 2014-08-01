@@ -1,7 +1,8 @@
-.globl _make_fcontext
-.align 2
-.def _make_fcontext; .scl 2; .type 32; .endef
-_make_fcontext:
+	.globl	make_fcontext[DS]
+	.globl .make_fcontext[PR]
+	.align 2 
+	.csect .make_fcontext[PR], 3
+#.make_fcontext:
     # save return address into R6
     mflr  6
 
@@ -19,12 +20,12 @@ _make_fcontext:
     # load LR
     mflr  0
     # jump to label 1
-    bl  label1
-label1:
+    bl  .Label
+.Label:
     # load LR into R4
     mflr  4
-    # compute abs address of label finish
-    addi  4, 4, finish - 1b
+    # compute abs address of label .L_finish
+    addi  4, 4, .L_finish - .Label 
     # restore LR
     mtlr  0
     # save address of finish as return-address for context-function
@@ -36,7 +37,7 @@ label1:
 
     blr  # return pointer to context-data
 
-finish:
+.L_finish:
     # save return address into R0
     mflr  0
     # save return address on stack, set up stack frame
@@ -47,4 +48,5 @@ finish:
     # exit code is zero
     li  3, 0
     # exit application
-    bl  _exit
+    bl  ._exit
+    nop
