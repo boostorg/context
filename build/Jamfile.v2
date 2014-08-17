@@ -303,7 +303,6 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_ppc32_sysv_xcoff_gas.o : asm/make_ppc32_sysv_xcoff_gas.S : @gas ]
      [ make asm/jump_ppc32_sysv_xcoff_gas.o : asm/jump_ppc32_sysv_xcoff_gas.S : @gas ]
-     untested.cpp
    : <abi>sysv
      <address-model>32
      <architecture>power
@@ -313,7 +312,6 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_ppc32_sysv_xcoff_gas.S
      asm/jump_ppc32_sysv_xcoff_gas.S
-     untested.cpp
    : <abi>sysv
      <address-model>32
      <architecture>power
@@ -324,7 +322,6 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_ppc32_sysv_xcoff_gas.S
      asm/jump_ppc32_sysv_xcoff_gas.S
-     untested.cpp
    : <abi>sysv
      <address-model>32
      <architecture>power
@@ -398,7 +395,6 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_ppc64_sysv_xcoff_gas.o : asm/make_ppc64_sysv_xcoff_gas.S : @gas ]
      [ make asm/jump_ppc64_sysv_xcoff_gas.o : asm/jump_ppc64_sysv_xcoff_gas.S : @gas ]
-     untested.cpp
    : <abi>sysv
      <address-model>64
      <architecture>power
@@ -408,7 +404,6 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_ppc64_sysv_xcoff_gas.S
      asm/jump_ppc64_sysv_xcoff_gas.S
-     untested.cpp
    : <abi>sysv
      <address-model>64
      <architecture>power
@@ -419,7 +414,6 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_ppc64_sysv_xcoff_gas.S
      asm/jump_ppc64_sysv_xcoff_gas.S
-     untested.cpp
    : <abi>sysv
      <address-model>64
      <architecture>power
