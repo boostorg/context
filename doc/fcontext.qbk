@@ -171,7 +171,7 @@ destroy local stack variables so they can release allocated resources (RAII
 pattern). The user is responsible for this task.
 
 
-[section:boost_fcontext Struct `fcontext_t` and related functions]
+[section:boost_fcontext `fcontext_t` and related functions]
 
         struct stack_t
         {
