@@ -95,6 +95,7 @@ int main( int argc, char * argv[])
         stack_allocator stack_alloc;
         fc = boost::context::make_fcontext(
                 stack_alloc.allocate( stack_allocator::default_stacksize() ),
+                stack_allocator::default_stacksize(),
                 fn);
 
         boost::uint64_t res = measure_time().count();
