@@ -209,6 +209,37 @@ alias asm_context_sources
      <toolset>msvc
    ;
 
+# ARM64
+# ARM64/AAPCS/MACH-O
+alias asm_context_sources
+   : [ make asm/make_arm64_aapcs_macho_gas.o : asm/make_arm64_aapcs_macho_gas.S : @gas64 ]
+     [ make asm/jump_arm64_aapcs_macho_gas.o : asm/jump_arm64_aapcs_macho_gas.S : @gas64 ]
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>mach-o
+   ;
+
+alias asm_context_sources
+   : asm/make_arm64_aapcs_macho_gas.S
+     asm/jump_arm64_aapcs_macho_gas.S
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>mach-o
+     <toolset>clang
+   ;
+
+alias asm_context_sources
+   : asm/make_arm64_aapcs_macho_gas.S
+     asm/jump_arm64_aapcs_macho_gas.S
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>mach-o
+     <toolset>darwin
+   ;
+
 # MIPS
 # MIPS/O32/ELF
 alias asm_context_sources
