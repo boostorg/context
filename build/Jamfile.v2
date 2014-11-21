@@ -14,9 +14,22 @@ import os ;
 import toolset ;
 import architecture ;
 
+feature.feature segmented-stacks : on : optional propagated composite ;
+feature.compose <segmented-stacks>on : <define>BOOST_USE_SEGMENTED_STACKS ;
+
 project boost/context
     : requirements
+      <library>/boost/system//boost_system
+      <library>/boost/thread//boost_thread
       <os>SOLARIS:<define>_XOPEN_SOURCE=600
+      <toolset>gcc-4.7,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>gcc-4.7,<segmented-stacks>on:<linkflags>"-static-libgcc"
+      <toolset>gcc-4.8,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>gcc-4.8,<segmented-stacks>on:<linkflags>"-static-libgcc"
+      <toolset>gcc-4.9,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>gcc-4.9,<segmented-stacks>on:<linkflags>"-static-libgcc"
+      <toolset>clang-3.4,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>clang-3.4,<segmented-stacks>on:<linkflags>"-static-libgcc"
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
       <define>BOOST_CONTEXT_SOURCE
     : usage-requirements
@@ -214,6 +227,7 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_arm64_aapcs_macho_gas.o : asm/make_arm64_aapcs_macho_gas.S : @gas64 ]
      [ make asm/jump_arm64_aapcs_macho_gas.o : asm/jump_arm64_aapcs_macho_gas.S : @gas64 ]
+     untested.cpp
    : <abi>aapcs
      <address-model>64
      <architecture>arm
@@ -223,6 +237,7 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_arm64_aapcs_macho_gas.S
      asm/jump_arm64_aapcs_macho_gas.S
+     untested.cpp
    : <abi>aapcs
      <address-model>64
      <architecture>arm
@@ -233,6 +248,7 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_arm64_aapcs_macho_gas.S
      asm/jump_arm64_aapcs_macho_gas.S
+     untested.cpp
    : <abi>aapcs
      <address-model>64
      <architecture>arm
@@ -799,8 +815,22 @@ alias select_asm_context_sources
     [ architecture.address-model ]
   ;
 
+
+alias stack_traits_sources
+    : windows/stack_traits.cpp
+    : <target-os>windows
+    ;
+
+alias stack_traits_sources
+    : posix/stack_traits.cpp
+    ;
+
+explicit stack_traits_sources ;
+
+
 lib boost_context
    : select_asm_context_sources
+     stack_traits_sources
    ;
 
 boost-install boost_context ;
