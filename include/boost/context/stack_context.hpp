@@ -30,7 +30,7 @@ struct stack_context {
 
     stack_context() :
         size( 0),
-        sp( nullptr),
+        sp( 0),
         segments_ctx() {
     }
 };
@@ -41,7 +41,7 @@ struct stack_context {
 
     stack_context() :
         size( 0),
-        sp( nullptr) {
+        sp( 0) {
     }
 };
 #endif
