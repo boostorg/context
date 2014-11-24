@@ -1,12 +1,12 @@
 
-//          Copyright Oliver Kowalke 2009.
+//          Copyright Oliver Kowalke 2014.
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CONTEXT_ALL_H
-#define BOOST_CONTEXT_ALL_H
-
 #include <boost/context/fcontext.hpp>
-
-#endif // BOOST_CONTEXT_ALL_H
+#include <boost/context/fixedsize.hpp>
+#include <boost/context/protected_fixedsize.hpp>
+#include <boost/context/segmented.hpp>
+#include <boost/context/stack_context.hpp>
+#include <boost/context/stack_traits.hpp>
