@@ -68,11 +68,11 @@ __econtext__ permits access to the current, active context via
 
 In this example a recursive descent parser uses a callback to emit a newly passed
 symbol. Using __econtext__ the control flow can be inverted, e.g. the user-code
-pulls parsed symbols from the parser - instead to get pushed from the parser.
+pulls parsed symbols from the parser - instead to get pushed from the parser
+(via callback).
 
 The interface of __econtext__ does not transfer data. This is not required
-because usually sharing the address off the data is sufficient (pointer/
-reference).
+because usually sharing data's address (pointer/reference) sufficient.
 
 If the code executed by __econtext__ emits an exception, `std::terminate()` will
 be called.
