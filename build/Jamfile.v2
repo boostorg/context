@@ -14,6 +14,9 @@ import os ;
 import toolset ;
 import architecture ;
 
+feature.feature segmented-stacks : on : optional propagated composite ;
+feature.compose <segmented-stacks>on : <define>BOOST_USE_SEGMENTED_STACKS ;
+
 project boost/context
     : requirements
       <os>SOLARIS:<define>_XOPEN_SOURCE=600
