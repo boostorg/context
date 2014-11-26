@@ -169,7 +169,7 @@ public:
         ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
     }
 
-    void jump_to() noexcept {
+    void jump_to( bool preserve_fpu = false) noexcept {
         assert( * this);
         ptr_t tmp( current_ctx_);
         current_ctx_ = ptr_;
@@ -178,14 +178,14 @@ public:
             __splitstack_getcontext( tmp->sctx.segments_ctx);
             __splitstack_setcontext( ptr_->sctx.segments_ctx);
 
-            jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ) );
+            jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ), preserve_fpu);
 
             __splitstack_setcontext( tmp->sctx.segments_ctx);
         } else {
-            jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ) );
+            jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ), preserve_fpu);
         }
 #else
-        jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ) );
+        jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ), preserve_fpu);
 #endif
     }
 

@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_COROUTINES_PROTECTED_FIXEDSIZE_H
-#define BOOST_COROUTINES_PROTECTED_FIXEDSIZE_H
+#ifndef BOOST_CONTEXT_PROTECTED_FIXEDSIZE_H
+#define BOOST_CONTEXT_PROTECTED_FIXEDSIZE_H
 
 extern "C" {
 #include <fcntl.h>
@@ -98,4 +98,4 @@ typedef basic_protected_fixedsize< stack_traits > protected_fixedsize;
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_COROUTINES_PROTECTED_FIXEDSIZE_H
+#endif // BOOST_CONTEXT_PROTECTED_FIXEDSIZE_H
