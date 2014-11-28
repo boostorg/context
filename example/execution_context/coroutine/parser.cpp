@@ -8,6 +8,7 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #include <boost/context/fixedsize.hpp>
 
@@ -44,9 +45,6 @@ public:
    void run() {
       scan();
       E();
-      if (next!='\0'){
-          exit(1);
-      }
    }
 
 private:
@@ -92,19 +90,26 @@ private:
 
 typedef coroutine<char> coro_t;
 
-int main() {
+void foo() {
     std::istringstream is("1+1");
     // invert control flow
     coro_t::pull_type seq(
-        boost::context::fixedsize(),
-        [&is]( coro_t::push_type & yield) {
+            boost::context::fixedsize(),
+            [&is]( coro_t::push_type & yield) {
             Parser p(is,[&yield](char ch){ yield(ch); });
             p.run();
-        });
+            });
 
     // user-code pulls parsed data from parser
     while(seq){
         printf("Parsed: %c\n",seq.get());
         seq();
     }
+}
+
+int main() {
+    std::thread t1( foo);
+    std::thread t2( foo);
+    t1.join();
+    t2.join();
 }
