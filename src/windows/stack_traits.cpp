@@ -22,7 +22,7 @@ extern "C" {
 #include <boost/context/detail/config.hpp>
 #include <boost/thread.hpp>
 
-#include <boost/econtext/stack_context.hpp>
+#include <boost/context/stack_context.hpp>
 
 // x86_64
 // test x86_64 before i386 because icc might

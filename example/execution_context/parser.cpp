@@ -8,6 +8,7 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #include <boost/context/execution_context.hpp>
 #include <boost/context/fixedsize.hpp>
@@ -43,9 +44,6 @@ public:
    void run() {
       scan();
       E();
-      if (next!='\0'){
-          exit(1);
-      }
    }
 
 private:
@@ -89,7 +87,7 @@ private:
    }
 };
 
-int main() {
+void foo() {
     std::istringstream is("1+1");
     bool done=false;
     char c;
@@ -105,6 +103,7 @@ int main() {
             });
             p.run();
             done=true;
+            main_ctx.jump_to();
         });
 
     // user-code pulls parsed data from parser
@@ -112,4 +111,10 @@ int main() {
         parser_ctx.jump_to();
         printf("Parsed: %c\n",c);
     }
+}
+
+int main() {
+    std::thread t( foo);
+    t.join();
+    return 0;
 }

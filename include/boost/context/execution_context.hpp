@@ -42,7 +42,7 @@ void __splitstack_setcontext( void * [BOOST_CONTEXT_SEGMENTS]);
 namespace boost {
 namespace context {
 
-class execution_context {
+class BOOST_CONTEXT_DECL execution_context {
 private:
     struct base_context {
         std::size_t     use_count;
@@ -105,6 +105,9 @@ private:
     };
 
     struct main_context : public base_context {
+        ~main_context() {
+            fprintf(stderr,"~main_context()\n");
+        }
         void deallocate() {
         }
 
@@ -128,12 +131,15 @@ private:
 
     static thread_local ptr_t                       current_ctx_;
 
-    bool                                            is_segmented_;
     boost::intrusive_ptr< base_context >            ptr_;
 
     execution_context() :
-        is_segmented_( false),
         ptr_( current_ctx_) {
+    }
+
+    static ptr_t create_main_context() {
+        static thread_local main_context mctx; // thread_local required?
+        return ptr_t( & mctx);
     }
 
 public:
@@ -141,51 +147,35 @@ public:
         return execution_context();
     }
 
-#if defined(BOOST_USE_SEGMENTED_STACKS)
-    template< typename Fn >
-    execution_context( segmented salloc, Fn && fn) :
-        is_segmented_( true),
-        ptr_() {
-        typedef side_context< Fn, segmented >  func_t;
-
-        stack_context sctx( salloc.allocate() );
-        std::size_t size = sctx.size - sizeof( func_t);
-        void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
-        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
-        ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
-    }
-#endif
-
     template< typename StackAlloc, typename Fn >
     execution_context( StackAlloc salloc, Fn && fn) :
-        is_segmented_( false),
         ptr_() {
         typedef side_context< Fn, StackAlloc >  func_t;
 
         stack_context sctx( salloc.allocate() );
+        // reserve space for control structure
         std::size_t size = sctx.size - sizeof( func_t);
         void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
+        // create fast-context
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
+        // placment new for control structure on fast-context stack
         ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
     }
 
-    void jump_to() noexcept {
+    void jump_to( bool preserve_fpu = false) noexcept {
         assert( * this);
         ptr_t tmp( current_ctx_);
         current_ctx_ = ptr_;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
-        if ( is_segmented_) {
             __splitstack_getcontext( tmp->sctx.segments_ctx);
             __splitstack_setcontext( ptr_->sctx.segments_ctx);
 
-            jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ) );
+            jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ), preserve_fpu);
 
             __splitstack_setcontext( tmp->sctx.segments_ctx);
-        } else {
-            jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ) );
         }
 #else
-        jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ) );
+        jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ), preserve_fpu);
 #endif
     }
 
@@ -200,7 +190,7 @@ public:
 
 thread_local
 execution_context::ptr_t
-execution_context::current_ctx_ = new execution_context::main_context();
+execution_context::current_ctx_ = execution_context::create_main_context();
 
 }}
 
