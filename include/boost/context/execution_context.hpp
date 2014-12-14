@@ -18,7 +18,6 @@
 #include <boost/intrusive_ptr.hpp>
 
 #include <boost/context/detail/config.hpp>
-#include <boost/context/reserve.hpp>
 #include <boost/context/stack_context.hpp>
 #include <boost/context/segmented.hpp>
 
@@ -157,24 +156,6 @@ public:
         // reserve space for control structure
         std::size_t size = sctx.size - sizeof( func_t);
         void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
-        // create fast-context
-        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
-        // placment new for control structure on fast-context stack
-        ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
-    }
-
-    template< typename StackAlloc, typename Fn >
-    execution_context( reserve & rs, StackAlloc salloc, Fn && fn) :
-        ptr_() {
-        typedef side_context< Fn, StackAlloc >  func_t;
-
-        stack_context sctx( salloc.allocate() );
-        // reserve space for user code
-        std::size_t size = sctx.size - rs.size;
-        * rs.vp = static_cast< char * >( sctx.sp) - rs.size;
-        // reserve space for control structure
-        size -= sizeof( func_t);
-        void * sp = static_cast< char * >( * rs.vp) - sizeof( func_t);
         // create fast-context
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
         // placment new for control structure on fast-context stack
