@@ -7,6 +7,10 @@
 #ifndef BOOST_CONTEXT_EXECUTION_CONTEXT_H
 #define BOOST_CONTEXT_EXECUTION_CONTEXT_H
 
+#if __cplusplus < 201103L
+# error "execution_context requires C++11 support!"
+#endif
+
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
@@ -18,12 +22,9 @@
 #include <boost/intrusive_ptr.hpp>
 
 #include <boost/context/detail/config.hpp>
+#include <boost/context/reserve.hpp>
 #include <boost/context/stack_context.hpp>
 #include <boost/context/segmented.hpp>
-
-#if defined(BOOST_NO_CXX11_FINAL)
-# error "execution_context requires C++11 support!"
-#endif
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_PREFIX
@@ -105,9 +106,6 @@ private:
     };
 
     struct main_context : public base_context {
-        ~main_context() {
-            fprintf(stderr,"~main_context()\n");
-        }
         void deallocate() {
         }
 
@@ -162,6 +160,24 @@ public:
         ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
     }
 
+    template< typename StackAlloc, typename Fn >
+    execution_context( reserve & rs, StackAlloc salloc, Fn && fn) :
+        ptr_() {
+        typedef side_context< Fn, StackAlloc >  func_t;
+
+        stack_context sctx( salloc.allocate() );
+        // reserve space for user code
+        std::size_t size = sctx.size - rs.size;
+        * rs.vp = static_cast< char * >( sctx.sp) - rs.size;
+        // reserve space for control structure
+        size -= sizeof( func_t);
+        void * sp = static_cast< char * >( * rs.vp) - sizeof( func_t);
+        // create fast-context
+        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
+        // placment new for control structure on fast-context stack
+        ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
+    }
+
     void jump_to( bool preserve_fpu = false) noexcept {
         assert( * this);
         ptr_t tmp( current_ctx_);
@@ -187,10 +203,6 @@ public:
         return nullptr == ptr_;
     }
 };
-
-thread_local
-execution_context::ptr_t
-execution_context::current_ctx_ = execution_context::create_main_context();
 
 }}
 
