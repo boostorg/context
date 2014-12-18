@@ -19,6 +19,7 @@ extern "C" {
 #include <cmath>
 
 #include <boost/assert.hpp>
+#include <boost/config.hpp>
 #include <boost/thread.hpp>
 
 #if !defined (SIGSTKSZ)

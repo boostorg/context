@@ -831,6 +831,7 @@ explicit stack_traits_sources ;
 lib boost_context
    : select_asm_context_sources
      stack_traits_sources
+     execution_context.cpp
    ;
 
 boost-install boost_context ;
