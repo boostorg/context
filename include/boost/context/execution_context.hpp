@@ -7,9 +7,7 @@
 #ifndef BOOST_CONTEXT_EXECUTION_CONTEXT_H
 #define BOOST_CONTEXT_EXECUTION_CONTEXT_H
 
-#if __cplusplus < 201103L
-# error "execution_context requires C++11 support!"
-#endif
+#if __cplusplus >= 201103L
 
 #include <cassert>
 #include <cstdint>
@@ -18,11 +16,11 @@
 #include <memory>
 
 #include <boost/config.hpp>
-#include <boost/context/fcontext.hpp>
 #include <boost/intrusive_ptr.hpp>
 
 #include <boost/context/detail/config.hpp>
-#include <boost/context/reserve.hpp>
+#include <boost/context/fcontext.hpp>
+#include <boost/context/fixedsize.hpp>
 #include <boost/context/stack_context.hpp>
 #include <boost/context/segmented.hpp>
 
@@ -65,6 +63,9 @@ private:
         virtual ~base_context() {
         }
 
+        base_context( base_context const&) = delete;
+        base_context & operator=( base_context const&) = delete;
+
         virtual void run() = 0;
         virtual void deallocate() = 0;
 
@@ -86,7 +87,7 @@ private:
         StackAlloc      salloc;
         Fn              fn;
 
-        side_context( stack_context sctx, StackAlloc const& salloc_, Fn && fn_, fcontext_t fctx) :
+        explicit side_context( stack_context sctx, StackAlloc const& salloc_, Fn && fn_, fcontext_t fctx) :
             base_context( fctx, sctx),
             salloc( salloc_),
             fn( std::forward< Fn >( fn_) ) {
@@ -145,8 +146,13 @@ public:
         return execution_context();
     }
 
+    template< typename Fn >
+    explicit execution_context( Fn && fn) :
+        execution_context( fixedsize(), std::forward< Fn >( fn) ) {
+    }
+
     template< typename StackAlloc, typename Fn >
-    execution_context( StackAlloc salloc, Fn && fn) :
+    explicit execution_context( StackAlloc salloc, Fn && fn) :
         ptr_() {
         typedef side_context< Fn, StackAlloc >  func_t;
 
@@ -154,24 +160,6 @@ public:
         // reserve space for control structure
         std::size_t size = sctx.size - sizeof( func_t);
         void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
-        // create fast-context
-        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
-        // placment new for control structure on fast-context stack
-        ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
-    }
-
-    template< typename StackAlloc, typename Fn >
-    execution_context( reserve & rs, StackAlloc salloc, Fn && fn) :
-        ptr_() {
-        typedef side_context< Fn, StackAlloc >  func_t;
-
-        stack_context sctx( salloc.allocate() );
-        // reserve space for user code
-        std::size_t size = sctx.size - rs.size;
-        * rs.vp = static_cast< char * >( sctx.sp) - rs.size;
-        // reserve space for control structure
-        size -= sizeof( func_t);
-        void * sp = static_cast< char * >( * rs.vp) - sizeof( func_t);
         // create fast-context
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
         // placment new for control structure on fast-context stack
@@ -208,6 +196,10 @@ public:
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX
+#endif
+
+#else
+# error "execution_context requires C++11 support!"
 #endif
 
 #endif // BOOST_CONTEXT_EXECUTION_CONTEXT_H
