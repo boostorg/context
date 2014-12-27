@@ -27,6 +27,4 @@ execution_context::current_ctx_ = execution_context::create_main_context();
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#else
-# error "execution_context requires C++11 support!"
 #endif
