@@ -22,7 +22,6 @@
 #include <boost/intrusive_ptr.hpp>
 
 #include <boost/context/detail/config.hpp>
-#include <boost/context/reserve.hpp>
 #include <boost/context/stack_context.hpp>
 #include <boost/context/segmented.hpp>
 
@@ -50,22 +49,22 @@ private:
         fcontext_t      fctx;
         stack_context   sctx;
 
-        base_context() :
+        base_context() noexcept :
             use_count( 0),
             fctx( 0),
             sctx() {
         } 
 
-        base_context( fcontext_t fctx_, stack_context const& sctx_) :
+        base_context( fcontext_t fctx_, stack_context const& sctx_) noexcept :
             use_count( 0),
             fctx( fctx_),
             sctx( sctx_) {
         } 
 
-        virtual ~base_context() {
+        virtual ~base_context() noexcept {
         }
 
-        virtual void run() = 0;
+        virtual void run() noexcept = 0;
         virtual void deallocate() = 0;
 
         friend void intrusive_ptr_add_ref( base_context * ctx) {
@@ -86,7 +85,7 @@ private:
         StackAlloc      salloc;
         Fn              fn;
 
-        side_context( stack_context sctx, StackAlloc const& salloc_, Fn && fn_, fcontext_t fctx) :
+        explicit side_context( stack_context sctx, StackAlloc const& salloc_, Fn && fn_, fcontext_t fctx) noexcept :
             base_context( fctx, sctx),
             salloc( salloc_),
             fn( std::forward< Fn >( fn_) ) {
@@ -96,7 +95,7 @@ private:
             salloc.deallocate( sctx);
         }
 
-        void run() {
+        void run() noexcept {
             try {
                 fn();
             } catch (...) {
@@ -109,7 +108,7 @@ private:
         void deallocate() {
         }
 
-        void run() {
+        void run() noexcept {
         }
     };
 
@@ -146,7 +145,7 @@ public:
     }
 
     template< typename StackAlloc, typename Fn >
-    execution_context( StackAlloc salloc, Fn && fn) :
+    explicit execution_context( StackAlloc salloc, Fn && fn) :
         ptr_() {
         typedef side_context< Fn, StackAlloc >  func_t;
 
@@ -154,24 +153,6 @@ public:
         // reserve space for control structure
         std::size_t size = sctx.size - sizeof( func_t);
         void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
-        // create fast-context
-        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
-        // placment new for control structure on fast-context stack
-        ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
-    }
-
-    template< typename StackAlloc, typename Fn >
-    execution_context( reserve & rs, StackAlloc salloc, Fn && fn) :
-        ptr_() {
-        typedef side_context< Fn, StackAlloc >  func_t;
-
-        stack_context sctx( salloc.allocate() );
-        // reserve space for user code
-        std::size_t size = sctx.size - rs.size;
-        * rs.vp = static_cast< char * >( sctx.sp) - rs.size;
-        // reserve space for control structure
-        size -= sizeof( func_t);
-        void * sp = static_cast< char * >( * rs.vp) - sizeof( func_t);
         // create fast-context
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
         // placment new for control structure on fast-context stack
