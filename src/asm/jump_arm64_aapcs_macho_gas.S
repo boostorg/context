@@ -1,10 +1,3 @@
-/*
-            Copyright Oliver Kowalke 2014.
-   Distributed under the Boost Software License, Version 1.0.
-      (See accompanying file LICENSE_1_0.txt or copy at
-          http://www.boost.org/LICENSE_1_0.txt)
-*/
-
 /*******************************************************
  *                                                     *
  *  -------------------------------------------------  *
@@ -12,113 +5,116 @@
  *  -------------------------------------------------  *
  *  | 0x0 | 0x4 | 0x8 | 0xc | 0x10| 0x14| 0x18| 0x1c|  *
  *  -------------------------------------------------  *
- *  |    s16    |    s17    |    s18    |    s19    |  *
+ *  |    d8     |    d9     |    d10    |    d11    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  8  |  9  |  10 |  11 |  12 |  13 |  14 |  15 |  *
  *  -------------------------------------------------  *
  *  | 0x20| 0x24| 0x28| 0x2c| 0x30| 0x34| 0x38| 0x3c|  *
  *  -------------------------------------------------  *
- *  |    s20    |    s21    |    s22    |    s23    |  *
+ *  |    d12    |    d13    |    d14    |    d15    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  16 |  17 |  18 |  19 |  20 |  21 |  22 |  23 |  *
  *  -------------------------------------------------  *
  *  | 0x40| 0x44| 0x48| 0x4c| 0x50| 0x54| 0x58| 0x5c|  *
  *  -------------------------------------------------  *
- *  |    s24    |    s25    |    s26    |    s27    |  *
+ *  |    x19    |    x20    |    x21    |    x22    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  24 |  25 |  26 |  27 |  28 |  29 |  30 |  31 |  *
  *  -------------------------------------------------  *
  *  | 0x60| 0x64| 0x68| 0x6c| 0x70| 0x74| 0x78| 0x7c|  *
  *  -------------------------------------------------  *
- *  |    s28    |    s29    |    s30    |    s31    |  *
+ *  |    x23    |    x24    |    x25    |    x26    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  32 |  33 |  34 |  35 |  36 |  37 |  38 |  39 |  *
  *  -------------------------------------------------  *
  *  | 0x80| 0x84| 0x88| 0x8c| 0x90| 0x94| 0x98| 0x9c|  *
  *  -------------------------------------------------  *
- *  |   sjlj    |     v1    |     v2    |     v3    |  *
+ *  |    x27    |    x28    |    FP     |     LR    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
- *  |  40 |  41 |  42 |  43 |  44 |  45 |  46 |  47 |  *
+ *  |  40 |  41 |  42 | 43  |           |           |  *
  *  -------------------------------------------------  *
- *  | 0xa0| 0xa4| 0xa8| 0xac| 0xb0| 0xb4| 0xb8| 0xbc|  *
+ *  | 0xa0| 0xa4| 0xa8| 0xac|           |           |  *
  *  -------------------------------------------------  *
- *  |    v4     |     v5    |     v6    |     v7    |  *
- *  -------------------------------------------------  *
- *  -------------------------------------------------  *
- *  |  48 |  49 |  50 |  51 |  52 |  53 |           |  *
- *  -------------------------------------------------  *
- *  | 0xc0| 0xc4| 0xc8| 0xcc| 0xd0| 0xd4|           |  *
- *  -------------------------------------------------  *
- *  |    v8     |     lr    |     pc    |           |  *
+ *  |     PC    |   align   |           |           |  *
  *  -------------------------------------------------  *
  *                                                     *
  *******************************************************/
 
 .text
 .globl _jump_fcontext
-.align 2
+.balign 16
 _jump_fcontext:
-    @ save LR as PC
-    push {lr}
-    @ save V1-V8,LR
-    push {v1-v8,lr}
-
-    @ locate TLS to save/restore SjLj handler
-    mrc  p15, 0, v2, c13, c0, #3
-    bic  v2, v2, #3
-
-    @ load TLS[__PTK_LIBC_DYLD_Unwind_SjLj_Key]
-    ldr  v1, [v2, #72]
-    @ save SjLj handler
-    push  {v1}
-
-    @ prepare stack for FPU
-    sub  sp, sp, #128
+    ; prepare stack for GP + FPU
+    sub  sp, sp, #0xb0
 
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
-    @ test if fpu env should be preserved
-    cmp  a4, #0
-    beq  1f
+    ; test if fpu env should be preserved
+    cmp  w3, #0
+    b.eq  1f
 
-    @ save S16-S31
-    vstmia  sp, {d8-d15}
+    ; save d8 - d15
+    stp    d8, d9,   [x0, #0x00]
+    stp    d10, d11, [x0, #0x10]
+    stp    d12, d13, [x0, #0x20]
+    stp    d14, d15, [x0, #0x30]
 
 1:
 #endif
 
-    @ store RSP (pointing to context-data) in A1
-    str  sp, [a1]
+    ; save x19-x30
+    stp x19, x20, [sp, #0x40]
+    stp x21, x22, [sp, #0x50]
+    stp x23, x24, [sp, #0x60]
+    stp x25, x26, [sp, #0x70]
+    stp x27, x28, [sp, #0x80]
+    stp fp, lr,   [sp, #0x90]
 
-    @ restore RSP (pointing to context-data) from A2
-    mov  sp, a2
+    ; save LR as PC
+    str lr, [sp, #0xa0]
+
+    ; store RSP (pointing to context-data) in first argument (x0).
+    ; STR cannot have sp as a target register
+    mov  x4, sp
+    str  x4, [x0]
+
+    ; restore RSP (pointing to context-data) from A2 (x1)
+    mov  sp, x1
 
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
-    @ test if fpu env should be preserved
-    cmp  a4, #0
-    beq  2f
+    ; test if fpu env should be preserved
+    cmp  w3, #0
+    b.eq  2f
 
-    @ restore S16-S31
-    vldmia  sp, {d8-d15}
+    ; load d8 - d15
+    ldp    d8, d9,   [x0, #0x00]
+    ldp    d10, d11, [x0, #0x10]
+    ldp    d12, d13, [x0, #0x20]
+    ldp    d14, d15, [x0, #0x30]
 
 2:
 #endif
 
-    @ prepare stack for FPU
-    add  sp, sp, #128
+    ; load x19-x30
+    ldp x19, x20, [sp, #0x40]
+    ldp x21, x22, [sp, #0x50]
+    ldp x23, x24, [sp, #0x60]
+    ldp x25, x26, [sp, #0x70]
+    ldp x27, x28, [sp, #0x80]
+    ldp fp, lr,   [sp, #0x90]
 
-    @ restore SjLj handler
-    pop  {v1}
-    @ store SjLj handler in TLS
-    str  v1, [v2, #72]
+    ; use third arg as return value after jump
+    ; and as first arg in context function
+    mov  x0, x2
 
-    @ use third arg as return value after jump
-    @ and as first arg in context function
-    mov  a1, a3
-    
-    @ restore v1-V8,LR,PC
-    pop {v1-v8,lr,pc}
+    ; load pc
+    ldr x4, [sp, #0xa0]
+
+    ; restore stack from GP + FPU
+    add  sp, sp, #0xb0
+
+    ret x4
