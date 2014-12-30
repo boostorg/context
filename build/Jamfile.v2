@@ -227,7 +227,6 @@ alias asm_context_sources
 alias asm_context_sources
    : [ make asm/make_arm64_aapcs_macho_gas.o : asm/make_arm64_aapcs_macho_gas.S : @gas64 ]
      [ make asm/jump_arm64_aapcs_macho_gas.o : asm/jump_arm64_aapcs_macho_gas.S : @gas64 ]
-     untested.cpp
    : <abi>aapcs
      <address-model>64
      <architecture>arm
@@ -237,7 +236,6 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_arm64_aapcs_macho_gas.S
      asm/jump_arm64_aapcs_macho_gas.S
-     untested.cpp
    : <abi>aapcs
      <address-model>64
      <architecture>arm
@@ -248,7 +246,6 @@ alias asm_context_sources
 alias asm_context_sources
    : asm/make_arm64_aapcs_macho_gas.S
      asm/jump_arm64_aapcs_macho_gas.S
-     untested.cpp
    : <abi>aapcs
      <address-model>64
      <architecture>arm
