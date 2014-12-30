@@ -1,10 +1,3 @@
-/*
-            Copyright Oliver Kowalke 2014.
-   Distributed under the Boost Software License, Version 1.0.
-      (See accompanying file LICENSE_1_0.txt or copy at
-          http://www.boost.org/LICENSE_1_0.txt)
-*/
-
 /*******************************************************
  *                                                     *
  *  -------------------------------------------------  *
@@ -12,76 +5,79 @@
  *  -------------------------------------------------  *
  *  | 0x0 | 0x4 | 0x8 | 0xc | 0x10| 0x14| 0x18| 0x1c|  *
  *  -------------------------------------------------  *
- *  |    s16    |    s17    |    s18    |    s19    |  *
+ *  |    d8     |    d9     |    d10    |    d11    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  8  |  9  |  10 |  11 |  12 |  13 |  14 |  15 |  *
  *  -------------------------------------------------  *
  *  | 0x20| 0x24| 0x28| 0x2c| 0x30| 0x34| 0x38| 0x3c|  *
  *  -------------------------------------------------  *
- *  |    s20    |    s21    |    s22    |    s23    |  *
+ *  |    d12    |    d13    |    d14    |    d15    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  16 |  17 |  18 |  19 |  20 |  21 |  22 |  23 |  *
  *  -------------------------------------------------  *
  *  | 0x40| 0x44| 0x48| 0x4c| 0x50| 0x54| 0x58| 0x5c|  *
  *  -------------------------------------------------  *
- *  |    s24    |    s25    |    s26    |    s27    |  *
+ *  |    x19    |    x20    |    x21    |    x22    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  24 |  25 |  26 |  27 |  28 |  29 |  30 |  31 |  *
  *  -------------------------------------------------  *
  *  | 0x60| 0x64| 0x68| 0x6c| 0x70| 0x74| 0x78| 0x7c|  *
  *  -------------------------------------------------  *
- *  |    s28    |    s29    |    s30    |    s31    |  *
+ *  |    x23    |    x24    |    x25    |    x26    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  32 |  33 |  34 |  35 |  36 |  37 |  38 |  39 |  *
  *  -------------------------------------------------  *
  *  | 0x80| 0x84| 0x88| 0x8c| 0x90| 0x94| 0x98| 0x9c|  *
  *  -------------------------------------------------  *
- *  |   sjlj    |     v1    |     v2    |     v3    |  *
+ *  |    x27    |    x28    |    FP     |     LR    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
- *  |  40 |  41 |  42 |  43 |  44 |  45 |  46 |  47 |  *
+ *  |  40 |  41 |  42 | 43  |           |           |  *
  *  -------------------------------------------------  *
- *  | 0xa0| 0xa4| 0xa8| 0xac| 0xb0| 0xb4| 0xb8| 0xbc|  *
+ *  | 0xa0| 0xa4| 0xa8| 0xac|           |           |  *
  *  -------------------------------------------------  *
- *  |    v4     |     v5    |     v6    |     v7    |  *
- *  -------------------------------------------------  *
- *  -------------------------------------------------  *
- *  |  48 |  49 |  50 |  51 |  52 |  53 |           |  *
- *  -------------------------------------------------  *
- *  | 0xc0| 0xc4| 0xc8| 0xcc| 0xd0| 0xd4|           |  *
- *  -------------------------------------------------  *
- *  |    v8     |     lr    |     pc    |           |  *
+ *  |     PC    |   align   |           |           |  *
  *  -------------------------------------------------  *
  *                                                     *
  *******************************************************/
 
+
 .text
 .globl _make_fcontext
-.align 2
+.balign 16
+
 _make_fcontext:
-    @ shift address in A1 to lower 16 byte boundary
-    bic  a1, a1, #15
+    ; shift address in x0 (allocated stack) to lower 16 byte boundary
+    and x0, x0, ~0xF
 
-    @ reserve space for context-data on context-stack
-    sub  a1, a1, #216
+    ; reserve space for context-data on context-stack
+    sub  x0, x0, #0xb0
 
-    @ third arg of make_fcontext() == address of context-function
-    str  a3, [a1,#208]
+    ; third arg of make_fcontext() == address of context-function
+    ; store address as a PC to jump in
+    str  x2, [x0, #0xa0]
 
-    @ compute abs address of label finish
-    adr  a2, finish
-    @ save address of finish as return-address for context-function
-    @ will be entered after context-function returns
-    str  a2, [a1,#200]
+    ; compute abs address of label finish
+    ; 0x0c = 3 instructions * size (4) before label 'finish'
 
-    bx  lr @ return pointer to context-data
+    ; TODO: Numeric offset since llvm still does not support labels in ADR. Fix:
+    ;       http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20140407/212336.html
+    adr  x1, 0x0c
+
+    ; save address of finish as return-address for context-function
+    ; will be entered after context-function returns (LR register)
+    str  x1, [x0, #0x98]
+
+    ret  lr ; return pointer to context-data (x0)
 
 finish:
-    @ exit code is zero
-    mov  a1, #0
-    @ exit application
+    ; exit code is zero
+    mov  x0, #0
+    ; exit application
     bl  __exit
+
+
