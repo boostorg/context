@@ -51,7 +51,7 @@ private:
 
         base_context() noexcept :
             use_count( 0),
-            fctx( 0),
+            fctx( nullptr),
             sctx() {
         } 
 
@@ -81,23 +81,25 @@ private:
     };
 
     template< typename Fn, typename StackAlloc >
-    struct side_context : public base_context {
-        StackAlloc      salloc;
-        Fn              fn;
+    class side_context : public base_context {
+    private:
+        StackAlloc      salloc_;
+        Fn              fn_;
 
-        explicit side_context( stack_context sctx, StackAlloc const& salloc_, Fn && fn_, fcontext_t fctx) noexcept :
+    public:
+        explicit side_context( stack_context sctx, StackAlloc const& salloc, fcontext_t fctx, Fn && fn) noexcept :
             base_context( fctx, sctx),
-            salloc( salloc_),
-            fn( std::forward< Fn >( fn_) ) {
+            salloc_( salloc),
+            fn_( std::forward< Fn >( fn) ) {
         }
 
         void deallocate() {
-            salloc.deallocate( sctx);
+            salloc_.deallocate( sctx);
         }
 
         void run() noexcept {
             try {
-                fn();
+                fn_();
             } catch (...) {
                 std::terminate();
             }
@@ -133,42 +135,13 @@ private:
     bool                                            use_segmented_ = false;
 #endif
 
-    execution_context() :
-        ptr_( current_ctx_) {
-    }
-
     static ptr_t create_main_context() {
         static thread_local main_context mctx; // thread_local required?
         return ptr_t( & mctx);
     }
 
-public:
-    static execution_context current() noexcept {
-        return execution_context();
-    }
-
-#if defined(BOOST_USE_SEGMENTED_STACKS)
-    template< typename Fn >
-    explicit execution_context( segmented salloc, Fn && fn) :
-        ptr_(),
-        use_segmented_( true) {
-        typedef side_context< Fn, segmented >  func_t;
-
-        stack_context sctx( salloc.allocate() );
-        // reserve space for control structure
-        std::size_t size = sctx.size - sizeof( func_t);
-        void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
-        // create fast-context
-        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
-        BOOST_ASSERT( nullptr != fctx);
-        // placment new for control structure on fast-context stack
-        ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
-    }
-#endif
-
     template< typename StackAlloc, typename Fn >
-    explicit execution_context( StackAlloc salloc, Fn && fn) :
-        ptr_() {
+    static ptr_t create_side_context( StackAlloc salloc, Fn && fn) {
         typedef side_context< Fn, StackAlloc >  func_t;
 
         stack_context sctx( salloc.allocate() );
@@ -179,7 +152,40 @@ public:
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
         BOOST_ASSERT( nullptr != fctx);
         // placment new for control structure on fast-context stack
-        ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
+        return ptr_t( new ( sp) func_t( sctx, salloc, fctx, std::forward< Fn >( fn) ) );
+    }
+
+    execution_context() :
+        ptr_( current_ctx_) {
+    }
+
+public:
+    static execution_context current() noexcept {
+        return execution_context();
+    }
+
+#if defined(BOOST_USE_SEGMENTED_STACKS)
+    template< typename Fn >
+    explicit execution_context( segmented salloc, Fn && fn) :
+        ptr_( create_side_context( salloc, std::forward< Fn >( fn) ) ),
+        use_segmented_( true) {
+    }
+
+    template< typename Fn, typename ... Args >
+    explicit execution_context( segmented salloc, Fn && fn, Args && ... args) :
+        ptr_( create_side_context( salloc, std::bind( std::forward< Fn >( fn), std::forward< Args >( args) ... ) ) ),
+        use_segmented_( true) {
+    }
+#endif
+
+    template< typename StackAlloc, typename Fn >
+    explicit execution_context( StackAlloc salloc, Fn && fn) :
+        ptr_( create_side_context( salloc, std::forward< Fn >( fn) ) ) {
+    }
+
+    template< typename StackAlloc, typename Fn, typename ... Args >
+    explicit execution_context( StackAlloc salloc, Fn && fn, Args && ... args) :
+        ptr_( create_side_context( salloc, std::bind( std::forward< Fn >( fn), std::forward< Args >( args) ... ) ) ) {
     }
 
     void jump_to( bool preserve_fpu = false) noexcept {

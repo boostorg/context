@@ -18,8 +18,9 @@ boost::context::execution_context * ctx1 = 0;
 boost::context::execution_context * ctx2 = 0;
 boost::context::execution_context * ctx = 0;
 
-void f1() {
+void f1( int i) {
     std::cout << "f1: entered" << std::endl;
+    std::cout << "i == " << i << std::endl;
     ctx2->jump_to();
     std::cout << "f1: re-entered" << std::endl;
     ctx2->jump_to();
@@ -33,7 +34,7 @@ void f2() {
 }
 
 int main( int argc, char * argv[]) {
-    boost::context::execution_context ctx1_( boost::context::fixedsize(), f1);
+    boost::context::execution_context ctx1_( boost::context::fixedsize(), f1, 3);
     ctx1 = & ctx1_;
     boost::context::execution_context ctx2_( boost::context::protected_fixedsize(), f2);
     ctx2 = & ctx2_;

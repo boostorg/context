@@ -94,6 +94,9 @@ pattern). The user is responsible for this task.
             template< typename StackAlloc, typename Fn >
             execution_context( StackAlloc salloc, Fn && fn);
 
+            template< typename StackAlloc, typename Fn, typename ... Args >
+            execution_context( StackAlloc salloc, Fn && fn, Args && ... args);
+
             void jump_to() noexcept;
 
             explicit operator bool() const noexcept;
@@ -109,6 +112,12 @@ execution context.]]
 ]
 
 [heading `template< typename StackAlloc, typname Fn > execution_context( StackAlloc salloc, Fn && fn)`]
+[variablelist
+[[Effects:] [Creates a new execution context and prepares the context to execute
+`fn`.]]
+]
+
+[heading `template< typename StackAlloc, typname Fn, typename ... Args > execution_context( StackAlloc salloc, Fn && fn, Args && ... args)`]
 [variablelist
 [[Effects:] [Creates a new execution context and prepares the context to execute
 `fn`.]]
