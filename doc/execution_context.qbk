@@ -84,6 +84,33 @@ Sometimes it is necessary to unwind the stack of an unfinished context to
 destroy local stack variables so they can release allocated resources (RAII
 pattern). The user is responsible for this task.
 
+[heading allocating control strutures on top of stack]
+Allocating control structures on top of the stack requires to allocated the
+__stack_context__ and create the control structure with placement new before
+__econtext__ is created.
+
+        // stack-alloctor used for (de-)allocating stack
+        fixedsize salloc( 4048);
+        // allocate stack space
+        stack_context sctx( salloc.allocate() );
+        // reserve space for control structure on top of the stack
+        void * sp = static_cast< char * >( sctx.sp) - sizeof( my_control_structure);
+        std::size_t size = sctx.size - sizeof( my_control_structure);
+        // placement new creates control structure on reserved space
+        my_control_structure * cs = new ( sp) my_control_structure( sp, size, sctx, salloc);
+        ...
+        struct my_control_structure  {
+            // execution context
+            execution_context ectx;
+
+            template< typename StackAllocator >
+            my_control_structure( void * sp, std::size_t size, stack_context sctx, StackAllocator salloc) :
+                // create execution context
+                ectx( preallocated( sp, size, sctx), salloc, entry_func) {
+            }
+            ...
+        };
+
 
 [heading Class `execution_context`]
 
@@ -96,6 +123,12 @@ pattern). The user is responsible for this task.
 
             template< typename StackAlloc, typename Fn, typename ... Args >
             execution_context( StackAlloc salloc, Fn && fn, Args && ... args);
+
+            template< typename StackAlloc, typename Fn >
+            execution_context( preallocated palloc, StackAlloc salloc, Fn && fn);
+
+            template< typename StackAlloc, typename Fn, typename ... Args >
+            execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args);
 
             void jump_to() noexcept;
 
@@ -123,6 +156,18 @@ execution context.]]
 `fn`.]]
 ]
 
+[heading `template< typename StackAlloc, typname Fn > execution_context( preallocated palloc, StackAlloc salloc, Fn && fn)`]
+[variablelist
+[[Effects:] [Creates a new execution context and prepares the context to execute
+`fn`. Used to store control structures on top of the stack.]]
+]
+
+[heading `template< typename StackAlloc, typname Fn, typename ... Args > execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args)`]
+[variablelist
+[[Effects:] [Creates a new execution context and prepares the context to execute
+`fn`. Used to store control structures on top of the stack.]]
+]
+
 [heading `void jump_to()`]
 [variablelist
 [[Effects:] [Stores internally the current context data (stack pointer,
@@ -145,5 +190,22 @@ has returned (completed), the function returns `false`. Otherwise `true`.]]
 has returned (completed), the function returns `true`. Otherwise `false`.]]
 [[Throws:] [Nothing.]]
 ]
+
+
+[heading Struct `preallocated`]
+
+        struct preallocated {
+            void        *   sp;
+            std::size_t     size;
+            stack_context   sctx;
+
+            preallocated( void * sp, std:size_t size, stack_allocator sctx) noexcept;
+        };
+
+[heading `preallocated( void * sp, std:size_t size, stack_allocator sctx)`]
+[variablelist
+[[Effects:] [Crreates an object of preallocated.]]
+]
+
 
 [endsect]

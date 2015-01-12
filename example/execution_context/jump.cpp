@@ -14,9 +14,9 @@
 #include <boost/context/fixedsize.hpp>
 #include <boost/context/protected_fixedsize.hpp>
 
-boost::context::execution_context * ctx1 = 0;
-boost::context::execution_context * ctx2 = 0;
-boost::context::execution_context * ctx = 0;
+boost::context::execution_context * ctx1 = nullptr;
+boost::context::execution_context * ctx2 = nullptr;
+boost::context::execution_context * ctx = nullptr;
 
 void f1( int i) {
     std::cout << "f1: entered" << std::endl;

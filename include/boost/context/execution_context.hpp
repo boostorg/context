@@ -12,10 +12,12 @@
 #endif
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <memory>
+#include <type_traits>
 
 #include <boost/config.hpp>
 #include <boost/context/fcontext.hpp>
@@ -41,6 +43,16 @@ void __splitstack_setcontext( void * [BOOST_CONTEXT_SEGMENTS]);
 
 namespace boost {
 namespace context {
+
+struct preallocated {
+    void        *   sp;
+    std::size_t     size;
+    stack_context   sctx;
+
+    preallocated( void * sp_, std::size_t size_, stack_context sctx_) noexcept :
+        sp( sp_), size( size_), sctx( sctx_) {
+    }
+};
 
 class BOOST_CONTEXT_DECL execution_context {
 private:
@@ -141,7 +153,7 @@ private:
     }
 
     template< typename StackAlloc, typename Fn >
-    static ptr_t create_side_context( StackAlloc salloc, Fn && fn) {
+    static ptr_t create_context( StackAlloc salloc, Fn && fn) {
         typedef side_context< Fn, StackAlloc >  func_t;
 
         stack_context sctx( salloc.allocate() );
@@ -155,6 +167,44 @@ private:
         return ptr_t( new ( sp) func_t( sctx, salloc, fctx, std::forward< Fn >( fn) ) );
     }
 
+    template< typename StackAlloc, typename Fn >
+    static ptr_t create_context( preallocated palloc, StackAlloc salloc, Fn && fn) {
+        typedef side_context< Fn, StackAlloc >  func_t;
+
+        // reserve space for control structure
+        std::size_t size = palloc.sctx.size - sizeof( func_t);
+        void * sp = static_cast< char * >( palloc.sctx.sp) - sizeof( func_t);
+        // create fast-context
+        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
+        BOOST_ASSERT( nullptr != fctx);
+        // placment new for control structure on fast-context stack
+        return ptr_t( new ( sp) func_t( palloc.sctx, salloc, fctx, std::forward< Fn >( fn) ) );
+    }
+
+    template< std::size_t I = 0, typename StackAlloc, typename Fn, typename ... Args >
+    static typename std::enable_if< I == sizeof ... ( Args), ptr_t >::type
+    create_side_context( StackAlloc salloc, Fn && fn, Args && ... args) {
+        return create_context( salloc, std::forward< Fn >( fn) );
+    }
+
+    template< std::size_t I = 0, typename StackAlloc, typename Fn, typename ... Args >
+    static typename std::enable_if< I < sizeof ... ( Args), ptr_t >::type
+    create_side_context( StackAlloc salloc, Fn && fn, Args && ... args) {
+        return create_context( salloc, std::bind( std::forward< Fn >( fn), std::forward< Args >( args) ... ) );
+    }
+
+    template< std::size_t I = 0, typename StackAlloc, typename Fn, typename ... Args >
+    static typename std::enable_if< I == sizeof ... ( Args), ptr_t >::type
+    create_side_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) {
+        return create_context( palloc, salloc, std::forward< Fn >( fn) );
+    }
+
+    template< std::size_t I = 0, typename StackAlloc, typename Fn, typename ... Args >
+    static typename std::enable_if< I < sizeof ... ( Args), ptr_t >::type
+    create_side_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) {
+        return create_context( palloc, salloc, std::bind( std::forward< Fn >( fn), std::forward< Args >( args) ... ) );
+    }
+
     execution_context() :
         ptr_( current_ctx_) {
     }
@@ -165,27 +215,27 @@ public:
     }
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
-    template< typename Fn >
-    explicit execution_context( segmented salloc, Fn && fn) :
-        ptr_( create_side_context( salloc, std::forward< Fn >( fn) ) ),
+    template< typename Fn, typename ... Args >
+    explicit execution_context( segmented salloc, Fn && fn, Args && ... args) :
+        ptr_( create_side_context( salloc, std::forward< Fn >( fn), std::forward< Args >( args) ... ) ),
         use_segmented_( true) {
     }
 
     template< typename Fn, typename ... Args >
-    explicit execution_context( segmented salloc, Fn && fn, Args && ... args) :
-        ptr_( create_side_context( salloc, std::bind( std::forward< Fn >( fn), std::forward< Args >( args) ... ) ) ),
+    explicit execution_context( preallocated palloc, segmented salloc, Fn && fn, Args && ... args) :
+        ptr_( create_side_context( palloc, salloc, std::forward< Fn >( fn), std::forward< Args >( args) ... ) ),
         use_segmented_( true) {
     }
 #endif
 
-    template< typename StackAlloc, typename Fn >
-    explicit execution_context( StackAlloc salloc, Fn && fn) :
-        ptr_( create_side_context( salloc, std::forward< Fn >( fn) ) ) {
+    template< typename StackAlloc, typename Fn, typename ... Args >
+    execution_context( StackAlloc salloc, Fn && fn, Args && ... args) :
+        ptr_( create_side_context( salloc, std::forward< Fn >( fn), std::forward< Args >( args) ... ) ) {
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
-    explicit execution_context( StackAlloc salloc, Fn && fn, Args && ... args) :
-        ptr_( create_side_context( salloc, std::bind( std::forward< Fn >( fn), std::forward< Args >( args) ... ) ) ) {
+    explicit execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
+        ptr_( create_side_context( palloc, salloc, std::forward< Fn >( fn), std::forward< Args >( args) ... ) ) {
     }
 
     void jump_to( bool preserve_fpu = false) noexcept {
