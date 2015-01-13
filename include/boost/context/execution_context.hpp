@@ -172,8 +172,8 @@ private:
         typedef side_context< Fn, StackAlloc >  func_t;
 
         // reserve space for control structure
-        std::size_t size = palloc.sctx.size - sizeof( func_t);
-        void * sp = static_cast< char * >( palloc.sctx.sp) - sizeof( func_t);
+        std::size_t size = palloc.size - sizeof( func_t);
+        void * sp = static_cast< char * >( palloc.sp) - sizeof( func_t);
         // create fast-context
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
         BOOST_ASSERT( nullptr != fctx);
