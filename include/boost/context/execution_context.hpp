@@ -11,13 +11,13 @@
 # error "execution_context requires C++11 support!"
 #endif
 
-#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <memory>
 
+#include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/context/fcontext.hpp>
 #include <boost/intrusive_ptr.hpp>
@@ -127,13 +127,13 @@ private:
     };
 
     static void entry_func( intptr_t p) noexcept {
-        assert( 0 != p);
+        BOOST_ASSERT( 0 != p);
 
         void * vp( reinterpret_cast< void * >( p) );
-        assert( nullptr != vp);
+        BOOST_ASSERT( nullptr != vp);
 
         base_context * bp( static_cast< base_context * >( vp) );
-        assert( nullptr != bp);
+        BOOST_ASSERT( nullptr != bp);
 
         bp->run();
     }
@@ -238,7 +238,7 @@ public:
     }
 
     void jump_to( bool preserve_fpu = false) noexcept {
-        assert( * this);
+        BOOST_ASSERT( * this);
         ptr_t tmp( current_ctx_);
         current_ctx_ = ptr_;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
