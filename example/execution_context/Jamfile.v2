@@ -42,19 +42,3 @@ exe segmented
 exe parser
     : parser.cpp
     ;
-
-exe coroutine/simple
-    : coroutine/simple.cpp
-    ;
-
-exe coroutine/fibonacci
-    : coroutine/fibonacci.cpp
-    ;
-
-exe coroutine/layout
-    : coroutine/layout.cpp
-    ;
-
-exe coroutine/parser
-    : coroutine/parser.cpp
-    ;

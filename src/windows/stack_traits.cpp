@@ -20,7 +20,11 @@ extern "C" {
 
 #include <boost/assert.hpp>
 #include <boost/context/detail/config.hpp>
-#include <boost/thread.hpp>
+#if __cplusplus < 201103L
+# include <boost/thread.hpp>
+#else
+# include <mutex>
+#endif
 
 #include <boost/context/stack_context.hpp>
 
@@ -45,6 +49,7 @@ extern "C" {
 namespace boost {
 namespace context {
 
+#if __cplusplus < 201103L
 void system_info_( SYSTEM_INFO * si)
 { ::GetSystemInfo( si); }
 
@@ -55,6 +60,15 @@ SYSTEM_INFO system_info()
     boost::call_once( flag, static_cast< void(*)( SYSTEM_INFO *) >( system_info_), & si);
     return si;
 }
+#else
+SYSTEM_INFO system_info()
+{
+    static SYSTEM_INFO si;
+    static std::once_flag flag;
+    std::call_once( flag, [](){ ::GetSystemInfo( & si); } );
+    return si;
+}
+#endif
 
 std::size_t pagesize()
 { return static_cast< std::size_t >( system_info().dwPageSize); }

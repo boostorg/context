@@ -18,8 +18,12 @@ namespace boost {
 namespace context {
 
 thread_local
+execution_context::fcontext
+execution_context::main_ctx_;
+
+thread_local
 execution_context::ptr_t
-execution_context::current_ctx_ = execution_context::create_main_context();
+execution_context::current_ctx_ = & execution_context::main_ctx_;
 
 }}
 

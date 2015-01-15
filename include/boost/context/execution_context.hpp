@@ -11,17 +11,19 @@
 # error "execution_context requires C++11 support!"
 #endif
 
-#include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <memory>
 
+#include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/context/fcontext.hpp>
 #include <boost/intrusive_ptr.hpp>
 
 #include <boost/context/detail/config.hpp>
+#include <boost/context/detail/rref.hpp>
 #include <boost/context/stack_context.hpp>
 #include <boost/context/segmented.hpp>
 
@@ -42,104 +44,167 @@ void __splitstack_setcontext( void * [BOOST_CONTEXT_SEGMENTS]);
 namespace boost {
 namespace context {
 
+struct preallocated {
+    void        *   sp;
+    std::size_t     size;
+    stack_context   sctx;
+
+    preallocated( void * sp_, std::size_t size_, stack_context sctx_) noexcept :
+        sp( sp_), size( size_), sctx( sctx_) {
+    }
+};
+
 class BOOST_CONTEXT_DECL execution_context {
 private:
-    struct base_context {
+    struct fcontext {
         std::size_t     use_count;
         fcontext_t      fctx;
         stack_context   sctx;
 
-        base_context() noexcept :
-            use_count( 0),
-            fctx( 0),
+        // main-context
+        fcontext() noexcept :
+            use_count( 1),
+            fctx( nullptr),
             sctx() {
         } 
 
-        base_context( fcontext_t fctx_, stack_context const& sctx_) noexcept :
+        // worker-context
+        fcontext( fcontext_t fctx_, stack_context const& sctx_) noexcept :
             use_count( 0),
             fctx( fctx_),
             sctx( sctx_) {
         } 
 
-        virtual ~base_context() noexcept {
+        virtual ~fcontext() noexcept {
         }
 
-        virtual void run() noexcept = 0;
-        virtual void deallocate() = 0;
+        virtual void deallocate() {
+        }
 
-        friend void intrusive_ptr_add_ref( base_context * ctx) {
+        virtual void run() noexcept {
+        }
+
+        friend void intrusive_ptr_add_ref( fcontext * ctx) {
             ++ctx->use_count;
         }
 
-        friend void intrusive_ptr_release( base_context * ctx) {
+        friend void intrusive_ptr_release( fcontext * ctx) {
             BOOST_ASSERT( nullptr != ctx);
 
             if ( 0 == --ctx->use_count) {
-                ctx->deallocate();
+                ctx->~fcontext();
             }
         }
     };
 
     template< typename Fn, typename StackAlloc >
-    struct side_context : public base_context {
-        StackAlloc      salloc;
-        Fn              fn;
+    class worker_fcontext : public fcontext {
+    private:
+        StackAlloc      salloc_;
+        Fn              fn_;
 
-        explicit side_context( stack_context sctx, StackAlloc const& salloc_, Fn && fn_, fcontext_t fctx) noexcept :
-            base_context( fctx, sctx),
-            salloc( salloc_),
-            fn( std::forward< Fn >( fn_) ) {
-        }
-
-        void deallocate() {
+        static void destroy( worker_fcontext * p) {
+            StackAlloc salloc( p->salloc_);
+            stack_context sctx( p->sctx);
+            p->~worker_fcontext();
             salloc.deallocate( sctx);
         }
 
-        void run() noexcept {
-            try {
-                fn();
-            } catch (...) {
-                std::terminate();
-            }
-        }
-    };
-
-    struct main_context : public base_context {
-        void deallocate() {
+    public:
+        explicit worker_fcontext( stack_context sctx, StackAlloc const& salloc, fcontext_t fctx, Fn && fn) noexcept :
+            fcontext( fctx, sctx),
+            salloc_( salloc),
+            fn_( std::forward< Fn >( fn) ) {
         }
 
-        void run() noexcept {
+        void deallocate() override final {
+            destroy( this);
+        }
+
+        void run() noexcept override final {
+            fn_();
         }
     };
 
     static void entry_func( intptr_t p) noexcept {
-        assert( 0 != p);
+        BOOST_ASSERT( 0 != p);
 
-        void * vp( reinterpret_cast< void * >( p) );
-        assert( nullptr != vp);
-
-        base_context * bp( static_cast< base_context * >( vp) );
-        assert( nullptr != bp);
+        fcontext * bp( reinterpret_cast< fcontext * >( p) );
+        BOOST_ASSERT( nullptr != bp);
 
         bp->run();
     }
 
-    typedef boost::intrusive_ptr< base_context >    ptr_t;
+    typedef boost::intrusive_ptr< fcontext >    ptr_t;
 
-    static thread_local ptr_t                       current_ctx_;
+    thread_local static fcontext                main_ctx_;
+    thread_local static ptr_t                   current_ctx_;
 
-    boost::intrusive_ptr< base_context >            ptr_;
+    boost::intrusive_ptr< fcontext >            ptr_;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
-    bool                                            use_segmented_ = false;
+    bool                                        use_segmented_ = false;
 #endif
+
+    template< typename StackAlloc, typename Fn >
+    static fcontext * create_context( StackAlloc salloc, Fn && fn) {
+        typedef worker_fcontext< Fn, StackAlloc >  func_t;
+
+        stack_context sctx( salloc.allocate() );
+        // reserve space for control structure
+        std::size_t size = sctx.size - sizeof( func_t);
+        void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
+        // create fast-context
+        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
+        BOOST_ASSERT( nullptr != fctx);
+        // placment new for control structure on fast-context stack
+        return new ( sp) func_t( sctx, salloc, fctx, std::forward< Fn >( fn) );
+    }
+
+    template< typename StackAlloc, typename Fn >
+    static fcontext * create_context( preallocated palloc, StackAlloc salloc, Fn && fn) {
+        typedef worker_fcontext< Fn, StackAlloc >  func_t;
+
+        // reserve space for control structure
+        std::size_t size = palloc.size - sizeof( func_t);
+        void * sp = static_cast< char * >( palloc.sp) - sizeof( func_t);
+        // create fast-context
+        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
+        BOOST_ASSERT( nullptr != fctx);
+        // placment new for control structure on fast-context stack
+        return new ( sp) func_t( palloc.sctx, salloc, fctx, std::forward< Fn >( fn) );
+    }
+
+    template< typename StackAlloc, typename Fn, typename ... Args >
+    static fcontext * create_worker_fcontext( StackAlloc salloc,
+                                              detail::fn_rref< Fn > fn,
+                                              detail::arg_rref< Args > ... args) {
+        return create_context( salloc,
+                               [=] () mutable {
+                                   try {
+                                       fn( args ...);
+                                   } catch (...) {
+                                       std::terminate();
+                                   }
+                               });
+    }
+
+    template< typename StackAlloc, typename Fn, typename ... Args >
+    static fcontext * create_worker_fcontext( preallocated palloc,
+                                              StackAlloc salloc,
+                                              detail::fn_rref< Fn > fn,
+                                              detail::arg_rref< Args > ... args) {
+        return create_context( palloc, salloc,
+                               [=] () mutable {
+                                   try {
+                                       fn( args ...);
+                                   } catch (...) {
+                                       std::terminate();
+                                   }
+                               });
+    }
 
     execution_context() :
         ptr_( current_ctx_) {
-    }
-
-    static ptr_t create_main_context() {
-        static thread_local main_context mctx; // thread_local required?
-        return ptr_t( & mctx);
     }
 
 public:
@@ -148,43 +213,40 @@ public:
     }
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
-    template< typename Fn >
-    explicit execution_context( segmented salloc, Fn && fn) :
-        ptr_(),
+    template< typename Fn, typename ... Args >
+    explicit execution_context( segmented salloc, Fn && fn, Args && ... args) :
+        ptr_( create_worker_fcontext( salloc,
+                                      detail::fn_rref< Fn >( std::forward< Fn >( fn) ),
+                                      detail::arg_rref< Args >( std::forward< Args >( args) ) ... ) ),
         use_segmented_( true) {
-        typedef side_context< Fn, segmented >  func_t;
+    }
 
-        stack_context sctx( salloc.allocate() );
-        // reserve space for control structure
-        std::size_t size = sctx.size - sizeof( func_t);
-        void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
-        // create fast-context
-        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
-        BOOST_ASSERT( nullptr != fctx);
-        // placment new for control structure on fast-context stack
-        ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
+    template< typename Fn, typename ... Args >
+    explicit execution_context( preallocated palloc, segmented salloc, Fn && fn, Args && ... args) :
+        ptr_( create_worker_fcontext( palloc, salloc,
+                                      detail::fn_rref< Fn >( std::forward< Fn >( fn) ),
+                                      detail::arg_rref< Args >( std::forward< Args >( args) ) ... ) ),
+        use_segmented_( true) {
     }
 #endif
 
-    template< typename StackAlloc, typename Fn >
-    explicit execution_context( StackAlloc salloc, Fn && fn) :
-        ptr_() {
-        typedef side_context< Fn, StackAlloc >  func_t;
+    template< typename StackAlloc, typename Fn, typename ... Args >
+    explicit execution_context( StackAlloc salloc, Fn && fn, Args && ... args) :
+        ptr_( create_worker_fcontext( salloc,
+                                      detail::fn_rref< Fn >( std::forward< Fn >( fn) ),
+                                      detail::arg_rref< Args >( std::forward< Args >( args) ) ... ) ) {
+    }
 
-        stack_context sctx( salloc.allocate() );
-        // reserve space for control structure
-        std::size_t size = sctx.size - sizeof( func_t);
-        void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
-        // create fast-context
-        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
-        BOOST_ASSERT( nullptr != fctx);
-        // placment new for control structure on fast-context stack
-        ptr_.reset( new ( sp) func_t( sctx, salloc, std::forward< Fn >( fn), fctx) );
+    template< typename StackAlloc, typename Fn, typename ... Args >
+    explicit execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
+        ptr_( create_worker_fcontext( palloc, salloc,
+                                      detail::fn_rref< Fn >( std::forward< Fn >( fn) ),
+                                      detail::arg_rref< Args >( std::forward< Args >( args) ) ... ) ) {
     }
 
     void jump_to( bool preserve_fpu = false) noexcept {
-        assert( * this);
-        ptr_t tmp( current_ctx_);
+        BOOST_ASSERT( * this);
+        fcontext * tmp( current_ctx_.get() );
         current_ctx_ = ptr_;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
         if ( use_segmented_) {
