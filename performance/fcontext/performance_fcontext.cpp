@@ -70,14 +70,12 @@ duration_type measure_time_ec() {
     boost::context::execution_context ectx( alloc, bar);
     ectx.jump_to();
         
-    duration_type total( duration_type::zero() );
+    time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::context::execution_context ectx( alloc, bar);
-        time_point_type start( clock_type::now() );
         ectx.jump_to();
-        total += clock_type::now() - start;
-        total -= overhead_clock(); // overhead of measurement
     }
+    duration_type total = clock_type::now() - start;
+    total -= overhead_clock(); // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
@@ -111,14 +109,12 @@ cycle_type measure_cycles_ec() {
     boost::context::execution_context ectx( alloc, bar);
     ectx.jump_to();
         
-    cycle_type total( 0);
+    cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::context::execution_context ectx( alloc, bar);
-        cycle_type start( cycles() );
         ectx.jump_to();
-        total += cycles() - start;
-        total -= overhead_cycle(); // overhead of measurement
     }
+    cycle_type total = cycles() - start;
+    total -= overhead_cycle(); // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
