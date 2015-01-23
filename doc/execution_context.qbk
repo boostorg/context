@@ -36,10 +36,9 @@ __econtext__ permits access to the current, active context via
 
             // executes parser in new execution context
             boost::context::execution_context parser_ctx(
-                boost::context::fixedsize(),
-                [&is,&main_ctx,&done,&c](){
+                boost::context::fixedsize_stack(),
+                [&main_ctx,&is,&c,&done](){
                     // create parser with callback function
-                    // jumping back to main context
                     Parser p(is,
                              [&main_ctx,&c](char ch){
                                  c=ch;
@@ -49,15 +48,17 @@ __econtext__ permits access to the current, active context via
                     // start recursive parsing
                     p.run();
                     done=true;
+                    // return to main execution context
+                    main_ctx.jump_to();
                 });
 
             // user-code pulls parsed data from parser
             // inverted control flow
-            while(!done){
-                // resume parser execution context
-                parser_ctx.jump_to();
+            parser_ctx.jump_to();
+            do {
                 printf("Parsed: %c\n",c);
-            }
+                parser_ctx.jump_to();
+            } while( ! done);
         }
 
         output:
@@ -90,7 +91,7 @@ __stack_context__ and create the control structure with placement new before
 __econtext__ is created.
 
         // stack-alloctor used for (de-)allocating stack
-        fixedsize salloc( 4048);
+        fixedsize_stack salloc( 4048);
         // allocate stack space
         stack_context sctx( salloc.allocate() );
         // reserve space for control structure on top of the stack

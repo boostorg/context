@@ -7,7 +7,7 @@
 <link rel="home" href="../../index.html" title="Chapter&#160;1.&#160;Context">
 <link rel="up" href="../stack.html" title="Stack allocation">
 <link rel="prev" href="../stack.html" title="Stack allocation">
-<link rel="next" href="fixedsize.html" title="Class fixedsize">
+<link rel="next" href="fixedsize.html" title="Class fixedsize_stack">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -27,7 +27,7 @@
 <a name="context.stack.protected_fixedsize"></a><a class="link" href="protected_fixedsize.html" title="Class protected_fixedsize">Class <span class="emphasis"><em>protected_fixedsize</em></span></a>
 </h3></div></div></div>
 <p>
-        <span class="bold"><strong>Boost.Context</strong></span> provides the class <span class="emphasis"><em>protected_fixedsize</em></span>
+        <span class="bold"><strong>Boost.Context</strong></span> provides the class <span class="emphasis"><em>protected_fixedsize_stack</em></span>
         which models the <span class="emphasis"><em>stack-allocator concept</em></span>. It appends
         a guard page at the end of each stack to protect against exceeding the stack.
         If the guard page is accessed (read or write operation) a segmentation fault/access
@@ -39,9 +39,9 @@
 <th align="left">Important</th>
 </tr>
 <tr><td align="left" valign="top"><p>
-          Using <span class="emphasis"><em>protected_fixedsize</em></span> is expensive. That is, launching
-          a new coroutine with a new stack is expensive; the allocated stack is just
-          as efficient to use as any other stack.
+          Using <span class="emphasis"><em>protected_fixedsize_stack</em></span> is expensive. That
+          is, launching a new coroutine with a new stack is expensive; the allocated
+          stack is just as efficient to use as any other stack.
         </p></td></tr>
 </table></div>
 <div class="note"><table border="0" summary="Note">

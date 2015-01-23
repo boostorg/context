@@ -4,14 +4,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <cstdio>
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <sstream>
-#include <thread>
 
-#include <boost/context/execution_context.hpp>
-#include <boost/context/fixedsize.hpp>
+#include <boost/context/all.hpp>
 
 /*
  * grammar:
@@ -87,34 +85,41 @@ private:
    }
 };
 
-void foo() {
+int main() {
     std::istringstream is("1+1");
     bool done=false;
     char c;
+
+    // create handle to main execution context
     boost::context::execution_context main_ctx(
         boost::context::execution_context::current() );
-    // invert control flow
+
+    // executes parser in new execution context
     boost::context::execution_context parser_ctx(
-        boost::context::fixedsize(),
-        [&is,&main_ctx,&done,&c](){
-            Parser p(is,[&main_ctx,&c](char ch){
-                c=ch;
-                main_ctx.jump_to();
-            });
+        boost::context::fixedsize_stack(),
+        [&main_ctx,&is,&c,&done](){
+            // create parser with callback function
+            Parser p( is,
+                      [&main_ctx,&c](char ch){
+                          c=ch;
+                          // resume main execution context
+                          main_ctx.jump_to();
+                      });
+            // start recursive parsing
             p.run();
             done=true;
             main_ctx.jump_to();
         });
 
     // user-code pulls parsed data from parser
-    while(!done){
-        parser_ctx.jump_to();
+    // invert control flow
+    parser_ctx.jump_to();
+    do {
         printf("Parsed: %c\n",c);
-    }
-}
+        parser_ctx.jump_to();
+    } while( ! done);
 
-int main() {
-    std::thread t( foo);
-    t.join();
-    return 0;
+    std::cout << "main: done" << std::endl;
+
+    return EXIT_SUCCESS;
 }

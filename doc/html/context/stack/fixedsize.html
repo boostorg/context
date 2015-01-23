@@ -1,13 +1,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<title>Class fixedsize</title>
+<title>Class fixedsize_stack</title>
 <link rel="stylesheet" href="../../../../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
 <link rel="home" href="../../index.html" title="Chapter&#160;1.&#160;Context">
 <link rel="up" href="../stack.html" title="Stack allocation">
 <link rel="prev" href="protected_fixedsize.html" title="Class protected_fixedsize">
-<link rel="next" href="segmented.html" title="Class segmented">
+<link rel="next" href="segmented.html" title="Class segmented_stack">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -24,29 +24,29 @@
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="context.stack.fixedsize"></a><a class="link" href="fixedsize.html" title="Class fixedsize">Class <span class="emphasis"><em>fixedsize</em></span></a>
+<a name="context.stack.fixedsize"></a><a class="link" href="fixedsize.html" title="Class fixedsize_stack">Class <span class="emphasis"><em>fixedsize_stack</em></span></a>
 </h3></div></div></div>
 <p>
-        __boost_coroutine__ provides the class <span class="emphasis"><em>fixedsize</em></span> which
-        models the <span class="emphasis"><em>stack-allocator concept</em></span>. In contrast to
-        <span class="emphasis"><em>protected_fixedsize</em></span> it does not append a guard page
-        at the end of each stack. The memory is simply managed by <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">malloc</span><span class="special">()</span></code> and <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">free</span><span class="special">()</span></code>.
+        <span class="bold"><strong>Boost.Context</strong></span> provides the class <span class="emphasis"><em>fixedsize_stack</em></span>
+        which models the <span class="emphasis"><em>stack-allocator concept</em></span>. In contrast
+        to <span class="emphasis"><em>protected_fixedsize_stack</em></span> it does not append a guard
+        page at the end of each stack. The memory is simply managed by <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">malloc</span><span class="special">()</span></code> and <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">free</span><span class="special">()</span></code>.
       </p>
-<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">context</span><span class="special">/</span><span class="identifier">fixedsize</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">context</span><span class="special">/</span><span class="identifier">fixedsize_stack</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 
 <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">traitsT</span> <span class="special">&gt;</span>
-<span class="keyword">struct</span> <span class="identifier">basic_fixedsize</span>
+<span class="keyword">struct</span> <span class="identifier">basic_fixedsize_stack</span>
 <span class="special">{</span>
     <span class="keyword">typedef</span> <span class="identifier">traitT</span>  <span class="identifier">traits_type</span><span class="special">;</span>
 
-    <span class="identifier">basic_fixesize</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span> <span class="special">=</span> <span class="identifier">traits_type</span><span class="special">::</span><span class="identifier">default_size</span><span class="special">());</span>
+    <span class="identifier">basic_fixesize_stack</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span> <span class="special">=</span> <span class="identifier">traits_type</span><span class="special">::</span><span class="identifier">default_size</span><span class="special">());</span>
 
     <span class="identifier">stack_context</span> <span class="identifier">allocate</span><span class="special">();</span>
 
     <span class="keyword">void</span> <span class="identifier">deallocate</span><span class="special">(</span> <span class="identifier">stack_context</span> <span class="special">&amp;);</span>
 <span class="special">}</span>
 
-<span class="keyword">typedef</span> <span class="identifier">basic_fixedsize</span><span class="special">&lt;</span> <span class="identifier">stack_traits</span> <span class="special">&gt;</span> <span class="identifier">fixedsize</span>
+<span class="keyword">typedef</span> <span class="identifier">basic_fixedsize_stack</span><span class="special">&lt;</span> <span class="identifier">stack_traits</span> <span class="special">&gt;</span> <span class="identifier">fixedsize_stack</span><span class="special">;</span>
 </pre>
 <h5>
 <a name="context.stack.fixedsize.h0"></a>

@@ -70,7 +70,6 @@ new state of the original context.
             BOOST_ASSERT(false&&!"f2: never returns");
         }
 
-        boost::context::guarded_stack_allocator alloc;
         std::size_t size(8192);
         void* sp1(std::malloc(size));
         void* sp2(std::malloc(size));
@@ -125,9 +124,8 @@ other context.
             boost::context::jump_fcontext(&fc,fcm,(intptr_t)(p->first+p->second));
         }
 
-        boost::context::guarded_stack_allocator alloc;
         std::size_t size(8192);
-        void* sp(size);
+        void* sp(std::malloc(size));
 
         pair_t p(std::make_pair(2,7));
         fc=boost::context::make_fcontext(sp,size,f);

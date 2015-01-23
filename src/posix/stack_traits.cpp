@@ -20,11 +20,7 @@ extern "C" {
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#if __cplusplus < 201103L
 # include <boost/thread.hpp>
-#else
-# include <mutex>
-#endif
 
 #if !defined (SIGSTKSZ)
 # define SIGSTKSZ (8 * 1024)
@@ -38,7 +34,6 @@ extern "C" {
 namespace boost {
 namespace context {
 
-#if __cplusplus < 201103L
 void pagesize_( std::size_t * size)
 {
     // conform to POSIX.1-2001
@@ -71,23 +66,6 @@ rlimit stacksize_limit()
     boost::call_once( flag, stacksize_limit_, & limit);
     return limit;
 }
-#else
-std::size_t pagesize()
-{
-    static std::size_t size = 0;
-    static std::once_flag flag;
-    std::call_once( flag, [](){ size = ::sysconf( _SC_PAGESIZE); });
-    return size;
-}
-
-rlimit stacksize_limit()
-{
-    static rlimit limit;
-    static std::once_flag flag;
-    std::call_once( flag, [](){ ::getrlimit( RLIMIT_STACK, & limit); });
-    return limit;
-}
-#endif
 
 bool
 stack_traits::is_unbounded() BOOST_NOEXCEPT

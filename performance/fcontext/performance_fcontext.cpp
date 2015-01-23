@@ -66,7 +66,7 @@ duration_type measure_time_ec() {
     boost::context::execution_context ctx( boost::context::execution_context::current() );
     mctx = & ctx;
     // cache warum-up
-    boost::context::fixedsize alloc;
+    boost::context::fixedsize_stack alloc;
     boost::context::execution_context ectx( alloc, bar);
     ectx.jump_to();
         
@@ -105,7 +105,7 @@ cycle_type measure_cycles_ec() {
     boost::context::execution_context ctx( boost::context::execution_context::current() );
     mctx = & ctx;
     // cache warum-up
-    boost::context::fixedsize alloc;
+    boost::context::fixedsize_stack alloc;
     boost::context::execution_context ectx( alloc, bar);
     ectx.jump_to();
         

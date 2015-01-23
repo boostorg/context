@@ -5,9 +5,9 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/context/fcontext.hpp>
-#include <boost/context/fixedsize.hpp>
-#include <boost/context/protected_fixedsize.hpp>
-#include <boost/context/segmented.hpp>
+#include <boost/context/fixedsize_stack.hpp>
+#include <boost/context/protected_fixedsize_stack.hpp>
+#include <boost/context/segmented_stack.hpp>
 #include <boost/context/stack_context.hpp>
 #include <boost/context/stack_traits.hpp>
 #if __cplusplus >= 201103L
