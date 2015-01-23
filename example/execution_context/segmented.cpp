@@ -4,14 +4,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+#include <cstdlib>
 #include <iostream>
 
-#include <boost/assert.hpp>
 #include <boost/config.hpp>
 
-#include <boost/context/execution_context.hpp>
-#include <boost/context/fixedsize.hpp>
-#include <boost/context/segmented.hpp>
+#include <boost/context/all.hpp>
 
 #ifdef BOOST_MSVC //MS VisualStudio
 __declspec(noinline) void access( char *buf);
@@ -35,16 +33,16 @@ void bar( int i)
     }
 }
 
-int main( int argc, char * argv[]) {
+int main() {
     int count = 384;
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
-    std::cout << "using segmented stacks: allocates " << count << " * 4kB == " << 4 * count << "kB on stack, ";
-    std::cout << "initial stack size = " << boost::context::segmented::traits_type::default_size() / 1024 << "kB" << std::endl;
+    std::cout << "using segmented_stack stacks: allocates " << count << " * 4kB == " << 4 * count << "kB on stack, ";
+    std::cout << "initial stack size = " << boost::context::segmented_stack::traits_type::default_size() / 1024 << "kB" << std::endl;
     std::cout << "application should not fail" << std::endl;
 #else
     std::cout << "using standard stacks: allocates " << count << " * 4kB == " << 4 * count << "kB on stack, ";
-    std::cout << "initial stack size = " << boost::context::fixedsize::traits_type::default_size() / 1024 << "kB" << std::endl;
+    std::cout << "initial stack size = " << boost::context::fixedsize_stack::traits_type::default_size() / 1024 << "kB" << std::endl;
     std::cout << "application might fail" << std::endl;
 #endif
 
@@ -53,9 +51,9 @@ int main( int argc, char * argv[]) {
 
     boost::context::execution_context bar_ctx(
 #if defined(BOOST_USE_SEGMENTED_STACKS)
-        boost::context::segmented(),
+        boost::context::segmented_stack(),
 #else
-        boost::context::fixedsize(),
+        boost::context::fixedsize_stack(),
 #endif
         [& main_ctx, count](){
             bar( count);

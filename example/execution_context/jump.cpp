@@ -5,14 +5,9 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <cstdlib>
-#include <cstring>
 #include <iostream>
 
-#include <boost/assert.hpp>
-
-#include <boost/context/execution_context.hpp>
-#include <boost/context/fixedsize.hpp>
-#include <boost/context/protected_fixedsize.hpp>
+#include <boost/context/all.hpp>
 
 boost::context::execution_context * ctx1 = nullptr;
 boost::context::execution_context * ctx2 = nullptr;
@@ -33,10 +28,10 @@ void f2() {
     ctx->jump_to();
 }
 
-int main( int argc, char * argv[]) {
-    boost::context::execution_context ctx1_( boost::context::fixedsize(), f1, 3);
+int main() {
+    boost::context::execution_context ctx1_( boost::context::fixedsize_stack(), f1, 3);
     ctx1 = & ctx1_;
-    boost::context::execution_context ctx2_( boost::context::protected_fixedsize(), f2);
+    boost::context::execution_context ctx2_( boost::context::protected_fixedsize_stack(), f2);
     ctx2 = & ctx2_;
     boost::context::execution_context ctx_( boost::context::execution_context::current() );
     ctx = & ctx_;

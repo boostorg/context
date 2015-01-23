@@ -38,14 +38,14 @@ namespace boost {
 namespace context {
 
 template< typename traitsT >
-class basic_segmented {
+class basic_segmented_stack {
 private:
     std::size_t     size_;
 
 public:
     typedef traitsT traits_type;
 
-    basic_segmented( std::size_t size = traits_type::default_size() ) :
+    basic_segmented_stack( std::size_t size = traits_type::default_size() ) :
         size_( size) {
         BOOST_ASSERT( traits_type::minimum_size() <= size_);
         BOOST_ASSERT( traits_type::is_unbounded() || ( traits_type::maximum_size() >= size_) );
@@ -70,7 +70,7 @@ public:
     }
 };
 
-typedef basic_segmented< stack_traits > segmented;
+typedef basic_segmented_stack< stack_traits > segmented_stack;
 
 }}
 

@@ -25,7 +25,7 @@
 #include <boost/context/detail/config.hpp>
 #include <boost/context/detail/rref.hpp>
 #include <boost/context/stack_context.hpp>
-#include <boost/context/segmented.hpp>
+#include <boost/context/segmented_stack.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_PREFIX
@@ -142,7 +142,7 @@ private:
 
     boost::intrusive_ptr< fcontext >            ptr_;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
-    bool                                        use_segmented_ = false;
+    bool                                        use_segmented_stack_ = false;
 #endif
 
     template< typename StackAlloc, typename Fn >
@@ -214,19 +214,19 @@ public:
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
     template< typename Fn, typename ... Args >
-    explicit execution_context( segmented salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( segmented_stack salloc, Fn && fn, Args && ... args) :
         ptr_( create_worker_fcontext( salloc,
                                       detail::fn_rref< Fn >( std::forward< Fn >( fn) ),
                                       detail::arg_rref< Args >( std::forward< Args >( args) ) ... ) ),
-        use_segmented_( true) {
+        use_segmented_stack_( true) {
     }
 
     template< typename Fn, typename ... Args >
-    explicit execution_context( preallocated palloc, segmented salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( preallocated palloc, segmented_stack salloc, Fn && fn, Args && ... args) :
         ptr_( create_worker_fcontext( palloc, salloc,
                                       detail::fn_rref< Fn >( std::forward< Fn >( fn) ),
                                       detail::arg_rref< Args >( std::forward< Args >( args) ) ... ) ),
-        use_segmented_( true) {
+        use_segmented_stack_( true) {
     }
 #endif
 
@@ -249,7 +249,7 @@ public:
         fcontext * tmp( current_ctx_.get() );
         current_ctx_ = ptr_;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
-        if ( use_segmented_) {
+        if ( use_segmented_stack_) {
             __splitstack_getcontext( tmp->sctx.segments_ctx);
             __splitstack_setcontext( ptr_->sctx.segments_ctx);
 

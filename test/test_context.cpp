@@ -238,7 +238,7 @@ void test_ectx() {
     boost::context::execution_context ctx( boost::context::execution_context::current() );
     mctx = & ctx;
     value1 = 0;
-    ctx::fixedsize alloc;
+    ctx::fixedsize_stack alloc;
     ctx::execution_context ectx( alloc, f11);
     ectx.jump_to();
     BOOST_CHECK_EQUAL( 3, value1);
@@ -248,7 +248,7 @@ void test_variadric() {
     boost::context::execution_context ctx( boost::context::execution_context::current() );
     mctx = & ctx;
     value1 = 0;
-    ctx::fixedsize alloc;
+    ctx::fixedsize_stack alloc;
     ctx::execution_context ectx( alloc, f12, 5);
     ectx.jump_to();
     BOOST_CHECK_EQUAL( 5, value1);
@@ -258,7 +258,7 @@ void test_prealloc() {
     boost::context::execution_context ctx( boost::context::execution_context::current() );
     mctx = & ctx;
     value1 = 0;
-    ctx::fixedsize alloc;
+    ctx::fixedsize_stack alloc;
     ctx::stack_context sctx( alloc.allocate() );
     void * sp = static_cast< char * >( sctx.sp) - 10;
     std::size_t size = sctx.size - 10;

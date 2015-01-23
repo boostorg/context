@@ -15,18 +15,13 @@ import os ;
 import toolset ;
 import architecture ;
 
-project boost/econtext/example
+project boost/context/example/execution_context
     : requirements
       <library>/boost/context//boost_context
-      <library>/boost/thread//boost_thread
-      <toolset>gcc-4.7,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <toolset>gcc-4.7,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
-      <toolset>gcc-4.8,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <toolset>gcc-4.8,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
-      <toolset>gcc-4.9,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <toolset>gcc-4.9,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
-      <toolset>clang-3.4,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <toolset>clang-3.4,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
+      <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
+      <toolset>clang,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>clang,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <link>static
       <threading>multi
     ;

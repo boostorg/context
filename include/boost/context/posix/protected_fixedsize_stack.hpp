@@ -33,14 +33,14 @@ namespace boost {
 namespace context {
 
 template< typename traitsT >
-class basic_protected_fixedsize {
+class basic_protected_fixedsize_stack {
 private:
     std::size_t     size_;
 
 public:
     typedef traitsT traits_type;
 
-    basic_protected_fixedsize( std::size_t size = traits_type::default_size() ) :
+    basic_protected_fixedsize_stack( std::size_t size = traits_type::default_size() ) :
         size_( size) {
         BOOST_ASSERT( traits_type::minimum_size() <= size_);
         BOOST_ASSERT( traits_type::is_unbounded() || ( traits_type::maximum_size() >= size_) );
@@ -90,7 +90,7 @@ public:
     }
 };
 
-typedef basic_protected_fixedsize< stack_traits > protected_fixedsize;
+typedef basic_protected_fixedsize_stack< stack_traits > protected_fixedsize_stack;
 
 }}
 
