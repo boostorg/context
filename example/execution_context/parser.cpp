@@ -90,22 +90,29 @@ int main() {
     bool done=false;
     char c;
 
-    // invert control flow
+    // create handle to main execution context
     boost::context::execution_context main_ctx(
         boost::context::execution_context::current() );
+
+    // executes parser in new execution context
     boost::context::execution_context parser_ctx(
         boost::context::fixedsize_stack(),
         [&main_ctx,&is,&c,&done](){
-            Parser p(is,[&main_ctx,&c](char ch){
-                c=ch;
-                main_ctx.jump_to();
-            });
+            // create parser with callback function
+            Parser p( is,
+                      [&main_ctx,&c](char ch){
+                          c=ch;
+                          // resume main execution context
+                          main_ctx.jump_to();
+                      });
+            // start recursive parsing
             p.run();
             done=true;
             main_ctx.jump_to();
         });
 
     // user-code pulls parsed data from parser
+    // invert control flow
     parser_ctx.jump_to();
     do {
         printf("Parsed: %c\n",c);
