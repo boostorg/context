@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2015/01/23 21:16:05 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2015/01/23 21:23:42 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -180,7 +180,6 @@
     <phrase role="identifier">BOOST_ASSERT</phrase><phrase role="special">(</phrase><phrase role="keyword">false</phrase><phrase role="special">&amp;&amp;!</phrase><phrase role="string">&quot;f2: never returns&quot;</phrase><phrase role="special">);</phrase>
 <phrase role="special">}</phrase>
 
-<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">guarded_stack_allocator</phrase> <phrase role="identifier">alloc</phrase><phrase role="special">;</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase><phrase role="special">(</phrase><phrase role="number">8192</phrase><phrase role="special">);</phrase>
 <phrase role="keyword">void</phrase><phrase role="special">*</phrase> <phrase role="identifier">sp1</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">malloc</phrase><phrase role="special">(</phrase><phrase role="identifier">size</phrase><phrase role="special">));</phrase>
 <phrase role="keyword">void</phrase><phrase role="special">*</phrase> <phrase role="identifier">sp2</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">malloc</phrase><phrase role="special">(</phrase><phrase role="identifier">size</phrase><phrase role="special">));</phrase>
@@ -251,9 +250,8 @@
     <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">jump_fcontext</phrase><phrase role="special">(&amp;</phrase><phrase role="identifier">fc</phrase><phrase role="special">,</phrase><phrase role="identifier">fcm</phrase><phrase role="special">,(</phrase><phrase role="identifier">intptr_t</phrase><phrase role="special">)(</phrase><phrase role="identifier">p</phrase><phrase role="special">-&gt;</phrase><phrase role="identifier">first</phrase><phrase role="special">+</phrase><phrase role="identifier">p</phrase><phrase role="special">-&gt;</phrase><phrase role="identifier">second</phrase><phrase role="special">));</phrase>
 <phrase role="special">}</phrase>
 
-<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">guarded_stack_allocator</phrase> <phrase role="identifier">alloc</phrase><phrase role="special">;</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase><phrase role="special">(</phrase><phrase role="number">8192</phrase><phrase role="special">);</phrase>
-<phrase role="keyword">void</phrase><phrase role="special">*</phrase> <phrase role="identifier">sp</phrase><phrase role="special">(</phrase><phrase role="identifier">size</phrase><phrase role="special">);</phrase>
+<phrase role="keyword">void</phrase><phrase role="special">*</phrase> <phrase role="identifier">sp</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">malloc</phrase><phrase role="special">(</phrase><phrase role="identifier">size</phrase><phrase role="special">));</phrase>
 
 <phrase role="identifier">pair_t</phrase> <phrase role="identifier">p</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">make_pair</phrase><phrase role="special">(</phrase><phrase role="number">2</phrase><phrase role="special">,</phrase><phrase role="number">7</phrase><phrase role="special">));</phrase>
 <phrase role="identifier">fc</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">make_fcontext</phrase><phrase role="special">(</phrase><phrase role="identifier">sp</phrase><phrase role="special">,</phrase><phrase role="identifier">size</phrase><phrase role="special">,</phrase><phrase role="identifier">f</phrase><phrase role="special">);</phrase>

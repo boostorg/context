@@ -272,7 +272,7 @@ structures.
             std::size_t size;
 
             // might contain additional control structures
-            // for instance for segmented stacks
+            // for segmented stacks
         }
 
 [heading `void * sp`]
