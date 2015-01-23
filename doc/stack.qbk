@@ -101,29 +101,29 @@ the highest/lowest address of the stack.]]
 [endsect]
 
 
-[section:fixedsize Class ['fixedsize]]
+[section:fixedsize Class ['fixedsize_stack]]
 
-__boost_coroutine__ provides the class __fixedsize__ which models
+__boost_context__ provides the class __fixedsize__ which models
 the __stack_allocator_concept__.
 In contrast to __protected_fixedsize__ it does not append a guard page at the
 end of each stack. The memory is simply managed by `std::malloc()` and
 `std::free()`.
 
-        #include <boost/context/fixedsize.hpp>
+        #include <boost/context/fixedsize_stack.hpp>
 
         template< typename traitsT >
-        struct basic_fixedsize
+        struct basic_fixedsize_stack
         {
             typedef traitT  traits_type;
 
-            basic_fixesize(std::size_t size = traits_type::default_size());
+            basic_fixesize_stack(std::size_t size = traits_type::default_size());
 
             stack_context allocate();
 
             void deallocate( stack_context &);
         }
 
-        typedef basic_fixedsize< stack_traits > fixedsize 
+        typedef basic_fixedsize_stack< stack_traits > fixedsize_stack;
 
 [heading `stack_context allocate()`]
 [variablelist
@@ -145,7 +145,7 @@ address of the stack.]]
 [endsect]
 
 
-[section:segmented Class ['segmented]]
+[section:segmented Class ['segmented_stack]]
 
 __boost_context__ supports usage of a __segmented__, e. g. the size of
 the stack grows on demand. The coroutine is created with a minimal stack size
@@ -161,21 +161,21 @@ __segmented_stack__ __boost_context__ must be built with
 must be compiled with compiler-flags
 [*-fsplit-stack -DBOOST_USE_SEGMENTED_STACKS].]
 
-        #include <boost/context/segmented.hpp>
+        #include <boost/context/segmented_stack.hpp>
 
         template< typename traitsT >
-        struct basic_segmented
+        struct basic_segmented_stack
         {
             typedef traitT  traits_type;
 
-            basic_segmented(std::size_t size = traits_type::default_size());
+            basic_segmented_stack(std::size_t size = traits_type::default_size());
 
             stack_context allocate();
 
             void deallocate( stack_context &);
         }
 
-        typedef basic_segmented< stack_traits > segmented;
+        typedef basic_segmented_stack< stack_traits > segmented_stack;
 
 [heading `stack_context allocate()`]
 [variablelist

@@ -1,12 +1,12 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<title>Class segmented</title>
+<title>Class segmented_stack</title>
 <link rel="stylesheet" href="../../../../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
 <link rel="home" href="../../index.html" title="Chapter&#160;1.&#160;Context">
 <link rel="up" href="../stack.html" title="Stack allocation">
-<link rel="prev" href="fixedsize.html" title="Class fixedsize">
+<link rel="prev" href="fixedsize.html" title="Class fixedsize_stack">
 <link rel="next" href="stack_traits.html" title="Class stack_traits">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -24,14 +24,14 @@
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="context.stack.segmented"></a><a class="link" href="segmented.html" title="Class segmented">Class <span class="emphasis"><em>segmented</em></span></a>
+<a name="context.stack.segmented"></a><a class="link" href="segmented.html" title="Class segmented_stack">Class <span class="emphasis"><em>segmented_stack</em></span></a>
 </h3></div></div></div>
 <p>
-        <span class="bold"><strong>Boost.Context</strong></span> supports usage of a <span class="emphasis"><em>segmented</em></span>,
+        <span class="bold"><strong>Boost.Context</strong></span> supports usage of a <span class="emphasis"><em>segmented_stack</em></span>,
         e. g. the size of the stack grows on demand. The coroutine is created with
-        a minimal stack size and will be increased as required. Class <span class="emphasis"><em>segmented</em></span>
+        a minimal stack size and will be increased as required. Class <span class="emphasis"><em>segmented_stack</em></span>
         models the <span class="emphasis"><em>stack-allocator concept</em></span>. In contrast to
-        <span class="emphasis"><em>protected_fixedsize</em></span> and <span class="emphasis"><em>fixedsize</em></span>
+        <span class="emphasis"><em>protected_fixedsize_stack</em></span> and <span class="emphasis"><em>fixedsize_stack</em></span>
         it creates a stack which grows on demand.
       </p>
 <div class="note"><table border="0" summary="Note">
@@ -49,21 +49,21 @@
           <span class="bold"><strong>-fsplit-stack -DBOOST_USE_SEGMENTED_STACKS</strong></span>.
         </p></td></tr>
 </table></div>
-<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">context</span><span class="special">/</span><span class="identifier">segmented</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">context</span><span class="special">/</span><span class="identifier">segmented_stack</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 
 <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">traitsT</span> <span class="special">&gt;</span>
-<span class="keyword">struct</span> <span class="identifier">basic_segmented</span>
+<span class="keyword">struct</span> <span class="identifier">basic_segmented_stack</span>
 <span class="special">{</span>
     <span class="keyword">typedef</span> <span class="identifier">traitT</span>  <span class="identifier">traits_type</span><span class="special">;</span>
 
-    <span class="identifier">basic_segmented</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span> <span class="special">=</span> <span class="identifier">traits_type</span><span class="special">::</span><span class="identifier">default_size</span><span class="special">());</span>
+    <span class="identifier">basic_segmented_stack</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span> <span class="special">=</span> <span class="identifier">traits_type</span><span class="special">::</span><span class="identifier">default_size</span><span class="special">());</span>
 
     <span class="identifier">stack_context</span> <span class="identifier">allocate</span><span class="special">();</span>
 
     <span class="keyword">void</span> <span class="identifier">deallocate</span><span class="special">(</span> <span class="identifier">stack_context</span> <span class="special">&amp;);</span>
 <span class="special">}</span>
 
-<span class="keyword">typedef</span> <span class="identifier">basic_segmented</span><span class="special">&lt;</span> <span class="identifier">stack_traits</span> <span class="special">&gt;</span> <span class="identifier">segmented</span><span class="special">;</span>
+<span class="keyword">typedef</span> <span class="identifier">basic_segmented_stack</span><span class="special">&lt;</span> <span class="identifier">stack_traits</span> <span class="special">&gt;</span> <span class="identifier">segmented_stack</span><span class="special">;</span>
 </pre>
 <h5>
 <a name="context.stack.segmented.h0"></a>

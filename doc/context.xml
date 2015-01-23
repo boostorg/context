@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2014/11/21 19:18:49 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2015/01/23 21:16:05 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -503,10 +503,9 @@
 
     <phrase role="comment">// executes parser in new execution context</phrase>
     <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">parser_ctx</phrase><phrase role="special">(</phrase>
-        <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">fixedsize</phrase><phrase role="special">(),</phrase>
-        <phrase role="special">[&amp;</phrase><phrase role="identifier">is</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">main_ctx</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">done</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">c</phrase><phrase role="special">](){</phrase>
+        <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">fixedsize_stack</phrase><phrase role="special">(),</phrase>
+        <phrase role="special">[&amp;</phrase><phrase role="identifier">main_ctx</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">is</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">c</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">done</phrase><phrase role="special">](){</phrase>
             <phrase role="comment">// create parser with callback function</phrase>
-            <phrase role="comment">// jumping back to main context</phrase>
             <phrase role="identifier">Parser</phrase> <phrase role="identifier">p</phrase><phrase role="special">(</phrase><phrase role="identifier">is</phrase><phrase role="special">,</phrase>
                      <phrase role="special">[&amp;</phrase><phrase role="identifier">main_ctx</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">c</phrase><phrase role="special">](</phrase><phrase role="keyword">char</phrase> <phrase role="identifier">ch</phrase><phrase role="special">){</phrase>
                          <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">ch</phrase><phrase role="special">;</phrase>
@@ -516,15 +515,17 @@
             <phrase role="comment">// start recursive parsing</phrase>
             <phrase role="identifier">p</phrase><phrase role="special">.</phrase><phrase role="identifier">run</phrase><phrase role="special">();</phrase>
             <phrase role="identifier">done</phrase><phrase role="special">=</phrase><phrase role="keyword">true</phrase><phrase role="special">;</phrase>
+            <phrase role="comment">// return to main execution context</phrase>
+            <phrase role="identifier">main_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">jump_to</phrase><phrase role="special">();</phrase>
         <phrase role="special">});</phrase>
 
     <phrase role="comment">// user-code pulls parsed data from parser</phrase>
     <phrase role="comment">// inverted control flow</phrase>
-    <phrase role="keyword">while</phrase><phrase role="special">(!</phrase><phrase role="identifier">done</phrase><phrase role="special">){</phrase>
-        <phrase role="comment">// resume parser execution context</phrase>
-        <phrase role="identifier">parser_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">jump_to</phrase><phrase role="special">();</phrase>
+    <phrase role="identifier">parser_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">jump_to</phrase><phrase role="special">();</phrase>
+    <phrase role="keyword">do</phrase> <phrase role="special">{</phrase>
         <phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;Parsed: %c\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">c</phrase><phrase role="special">);</phrase>
-    <phrase role="special">}</phrase>
+        <phrase role="identifier">parser_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">jump_to</phrase><phrase role="special">();</phrase>
+    <phrase role="special">}</phrase> <phrase role="keyword">while</phrase><phrase role="special">(</phrase> <phrase role="special">!</phrase> <phrase role="identifier">done</phrase><phrase role="special">);</phrase>
 <phrase role="special">}</phrase>
 
 <phrase role="identifier">output</phrase><phrase role="special">:</phrase>
@@ -536,12 +537,12 @@
       In this example a recursive descent parser uses a callback to emit a newly
       passed symbol. Using <emphasis>execution_context</emphasis> the control flow
       can be inverted, e.g. the user-code pulls parsed symbols from the parser -
-      instead to get pushed from the parser.
+      instead to get pushed from the parser (via callback).
     </para>
     <para>
       The interface of <emphasis>execution_context</emphasis> does not transfer data.
-      This is not required because usually sharing the address off the data is sufficient
-      (pointer/ reference).
+      This is not required because usually sharing data's address (pointer/reference)
+      sufficient.
     </para>
     <para>
       If the code executed by <emphasis>execution_context</emphasis> emits an exception,
@@ -561,6 +562,38 @@
       The user is responsible for this task.
     </para>
     <bridgehead renderas="sect3" id="context.econtext.h0">
+      <phrase id="context.econtext.allocating_control_strutures_on_top_of_stack"/><link
+      linkend="context.econtext.allocating_control_strutures_on_top_of_stack">allocating
+      control strutures on top of stack</link>
+    </bridgehead>
+    <para>
+      Allocating control structures on top of the stack requires to allocated the
+      <emphasis>stack_context</emphasis> and create the control structure with placement
+      new before <emphasis>execution_context</emphasis> is created.
+    </para>
+<programlisting><phrase role="comment">// stack-alloctor used for (de-)allocating stack</phrase>
+<phrase role="identifier">fixedsize_stack</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">(</phrase> <phrase role="number">4048</phrase><phrase role="special">);</phrase>
+<phrase role="comment">// allocate stack space</phrase>
+<phrase role="identifier">stack_context</phrase> <phrase role="identifier">sctx</phrase><phrase role="special">(</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">.</phrase><phrase role="identifier">allocate</phrase><phrase role="special">()</phrase> <phrase role="special">);</phrase>
+<phrase role="comment">// reserve space for control structure on top of the stack</phrase>
+<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">sp</phrase> <phrase role="special">=</phrase> <phrase role="keyword">static_cast</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">char</phrase> <phrase role="special">*</phrase> <phrase role="special">&gt;(</phrase> <phrase role="identifier">sctx</phrase><phrase role="special">.</phrase><phrase role="identifier">sp</phrase><phrase role="special">)</phrase> <phrase role="special">-</phrase> <phrase role="keyword">sizeof</phrase><phrase role="special">(</phrase> <phrase role="identifier">my_control_structure</phrase><phrase role="special">);</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase> <phrase role="special">=</phrase> <phrase role="identifier">sctx</phrase><phrase role="special">.</phrase><phrase role="identifier">size</phrase> <phrase role="special">-</phrase> <phrase role="keyword">sizeof</phrase><phrase role="special">(</phrase> <phrase role="identifier">my_control_structure</phrase><phrase role="special">);</phrase>
+<phrase role="comment">// placement new creates control structure on reserved space</phrase>
+<phrase role="identifier">my_control_structure</phrase> <phrase role="special">*</phrase> <phrase role="identifier">cs</phrase> <phrase role="special">=</phrase> <phrase role="keyword">new</phrase> <phrase role="special">(</phrase> <phrase role="identifier">sp</phrase><phrase role="special">)</phrase> <phrase role="identifier">my_control_structure</phrase><phrase role="special">(</phrase> <phrase role="identifier">sp</phrase><phrase role="special">,</phrase> <phrase role="identifier">size</phrase><phrase role="special">,</phrase> <phrase role="identifier">sctx</phrase><phrase role="special">,</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">);</phrase>
+<phrase role="special">...</phrase>
+<phrase role="keyword">struct</phrase> <phrase role="identifier">my_control_structure</phrase>  <phrase role="special">{</phrase>
+    <phrase role="comment">// execution context</phrase>
+    <phrase role="identifier">execution_context</phrase> <phrase role="identifier">ectx</phrase><phrase role="special">;</phrase>
+
+    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">&gt;</phrase>
+    <phrase role="identifier">my_control_structure</phrase><phrase role="special">(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">sp</phrase><phrase role="special">,</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase><phrase role="special">,</phrase> <phrase role="identifier">stack_context</phrase> <phrase role="identifier">sctx</phrase><phrase role="special">,</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">)</phrase> <phrase role="special">:</phrase>
+        <phrase role="comment">// create execution context</phrase>
+        <phrase role="identifier">ectx</phrase><phrase role="special">(</phrase> <phrase role="identifier">preallocated</phrase><phrase role="special">(</phrase> <phrase role="identifier">sp</phrase><phrase role="special">,</phrase> <phrase role="identifier">size</phrase><phrase role="special">,</phrase> <phrase role="identifier">sctx</phrase><phrase role="special">),</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">entry_func</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+    <phrase role="special">}</phrase>
+    <phrase role="special">...</phrase>
+<phrase role="special">};</phrase>
+</programlisting>
+    <bridgehead renderas="sect3" id="context.econtext.h1">
       <phrase id="context.econtext.class__code__phrase_role__identifier__execution_context__phrase___code_"/><link
       linkend="context.econtext.class__code__phrase_role__identifier__execution_context__phrase___code_">Class
       <code><phrase role="identifier">execution_context</phrase></code></link>
@@ -572,6 +605,15 @@
     <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&gt;</phrase>
     <phrase role="identifier">execution_context</phrase><phrase role="special">(</phrase> <phrase role="identifier">StackAlloc</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">);</phrase>
 
+    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
+    <phrase role="identifier">execution_context</phrase><phrase role="special">(</phrase> <phrase role="identifier">StackAlloc</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
+
+    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&gt;</phrase>
+    <phrase role="identifier">execution_context</phrase><phrase role="special">(</phrase> <phrase role="identifier">preallocated</phrase> <phrase role="identifier">palloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">StackAlloc</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">);</phrase>
+
+    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
+    <phrase role="identifier">execution_context</phrase><phrase role="special">(</phrase> <phrase role="identifier">preallocated</phrase> <phrase role="identifier">palloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">StackAlloc</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
+
     <phrase role="keyword">void</phrase> <phrase role="identifier">jump_to</phrase><phrase role="special">()</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 
     <phrase role="keyword">explicit</phrase> <phrase role="keyword">operator</phrase> <phrase role="keyword">bool</phrase><phrase role="special">()</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
@@ -579,7 +621,7 @@
     <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">!()</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 <phrase role="special">};</phrase>
 </programlisting>
-    <bridgehead renderas="sect3" id="context.econtext.h1">
+    <bridgehead renderas="sect3" id="context.econtext.h2">
       <phrase id="context.econtext._code__phrase_role__keyword__static__phrase___phrase_role__identifier__execution_context__phrase___phrase_role__identifier__current__phrase__phrase_role__special______phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__static__phrase___phrase_role__identifier__execution_context__phrase___phrase_role__identifier__current__phrase__phrase_role__special______phrase___code_"><code><phrase
       role="keyword">static</phrase> <phrase role="identifier">execution_context</phrase>
@@ -605,7 +647,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h2">
+    <bridgehead renderas="sect3" id="context.econtext.h3">
       <phrase id="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"><code><phrase
       role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase
@@ -629,7 +671,93 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h3">
+    <bridgehead renderas="sect3" id="context.econtext.h4">
+      <phrase id="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"/><link
+      linkend="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"><code><phrase
+      role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase
+      role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase
+      role="special">,</phrase> <phrase role="identifier">typname</phrase> <phrase
+      role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase>
+      <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase>
+      <phrase role="special">&gt;</phrase> <phrase role="identifier">execution_context</phrase><phrase
+      role="special">(</phrase> <phrase role="identifier">StackAlloc</phrase> <phrase
+      role="identifier">salloc</phrase><phrase role="special">,</phrase> <phrase
+      role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase
+      role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase>
+      <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase>
+      <phrase role="identifier">args</phrase><phrase role="special">)</phrase></code></link>
+    </bridgehead>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Effects:</term>
+        <listitem>
+          <para>
+            Creates a new execution context and prepares the context to execute
+            <code><phrase role="identifier">fn</phrase></code>.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <bridgehead renderas="sect3" id="context.econtext.h5">
+      <phrase id="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"/><link
+      linkend="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"><code><phrase
+      role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase
+      role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase
+      role="special">,</phrase> <phrase role="identifier">typname</phrase> <phrase
+      role="identifier">Fn</phrase> <phrase role="special">&gt;</phrase> <phrase
+      role="identifier">execution_context</phrase><phrase role="special">(</phrase>
+      <phrase role="identifier">preallocated</phrase> <phrase role="identifier">palloc</phrase><phrase
+      role="special">,</phrase> <phrase role="identifier">StackAlloc</phrase> <phrase
+      role="identifier">salloc</phrase><phrase role="special">,</phrase> <phrase
+      role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase
+      role="identifier">fn</phrase><phrase role="special">)</phrase></code></link>
+    </bridgehead>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Effects:</term>
+        <listitem>
+          <para>
+            Creates a new execution context and prepares the context to execute
+            <code><phrase role="identifier">fn</phrase></code>. Used to store control
+            structures on top of the stack.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <bridgehead renderas="sect3" id="context.econtext.h6">
+      <phrase id="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"/><link
+      linkend="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"><code><phrase
+      role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase
+      role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase
+      role="special">,</phrase> <phrase role="identifier">typname</phrase> <phrase
+      role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase>
+      <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase>
+      <phrase role="special">&gt;</phrase> <phrase role="identifier">execution_context</phrase><phrase
+      role="special">(</phrase> <phrase role="identifier">preallocated</phrase>
+      <phrase role="identifier">palloc</phrase><phrase role="special">,</phrase>
+      <phrase role="identifier">StackAlloc</phrase> <phrase role="identifier">salloc</phrase><phrase
+      role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase>
+      <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase
+      role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase>
+      <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase
+      role="special">)</phrase></code></link>
+    </bridgehead>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Effects:</term>
+        <listitem>
+          <para>
+            Creates a new execution context and prepares the context to execute
+            <code><phrase role="identifier">fn</phrase></code>. Used to store control
+            structures on top of the stack.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <bridgehead renderas="sect3" id="context.econtext.h7">
       <phrase id="context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__jump_to__phrase__phrase_role__special______phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__jump_to__phrase__phrase_role__special______phrase___code_"><code><phrase
       role="keyword">void</phrase> <phrase role="identifier">jump_to</phrase><phrase
@@ -659,7 +787,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h4">
+    <bridgehead renderas="sect3" id="context.econtext.h8">
       <phrase id="context.econtext._code__phrase_role__keyword__explicit__phrase___phrase_role__keyword__operator__phrase___phrase_role__keyword__bool__phrase__phrase_role__special______phrase___phrase_role__keyword__const__phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__explicit__phrase___phrase_role__keyword__operator__phrase___phrase_role__keyword__bool__phrase__phrase_role__special______phrase___phrase_role__keyword__const__phrase___code_"><code><phrase
       role="keyword">explicit</phrase> <phrase role="keyword">operator</phrase>
@@ -688,7 +816,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h5">
+    <bridgehead renderas="sect3" id="context.econtext.h9">
       <phrase id="context.econtext._code__phrase_role__keyword__bool__phrase___phrase_role__keyword__operator__phrase__phrase_role__special_______phrase___phrase_role__keyword__const__phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__bool__phrase___phrase_role__keyword__operator__phrase__phrase_role__special_______phrase___phrase_role__keyword__const__phrase___code_"><code><phrase
       role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase
@@ -712,6 +840,40 @@
         <listitem>
           <para>
             Nothing.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <bridgehead renderas="sect3" id="context.econtext.h10">
+      <phrase id="context.econtext.struct__code__phrase_role__identifier__preallocated__phrase___code_"/><link
+      linkend="context.econtext.struct__code__phrase_role__identifier__preallocated__phrase___code_">Struct
+      <code><phrase role="identifier">preallocated</phrase></code></link>
+    </bridgehead>
+<programlisting><phrase role="keyword">struct</phrase> <phrase role="identifier">preallocated</phrase> <phrase role="special">{</phrase>
+    <phrase role="keyword">void</phrase>        <phrase role="special">*</phrase>   <phrase role="identifier">sp</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase>     <phrase role="identifier">size</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">stack_context</phrase>   <phrase role="identifier">sctx</phrase><phrase role="special">;</phrase>
+
+    <phrase role="identifier">preallocated</phrase><phrase role="special">(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">sp</phrase><phrase role="special">,</phrase> <phrase role="identifier">std</phrase><phrase role="special">:</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase><phrase role="special">,</phrase> <phrase role="identifier">stack_allocator</phrase> <phrase role="identifier">sctx</phrase><phrase role="special">)</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+<phrase role="special">};</phrase>
+</programlisting>
+    <bridgehead renderas="sect3" id="context.econtext.h11">
+      <phrase id="context.econtext._code__phrase_role__identifier__preallocated__phrase__phrase_role__special_____phrase___phrase_role__keyword__void__phrase___phrase_role__special_____phrase___phrase_role__identifier__sp__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special_____phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_allocator__phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"/><link
+      linkend="context.econtext._code__phrase_role__identifier__preallocated__phrase__phrase_role__special_____phrase___phrase_role__keyword__void__phrase___phrase_role__special_____phrase___phrase_role__identifier__sp__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special_____phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_allocator__phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"><code><phrase
+      role="identifier">preallocated</phrase><phrase role="special">(</phrase> <phrase
+      role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">sp</phrase><phrase
+      role="special">,</phrase> <phrase role="identifier">std</phrase><phrase role="special">:</phrase><phrase
+      role="identifier">size_t</phrase> <phrase role="identifier">size</phrase><phrase
+      role="special">,</phrase> <phrase role="identifier">stack_allocator</phrase>
+      <phrase role="identifier">sctx</phrase><phrase role="special">)</phrase></code></link>
+    </bridgehead>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Effects:</term>
+        <listitem>
+          <para>
+            Crreates an object of preallocated.
           </para>
         </listitem>
       </varlistentry>
@@ -847,7 +1009,7 @@
     <section id="context.stack.protected_fixedsize">
       <title><link linkend="context.stack.protected_fixedsize">Class <emphasis>protected_fixedsize</emphasis></link></title>
       <para>
-        <emphasis role="bold">Boost.Context</emphasis> provides the class <emphasis>protected_fixedsize</emphasis>
+        <emphasis role="bold">Boost.Context</emphasis> provides the class <emphasis>protected_fixedsize_stack</emphasis>
         which models the <emphasis>stack-allocator concept</emphasis>. It appends
         a guard page at the end of each stack to protect against exceeding the stack.
         If the guard page is accessed (read or write operation) a segmentation fault/access
@@ -855,9 +1017,9 @@
       </para>
       <important>
         <para>
-          Using <emphasis>protected_fixedsize</emphasis> is expensive. That is, launching
-          a new coroutine with a new stack is expensive; the allocated stack is just
-          as efficient to use as any other stack.
+          Using <emphasis>protected_fixedsize_stack</emphasis> is expensive. That
+          is, launching a new coroutine with a new stack is expensive; the allocated
+          stack is just as efficient to use as any other stack.
         </para>
       </important>
       <note>
@@ -967,32 +1129,32 @@
       </variablelist>
     </section>
     <section id="context.stack.fixedsize">
-      <title><link linkend="context.stack.fixedsize">Class <emphasis>fixedsize</emphasis></link></title>
+      <title><link linkend="context.stack.fixedsize">Class <emphasis>fixedsize_stack</emphasis></link></title>
       <para>
-        __boost_coroutine__ provides the class <emphasis>fixedsize</emphasis> which
-        models the <emphasis>stack-allocator concept</emphasis>. In contrast to
-        <emphasis>protected_fixedsize</emphasis> it does not append a guard page
-        at the end of each stack. The memory is simply managed by <code><phrase role="identifier">std</phrase><phrase
-        role="special">::</phrase><phrase role="identifier">malloc</phrase><phrase
+        <emphasis role="bold">Boost.Context</emphasis> provides the class <emphasis>fixedsize_stack</emphasis>
+        which models the <emphasis>stack-allocator concept</emphasis>. In contrast
+        to <emphasis>protected_fixedsize_stack</emphasis> it does not append a guard
+        page at the end of each stack. The memory is simply managed by <code><phrase
+        role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">malloc</phrase><phrase
         role="special">()</phrase></code> and <code><phrase role="identifier">std</phrase><phrase
         role="special">::</phrase><phrase role="identifier">free</phrase><phrase
         role="special">()</phrase></code>.
       </para>
-<programlisting><phrase role="preprocessor">#include</phrase> <phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">/</phrase><phrase role="identifier">context</phrase><phrase role="special">/</phrase><phrase role="identifier">fixedsize</phrase><phrase role="special">.</phrase><phrase role="identifier">hpp</phrase><phrase role="special">&gt;</phrase>
+<programlisting><phrase role="preprocessor">#include</phrase> <phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">/</phrase><phrase role="identifier">context</phrase><phrase role="special">/</phrase><phrase role="identifier">fixedsize_stack</phrase><phrase role="special">.</phrase><phrase role="identifier">hpp</phrase><phrase role="special">&gt;</phrase>
 
 <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">traitsT</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">struct</phrase> <phrase role="identifier">basic_fixedsize</phrase>
+<phrase role="keyword">struct</phrase> <phrase role="identifier">basic_fixedsize_stack</phrase>
 <phrase role="special">{</phrase>
     <phrase role="keyword">typedef</phrase> <phrase role="identifier">traitT</phrase>  <phrase role="identifier">traits_type</phrase><phrase role="special">;</phrase>
 
-    <phrase role="identifier">basic_fixesize</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase> <phrase role="special">=</phrase> <phrase role="identifier">traits_type</phrase><phrase role="special">::</phrase><phrase role="identifier">default_size</phrase><phrase role="special">());</phrase>
+    <phrase role="identifier">basic_fixesize_stack</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase> <phrase role="special">=</phrase> <phrase role="identifier">traits_type</phrase><phrase role="special">::</phrase><phrase role="identifier">default_size</phrase><phrase role="special">());</phrase>
 
     <phrase role="identifier">stack_context</phrase> <phrase role="identifier">allocate</phrase><phrase role="special">();</phrase>
 
     <phrase role="keyword">void</phrase> <phrase role="identifier">deallocate</phrase><phrase role="special">(</phrase> <phrase role="identifier">stack_context</phrase> <phrase role="special">&amp;);</phrase>
 <phrase role="special">}</phrase>
 
-<phrase role="keyword">typedef</phrase> <phrase role="identifier">basic_fixedsize</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">stack_traits</phrase> <phrase role="special">&gt;</phrase> <phrase role="identifier">fixedsize</phrase>
+<phrase role="keyword">typedef</phrase> <phrase role="identifier">basic_fixedsize_stack</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">stack_traits</phrase> <phrase role="special">&gt;</phrase> <phrase role="identifier">fixedsize_stack</phrase><phrase role="special">;</phrase>
 </programlisting>
       <bridgehead renderas="sect4" id="context.stack.fixedsize.h0">
         <phrase id="context.stack.fixedsize._code__phrase_role__identifier__stack_context__phrase___phrase_role__identifier__allocate__phrase__phrase_role__special______phrase___code_"/><link
@@ -1078,13 +1240,13 @@
       </variablelist>
     </section>
     <section id="context.stack.segmented">
-      <title><link linkend="context.stack.segmented">Class <emphasis>segmented</emphasis></link></title>
+      <title><link linkend="context.stack.segmented">Class <emphasis>segmented_stack</emphasis></link></title>
       <para>
-        <emphasis role="bold">Boost.Context</emphasis> supports usage of a <emphasis>segmented</emphasis>,
+        <emphasis role="bold">Boost.Context</emphasis> supports usage of a <emphasis>segmented_stack</emphasis>,
         e. g. the size of the stack grows on demand. The coroutine is created with
-        a minimal stack size and will be increased as required. Class <emphasis>segmented</emphasis>
+        a minimal stack size and will be increased as required. Class <emphasis>segmented_stack</emphasis>
         models the <emphasis>stack-allocator concept</emphasis>. In contrast to
-        <emphasis>protected_fixedsize</emphasis> and <emphasis>fixedsize</emphasis>
+        <emphasis>protected_fixedsize_stack</emphasis> and <emphasis>fixedsize_stack</emphasis>
         it creates a stack which grows on demand.
       </para>
       <note>
@@ -1098,21 +1260,21 @@
           <emphasis role="bold">-fsplit-stack -DBOOST_USE_SEGMENTED_STACKS</emphasis>.
         </para>
       </note>
-<programlisting><phrase role="preprocessor">#include</phrase> <phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">/</phrase><phrase role="identifier">context</phrase><phrase role="special">/</phrase><phrase role="identifier">segmented</phrase><phrase role="special">.</phrase><phrase role="identifier">hpp</phrase><phrase role="special">&gt;</phrase>
+<programlisting><phrase role="preprocessor">#include</phrase> <phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">/</phrase><phrase role="identifier">context</phrase><phrase role="special">/</phrase><phrase role="identifier">segmented_stack</phrase><phrase role="special">.</phrase><phrase role="identifier">hpp</phrase><phrase role="special">&gt;</phrase>
 
 <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">traitsT</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">struct</phrase> <phrase role="identifier">basic_segmented</phrase>
+<phrase role="keyword">struct</phrase> <phrase role="identifier">basic_segmented_stack</phrase>
 <phrase role="special">{</phrase>
     <phrase role="keyword">typedef</phrase> <phrase role="identifier">traitT</phrase>  <phrase role="identifier">traits_type</phrase><phrase role="special">;</phrase>
 
-    <phrase role="identifier">basic_segmented</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase> <phrase role="special">=</phrase> <phrase role="identifier">traits_type</phrase><phrase role="special">::</phrase><phrase role="identifier">default_size</phrase><phrase role="special">());</phrase>
+    <phrase role="identifier">basic_segmented_stack</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase> <phrase role="special">=</phrase> <phrase role="identifier">traits_type</phrase><phrase role="special">::</phrase><phrase role="identifier">default_size</phrase><phrase role="special">());</phrase>
 
     <phrase role="identifier">stack_context</phrase> <phrase role="identifier">allocate</phrase><phrase role="special">();</phrase>
 
     <phrase role="keyword">void</phrase> <phrase role="identifier">deallocate</phrase><phrase role="special">(</phrase> <phrase role="identifier">stack_context</phrase> <phrase role="special">&amp;);</phrase>
 <phrase role="special">}</phrase>
 
-<phrase role="keyword">typedef</phrase> <phrase role="identifier">basic_segmented</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">stack_traits</phrase> <phrase role="special">&gt;</phrase> <phrase role="identifier">segmented</phrase><phrase role="special">;</phrase>
+<phrase role="keyword">typedef</phrase> <phrase role="identifier">basic_segmented_stack</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">stack_traits</phrase> <phrase role="special">&gt;</phrase> <phrase role="identifier">segmented_stack</phrase><phrase role="special">;</phrase>
 </programlisting>
       <bridgehead renderas="sect4" id="context.stack.segmented.h0">
         <phrase id="context.stack.segmented._code__phrase_role__identifier__stack_context__phrase___phrase_role__identifier__allocate__phrase__phrase_role__special______phrase___code_"/><link
@@ -1368,8 +1530,8 @@
       <para>
         <emphasis role="bold">Boost.Context</emphasis> provides the class <emphasis>stack_context</emphasis>
         which will contain the stack pointer and the size of the stack. In case of
-        a <emphasis>segmented</emphasis>, <emphasis>stack_context</emphasis> contains
-        some extra control structures.
+        a <emphasis>segmented_stack</emphasis>, <emphasis>stack_context</emphasis>
+        contains some extra control structures.
       </para>
 <programlisting><phrase role="keyword">struct</phrase> <phrase role="identifier">stack_context</phrase>
 <phrase role="special">{</phrase>
