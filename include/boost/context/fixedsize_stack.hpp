@@ -18,6 +18,10 @@
 #include <boost/context/stack_context.hpp>
 #include <boost/context/stack_traits.hpp>
 
+#if defined(BOOST_USE_VALGRIND)
+#include <valgrind/valgrind.h>
+#endif
+
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
 #endif
@@ -46,6 +50,9 @@ public:
         stack_context sctx;
         sctx.size = size_;
         sctx.sp = static_cast< char * >( vp) + sctx.size;
+#if defined(BOOST_USE_VALGRIND)
+        sctx.valgrind_stack_id = VALGRIND_STACK_REGISTER( sctx.sp, vp);
+#endif
         return sctx;
     }
 
@@ -53,6 +60,10 @@ public:
         BOOST_ASSERT( sctx.sp);
         BOOST_ASSERT( traits_type::minimum_size() <= sctx.size);
         BOOST_ASSERT( traits_type::is_unbounded() || ( traits_type::maximum_size() >= sctx.size) );
+
+#if defined(BOOST_USE_VALGRIND)
+        VALGRIND_STACK_DEREGISTER( sctx.valgrind_stack_id);
+#endif
 
         void * vp = static_cast< char * >( sctx.sp) - sctx.size;
         std::free( vp);
