@@ -27,22 +27,34 @@ struct stack_context {
     std::size_t             size;
     void                *   sp;
     segments_context        segments_ctx;
+#if defined(BOOST_USE_VALGRIND)
+    unsigned                valgrind_stack_id;
+#endif
 
     stack_context() :
         size( 0),
         sp( 0),
-        segments_ctx() {
-    }
+        segments_ctx()
+#if defined(BOOST_USE_VALGRIND)
+        , valgrind_stack_id( 0)
+#endif
+        {}
 };
 #else
 struct stack_context {
     std::size_t             size;
     void                *   sp;
+#if defined(BOOST_USE_VALGRIND)
+    unsigned                valgrind_stack_id;
+#endif
 
     stack_context() :
         size( 0),
-        sp( 0) {
-    }
+        sp( 0)
+#if defined(BOOST_USE_VALGRIND)
+        , valgrind_stack_id( 0)
+#endif
+    {}
 };
 #endif
 
