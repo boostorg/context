@@ -16,6 +16,7 @@
 #include <boost/utility.hpp>
 
 #include <boost/context/all.hpp>
+#include <boost/context/detail/config.hpp>
 
 #include "../example/simple_stack_allocator.hpp"
 
@@ -283,7 +284,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_fp) );
     test->add( BOOST_TEST_CASE( & test_stacked) );
 
-#if __cplusplus >= 201103L
+#if ! defined(BOOST_CONTEXT_NO_EXECUTION_CONTEXT)
     test->add( BOOST_TEST_CASE( & test_ectx) );
     test->add( BOOST_TEST_CASE( & test_variadric) );
     test->add( BOOST_TEST_CASE( & test_prealloc) );

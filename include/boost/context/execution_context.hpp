@@ -7,31 +7,30 @@
 #ifndef BOOST_CONTEXT_EXECUTION_CONTEXT_H
 #define BOOST_CONTEXT_EXECUTION_CONTEXT_H
 
-#if __cplusplus < 201103L
-# error "execution_context requires C++11 support!"
-#endif
-
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <exception>
-#include <memory>
-
-#include <boost/assert.hpp>
-#include <boost/config.hpp>
-#include <boost/context/fcontext.hpp>
-#include <boost/intrusive_ptr.hpp>
-
 #include <boost/context/detail/config.hpp>
-#include <boost/context/detail/rref.hpp>
-#include <boost/context/stack_context.hpp>
-#include <boost/context/segmented_stack.hpp>
 
-#ifdef BOOST_HAS_ABI_HEADERS
-# include BOOST_ABI_PREFIX
-#endif
+#if ! defined(BOOST_CONTEXT_NO_EXECUTION_CONTEXT)
 
-#if defined(BOOST_USE_SEGMENTED_STACKS)
+# include <cstddef>
+# include <cstdint>
+# include <cstdlib>
+# include <exception>
+# include <memory>
+
+# include <boost/assert.hpp>
+# include <boost/config.hpp>
+# include <boost/context/fcontext.hpp>
+# include <boost/intrusive_ptr.hpp>
+
+# include <boost/context/detail/rref.hpp>
+# include <boost/context/stack_context.hpp>
+# include <boost/context/segmented_stack.hpp>
+
+# ifdef BOOST_HAS_ABI_HEADERS
+#  include BOOST_ABI_PREFIX
+# endif
+
+# if defined(BOOST_USE_SEGMENTED_STACKS)
 extern "C" {
 
 void __splitstack_getcontext( void * [BOOST_CONTEXT_SEGMENTS]);
@@ -39,7 +38,7 @@ void __splitstack_getcontext( void * [BOOST_CONTEXT_SEGMENTS]);
 void __splitstack_setcontext( void * [BOOST_CONTEXT_SEGMENTS]);
 
 }
-#endif
+# endif
 
 namespace boost {
 namespace context {
@@ -141,9 +140,9 @@ private:
     thread_local static ptr_t                   current_ctx_;
 
     boost::intrusive_ptr< fcontext >            ptr_;
-#if defined(BOOST_USE_SEGMENTED_STACKS)
+# if defined(BOOST_USE_SEGMENTED_STACKS)
     bool                                        use_segmented_stack_ = false;
-#endif
+# endif
 
     template< typename StackAlloc, typename Fn >
     static fcontext * create_context( StackAlloc salloc, Fn && fn) {
@@ -212,7 +211,7 @@ public:
         return execution_context();
     }
 
-#if defined(BOOST_USE_SEGMENTED_STACKS)
+# if defined(BOOST_USE_SEGMENTED_STACKS)
     template< typename Fn, typename ... Args >
     explicit execution_context( segmented_stack salloc, Fn && fn, Args && ... args) :
         ptr_( create_worker_fcontext( salloc,
@@ -228,7 +227,7 @@ public:
                                       detail::arg_rref< Args >( std::forward< Args >( args) ) ... ) ),
         use_segmented_stack_( true) {
     }
-#endif
+# endif
 
     template< typename StackAlloc, typename Fn, typename ... Args >
     explicit execution_context( StackAlloc salloc, Fn && fn, Args && ... args) :
@@ -248,7 +247,7 @@ public:
         BOOST_ASSERT( * this);
         fcontext * tmp( current_ctx_.get() );
         current_ctx_ = ptr_;
-#if defined(BOOST_USE_SEGMENTED_STACKS)
+# if defined(BOOST_USE_SEGMENTED_STACKS)
         if ( use_segmented_stack_) {
             __splitstack_getcontext( tmp->sctx.segments_ctx);
             __splitstack_setcontext( ptr_->sctx.segments_ctx);
@@ -259,9 +258,9 @@ public:
         } else {
             jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ), preserve_fpu);
         }
-#else
+# else
         jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ), preserve_fpu);
-#endif
+# endif
     }
 
     explicit operator bool() const noexcept {
@@ -275,8 +274,10 @@ public:
 
 }}
 
-#ifdef BOOST_HAS_ABI_HEADERS
+# ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX
+# endif
+
 #endif
 
 #endif // BOOST_CONTEXT_EXECUTION_CONTEXT_H

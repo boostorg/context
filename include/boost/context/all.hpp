@@ -10,6 +10,4 @@
 #include <boost/context/segmented_stack.hpp>
 #include <boost/context/stack_context.hpp>
 #include <boost/context/stack_traits.hpp>
-#if __cplusplus >= 201103L
 #include <boost/context/execution_context.hpp>
-#endif
