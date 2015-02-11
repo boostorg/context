@@ -153,6 +153,17 @@ private:
         // reserve space for control structure
         std::size_t size = sctx.size - sizeof( func_t);
         void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
+#if 0
+        constexpr std::size_t func_alignment = 64; // alignof( func_t);
+        constexpr std::size_t func_size = sizeof( func_t);
+        // reserve space on stack
+        void * sp = static_cast< char * >( sctx.sp) - func_size - func_alignment;
+        // align sp pointer
+        sp = std::align( func_alignment, func_size, sp, func_size + func_alignment);
+        BOOST_ASSERT( nullptr != sp);
+        // calculate remaining size
+        std::size_t size = sctx.size - ( static_cast< char * >( sctx.sp) - static_cast< char * >( sp) );
+#endif
         // create fast-context
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
         BOOST_ASSERT( nullptr != fctx);
@@ -167,6 +178,17 @@ private:
         // reserve space for control structure
         std::size_t size = palloc.size - sizeof( func_t);
         void * sp = static_cast< char * >( palloc.sp) - sizeof( func_t);
+#if 0
+        constexpr std::size_t func_alignment = 64; // alignof( func_t);
+        constexpr std::size_t func_size = sizeof( func_t);
+        // reserve space on stack
+        void * sp = static_cast< char * >( palloc.sp) - func_size - func_alignment;
+        // align sp pointer
+        sp = std::align( func_alignment, func_size, sp, func_size + func_alignment);
+        BOOST_ASSERT( nullptr != sp);
+        // calculate remaining size
+        std::size_t size = palloc.size - ( static_cast< char * >( palloc.sp) - static_cast< char * >( sp) );
+#endif
         // create fast-context
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
         BOOST_ASSERT( nullptr != fctx);
