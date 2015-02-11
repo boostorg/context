@@ -16,13 +16,14 @@
 # include <cstdlib>
 # include <exception>
 # include <memory>
+# include <tuple>
+# include <utility>
 
 # include <boost/assert.hpp>
 # include <boost/config.hpp>
 # include <boost/context/fcontext.hpp>
 # include <boost/intrusive_ptr.hpp>
 
-# include <boost/context/detail/rref.hpp>
 # include <boost/context/stack_context.hpp>
 # include <boost/context/segmented_stack.hpp>
 
@@ -173,29 +174,34 @@ private:
         return new ( sp) func_t( palloc.sctx, salloc, fctx, std::forward< Fn >( fn) );
     }
 
-    template< typename StackAlloc, typename Fn, typename ... Args >
+    template< typename StackAlloc, typename Fn, typename Tpl, std::size_t ... I >
     static fcontext * create_worker_fcontext( StackAlloc salloc,
-                                              detail::fn_rref< Fn > fn,
-                                              detail::arg_rref< Args > ... args) {
+                                              Fn && fn_, Tpl && tpl_,
+                                              std::index_sequence< I ... >) {
         return create_context( salloc,
-                               [=] () mutable {
+                               [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable {
                                    try {
-                                       fn( args ...);
+                                       fn(
+                                           // std::tuple_element<> does not perfect forwarding
+                                           std::forward< decltype( std::get< I >( std::declval< Tpl >() ) ) >(
+                                                std::get< I >( std::forward< Tpl >( tpl) ) ) ... );
                                    } catch (...) {
                                        std::terminate();
                                    }
                                });
     }
 
-    template< typename StackAlloc, typename Fn, typename ... Args >
-    static fcontext * create_worker_fcontext( preallocated palloc,
-                                              StackAlloc salloc,
-                                              detail::fn_rref< Fn > fn,
-                                              detail::arg_rref< Args > ... args) {
+    template< typename StackAlloc, typename Fn, typename Tpl, std::size_t ... I >
+    static fcontext * create_worker_fcontext( preallocated palloc, StackAlloc salloc,
+                                              Fn && fn_, Tpl && tpl_,
+                                              std::index_sequence< I ... >) {
         return create_context( palloc, salloc,
-                               [=] () mutable {
+                               [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable {
                                    try {
-                                       fn( args ...);
+                                       fn(
+                                           // std::tuple_element<> does not perfect forwarding
+                                           std::forward< decltype( std::get< I >( std::declval< Tpl >() ) ) >(
+                                                std::get< I >( std::forward< Tpl >( tpl) ) ) ... );
                                    } catch (...) {
                                        std::terminate();
                                    }
@@ -215,16 +221,18 @@ public:
     template< typename Fn, typename ... Args >
     explicit execution_context( segmented_stack salloc, Fn && fn, Args && ... args) :
         ptr_( create_worker_fcontext( salloc,
-                                      detail::fn_rref< Fn >( std::forward< Fn >( fn) ),
-                                      detail::arg_rref< Args >( std::forward< Args >( args) ) ... ) ),
+                                      std::forward< Fn >( fn),
+                                      std::make_tuple( std::forward< Args >( args) ... ),
+                                      std::index_sequence_for< Args ... >() ) ) {
         use_segmented_stack_( true) {
     }
 
     template< typename Fn, typename ... Args >
     explicit execution_context( preallocated palloc, segmented_stack salloc, Fn && fn, Args && ... args) :
         ptr_( create_worker_fcontext( palloc, salloc,
-                                      detail::fn_rref< Fn >( std::forward< Fn >( fn) ),
-                                      detail::arg_rref< Args >( std::forward< Args >( args) ) ... ) ),
+                                      std::forward< Fn >( fn),
+                                      std::make_tuple( std::forward< Args >( args) ... ),
+                                      std::index_sequence_for< Args ... >() ) ) {
         use_segmented_stack_( true) {
     }
 # endif
@@ -232,15 +240,17 @@ public:
     template< typename StackAlloc, typename Fn, typename ... Args >
     explicit execution_context( StackAlloc salloc, Fn && fn, Args && ... args) :
         ptr_( create_worker_fcontext( salloc,
-                                      detail::fn_rref< Fn >( std::forward< Fn >( fn) ),
-                                      detail::arg_rref< Args >( std::forward< Args >( args) ) ... ) ) {
+                                      std::forward< Fn >( fn),
+                                      std::make_tuple( std::forward< Args >( args) ... ),
+                                      std::index_sequence_for< Args ... >() ) ) {
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
     explicit execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
         ptr_( create_worker_fcontext( palloc, salloc,
-                                      detail::fn_rref< Fn >( std::forward< Fn >( fn) ),
-                                      detail::arg_rref< Args >( std::forward< Args >( args) ) ... ) ) {
+                                      std::forward< Fn >( fn),
+                                      std::make_tuple( std::forward< Args >( args) ... ),
+                                      std::index_sequence_for< Args ... >() ) ) {
     }
 
     void jump_to( bool preserve_fpu = false) noexcept {
