@@ -153,6 +153,17 @@ private:
         // reserve space for control structure
         std::size_t size = sctx.size - sizeof( func_t);
         void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
+#if 0
+        constexpr std::size_t func_alignment = 64; // alignof( func_t);
+        constexpr std::size_t func_size = sizeof( func_t);
+        // reserve space on stack
+        void * sp = static_cast< char * >( sctx.sp) - func_size - func_alignment;
+        // align sp pointer
+        sp = std::align( func_alignment, func_size, sp, func_size + func_alignment);
+        BOOST_ASSERT( nullptr != sp);
+        // calculate remaining size
+        std::size_t size = sctx.size - ( static_cast< char * >( sctx.sp) - static_cast< char * >( sp) );
+#endif
         // create fast-context
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
         BOOST_ASSERT( nullptr != fctx);
@@ -167,6 +178,17 @@ private:
         // reserve space for control structure
         std::size_t size = palloc.size - sizeof( func_t);
         void * sp = static_cast< char * >( palloc.sp) - sizeof( func_t);
+#if 0
+        constexpr std::size_t func_alignment = 64; // alignof( func_t);
+        constexpr std::size_t func_size = sizeof( func_t);
+        // reserve space on stack
+        void * sp = static_cast< char * >( palloc.sp) - func_size - func_alignment;
+        // align sp pointer
+        sp = std::align( func_alignment, func_size, sp, func_size + func_alignment);
+        BOOST_ASSERT( nullptr != sp);
+        // calculate remaining size
+        std::size_t size = palloc.size - ( static_cast< char * >( palloc.sp) - static_cast< char * >( sp) );
+#endif
         // create fast-context
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
         BOOST_ASSERT( nullptr != fctx);
@@ -255,21 +277,22 @@ public:
 
     void jump_to( bool preserve_fpu = false) noexcept {
         BOOST_ASSERT( * this);
-        fcontext * tmp( current_ctx_.get() );
+        fcontext * old_ctx( current_ctx_.get() );
+        fcontext * new_ctx( ptr_.get() );
         current_ctx_ = ptr_;
 # if defined(BOOST_USE_SEGMENTED_STACKS)
         if ( use_segmented_stack_) {
-            __splitstack_getcontext( tmp->sctx.segments_ctx);
-            __splitstack_setcontext( ptr_->sctx.segments_ctx);
+            __splitstack_getcontext( old_ctx->sctx.segments_ctx);
+            __splitstack_setcontext( new_ctx->sctx.segments_ctx);
 
-            jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ), preserve_fpu);
+            jump_fcontext( & old_ctx->fctx, new_ctx->fctx, reinterpret_cast< intptr_t >( new_ctx), preserve_fpu);
 
-            __splitstack_setcontext( tmp->sctx.segments_ctx);
+            __splitstack_setcontext( old_ctx->sctx.segments_ctx);
         } else {
-            jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ), preserve_fpu);
+            jump_fcontext( & old_ctx->fctx, new_ctx->fctx, reinterpret_cast< intptr_t >( new_ctx), preserve_fpu);
         }
 # else
-        jump_fcontext( & tmp->fctx, ptr_->fctx, reinterpret_cast< intptr_t >( ptr_.get() ), preserve_fpu);
+        jump_fcontext( & old_ctx->fctx, new_ctx->fctx, reinterpret_cast< intptr_t >( new_ctx), preserve_fpu);
 # endif
     }
 

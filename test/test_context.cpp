@@ -222,7 +222,7 @@ void test_stacked()
     BOOST_CHECK_EQUAL( 3, value1);
 }
 
-#if __cplusplus >= 201103L
+#if ! defined(BOOST_CONTEXT_NO_EXECUTION_CONTEXT)
 ctx::execution_context * mctx = nullptr;
 
 void f11() {
