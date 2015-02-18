@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2015/01/23 21:23:42 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2015/02/18 17:35:30 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -468,7 +468,7 @@
     <title><link linkend="context.econtext">Class execution_context</link></title>
     <important>
       <para>
-        <emphasis>execution_context</emphasis> is supported only by C++11.
+        <emphasis>execution_context</emphasis> is supported only by C++14.
       </para>
     </important>
     <para>
@@ -508,21 +508,21 @@
                      <phrase role="special">[&amp;</phrase><phrase role="identifier">main_ctx</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">c</phrase><phrase role="special">](</phrase><phrase role="keyword">char</phrase> <phrase role="identifier">ch</phrase><phrase role="special">){</phrase>
                          <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">ch</phrase><phrase role="special">;</phrase>
                          <phrase role="comment">// resume main execution context</phrase>
-                         <phrase role="identifier">main_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">jump_to</phrase><phrase role="special">();</phrase>
+                         <phrase role="identifier">main_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
                      <phrase role="special">});</phrase>
             <phrase role="comment">// start recursive parsing</phrase>
             <phrase role="identifier">p</phrase><phrase role="special">.</phrase><phrase role="identifier">run</phrase><phrase role="special">();</phrase>
             <phrase role="identifier">done</phrase><phrase role="special">=</phrase><phrase role="keyword">true</phrase><phrase role="special">;</phrase>
             <phrase role="comment">// return to main execution context</phrase>
-            <phrase role="identifier">main_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">jump_to</phrase><phrase role="special">();</phrase>
+            <phrase role="identifier">main_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
         <phrase role="special">});</phrase>
 
     <phrase role="comment">// user-code pulls parsed data from parser</phrase>
     <phrase role="comment">// inverted control flow</phrase>
-    <phrase role="identifier">parser_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">jump_to</phrase><phrase role="special">();</phrase>
+    <phrase role="identifier">parser_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
     <phrase role="keyword">do</phrase> <phrase role="special">{</phrase>
         <phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;Parsed: %c\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">c</phrase><phrase role="special">);</phrase>
-        <phrase role="identifier">parser_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">jump_to</phrase><phrase role="special">();</phrase>
+        <phrase role="identifier">parser_ctx</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
     <phrase role="special">}</phrase> <phrase role="keyword">while</phrase><phrase role="special">(</phrase> <phrase role="special">!</phrase> <phrase role="identifier">done</phrase><phrase role="special">);</phrase>
 <phrase role="special">}</phrase>
 
@@ -569,6 +569,12 @@
       <emphasis>stack_context</emphasis> and create the control structure with placement
       new before <emphasis>execution_context</emphasis> is created.
     </para>
+    <note>
+      <para>
+        The user is responsible for destructing the control structure at the top
+        of the stack.
+      </para>
+    </note>
 <programlisting><phrase role="comment">// stack-alloctor used for (de-)allocating stack</phrase>
 <phrase role="identifier">fixedsize_stack</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">(</phrase> <phrase role="number">4048</phrase><phrase role="special">);</phrase>
 <phrase role="comment">// allocate stack space</phrase>
@@ -578,6 +584,9 @@
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase> <phrase role="special">=</phrase> <phrase role="identifier">sctx</phrase><phrase role="special">.</phrase><phrase role="identifier">size</phrase> <phrase role="special">-</phrase> <phrase role="keyword">sizeof</phrase><phrase role="special">(</phrase> <phrase role="identifier">my_control_structure</phrase><phrase role="special">);</phrase>
 <phrase role="comment">// placement new creates control structure on reserved space</phrase>
 <phrase role="identifier">my_control_structure</phrase> <phrase role="special">*</phrase> <phrase role="identifier">cs</phrase> <phrase role="special">=</phrase> <phrase role="keyword">new</phrase> <phrase role="special">(</phrase> <phrase role="identifier">sp</phrase><phrase role="special">)</phrase> <phrase role="identifier">my_control_structure</phrase><phrase role="special">(</phrase> <phrase role="identifier">sp</phrase><phrase role="special">,</phrase> <phrase role="identifier">size</phrase><phrase role="special">,</phrase> <phrase role="identifier">sctx</phrase><phrase role="special">,</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">);</phrase>
+<phrase role="special">...</phrase>
+<phrase role="comment">// destructing the control structure</phrase>
+<phrase role="identifier">cs</phrase><phrase role="special">-&gt;~</phrase><phrase role="identifier">my_control_structure</phrase><phrase role="special">();</phrase>
 <phrase role="special">...</phrase>
 <phrase role="keyword">struct</phrase> <phrase role="identifier">my_control_structure</phrase>  <phrase role="special">{</phrase>
     <phrase role="comment">// execution context</phrase>
@@ -592,6 +601,44 @@
 <phrase role="special">};</phrase>
 </programlisting>
     <bridgehead renderas="sect3" id="context.econtext.h1">
+      <phrase id="context.econtext.exception_handling"/><link linkend="context.econtext.exception_handling">exception
+      handling</link>
+    </bridgehead>
+    <para>
+      If the function executed inside a <emphasis>execution_context</emphasis> emitts
+      ans exception, <code><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase
+      role="identifier">terminate</phrase><phrase role="special">()</phrase></code>
+      is called - <code><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase
+      role="identifier">exception_ptr</phrase></code> can used to store exceptions
+      thrown inside the other context.
+    </para>
+<programlisting><phrase role="keyword">class</phrase> <phrase role="identifier">my_context</phrase> <phrase role="special">{</phrase>
+<phrase role="keyword">private</phrase><phrase role="special">:</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">exception_ptr</phrase>  <phrase role="identifier">excptr_</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">execution_context</phrase>   <phrase role="identifier">ctx_</phrase><phrase role="special">;</phrase>
+
+<phrase role="keyword">public</phrase><phrase role="special">:</phrase>
+    <phrase role="identifier">my_context</phrase><phrase role="special">()</phrase> <phrase role="special">:</phrase>
+        <phrase role="identifier">excptr_</phrase><phrase role="special">(),</phrase>
+        <phrase role="identifier">ctx_</phrase><phrase role="special">(</phrase> <phrase role="identifier">fixedsize_stack</phrase><phrase role="special">(),</phrase>
+              <phrase role="special">[&amp;</phrase><phrase role="identifier">excptr_</phrase><phrase role="special">](){</phrase>
+                <phrase role="keyword">try</phrase> <phrase role="special">{</phrase>
+                    <phrase role="special">...</phrase>
+                <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(...)</phrase> <phrase role="special">{</phrase>
+                    <phrase role="identifier">excptr_</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">current_exception</phrase><phrase role="special">();</phrase>
+                <phrase role="special">}</phrase>
+        <phrase role="special">})</phrase> <phrase role="special">{</phrase>
+    <phrase role="special">}</phrase>
+
+    <phrase role="keyword">void</phrase> <phrase role="identifier">run</phrase><phrase role="special">()</phrase> <phrase role="special">{</phrase>
+        <phrase role="identifier">ctx_</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+        <phrase role="keyword">if</phrase> <phrase role="special">(</phrase> <phrase role="identifier">excptr_</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">rethrow_exception</phrase><phrase role="special">(</phrase> <phrase role="identifier">excptr_</phrase><phrase role="special">);</phrase>
+        <phrase role="special">}</phrase>
+    <phrase role="special">}</phrase>
+<phrase role="special">};</phrase>
+</programlisting>
+    <bridgehead renderas="sect3" id="context.econtext.h2">
       <phrase id="context.econtext.class__code__phrase_role__identifier__execution_context__phrase___code_"/><link
       linkend="context.econtext.class__code__phrase_role__identifier__execution_context__phrase___code_">Class
       <code><phrase role="identifier">execution_context</phrase></code></link>
@@ -612,14 +659,14 @@
     <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
     <phrase role="identifier">execution_context</phrase><phrase role="special">(</phrase> <phrase role="identifier">preallocated</phrase> <phrase role="identifier">palloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">StackAlloc</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
 
-    <phrase role="keyword">void</phrase> <phrase role="identifier">jump_to</phrase><phrase role="special">()</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+    <phrase role="keyword">void</phrase> <phrase role="identifier">resume</phrase><phrase role="special">()</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 
     <phrase role="keyword">explicit</phrase> <phrase role="keyword">operator</phrase> <phrase role="keyword">bool</phrase><phrase role="special">()</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 
     <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">!()</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 <phrase role="special">};</phrase>
 </programlisting>
-    <bridgehead renderas="sect3" id="context.econtext.h2">
+    <bridgehead renderas="sect3" id="context.econtext.h3">
       <phrase id="context.econtext._code__phrase_role__keyword__static__phrase___phrase_role__identifier__execution_context__phrase___phrase_role__identifier__current__phrase__phrase_role__special______phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__static__phrase___phrase_role__identifier__execution_context__phrase___phrase_role__identifier__current__phrase__phrase_role__special______phrase___code_"><code><phrase
       role="keyword">static</phrase> <phrase role="identifier">execution_context</phrase>
@@ -645,7 +692,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h3">
+    <bridgehead renderas="sect3" id="context.econtext.h4">
       <phrase id="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"><code><phrase
       role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase
@@ -669,7 +716,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h4">
+    <bridgehead renderas="sect3" id="context.econtext.h5">
       <phrase id="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"><code><phrase
       role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase
@@ -697,7 +744,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h5">
+    <bridgehead renderas="sect3" id="context.econtext.h6">
       <phrase id="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"><code><phrase
       role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase
@@ -724,7 +771,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h6">
+    <bridgehead renderas="sect3" id="context.econtext.h7">
       <phrase id="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"><code><phrase
       role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase
@@ -755,10 +802,10 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h7">
-      <phrase id="context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__jump_to__phrase__phrase_role__special______phrase___code_"/><link
-      linkend="context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__jump_to__phrase__phrase_role__special______phrase___code_"><code><phrase
-      role="keyword">void</phrase> <phrase role="identifier">jump_to</phrase><phrase
+    <bridgehead renderas="sect3" id="context.econtext.h8">
+      <phrase id="context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__resume__phrase__phrase_role__special______phrase___code_"/><link
+      linkend="context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__resume__phrase__phrase_role__special______phrase___code_"><code><phrase
+      role="keyword">void</phrase> <phrase role="identifier">resume</phrase><phrase
       role="special">()</phrase></code></link>
     </bridgehead>
     <variablelist>
@@ -777,6 +824,19 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>Note:</term>
+        <listitem>
+          <para>
+            The behaviour is undefined if <code><phrase role="identifier">resume</phrase><phrase
+            role="special">()</phrase></code> is called while <code><phrase role="identifier">execution_context</phrase><phrase
+            role="special">::</phrase><phrase role="identifier">current</phrase><phrase
+            role="special">()</phrase></code> returns <code><phrase role="special">*</phrase><phrase
+            role="keyword">this</phrase></code> (e.g. resuming an alredy running
+            cotnext).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>Throws:</term>
         <listitem>
           <para>
@@ -785,7 +845,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h8">
+    <bridgehead renderas="sect3" id="context.econtext.h9">
       <phrase id="context.econtext._code__phrase_role__keyword__explicit__phrase___phrase_role__keyword__operator__phrase___phrase_role__keyword__bool__phrase__phrase_role__special______phrase___phrase_role__keyword__const__phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__explicit__phrase___phrase_role__keyword__operator__phrase___phrase_role__keyword__bool__phrase__phrase_role__special______phrase___phrase_role__keyword__const__phrase___code_"><code><phrase
       role="keyword">explicit</phrase> <phrase role="keyword">operator</phrase>
@@ -814,7 +874,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h9">
+    <bridgehead renderas="sect3" id="context.econtext.h10">
       <phrase id="context.econtext._code__phrase_role__keyword__bool__phrase___phrase_role__keyword__operator__phrase__phrase_role__special_______phrase___phrase_role__keyword__const__phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__keyword__bool__phrase___phrase_role__keyword__operator__phrase__phrase_role__special_______phrase___phrase_role__keyword__const__phrase___code_"><code><phrase
       role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase
@@ -842,7 +902,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <bridgehead renderas="sect3" id="context.econtext.h10">
+    <bridgehead renderas="sect3" id="context.econtext.h11">
       <phrase id="context.econtext.struct__code__phrase_role__identifier__preallocated__phrase___code_"/><link
       linkend="context.econtext.struct__code__phrase_role__identifier__preallocated__phrase___code_">Struct
       <code><phrase role="identifier">preallocated</phrase></code></link>
@@ -855,7 +915,7 @@
     <phrase role="identifier">preallocated</phrase><phrase role="special">(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">sp</phrase><phrase role="special">,</phrase> <phrase role="identifier">std</phrase><phrase role="special">:</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase><phrase role="special">,</phrase> <phrase role="identifier">stack_allocator</phrase> <phrase role="identifier">sctx</phrase><phrase role="special">)</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 <phrase role="special">};</phrase>
 </programlisting>
-    <bridgehead renderas="sect3" id="context.econtext.h11">
+    <bridgehead renderas="sect3" id="context.econtext.h12">
       <phrase id="context.econtext._code__phrase_role__identifier__preallocated__phrase__phrase_role__special_____phrase___phrase_role__keyword__void__phrase___phrase_role__special_____phrase___phrase_role__identifier__sp__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special_____phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_allocator__phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__identifier__preallocated__phrase__phrase_role__special_____phrase___phrase_role__keyword__void__phrase___phrase_role__special_____phrase___phrase_role__identifier__sp__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special_____phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_allocator__phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"><code><phrase
       role="identifier">preallocated</phrase><phrase role="special">(</phrase> <phrase
@@ -1537,7 +1597,7 @@
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase><phrase role="special">;</phrase>
 
     <phrase role="comment">// might contain additional control structures</phrase>
-    <phrase role="comment">// for instance for segmented stacks</phrase>
+    <phrase role="comment">// for segmented stacks</phrase>
 <phrase role="special">}</phrase>
 </programlisting>
       <bridgehead renderas="sect4" id="context.stack.stack_context.h0">
@@ -1573,6 +1633,15 @@
           </listitem>
         </varlistentry>
       </variablelist>
+    </section>
+    <section id="context.stack.valgrind">
+      <title><link linkend="context.stack.valgrind">Support for valgrind</link></title>
+      <para>
+        Running programs that switch stacks under valgrind causes problems. Property
+        (b2 command-line) <code><phrase role="identifier">valgrind</phrase><phrase
+        role="special">=</phrase><phrase role="identifier">on</phrase></code> let
+        valgrind treat the memory regions as stack space which suppresses the errors.
+      </para>
     </section>
   </section>
   <section id="context.performance">

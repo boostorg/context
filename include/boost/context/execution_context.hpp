@@ -245,7 +245,7 @@ public:
         ptr_( create_worker_fcontext( salloc,
                                       std::forward< Fn >( fn),
                                       std::make_tuple( std::forward< Args >( args) ... ),
-                                      std::index_sequence_for< Args ... >() ) ) {
+                                      std::index_sequence_for< Args ... >() ) ),
         use_segmented_stack_( true) {
     }
 
@@ -254,7 +254,7 @@ public:
         ptr_( create_worker_fcontext( palloc, salloc,
                                       std::forward< Fn >( fn),
                                       std::make_tuple( std::forward< Args >( args) ... ),
-                                      std::index_sequence_for< Args ... >() ) ) {
+                                      std::index_sequence_for< Args ... >() ) ),
         use_segmented_stack_( true) {
     }
 # endif
@@ -275,8 +275,7 @@ public:
                                       std::index_sequence_for< Args ... >() ) ) {
     }
 
-    void jump_to( bool preserve_fpu = false) noexcept {
-        BOOST_ASSERT( * this);
+    void resume( bool preserve_fpu = false) noexcept {
         fcontext * old_ctx( current_ctx_.get() );
         fcontext * new_ctx( ptr_.get() );
         current_ctx_ = ptr_;
@@ -294,14 +293,6 @@ public:
 # else
         jump_fcontext( & old_ctx->fctx, new_ctx->fctx, reinterpret_cast< intptr_t >( new_ctx), preserve_fpu);
 # endif
-    }
-
-    explicit operator bool() const noexcept {
-        return nullptr != ptr_;
-    }
-
-    bool operator!() const noexcept {
-        return nullptr == ptr_;
     }
 };
 

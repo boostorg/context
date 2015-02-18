@@ -32,7 +32,7 @@
 <th align="left">Important</th>
 </tr>
 <tr><td align="left" valign="top"><p>
-        <span class="emphasis"><em>execution_context</em></span> is supported only by C++11.
+        <span class="emphasis"><em>execution_context</em></span> is supported only by C++14.
       </p></td></tr>
 </table></div>
 <p>
@@ -70,21 +70,21 @@
                      <span class="special">[&amp;</span><span class="identifier">main_ctx</span><span class="special">,&amp;</span><span class="identifier">c</span><span class="special">](</span><span class="keyword">char</span> <span class="identifier">ch</span><span class="special">){</span>
                          <span class="identifier">c</span><span class="special">=</span><span class="identifier">ch</span><span class="special">;</span>
                          <span class="comment">// resume main execution context</span>
-                         <span class="identifier">main_ctx</span><span class="special">.</span><span class="identifier">jump_to</span><span class="special">();</span>
+                         <span class="identifier">main_ctx</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
                      <span class="special">});</span>
             <span class="comment">// start recursive parsing</span>
             <span class="identifier">p</span><span class="special">.</span><span class="identifier">run</span><span class="special">();</span>
             <span class="identifier">done</span><span class="special">=</span><span class="keyword">true</span><span class="special">;</span>
             <span class="comment">// return to main execution context</span>
-            <span class="identifier">main_ctx</span><span class="special">.</span><span class="identifier">jump_to</span><span class="special">();</span>
+            <span class="identifier">main_ctx</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
         <span class="special">});</span>
 
     <span class="comment">// user-code pulls parsed data from parser</span>
     <span class="comment">// inverted control flow</span>
-    <span class="identifier">parser_ctx</span><span class="special">.</span><span class="identifier">jump_to</span><span class="special">();</span>
+    <span class="identifier">parser_ctx</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
     <span class="keyword">do</span> <span class="special">{</span>
         <span class="identifier">printf</span><span class="special">(</span><span class="string">"Parsed: %c\n"</span><span class="special">,</span><span class="identifier">c</span><span class="special">);</span>
-        <span class="identifier">parser_ctx</span><span class="special">.</span><span class="identifier">jump_to</span><span class="special">();</span>
+        <span class="identifier">parser_ctx</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
     <span class="special">}</span> <span class="keyword">while</span><span class="special">(</span> <span class="special">!</span> <span class="identifier">done</span><span class="special">);</span>
 <span class="special">}</span>
 
@@ -134,6 +134,16 @@
       <span class="emphasis"><em>stack_context</em></span> and create the control structure with placement
       new before <span class="emphasis"><em>execution_context</em></span> is created.
     </p>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+        The user is responsible for destructing the control structure at the top
+        of the stack.
+      </p></td></tr>
+</table></div>
 <pre class="programlisting"><span class="comment">// stack-alloctor used for (de-)allocating stack</span>
 <span class="identifier">fixedsize_stack</span> <span class="identifier">salloc</span><span class="special">(</span> <span class="number">4048</span><span class="special">);</span>
 <span class="comment">// allocate stack space</span>
@@ -143,6 +153,9 @@
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span> <span class="special">=</span> <span class="identifier">sctx</span><span class="special">.</span><span class="identifier">size</span> <span class="special">-</span> <span class="keyword">sizeof</span><span class="special">(</span> <span class="identifier">my_control_structure</span><span class="special">);</span>
 <span class="comment">// placement new creates control structure on reserved space</span>
 <span class="identifier">my_control_structure</span> <span class="special">*</span> <span class="identifier">cs</span> <span class="special">=</span> <span class="keyword">new</span> <span class="special">(</span> <span class="identifier">sp</span><span class="special">)</span> <span class="identifier">my_control_structure</span><span class="special">(</span> <span class="identifier">sp</span><span class="special">,</span> <span class="identifier">size</span><span class="special">,</span> <span class="identifier">sctx</span><span class="special">,</span> <span class="identifier">salloc</span><span class="special">);</span>
+<span class="special">...</span>
+<span class="comment">// destructing the control structure</span>
+<span class="identifier">cs</span><span class="special">-&gt;~</span><span class="identifier">my_control_structure</span><span class="special">();</span>
 <span class="special">...</span>
 <span class="keyword">struct</span> <span class="identifier">my_control_structure</span>  <span class="special">{</span>
     <span class="comment">// execution context</span>
@@ -158,6 +171,43 @@
 </pre>
 <h4>
 <a name="context.econtext.h1"></a>
+      <span><a name="context.econtext.exception_handling"></a></span><a class="link" href="econtext.html#context.econtext.exception_handling">exception
+      handling</a>
+    </h4>
+<p>
+      If the function executed inside a <span class="emphasis"><em>execution_context</em></span> emitts
+      ans exception, <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">terminate</span><span class="special">()</span></code>
+      is called - <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span></code> can used to store exceptions
+      thrown inside the other context.
+    </p>
+<pre class="programlisting"><span class="keyword">class</span> <span class="identifier">my_context</span> <span class="special">{</span>
+<span class="keyword">private</span><span class="special">:</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span>  <span class="identifier">excptr_</span><span class="special">;</span>
+    <span class="identifier">execution_context</span>   <span class="identifier">ctx_</span><span class="special">;</span>
+
+<span class="keyword">public</span><span class="special">:</span>
+    <span class="identifier">my_context</span><span class="special">()</span> <span class="special">:</span>
+        <span class="identifier">excptr_</span><span class="special">(),</span>
+        <span class="identifier">ctx_</span><span class="special">(</span> <span class="identifier">fixedsize_stack</span><span class="special">(),</span>
+              <span class="special">[&amp;</span><span class="identifier">excptr_</span><span class="special">](){</span>
+                <span class="keyword">try</span> <span class="special">{</span>
+                    <span class="special">...</span>
+                <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(...)</span> <span class="special">{</span>
+                    <span class="identifier">excptr_</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">current_exception</span><span class="special">();</span>
+                <span class="special">}</span>
+        <span class="special">})</span> <span class="special">{</span>
+    <span class="special">}</span>
+
+    <span class="keyword">void</span> <span class="identifier">run</span><span class="special">()</span> <span class="special">{</span>
+        <span class="identifier">ctx_</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
+        <span class="keyword">if</span> <span class="special">(</span> <span class="identifier">excptr_</span><span class="special">)</span> <span class="special">{</span>
+            <span class="identifier">std</span><span class="special">::</span><span class="identifier">rethrow_exception</span><span class="special">(</span> <span class="identifier">excptr_</span><span class="special">);</span>
+        <span class="special">}</span>
+    <span class="special">}</span>
+<span class="special">};</span>
+</pre>
+<h4>
+<a name="context.econtext.h2"></a>
       <span><a name="context.econtext.class__code__phrase_role__identifier__execution_context__phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext.class__code__phrase_role__identifier__execution_context__phrase___code_">Class
       <code class="computeroutput"><span class="identifier">execution_context</span></code></a>
     </h4>
@@ -177,7 +227,7 @@
     <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Args</span> <span class="special">&gt;</span>
     <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">preallocated</span> <span class="identifier">palloc</span><span class="special">,</span> <span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span>
 
-    <span class="keyword">void</span> <span class="identifier">jump_to</span><span class="special">()</span> <span class="keyword">noexcept</span><span class="special">;</span>
+    <span class="keyword">void</span> <span class="identifier">resume</span><span class="special">()</span> <span class="keyword">noexcept</span><span class="special">;</span>
 
     <span class="keyword">explicit</span> <span class="keyword">operator</span> <span class="keyword">bool</span><span class="special">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
 
@@ -185,7 +235,7 @@
 <span class="special">};</span>
 </pre>
 <h4>
-<a name="context.econtext.h2"></a>
+<a name="context.econtext.h3"></a>
       <span><a name="context.econtext._code__phrase_role__keyword__static__phrase___phrase_role__identifier__execution_context__phrase___phrase_role__identifier__current__phrase__phrase_role__special______phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__static__phrase___phrase_role__identifier__execution_context__phrase___phrase_role__identifier__current__phrase__phrase_role__special______phrase___code_"><code class="computeroutput"><span class="keyword">static</span> <span class="identifier">execution_context</span>
       <span class="identifier">current</span><span class="special">()</span></code></a>
     </h4>
@@ -204,7 +254,7 @@
 </dl>
 </div>
 <h4>
-<a name="context.econtext.h3"></a>
+<a name="context.econtext.h4"></a>
       <span><a name="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"><code class="computeroutput"><span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span> <span class="identifier">typname</span> <span class="identifier">Fn</span> <span class="special">&gt;</span> <span class="identifier">execution_context</span><span class="special">(</span>
       <span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span>
       <span class="identifier">fn</span><span class="special">)</span></code></a>
@@ -220,7 +270,7 @@
 </dl>
 </div>
 <h4>
-<a name="context.econtext.h4"></a>
+<a name="context.econtext.h5"></a>
       <span><a name="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"><code class="computeroutput"><span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span> <span class="identifier">typname</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span>
       <span class="special">...</span> <span class="identifier">Args</span>
       <span class="special">&gt;</span> <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Args</span>
@@ -238,7 +288,7 @@
 </dl>
 </div>
 <h4>
-<a name="context.econtext.h5"></a>
+<a name="context.econtext.h6"></a>
       <span><a name="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___code_"><code class="computeroutput"><span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span> <span class="identifier">typname</span> <span class="identifier">Fn</span> <span class="special">&gt;</span> <span class="identifier">execution_context</span><span class="special">(</span>
       <span class="identifier">preallocated</span> <span class="identifier">palloc</span><span class="special">,</span> <span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">)</span></code></a>
     </h4>
@@ -254,7 +304,7 @@
 </dl>
 </div>
 <h4>
-<a name="context.econtext.h6"></a>
+<a name="context.econtext.h7"></a>
       <span><a name="context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__template__phrase__phrase_role__special___lt___phrase___phrase_role__keyword__typename__phrase___phrase_role__identifier__stackalloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__typname__phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__keyword__typename__phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase___phrase_role__special___gt___phrase___phrase_role__identifier__execution_context__phrase__phrase_role__special_____phrase___phrase_role__identifier__preallocated__phrase___phrase_role__identifier__palloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__stackalloc__phrase___phrase_role__identifier__salloc__phrase__phrase_role__special_____phrase___phrase_role__identifier__fn__phrase___phrase_role__special___amp__amp___phrase___phrase_role__identifier__fn__phrase__phrase_role__special_____phrase___phrase_role__identifier__args__phrase___phrase_role__special___amp__amp___phrase___phrase_role__special_______phrase___phrase_role__identifier__args__phrase__phrase_role__special_____phrase___code_"><code class="computeroutput"><span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span> <span class="identifier">typname</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span>
       <span class="special">...</span> <span class="identifier">Args</span>
       <span class="special">&gt;</span> <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">preallocated</span>
@@ -275,8 +325,8 @@
 </dl>
 </div>
 <h4>
-<a name="context.econtext.h7"></a>
-      <span><a name="context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__jump_to__phrase__phrase_role__special______phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__jump_to__phrase__phrase_role__special______phrase___code_"><code class="computeroutput"><span class="keyword">void</span> <span class="identifier">jump_to</span><span class="special">()</span></code></a>
+<a name="context.econtext.h8"></a>
+      <span><a name="context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__resume__phrase__phrase_role__special______phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__resume__phrase__phrase_role__special______phrase___code_"><code class="computeroutput"><span class="keyword">void</span> <span class="identifier">resume</span><span class="special">()</span></code></a>
     </h4>
 <div class="variablelist">
 <p class="title"><b></b></p>
@@ -288,6 +338,11 @@
             the context data from <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>, which implies jumping to <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>'s
             execution context.
           </p></dd>
+<dt><span class="term">Note:</span></dt>
+<dd><p>
+            The behaviour is undefined if <code class="computeroutput"><span class="identifier">resume</span><span class="special">()</span></code> is called while <code class="computeroutput"><span class="identifier">execution_context</span><span class="special">::</span><span class="identifier">current</span><span class="special">()</span></code> returns <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code> (e.g. resuming an alredy running
+            cotnext).
+          </p></dd>
 <dt><span class="term">Throws:</span></dt>
 <dd><p>
             Nothing.
@@ -295,7 +350,7 @@
 </dl>
 </div>
 <h4>
-<a name="context.econtext.h8"></a>
+<a name="context.econtext.h9"></a>
       <span><a name="context.econtext._code__phrase_role__keyword__explicit__phrase___phrase_role__keyword__operator__phrase___phrase_role__keyword__bool__phrase__phrase_role__special______phrase___phrase_role__keyword__const__phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__explicit__phrase___phrase_role__keyword__operator__phrase___phrase_role__keyword__bool__phrase__phrase_role__special______phrase___phrase_role__keyword__const__phrase___code_"><code class="computeroutput"><span class="keyword">explicit</span> <span class="keyword">operator</span>
       <span class="keyword">bool</span><span class="special">()</span> <span class="keyword">const</span></code></a>
     </h4>
@@ -316,7 +371,7 @@
 </dl>
 </div>
 <h4>
-<a name="context.econtext.h9"></a>
+<a name="context.econtext.h10"></a>
       <span><a name="context.econtext._code__phrase_role__keyword__bool__phrase___phrase_role__keyword__operator__phrase__phrase_role__special_______phrase___phrase_role__keyword__const__phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__bool__phrase___phrase_role__keyword__operator__phrase__phrase_role__special_______phrase___phrase_role__keyword__const__phrase___code_"><code class="computeroutput"><span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">!()</span> <span class="keyword">const</span></code></a>
     </h4>
 <div class="variablelist">
@@ -336,7 +391,7 @@
 </dl>
 </div>
 <h4>
-<a name="context.econtext.h10"></a>
+<a name="context.econtext.h11"></a>
       <span><a name="context.econtext.struct__code__phrase_role__identifier__preallocated__phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext.struct__code__phrase_role__identifier__preallocated__phrase___code_">Struct
       <code class="computeroutput"><span class="identifier">preallocated</span></code></a>
     </h4>
@@ -349,7 +404,7 @@
 <span class="special">};</span>
 </pre>
 <h4>
-<a name="context.econtext.h11"></a>
+<a name="context.econtext.h12"></a>
       <span><a name="context.econtext._code__phrase_role__identifier__preallocated__phrase__phrase_role__special_____phrase___phrase_role__keyword__void__phrase___phrase_role__special_____phrase___phrase_role__identifier__sp__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special_____phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_allocator__phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__identifier__preallocated__phrase__phrase_role__special_____phrase___phrase_role__keyword__void__phrase___phrase_role__special_____phrase___phrase_role__identifier__sp__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special_____phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_allocator__phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"><code class="computeroutput"><span class="identifier">preallocated</span><span class="special">(</span> <span class="keyword">void</span> <span class="special">*</span> <span class="identifier">sp</span><span class="special">,</span> <span class="identifier">std</span><span class="special">:</span><span class="identifier">size_t</span> <span class="identifier">size</span><span class="special">,</span> <span class="identifier">stack_allocator</span>
       <span class="identifier">sctx</span><span class="special">)</span></code></a>
     </h4>
