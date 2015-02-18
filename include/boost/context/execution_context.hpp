@@ -245,7 +245,7 @@ public:
         ptr_( create_worker_fcontext( salloc,
                                       std::forward< Fn >( fn),
                                       std::make_tuple( std::forward< Args >( args) ... ),
-                                      std::index_sequence_for< Args ... >() ) ) {
+                                      std::index_sequence_for< Args ... >() ) ),
         use_segmented_stack_( true) {
     }
 
@@ -254,7 +254,7 @@ public:
         ptr_( create_worker_fcontext( palloc, salloc,
                                       std::forward< Fn >( fn),
                                       std::make_tuple( std::forward< Args >( args) ... ),
-                                      std::index_sequence_for< Args ... >() ) ) {
+                                      std::index_sequence_for< Args ... >() ) ),
         use_segmented_stack_( true) {
     }
 # endif
