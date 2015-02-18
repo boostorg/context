@@ -103,20 +103,20 @@ int main() {
                       [&main_ctx,&c](char ch){
                           c=ch;
                           // resume main execution context
-                          main_ctx.jump_to();
+                          main_ctx.resume();
                       });
             // start recursive parsing
             p.run();
             done=true;
-            main_ctx.jump_to();
+            main_ctx.resume();
         });
 
     // user-code pulls parsed data from parser
     // invert control flow
-    parser_ctx.jump_to();
+    parser_ctx.resume();
     do {
         printf("Parsed: %c\n",c);
-        parser_ctx.jump_to();
+        parser_ctx.resume();
     } while( ! done);
 
     std::cout << "main: done" << std::endl;

@@ -70,21 +70,21 @@
                      <span class="special">[&amp;</span><span class="identifier">main_ctx</span><span class="special">,&amp;</span><span class="identifier">c</span><span class="special">](</span><span class="keyword">char</span> <span class="identifier">ch</span><span class="special">){</span>
                          <span class="identifier">c</span><span class="special">=</span><span class="identifier">ch</span><span class="special">;</span>
                          <span class="comment">// resume main execution context</span>
-                         <span class="identifier">main_ctx</span><span class="special">.</span><span class="identifier">jump_to</span><span class="special">();</span>
+                         <span class="identifier">main_ctx</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
                      <span class="special">});</span>
             <span class="comment">// start recursive parsing</span>
             <span class="identifier">p</span><span class="special">.</span><span class="identifier">run</span><span class="special">();</span>
             <span class="identifier">done</span><span class="special">=</span><span class="keyword">true</span><span class="special">;</span>
             <span class="comment">// return to main execution context</span>
-            <span class="identifier">main_ctx</span><span class="special">.</span><span class="identifier">jump_to</span><span class="special">();</span>
+            <span class="identifier">main_ctx</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
         <span class="special">});</span>
 
     <span class="comment">// user-code pulls parsed data from parser</span>
     <span class="comment">// inverted control flow</span>
-    <span class="identifier">parser_ctx</span><span class="special">.</span><span class="identifier">jump_to</span><span class="special">();</span>
+    <span class="identifier">parser_ctx</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
     <span class="keyword">do</span> <span class="special">{</span>
         <span class="identifier">printf</span><span class="special">(</span><span class="string">"Parsed: %c\n"</span><span class="special">,</span><span class="identifier">c</span><span class="special">);</span>
-        <span class="identifier">parser_ctx</span><span class="special">.</span><span class="identifier">jump_to</span><span class="special">();</span>
+        <span class="identifier">parser_ctx</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
     <span class="special">}</span> <span class="keyword">while</span><span class="special">(</span> <span class="special">!</span> <span class="identifier">done</span><span class="special">);</span>
 <span class="special">}</span>
 
@@ -177,7 +177,7 @@
     <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Args</span> <span class="special">&gt;</span>
     <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">preallocated</span> <span class="identifier">palloc</span><span class="special">,</span> <span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span>
 
-    <span class="keyword">void</span> <span class="identifier">jump_to</span><span class="special">()</span> <span class="keyword">noexcept</span><span class="special">;</span>
+    <span class="keyword">void</span> <span class="identifier">resume</span><span class="special">()</span> <span class="keyword">noexcept</span><span class="special">;</span>
 
     <span class="keyword">explicit</span> <span class="keyword">operator</span> <span class="keyword">bool</span><span class="special">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
 
@@ -276,7 +276,7 @@
 </div>
 <h4>
 <a name="context.econtext.h7"></a>
-      <span><a name="context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__jump_to__phrase__phrase_role__special______phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__jump_to__phrase__phrase_role__special______phrase___code_"><code class="computeroutput"><span class="keyword">void</span> <span class="identifier">jump_to</span><span class="special">()</span></code></a>
+      <span><a name="context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__resume__phrase__phrase_role__special______phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__void__phrase___phrase_role__identifier__resume__phrase__phrase_role__special______phrase___code_"><code class="computeroutput"><span class="keyword">void</span> <span class="identifier">resume</span><span class="special">()</span></code></a>
     </h4>
 <div class="variablelist">
 <p class="title"><b></b></p>

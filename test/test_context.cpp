@@ -227,12 +227,12 @@ ctx::execution_context * mctx = nullptr;
 
 void f11() {
     value1 = 3;
-    mctx->jump_to();
+    mctx->resume();
 }
 
 void f12( int i) {
     value1 = i;
-    mctx->jump_to();
+    mctx->resume();
 }
 
 void test_ectx() {
@@ -241,7 +241,7 @@ void test_ectx() {
     value1 = 0;
     ctx::fixedsize_stack alloc;
     ctx::execution_context ectx( alloc, f11);
-    ectx.jump_to();
+    ectx.resume();
     BOOST_CHECK_EQUAL( 3, value1);
 }
 
@@ -251,7 +251,7 @@ void test_variadric() {
     value1 = 0;
     ctx::fixedsize_stack alloc;
     ctx::execution_context ectx( alloc, f12, 5);
-    ectx.jump_to();
+    ectx.resume();
     BOOST_CHECK_EQUAL( 5, value1);
 }
 
@@ -264,7 +264,7 @@ void test_prealloc() {
     void * sp = static_cast< char * >( sctx.sp) - 10;
     std::size_t size = sctx.size - 10;
     ctx::execution_context ectx( ctx::preallocated( sp, size, sctx), alloc, f12, 7);
-    ectx.jump_to();
+    ectx.resume();
     BOOST_CHECK_EQUAL( 7, value1);
 }
 #endif

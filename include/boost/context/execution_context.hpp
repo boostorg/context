@@ -275,8 +275,7 @@ public:
                                       std::index_sequence_for< Args ... >() ) ) {
     }
 
-    void jump_to( bool preserve_fpu = false) noexcept {
-        BOOST_ASSERT( * this);
+    void resume( bool preserve_fpu = false) noexcept {
         fcontext * old_ctx( current_ctx_.get() );
         fcontext * new_ctx( ptr_.get() );
         current_ctx_ = ptr_;

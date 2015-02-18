@@ -43,21 +43,21 @@ __econtext__ permits access to the current, active context via
                              [&main_ctx,&c](char ch){
                                  c=ch;
                                  // resume main execution context
-                                 main_ctx.jump_to();
+                                 main_ctx.resume();
                              });
                     // start recursive parsing
                     p.run();
                     done=true;
                     // return to main execution context
-                    main_ctx.jump_to();
+                    main_ctx.resume();
                 });
 
             // user-code pulls parsed data from parser
             // inverted control flow
-            parser_ctx.jump_to();
+            parser_ctx.resume();
             do {
                 printf("Parsed: %c\n",c);
-                parser_ctx.jump_to();
+                parser_ctx.resume();
             } while( ! done);
         }
 
@@ -89,6 +89,8 @@ pattern). The user is responsible for this task.
 Allocating control structures on top of the stack requires to allocated the
 __stack_context__ and create the control structure with placement new before
 __econtext__ is created.
+[note The user is responsible for destructing the control structure at the top
+of the stack.]
 
         // stack-alloctor used for (de-)allocating stack
         fixedsize_stack salloc( 4048);
@@ -99,6 +101,9 @@ __econtext__ is created.
         std::size_t size = sctx.size - sizeof( my_control_structure);
         // placement new creates control structure on reserved space
         my_control_structure * cs = new ( sp) my_control_structure( sp, size, sctx, salloc);
+        ...
+        // destructing the control structure
+        cs->~my_control_structure();
         ...
         struct my_control_structure  {
             // execution context
@@ -131,7 +136,7 @@ __econtext__ is created.
             template< typename StackAlloc, typename Fn, typename ... Args >
             execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args);
 
-            void jump_to() noexcept;
+            void resume() noexcept;
 
             explicit operator bool() const noexcept;
 
@@ -169,12 +174,14 @@ execution context.]]
 `fn`. Used to store control structures on top of the stack.]]
 ]
 
-[heading `void jump_to()`]
+[heading `void resume()`]
 [variablelist
 [[Effects:] [Stores internally the current context data (stack pointer,
 instruction pointer, and CPU registers) to the current active context and
 restores the context data from `*this`, which implies jumping to `*this`'s
 execution context.]]
+[[Note:] [The behaviour is undefined if `resume()` is called while `execution_context::current()`
+returns `*this` (e.g. resuming an alredy running cotnext).]]
 [[Throws:] [Nothing.]]
 ]
 
