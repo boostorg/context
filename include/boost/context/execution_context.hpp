@@ -295,14 +295,6 @@ public:
         jump_fcontext( & old_ctx->fctx, new_ctx->fctx, reinterpret_cast< intptr_t >( new_ctx), preserve_fpu);
 # endif
     }
-
-    explicit operator bool() const noexcept {
-        return nullptr != ptr_;
-    }
-
-    bool operator!() const noexcept {
-        return nullptr == ptr_;
-    }
 };
 
 }}
