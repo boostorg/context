@@ -48,6 +48,7 @@ void stacksize_limit_( rlimit * limit)
 #else
     const int result = ::getrlimit( RLIMIT_STACK, limit);
     BOOST_ASSERT( 0 == result);
+    (void)result;
 #endif
 }
 
