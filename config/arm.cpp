@@ -6,7 +6,7 @@
 // accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
-#if !defined(__arm__) && !defined(__thumb__) && \
+#if !defined(__aarch64__) && !defined(__arm__) && !defined(__thumb__) && \
     !defined(__TARGET_ARCH_ARM) && !defined(__TARGET_ARCH_THUMB) && \
     !defined(_ARM) && !defined(_M_ARM)
 #error "Not ARM"
