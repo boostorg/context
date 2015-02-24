@@ -71,22 +71,22 @@ jump_fcontext:
 #    b.eq  1f
 
     # save d8 - d15
-    stp    d8, d9,   [sp, #0x00]
-    stp    d10, d11, [sp, #0x10]
-    stp    d12, d13, [sp, #0x20]
-    stp    d14, d15, [sp, #0x30]
+    stp  d8,  d9,  [sp, #0x00]
+    stp  d10, d11, [sp, #0x10]
+    stp  d12, d13, [sp, #0x20]
+    stp  d14, d15, [sp, #0x30]
 
 1:
     # save x19-x30
-    stp x19, x20, [sp, #0x40]
-    stp x21, x22, [sp, #0x50]
-    stp x23, x24, [sp, #0x60]
-    stp x25, x26, [sp, #0x70]
-    stp x27, x28, [sp, #0x80]
-    stp x29, x30, [sp, #0x90]
+    stp  x19, x20, [sp, #0x40]
+    stp  x21, x22, [sp, #0x50]
+    stp  x23, x24, [sp, #0x60]
+    stp  x25, x26, [sp, #0x70]
+    stp  x27, x28, [sp, #0x80]
+    stp  fp,  lr,  [sp, #0x90]
 
     # save LR as PC
-    str x30, [sp, #0xa0]
+    str  lr, [sp, #0xa0]
 
     # store RSP (pointing to context-data) in first argument (x0).
     # STR cannot have sp as a target register
@@ -101,26 +101,26 @@ jump_fcontext:
 #    b.eq  2f
 
     # load d8 - d15
-    ldp    d8, d9,   [x0, #0x00]
-    ldp    d10, d11, [x0, #0x10]
-    ldp    d12, d13, [x0, #0x20]
-    ldp    d14, d15, [x0, #0x30]
+    ldp  d8,  d9,  [sp, #0x00]
+    ldp  d10, d11, [sp, #0x10]
+    ldp  d12, d13, [sp, #0x20]
+    ldp  d14, d15, [sp, #0x30]
 
 2:
     # load x19-x30
-    ldp x19, x20, [sp, #0x40]
-    ldp x21, x22, [sp, #0x50]
-    ldp x23, x24, [sp, #0x60]
-    ldp x25, x26, [sp, #0x70]
-    ldp x27, x28, [sp, #0x80]
-    ldp x29, x30, [sp, #0x90]
+    ldp  x19, x20, [sp, #0x40]
+    ldp  x21, x22, [sp, #0x50]
+    ldp  x23, x24, [sp, #0x60]
+    ldp  x25, x26, [sp, #0x70]
+    ldp  x27, x28, [sp, #0x80]
+    ldp  fp,  lr,  [sp, #0x90]
 
     # use third arg as return value after jump
     # and as first arg in context function
     mov  x0, x2
 
     # load pc
-    ldr x4, [sp, #0xa0]
+    ldr  x4, [sp, #0xa0]
 
     # restore stack from GP + FPU
     add  sp, sp, #0xb0
