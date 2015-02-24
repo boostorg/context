@@ -1,3 +1,9 @@
+/*
+            Copyright Edward Nevill 2015
+   Distributed under the Boost Software License, Version 1.0.
+      (See accompanying file LICENSE_1_0.txt or copy at
+          http://www.boost.org/LICENSE_1_0.txt)
+*/
 /*******************************************************
  *                                                     *
  *  -------------------------------------------------  *
@@ -45,76 +51,35 @@
  *                                                     *
  *******************************************************/
 
+.cpu    generic+fp+simd
 .text
-.globl _jump_fcontext
-.balign 16
-_jump_fcontext:
-    ; prepare stack for GP + FPU
-    sub  sp, sp, #0xb0
+.align  2
+.global make_fcontext
+.type   make_fcontext, %function
+make_fcontext:
+    # shift address in x0 (allocated stack) to lower 16 byte boundary
+    and x0, x0, ~0xF
 
-#if (defined(__VFP_FP__) && !defined(__SOFTFP__))
-    ; test if fpu env should be preserved
-    cmp  w3, #0
-    b.eq  1f
+    # reserve space for context-data on context-stack
+    sub  x0, x0, #0xb0
 
-    ; save d8 - d15
-    stp  d8,  d9,  [sp, #0x00]
-    stp  d10, d11, [sp, #0x10]
-    stp  d12, d13, [sp, #0x20]
-    stp  d14, d15, [sp, #0x30]
+    # third arg of make_fcontext() == address of context-function
+    # store address as a PC to jump in
+    str  x2, [x0, #0xa0]
 
-1:
-#endif
+    # save address of finish as return-address for context-function
+    # will be entered after context-function returns (LR register)
+    adr  x1, finish
+    str  x1, [x0, #0x98]
 
-    ; save x19-x30
-    stp  x19, x20, [sp, #0x40]
-    stp  x21, x22, [sp, #0x50]
-    stp  x23, x24, [sp, #0x60]
-    stp  x25, x26, [sp, #0x70]
-    stp  x27, x28, [sp, #0x80]
-    stp  fp,  lr,  [sp, #0x90]
+    ret  x30 // return pointer to context-data (x0)
 
-    ; save LR as PC
-    str  lr, [sp, #0xa0]
+finish:
+    # exit code is zero
+    mov  x0, #0
+    # exit application
+    bl  _exit
 
-    ; store RSP (pointing to context-data) in first argument (x0).
-    ; STR cannot have sp as a target register
-    mov  x4, sp
-    str  x4, [x0]
-
-    ; restore RSP (pointing to context-data) from A2 (x1)
-    mov  sp, x1
-
-#if (defined(__VFP_FP__) && !defined(__SOFTFP__))
-    ; test if fpu env should be preserved
-    cmp  w3, #0
-    b.eq  2f
-
-    ; load d8 - d15
-    ldp  d8,  d9,  [sp, #0x00]
-    ldp  d10, d11, [sp, #0x10]
-    ldp  d12, d13, [sp, #0x20]
-    ldp  d14, d15, [sp, #0x30]
-
-2:
-#endif
-
-    ; load x19-x30
-    ldp  x19, x20, [sp, #0x40]
-    ldp  x21, x22, [sp, #0x50]
-    ldp  x23, x24, [sp, #0x60]
-    ldp  x25, x26, [sp, #0x70]
-    ldp  x27, x28, [sp, #0x80]
-    ldp  fp,  lr,  [sp, #0x90]
-
-    ; use third arg as return value after jump
-    ; and as first arg in context function
-    mov  x0, x2
-
-    ; load pc
-    ldr  x4, [sp, #0xa0]
-
-    ; restore stack from GP + FPU
-    add  sp, sp, #0xb0
-
-    ret x4
+.size   make_fcontext,.-make_fcontext
+# Mark that we don't need executable stack.
+.section .note.GNU-stack,"",%progbits
