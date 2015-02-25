@@ -83,10 +83,10 @@ jump_fcontext:
     stp  x23, x24, [sp, #0x60]
     stp  x25, x26, [sp, #0x70]
     stp  x27, x28, [sp, #0x80]
-    stp  fp,  lr,  [sp, #0x90]
+    stp  x29, x30, [sp, #0x90]
 
     # save LR as PC
-    str  lr, [sp, #0xa0]
+    str  x30, [sp, #0xa0]
 
     # store RSP (pointing to context-data) in first argument (x0).
     # STR cannot have sp as a target register
@@ -113,7 +113,7 @@ jump_fcontext:
     ldp  x23, x24, [sp, #0x60]
     ldp  x25, x26, [sp, #0x70]
     ldp  x27, x28, [sp, #0x80]
-    ldp  fp,  lr,  [sp, #0x90]
+    ldp  x29, x30, [sp, #0x90]
 
     # use third arg as return value after jump
     # and as first arg in context function
