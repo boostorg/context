@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2015/02/18 17:35:30 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2015/03/05 16:26:31 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -612,31 +612,47 @@
       role="identifier">exception_ptr</phrase></code> can used to store exceptions
       thrown inside the other context.
     </para>
-<programlisting><phrase role="keyword">class</phrase> <phrase role="identifier">my_context</phrase> <phrase role="special">{</phrase>
+<programlisting><phrase role="keyword">class</phrase> <phrase role="identifier">X</phrase> <phrase role="special">{</phrase>
 <phrase role="keyword">private</phrase><phrase role="special">:</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">exception_ptr</phrase>  <phrase role="identifier">excptr_</phrase><phrase role="special">;</phrase>
-    <phrase role="identifier">execution_context</phrase>   <phrase role="identifier">ctx_</phrase><phrase role="special">;</phrase>
+    <phrase role="keyword">int</phrase> <phrase role="special">*</phrase> <phrase role="identifier">inp_</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="identifier">outp_</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">exception_ptr</phrase> <phrase role="identifier">excptr_</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">caller_</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">callee_</phrase><phrase role="special">;</phrase>
 
 <phrase role="keyword">public</phrase><phrase role="special">:</phrase>
-    <phrase role="identifier">my_context</phrase><phrase role="special">()</phrase> <phrase role="special">:</phrase>
+    <phrase role="identifier">X</phrase><phrase role="special">()</phrase> <phrase role="special">:</phrase>
+        <phrase role="identifier">inp_</phrase><phrase role="special">(</phrase> <phrase role="keyword">nullptr</phrase><phrase role="special">),</phrase>
+        <phrase role="identifier">outp_</phrase><phrase role="special">(),</phrase>
         <phrase role="identifier">excptr_</phrase><phrase role="special">(),</phrase>
-        <phrase role="identifier">ctx_</phrase><phrase role="special">(</phrase> <phrase role="identifier">fixedsize_stack</phrase><phrase role="special">(),</phrase>
-              <phrase role="special">[&amp;</phrase><phrase role="identifier">excptr_</phrase><phrase role="special">](){</phrase>
-                <phrase role="keyword">try</phrase> <phrase role="special">{</phrase>
-                    <phrase role="special">...</phrase>
-                <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(...)</phrase> <phrase role="special">{</phrase>
-                    <phrase role="identifier">excptr_</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">current_exception</phrase><phrase role="special">();</phrase>
-                <phrase role="special">}</phrase>
-        <phrase role="special">})</phrase> <phrase role="special">{</phrase>
-    <phrase role="special">}</phrase>
+        <phrase role="identifier">caller_</phrase><phrase role="special">(</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">::</phrase><phrase role="identifier">current</phrase><phrase role="special">()</phrase> <phrase role="special">),</phrase>
+        <phrase role="identifier">callee_</phrase><phrase role="special">(</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">fixedsize_stack</phrase><phrase role="special">(),</phrase>
+                 <phrase role="special">[=]</phrase> <phrase role="special">()</phrase> <phrase role="special">{</phrase>
+                    <phrase role="keyword">try</phrase> <phrase role="special">{</phrase>
+                        <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase> <phrase role="special">=</phrase> <phrase role="special">*</phrase> <phrase role="identifier">inp_</phrase><phrase role="special">;</phrase>
+                        <phrase role="identifier">outp_</phrase> <phrase role="special">=</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">lexical_cast</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="special">&gt;(</phrase> <phrase role="identifier">i</phrase><phrase role="special">);</phrase>
+                        <phrase role="identifier">caller_</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+                    <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(...)</phrase> <phrase role="special">{</phrase>
+                        <phrase role="identifier">excptr_</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">current_exception</phrase><phrase role="special">();</phrase>
+                    <phrase role="special">}</phrase>
+                 <phrase role="special">})</phrase>
+    <phrase role="special">{}</phrase>
 
-    <phrase role="keyword">void</phrase> <phrase role="identifier">run</phrase><phrase role="special">()</phrase> <phrase role="special">{</phrase>
-        <phrase role="identifier">ctx_</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+        <phrase role="identifier">inp_</phrase> <phrase role="special">=</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">i</phrase><phrase role="special">;</phrase>
+        <phrase role="identifier">callee_</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
         <phrase role="keyword">if</phrase> <phrase role="special">(</phrase> <phrase role="identifier">excptr_</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
             <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">rethrow_exception</phrase><phrase role="special">(</phrase> <phrase role="identifier">excptr_</phrase><phrase role="special">);</phrase>
         <phrase role="special">}</phrase>
+        <phrase role="keyword">return</phrase> <phrase role="identifier">outp_</phrase><phrase role="special">;</phrase>
     <phrase role="special">}</phrase>
 <phrase role="special">};</phrase>
+
+<phrase role="keyword">int</phrase> <phrase role="identifier">main</phrase><phrase role="special">()</phrase> <phrase role="special">{</phrase>
+    <phrase role="identifier">X</phrase> <phrase role="identifier">x</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">x</phrase><phrase role="special">(</phrase> <phrase role="number">7</phrase><phrase role="special">)</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;done&quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+<phrase role="special">}</phrase>
 </programlisting>
     <bridgehead renderas="sect3" id="context.econtext.h2">
       <phrase id="context.econtext.class__code__phrase_role__identifier__execution_context__phrase___code_"/><link

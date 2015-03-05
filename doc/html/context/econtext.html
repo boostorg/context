@@ -180,31 +180,47 @@
       is called - <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span></code> can used to store exceptions
       thrown inside the other context.
     </p>
-<pre class="programlisting"><span class="keyword">class</span> <span class="identifier">my_context</span> <span class="special">{</span>
+<pre class="programlisting"><span class="keyword">class</span> <span class="identifier">X</span> <span class="special">{</span>
 <span class="keyword">private</span><span class="special">:</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span>  <span class="identifier">excptr_</span><span class="special">;</span>
-    <span class="identifier">execution_context</span>   <span class="identifier">ctx_</span><span class="special">;</span>
+    <span class="keyword">int</span> <span class="special">*</span> <span class="identifier">inp_</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">outp_</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span> <span class="identifier">excptr_</span><span class="special">;</span>
+    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span> <span class="identifier">caller_</span><span class="special">;</span>
+    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span> <span class="identifier">callee_</span><span class="special">;</span>
 
 <span class="keyword">public</span><span class="special">:</span>
-    <span class="identifier">my_context</span><span class="special">()</span> <span class="special">:</span>
+    <span class="identifier">X</span><span class="special">()</span> <span class="special">:</span>
+        <span class="identifier">inp_</span><span class="special">(</span> <span class="keyword">nullptr</span><span class="special">),</span>
+        <span class="identifier">outp_</span><span class="special">(),</span>
         <span class="identifier">excptr_</span><span class="special">(),</span>
-        <span class="identifier">ctx_</span><span class="special">(</span> <span class="identifier">fixedsize_stack</span><span class="special">(),</span>
-              <span class="special">[&amp;</span><span class="identifier">excptr_</span><span class="special">](){</span>
-                <span class="keyword">try</span> <span class="special">{</span>
-                    <span class="special">...</span>
-                <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(...)</span> <span class="special">{</span>
-                    <span class="identifier">excptr_</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">current_exception</span><span class="special">();</span>
-                <span class="special">}</span>
-        <span class="special">})</span> <span class="special">{</span>
-    <span class="special">}</span>
+        <span class="identifier">caller_</span><span class="special">(</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">::</span><span class="identifier">current</span><span class="special">()</span> <span class="special">),</span>
+        <span class="identifier">callee_</span><span class="special">(</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">fixedsize_stack</span><span class="special">(),</span>
+                 <span class="special">[=]</span> <span class="special">()</span> <span class="special">{</span>
+                    <span class="keyword">try</span> <span class="special">{</span>
+                        <span class="keyword">int</span> <span class="identifier">i</span> <span class="special">=</span> <span class="special">*</span> <span class="identifier">inp_</span><span class="special">;</span>
+                        <span class="identifier">outp_</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">lexical_cast</span><span class="special">&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="special">&gt;(</span> <span class="identifier">i</span><span class="special">);</span>
+                        <span class="identifier">caller_</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
+                    <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(...)</span> <span class="special">{</span>
+                        <span class="identifier">excptr_</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">current_exception</span><span class="special">();</span>
+                    <span class="special">}</span>
+                 <span class="special">})</span>
+    <span class="special">{}</span>
 
-    <span class="keyword">void</span> <span class="identifier">run</span><span class="special">()</span> <span class="special">{</span>
-        <span class="identifier">ctx_</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="keyword">int</span> <span class="identifier">i</span><span class="special">)</span> <span class="special">{</span>
+        <span class="identifier">inp_</span> <span class="special">=</span> <span class="special">&amp;</span> <span class="identifier">i</span><span class="special">;</span>
+        <span class="identifier">callee_</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
         <span class="keyword">if</span> <span class="special">(</span> <span class="identifier">excptr_</span><span class="special">)</span> <span class="special">{</span>
             <span class="identifier">std</span><span class="special">::</span><span class="identifier">rethrow_exception</span><span class="special">(</span> <span class="identifier">excptr_</span><span class="special">);</span>
         <span class="special">}</span>
+        <span class="keyword">return</span> <span class="identifier">outp_</span><span class="special">;</span>
     <span class="special">}</span>
 <span class="special">};</span>
+
+<span class="keyword">int</span> <span class="identifier">main</span><span class="special">()</span> <span class="special">{</span>
+    <span class="identifier">X</span> <span class="identifier">x</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="identifier">x</span><span class="special">(</span> <span class="number">7</span><span class="special">)</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"done"</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
+<span class="special">}</span>
 </pre>
 <h4>
 <a name="context.econtext.h2"></a>

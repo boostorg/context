@@ -121,31 +121,50 @@ of the stack.]
 If the function executed inside a __econtext__ emitts ans exception, `std::terminate()` is
 called - `std::exception_ptr` can used to store exceptions thrown inside the other context.
 
-        class my_context {
+[heading parameter passing]
+Input and output parameters are transfered via a lambda capture list and references/pointers.
+
+        class X {
         private:
-            std::exception_ptr  excptr_;
-            execution_context   ctx_;
+            int * inp_;
+            std::string outp_;
+            std::exception_ptr excptr_;
+            boost::context::execution_context caller_;
+            boost::context::execution_context callee_;
 
         public:
-            my_context() :
+            X() :
+                inp_( nullptr),
+                outp_(),
                 excptr_(),
-                ctx_( fixedsize_stack(),
-                      [&excptr_](){
-                        try {
-                            ...
-                        } catch (...) {
-                            excptr_ = std::current_exception();
-                        }
-                }) {
-            }
+                caller_( boost::context::execution_context::current() ),
+                callee_( boost::context::fixedsize_stack(),
+                         [=] () {
+                            try {
+                                int i = * inp_;
+                                outp_ = boost::lexical_cast< std::string >( i);
+                                caller_.resume();
+                            } catch (...) {
+                                excptr_ = std::current_exception();
+                            }
+                         })
+            {}
 
-            void run() {
-                ctx_.resume();
+            std::string operator()( int i) {
+                inp_ = & i;
+                callee_.resume();
                 if ( excptr_) {
                     std::rethrow_exception( excptr_);
                 }
+                return outp_;
             }
         };
+
+        int main() {
+            X x;
+            std::cout << x( 7) << std::endl;
+            std::cout << "done" << std::endl;
+        }
 
 
 [heading Class `execution_context`]
