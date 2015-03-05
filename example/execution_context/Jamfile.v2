@@ -37,3 +37,11 @@ exe segmented
 exe parser
     : parser.cpp
     ;
+
+exe fibonacci
+    : fibonacci.cpp
+    ;
+
+exe parameter
+    : parameter.cpp
+    ;
