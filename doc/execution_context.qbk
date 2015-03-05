@@ -121,6 +121,9 @@ of the stack.]
 If the function executed inside a __econtext__ emitts ans exception, `std::terminate()` is
 called - `std::exception_ptr` can used to store exceptions thrown inside the other context.
 
+[heading parameter passing]
+Input and output parameters are transfered via a lambda capture list and references/pointers.
+
         class X {
         private:
             int * inp_;
