@@ -12,6 +12,7 @@ import indirect ;
 import modules ;
 import os ;
 import toolset ;
+import architecture ;
 
 feature.feature segmented-stacks : on : optional propagated composite ;
 feature.compose <segmented-stacks>on : <define>BOOST_USE_SEGMENTED_STACKS ;
@@ -835,6 +836,13 @@ alias asm_context_sources
 
 explicit asm_context_sources ;
 
+alias select_asm_context_sources
+  : asm_context_sources
+  : [ architecture.architecture ]
+    [ architecture.address-model ]
+  ;
+
+
 alias stack_traits_sources
     : windows/stack_traits.cpp
     : <target-os>windows
@@ -848,7 +856,7 @@ explicit stack_traits_sources ;
 
 
 lib boost_context
-   : asm_context_sources
+   : select_asm_context_sources
      stack_traits_sources
      execution_context.cpp
    ;
