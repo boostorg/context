@@ -235,12 +235,28 @@ void f12( int i) {
     mctx->resume();
 }
 
+void f13( int i) {
+    value1 = i;
+}
+
+void f14( std::string const& msg) {
+    throw std::runtime_error( msg);
+}
+
 void test_ectx() {
     boost::context::execution_context ctx( boost::context::execution_context::current() );
     mctx = & ctx;
     value1 = 0;
     ctx::fixedsize_stack alloc;
     ctx::execution_context ectx( alloc, f11);
+    ectx.resume();
+    BOOST_CHECK_EQUAL( 3, value1);
+}
+
+void test_return() {
+    value1 = 0;
+    ctx::fixedsize_stack alloc;
+    ctx::execution_context ectx( alloc, f13, 3);
     ectx.resume();
     BOOST_CHECK_EQUAL( 3, value1);
 }
@@ -286,6 +302,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 
 #if ! defined(BOOST_CONTEXT_NO_EXECUTION_CONTEXT)
     test->add( BOOST_TEST_CASE( & test_ectx) );
+    test->add( BOOST_TEST_CASE( & test_return) );
     test->add( BOOST_TEST_CASE( & test_variadric) );
     test->add( BOOST_TEST_CASE( & test_prealloc) );
 #endif

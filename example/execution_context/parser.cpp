@@ -102,20 +102,19 @@ int main() {
                 [&main_ctx,&is,&c,&done,&except](){
                 // create parser with callback function
                 Parser p( is,
-                    [&main_ctx,&c](char ch){
-                    c=ch;
-                    // resume main execution context
-                    main_ctx.resume();
-                    });
-                try {
-                    // start recursive parsing
-                    p.run();
-                } catch ( ... ) {
-                    // store other exceptions in exception-pointer
-                    except = std::current_exception();
-                }
-                done=true;
-                main_ctx.resume();
+                        [&main_ctx,&c](char ch){
+                        c=ch;
+                        // resume main execution context
+                        main_ctx.resume();
+                        });
+                    try {
+                        // start recursive parsing
+                        p.run();
+                    } catch ( ... ) {
+                        // store other exceptions in exception-pointer
+                        except = std::current_exception();
+                    }
+                    done=true;
                 });
 
         // user-code pulls parsed data from parser

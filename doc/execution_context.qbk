@@ -48,8 +48,6 @@ __econtext__ permits access to the current, active context via
                     // start recursive parsing
                     p.run();
                     done=true;
-                    // return to main execution context
-                    main_ctx.resume();
                 });
 
             // user-code pulls parsed data from parser
@@ -230,7 +228,9 @@ instruction pointer, and CPU registers) to the current active context and
 restores the context data from `*this`, which implies jumping to `*this`'s
 execution context.]]
 [[Note:] [The behaviour is undefined if `resume()` is called while `execution_context::current()`
-returns `*this` (e.g. resuming an alredy running cotnext).]]
+returns `*this` (e.g. resuming an alredy running cotnext). If the top-level context
+function returns, the parent execution context (which has called `resume()' before)
+is resumed (e.g. return from `resume()`.]]
 [[Throws:] [Nothing.]]
 ]
 
