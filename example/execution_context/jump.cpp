@@ -16,16 +16,16 @@ boost::context::execution_context * ctx = nullptr;
 void f1( int i) {
     std::cout << "f1: entered" << std::endl;
     std::cout << "i == " << i << std::endl;
-    ctx2->resume();
+    ( * ctx2)();
     std::cout << "f1: re-entered" << std::endl;
-    ctx2->resume();
+    ( * ctx2)();
 }
 
 void f2() {
     std::cout << "f2: entered" << std::endl;
-    ctx1->resume();
+    ( * ctx1)();
     std::cout << "f2: re-entered" << std::endl;
-    ctx->resume();
+    ( * ctx)();
 }
 
 int main() {
@@ -36,7 +36,7 @@ int main() {
     boost::context::execution_context ctx_( boost::context::execution_context::current() );
     ctx = & ctx_;
     
-    ctx1->resume();
+    ( * ctx1)();
 
     std::cout << "main: done" << std::endl;
 

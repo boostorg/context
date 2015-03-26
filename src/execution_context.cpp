@@ -21,11 +21,11 @@ namespace context {
 
 thread_local
 execution_context::activation_record
-execution_context::activation_record::main_ar;
+execution_context::activation_record::toplevel_rec;
 
 thread_local
 execution_context::activation_record::ptr_t
-execution_context::activation_record::current_ar = & execution_context::activation_record::main_ar;
+execution_context::activation_record::current_rec = & execution_context::activation_record::toplevel_rec;
 
 }}
 

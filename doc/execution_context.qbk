@@ -7,7 +7,7 @@
 
 [section:econtext Class execution_context]
 
-[important __econtext__ is supported only by C++14.]
+[important __econtext__ requires C++14.]
 
 Class __econtext__ encapsulates __fcontext__ and related functions (
 __jump_fcontext__ and __make_fcontext__) as well as stack management.
@@ -27,7 +27,6 @@ __econtext__ permits access to the current, active context via
 
         int main() {
             std::istringstream is("1+1");
-            bool done=false;
             char c;
 
             // create handle to main execution context
@@ -37,26 +36,23 @@ __econtext__ permits access to the current, active context via
             // executes parser in new execution context
             boost::context::execution_context parser_ctx(
                 boost::context::fixedsize_stack(),
-                [&main_ctx,&is,&c,&done](){
+                [&main_ctx,&is,&c](){
                     // create parser with callback function
                     Parser p(is,
                              [&main_ctx,&c](char ch){
                                  c=ch;
                                  // resume main execution context
-                                 main_ctx.resume();
+                                 main_ctx();
                              });
                     // start recursive parsing
                     p.run();
-                    done=true;
                 });
 
             // user-code pulls parsed data from parser
             // inverted control flow
-            parser_ctx.resume();
-            do {
+            while ( parser_ctx() ) {
                 printf("Parsed: %c\n",c);
-                parser_ctx.resume();
-            } while( ! done);
+            }
         }
 
         output:
@@ -71,13 +67,11 @@ pulls parsed symbols from the parser - instead to get pushed from the parser
 (via callback).
 
 The interface of __econtext__ does not transfer data. This is not required
-because usually sharing data's address (pointer/reference) sufficient.
+because usually sharing data's address (pointer/reference of lvalues) is sufficient.
 
-If the code executed by __econtext__ emits an exception, `std::terminate()` will
-be called.
-
-[important Do not jump from inside a catch block and than re-throw exceptions in
-another execution context.]
+If the code executed by __econtext__ emits an exception, the context is terminated,
+the parent __econtext__ (context that has resumed the throwing context) is resumed
+(return from ['execution_context::operator()]) and the exception is re-thrown.
 
 Sometimes it is necessary to unwind the stack of an unfinished context to
 destroy local stack variables so they can release allocated resources (RAII
@@ -116,8 +110,9 @@ of the stack.]
         };
 
 [heading exception handling]
-If the function executed inside a __econtext__ emitts ans exception, `std::terminate()` is
-called - `std::exception_ptr` can used to store exceptions thrown inside the other context.
+If the function executed inside a __econtext__ emitts ans exception, the context is terminated,
+the parent context (context that has resumed the throwing __econtext__) is resumed and the
+exception is re-thrown.
 
 [heading parameter passing]
 Input and output parameters are transfered via a lambda capture list and references/pointers.
@@ -126,7 +121,6 @@ Input and output parameters are transfered via a lambda capture list and referen
         private:
             int * inp_;
             std::string outp_;
-            std::exception_ptr excptr_;
             boost::context::execution_context caller_;
             boost::context::execution_context callee_;
 
@@ -134,26 +128,18 @@ Input and output parameters are transfered via a lambda capture list and referen
             X() :
                 inp_( nullptr),
                 outp_(),
-                excptr_(),
                 caller_( boost::context::execution_context::current() ),
                 callee_( boost::context::fixedsize_stack(),
                          [=] () {
-                            try {
                                 int i = * inp_;
                                 outp_ = boost::lexical_cast< std::string >( i);
-                                caller_.resume();
-                            } catch (...) {
-                                excptr_ = std::current_exception();
-                            }
+                                caller_();
                          })
             {}
 
             std::string operator()( int i) {
                 inp_ = & i;
-                callee_.resume();
-                if ( excptr_) {
-                    std::rethrow_exception( excptr_);
-                }
+                callee_();
                 return outp_;
             }
         };
@@ -183,7 +169,7 @@ Input and output parameters are transfered via a lambda capture list and referen
             template< typename StackAlloc, typename Fn, typename ... Args >
             execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args);
 
-            void resume() noexcept;
+            execution_context & operator()();
 
             explicit operator bool() const noexcept;
 
@@ -221,17 +207,18 @@ execution context.]]
 `fn`. Used to store control structures on top of the stack.]]
 ]
 
-[heading `void resume()`]
+[heading `execution_context & operator()()`]
 [variablelist
 [[Effects:] [Stores internally the current context data (stack pointer,
 instruction pointer, and CPU registers) to the current active context and
 restores the context data from `*this`, which implies jumping to `*this`'s
 execution context.]]
-[[Note:] [The behaviour is undefined if `resume()` is called while `execution_context::current()`
+[[Note:] [The behaviour is undefined if `operator()()` is called while `execution_context::current()`
 returns `*this` (e.g. resuming an alredy running cotnext). If the top-level context
-function returns, the parent execution context (which has called `resume()' before)
-is resumed (e.g. return from `resume()`.]]
-[[Throws:] [Nothing.]]
+function returns, the parent execution context (which has called ['operator()()] before)
+is resumed (e.g. return from `operator()()`.]]
+[[Returns:] [Reference to `*this`.]]
+[[Throws:] [Exception thrown by `child`-context.]]
 ]
 
 [heading `explicit operator bool() const`]
