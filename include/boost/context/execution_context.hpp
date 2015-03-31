@@ -16,6 +16,7 @@
 # include <cstdlib>
 # include <exception>
 # include <memory>
+# include <stack>
 # include <tuple>
 # include <utility>
 
@@ -65,7 +66,7 @@ private:
         std::size_t             use_count;
         fcontext_t              fctx;
         stack_context           sctx;
-        activation_record   *   parent_rec;
+        std::stack< ptr_t >     parents;
         bool                    terminated;
         std::exception_ptr      except;
         bool                    preserve_fpu;
@@ -75,7 +76,7 @@ private:
             use_count( 1),
             fctx( nullptr),
             sctx(),
-            parent_rec( nullptr),
+            parents(),
             terminated( false),
             except(),
             preserve_fpu( false),
@@ -86,7 +87,7 @@ private:
             use_count( 0),
             fctx( fctx_),
             sctx( sctx_),
-            parent_rec( nullptr),
+            parents(),
             terminated( false),
             except(),
             preserve_fpu( false),
@@ -95,34 +96,38 @@ private:
 
         virtual ~activation_record() noexcept = default;
 
-        void resume( bool preserve_fpu = false) {
+        void resume( bool fpu = false) {
             // get parent context
-            parent_rec = current_rec.get();
+            if ( ! current_rec->terminated)  {
+                parents.push( current_rec);
+            }
+            // store current activation record in local variable
+            activation_record * from = current_rec.get();
             // store `this` in static, thread local pointer
             // `this` will become the active (running) context
             // returned by execution_context::current()
             current_rec = this;
             // set FPU flag
-            parent_rec->preserve_fpu = preserve_fpu;
-            current_rec->preserve_fpu = preserve_fpu;
+            from->preserve_fpu = fpu;
+            this->preserve_fpu = fpu;
 # if defined(BOOST_USE_SEGMENTED_STACKS)
             if ( use_segmented_stack) {
                 // adjust segmented stack properties
-                __splitstack_getcontext( parent_rec->sctx.segments_ctx);
+                __splitstack_getcontext( from->sctx.segments_ctx);
                 __splitstack_setcontext( sctx.segments_ctx);
                 // context switch from parent context to `this`-context
-                jump_fcontext( & parent_rec->fctx, fctx, reinterpret_cast< intptr_t >( this), preserve_fpu);
+                jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), preserve_fpu);
                 // parent context resumed
                 // adjust segmented stack properties
-                __splitstack_setcontext( parent_rec->sctx.segments_ctx);
+                __splitstack_setcontext( from->sctx.segments_ctx);
             } else {
                 // context switch from parent context to `this`-context
-                jump_fcontext( & parent_rec->fctx, fctx, reinterpret_cast< intptr_t >( this), preserve_fpu);
+                jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), preserve_fpu);
                 // parent context resumed
             }
 # else
             // context switch from parent context to `this`-context
-            jump_fcontext( & parent_rec->fctx, fctx, reinterpret_cast< intptr_t >( this), preserve_fpu);
+            jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), preserve_fpu);
             // parent context resumed
 # endif
             // re-throw exception in parent's context
@@ -130,11 +135,11 @@ private:
             // the context is terminated and the parent context
             // (context which has resumed the throwin context by
             // calling execution_context::operator()) is resumed
-            if ( parent_rec->except) {
+            if ( from->except) {
                 // store local copy of exception_ptr
-                std::exception_ptr ex( parent_rec->except);
+                std::exception_ptr ex( from->except);
                 // reset exception_ptr of parent context
-                parent_rec->except = nullptr;
+                from->except = nullptr;
                 // re-throw excpetion
                 // the exception is thrown out of
                 // `throwing context`->execution_context::operator()
@@ -176,6 +181,11 @@ private:
             activation_record( fctx, sctx, use_segmented_stack),
             salloc_( salloc),
             fn_( std::forward< Fn >( fn) ) {
+            printf("capture_record()\n");
+        }
+
+        ~capture_record() {
+            printf("~capture_record()\n");
         }
 
         void deallocate() {
@@ -186,18 +196,24 @@ private:
             try {
                 fn_();
             } catch (...) {
-                BOOST_ASSERT( nullptr != parent_rec);
+                BOOST_ASSERT( ! parents.empty() );
                 // store exception in parent's exception_ptr
                 // because exception is re-thrown in parent's context
-                parent_rec->except = std::current_exception();
+                parents.top()->except = std::current_exception();
             }
             // set termination flag
             terminated = true;
-            BOOST_ASSERT( nullptr != parent_rec);
+            BOOST_ASSERT( ! parents.empty() );
+            activation_record * parent = nullptr;
+            do {
+                parent = parents.top().get();
+                parents.pop();
+                BOOST_ASSERT( nullptr != parent);
+            } while ( parent->terminated && ! parents.empty() );
             // return to parent context
             // use preserve_fpu flag of parent because it
             // is resumed and the current context has terminated
-            parent_rec->resume( parent_rec->preserve_fpu);
+            parent->resume( parent->preserve_fpu);
         }
     };
 

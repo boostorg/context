@@ -34,6 +34,10 @@ exe segmented
     : segmented.cpp
     ;
 
+exe cycle
+    : cycle.cpp
+    ;
+
 exe parser
     : parser.cpp
     ;
