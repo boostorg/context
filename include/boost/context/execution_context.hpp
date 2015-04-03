@@ -148,6 +148,8 @@ private:
             }
         }
 
+        virtual void deallocate() {}
+
         friend void intrusive_ptr_add_ref( activation_record * ar) {
             ++ar->use_count;
         }
@@ -156,7 +158,7 @@ private:
             BOOST_ASSERT( nullptr != ar);
 
             if ( 0 == --ar->use_count) {
-                ar->~activation_record();
+                ar->deallocate();
             }
         }
     };
@@ -181,14 +183,9 @@ private:
             activation_record( fctx, sctx, use_segmented_stack),
             salloc_( salloc),
             fn_( std::forward< Fn >( fn) ) {
-            printf("capture_record()\n");
         }
 
-        ~capture_record() {
-            printf("~capture_record()\n");
-        }
-
-        void deallocate() {
+        void deallocate() override final {
             destroy( this);
         }
 
