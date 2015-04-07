@@ -16,7 +16,6 @@
 # include <cstdlib>
 # include <exception>
 # include <memory>
-# include <stack>
 # include <tuple>
 # include <utility>
 
@@ -60,46 +59,48 @@ private:
     struct activation_record {
         typedef boost::intrusive_ptr< activation_record >    ptr_t;
 
+        enum flag_t {
+            flag_main_ctx   = 1 << 1,
+            flag_terminated = 1 << 2,
+            flag_preserve_fpu = 1 << 3,
+            flag_segmented_stack = 1 << 4
+        };
+
         thread_local static activation_record       toplevel_rec;
         thread_local static ptr_t                   current_rec;
 
         std::size_t             use_count;
         fcontext_t              fctx;
         stack_context           sctx;
-        std::stack< ptr_t >     parents;
-        bool                    terminated;
+        activation_record   *   parent;
         std::exception_ptr      except;
-        bool                    preserve_fpu;
-        bool                    use_segmented_stack;
+        int                     flags;
 
         activation_record() noexcept :
             use_count( 1),
             fctx( nullptr),
             sctx(),
-            parents(),
-            terminated( false),
+            parent( nullptr),
             except(),
-            preserve_fpu( false),
-            use_segmented_stack( false) {
+            flags( flag_main_ctx) {
         } 
 
-        activation_record( fcontext_t fctx_, stack_context sctx_, bool use_segmented_stack_) noexcept :
+        activation_record( fcontext_t fctx_, stack_context sctx_, bool use_segmented_stack) noexcept :
             use_count( 0),
             fctx( fctx_),
             sctx( sctx_),
-            parents(),
-            terminated( false),
+            parent( nullptr),
             except(),
-            preserve_fpu( false),
-            use_segmented_stack( use_segmented_stack_) {
+            flags( use_segmented_stack ? flag_segmented_stack : 0) {
         } 
 
         virtual ~activation_record() noexcept = default;
 
         void resume( bool fpu = false) {
             // get parent context
-            if ( ! current_rec->terminated)  {
-                parents.push( current_rec);
+            if ( 0 == ( current_rec->flags & flag_terminated) &&
+                 0 == ( flags & flag_main_ctx) )  {
+                parent = current_rec.get();
             }
             // store current activation record in local variable
             activation_record * from = current_rec.get();
@@ -108,26 +109,31 @@ private:
             // returned by execution_context::current()
             current_rec = this;
             // set FPU flag
-            from->preserve_fpu = fpu;
-            this->preserve_fpu = fpu;
+            if (fpu) {
+                from->flags |= flag_preserve_fpu;
+                this->flags |= flag_preserve_fpu;
+            } else {
+                from->flags &= ~flag_preserve_fpu;
+                this->flags &= ~flag_preserve_fpu;
+            }
 # if defined(BOOST_USE_SEGMENTED_STACKS)
-            if ( use_segmented_stack) {
+            if ( 0 != (flags & flag_segmented_stack) ) {
                 // adjust segmented stack properties
                 __splitstack_getcontext( from->sctx.segments_ctx);
                 __splitstack_setcontext( sctx.segments_ctx);
                 // context switch from parent context to `this`-context
-                jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), preserve_fpu);
+                jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), fpu);
                 // parent context resumed
                 // adjust segmented stack properties
                 __splitstack_setcontext( from->sctx.segments_ctx);
             } else {
                 // context switch from parent context to `this`-context
-                jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), preserve_fpu);
+                jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), fpu);
                 // parent context resumed
             }
 # else
             // context switch from parent context to `this`-context
-            jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), preserve_fpu);
+            jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), fpu);
             // parent context resumed
 # endif
             // re-throw exception in parent's context
@@ -193,24 +199,19 @@ private:
             try {
                 fn_();
             } catch (...) {
-                BOOST_ASSERT( ! parents.empty() );
+                BOOST_ASSERT( nullptr != parent);
                 // store exception in parent's exception_ptr
                 // because exception is re-thrown in parent's context
-                parents.top()->except = std::current_exception();
+                parent->except = std::current_exception();
             }
             // set termination flag
-            terminated = true;
-            BOOST_ASSERT( ! parents.empty() );
-            activation_record * parent = nullptr;
-            do {
-                parent = parents.top().get();
-                parents.pop();
-                BOOST_ASSERT( nullptr != parent);
-            } while ( parent->terminated && ! parents.empty() );
+            flags |= flag_terminated;
+            BOOST_ASSERT( nullptr != parent);
+            BOOST_ASSERT( 0 == (flags & flag_main_ctx) );
             // return to parent context
             // use preserve_fpu flag of parent because it
             // is resumed and the current context has terminated
-            parent->resume( parent->preserve_fpu);
+            parent->resume( parent->flags & flag_preserve_fpu);
         }
     };
 
@@ -391,11 +392,11 @@ public:
     }
 
     explicit operator bool() const noexcept {
-        return nullptr != ptr_.get() && ! ptr_->terminated;
+        return nullptr != ptr_.get() && 0 == (ptr_->flags & activation_record::flag_terminated);
     }
 
     bool operator!() const noexcept {
-        return ! ( nullptr != ptr_.get() && ! ptr_->terminated);
+        return ! ( nullptr != ptr_.get() && 0 == (ptr_->flags & activation_record::flag_terminated) );
     }
 };
 
