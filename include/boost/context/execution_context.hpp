@@ -16,6 +16,7 @@
 # include <cstdlib>
 # include <exception>
 # include <memory>
+# include <stack>
 # include <tuple>
 # include <utility>
 
@@ -72,15 +73,17 @@ private:
         std::size_t             use_count;
         fcontext_t              fctx;
         stack_context           sctx;
-        activation_record   *   parent;
+        std::stack< ptr_t >     parents;
         std::exception_ptr      except;
         int                     flags;
 
+        // used for toplevel-context
+        // (e.g. main context, thread-entry context)
         activation_record() noexcept :
             use_count( 1),
             fctx( nullptr),
             sctx(),
-            parent( nullptr),
+            parents(),
             except(),
             flags( flag_main_ctx) {
         } 
@@ -89,7 +92,7 @@ private:
             use_count( 0),
             fctx( fctx_),
             sctx( sctx_),
-            parent( nullptr),
+            parents(),
             except(),
             flags( use_segmented_stack ? flag_segmented_stack : 0) {
         } 
@@ -100,7 +103,7 @@ private:
             // get parent context
             if ( 0 == ( current_rec->flags & flag_terminated) &&
                  0 == ( flags & flag_main_ctx) )  {
-                parent = current_rec.get();
+                parents.push( current_rec);
             }
             // store current activation record in local variable
             activation_record * from = current_rec.get();
@@ -199,18 +202,24 @@ private:
             try {
                 fn_();
             } catch (...) {
-                BOOST_ASSERT( nullptr != parent);
+                BOOST_ASSERT( ! parents.empty() );
                 // store exception in parent's exception_ptr
                 // because exception is re-thrown in parent's context
-                parent->except = std::current_exception();
+                parents.top()->except = std::current_exception();
             }
             // set termination flag
             flags |= flag_terminated;
-            BOOST_ASSERT( nullptr != parent);
+            BOOST_ASSERT( ! parents.empty() );
             BOOST_ASSERT( 0 == (flags & flag_main_ctx) );
             // return to parent context
             // use preserve_fpu flag of parent because it
             // is resumed and the current context has terminated
+            ptr_t parent;
+            do {
+               parent = parents.top();
+               parents.pop();
+            } while ( parent && 0 != ( parent->flags & flag_terminated) );
+            BOOST_ASSERT( parent);
             parent->resume( parent->flags & flag_preserve_fpu);
         }
     };
