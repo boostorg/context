@@ -37,7 +37,11 @@ struct stack_t
 
 struct fp_t
 {
+#ifdef __aarch64__
+    boost::uint64_t     fc_freg[8];
+#else
     boost::uint32_t     fc_freg[16];
+#endif
 
     fp_t() :
         fc_freg()
@@ -46,6 +50,17 @@ struct fp_t
 
 struct fcontext_t
 {
+#ifdef __aarch64__
+    boost::uint64_t	fc_greg[13];
+    boost::uint64_t	align;
+    stack_t		fc_stack;
+    fp_t		fc_fp;
+    fcontext_t() :
+	 fc_greg(),
+	 fc_stack(),
+	 fc_fp()
+	 {}
+#else
     boost::uint32_t     fc_greg[11];
     stack_t             fc_stack;
     fp_t                fc_fp;
@@ -55,6 +70,7 @@ struct fcontext_t
         fc_stack(),
         fc_fp()
     {}
+#endif
 };
 
 }
