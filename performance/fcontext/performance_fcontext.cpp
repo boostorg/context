@@ -40,7 +40,7 @@ static void foo( intptr_t) {
 #if __cplusplus >= 201103L
 static void bar() {
     while ( true) {
-        mctx->resume();
+        ( * mctx)();
     }
 }
 #endif
@@ -68,11 +68,11 @@ duration_type measure_time_ec() {
     // cache warum-up
     boost::context::fixedsize_stack alloc;
     boost::context::execution_context ectx( alloc, bar);
-    ectx.resume();
+    ectx();
         
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        ectx.resume();
+        ectx();
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -107,11 +107,11 @@ cycle_type measure_cycles_ec() {
     // cache warum-up
     boost::context::fixedsize_stack alloc;
     boost::context::execution_context ectx( alloc, bar);
-    ectx.resume();
+    ectx();
         
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        ectx.resume();
+        ectx();
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement

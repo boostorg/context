@@ -16,6 +16,7 @@
 # include <cstdlib>
 # include <exception>
 # include <memory>
+# include <stack>
 # include <tuple>
 # include <utility>
 
@@ -56,63 +57,139 @@ struct preallocated {
 
 class BOOST_CONTEXT_DECL execution_context {
 private:
-    struct fcontext {
-        std::size_t     use_count;
-        fcontext_t      fctx;
-        stack_context   sctx;
+    struct activation_record {
+        typedef boost::intrusive_ptr< activation_record >    ptr_t;
 
-        // main-context
-        fcontext() noexcept :
+        enum flag_t {
+            flag_main_ctx   = 1 << 1,
+            flag_terminated = 1 << 2,
+            flag_preserve_fpu = 1 << 3,
+            flag_segmented_stack = 1 << 4
+        };
+
+        thread_local static activation_record       toplevel_rec;
+        thread_local static ptr_t                   current_rec;
+
+        std::size_t             use_count;
+        fcontext_t              fctx;
+        stack_context           sctx;
+        std::stack< ptr_t >     parents;
+        std::exception_ptr      except;
+        int                     flags;
+
+        // used for toplevel-context
+        // (e.g. main context, thread-entry context)
+        activation_record() noexcept :
             use_count( 1),
             fctx( nullptr),
-            sctx() {
+            sctx(),
+            parents(),
+            except(),
+            flags( flag_main_ctx) {
         } 
 
-        // worker-context
-        fcontext( fcontext_t fctx_, stack_context const& sctx_) noexcept :
+        activation_record( fcontext_t fctx_, stack_context sctx_, bool use_segmented_stack) noexcept :
             use_count( 0),
             fctx( fctx_),
-            sctx( sctx_) {
+            sctx( sctx_),
+            parents(),
+            except(),
+            flags( use_segmented_stack ? flag_segmented_stack : 0) {
         } 
 
-        virtual ~fcontext() noexcept {
+        virtual ~activation_record() noexcept = default;
+
+        void resume( bool fpu = false) {
+            // get parent context
+            if ( 0 == ( current_rec->flags & flag_terminated) &&
+                 0 == ( flags & flag_main_ctx) )  {
+                parents.push( current_rec);
+            }
+            // store current activation record in local variable
+            activation_record * from = current_rec.get();
+            // store `this` in static, thread local pointer
+            // `this` will become the active (running) context
+            // returned by execution_context::current()
+            current_rec = this;
+            // set FPU flag
+            if (fpu) {
+                from->flags |= flag_preserve_fpu;
+                this->flags |= flag_preserve_fpu;
+            } else {
+                from->flags &= ~flag_preserve_fpu;
+                this->flags &= ~flag_preserve_fpu;
+            }
+# if defined(BOOST_USE_SEGMENTED_STACKS)
+            if ( 0 != (flags & flag_segmented_stack) ) {
+                // adjust segmented stack properties
+                __splitstack_getcontext( from->sctx.segments_ctx);
+                __splitstack_setcontext( sctx.segments_ctx);
+                // context switch from parent context to `this`-context
+                jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), fpu);
+                // parent context resumed
+                // adjust segmented stack properties
+                __splitstack_setcontext( from->sctx.segments_ctx);
+            } else {
+                // context switch from parent context to `this`-context
+                jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), fpu);
+                // parent context resumed
+            }
+# else
+            // context switch from parent context to `this`-context
+            jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), fpu);
+            // parent context resumed
+# endif
+            // re-throw exception in parent's context
+            // if running context throws an exception
+            // the context is terminated and the parent context
+            // (context which has resumed the throwin context by
+            // calling execution_context::operator()) is resumed
+            if ( from->except) {
+                // store local copy of exception_ptr
+                std::exception_ptr ex( from->except);
+                // reset exception_ptr of parent context
+                from->except = nullptr;
+                // re-throw excpetion
+                // the exception is thrown out of
+                // `throwing context`->execution_context::operator()
+                // in parent's context
+                std::rethrow_exception( ex);
+            }
         }
 
-        virtual void deallocate() {
+        virtual void deallocate() {}
+
+        friend void intrusive_ptr_add_ref( activation_record * ar) {
+            ++ar->use_count;
         }
 
-        virtual void run() noexcept {
-        }
+        friend void intrusive_ptr_release( activation_record * ar) {
+            BOOST_ASSERT( nullptr != ar);
 
-        friend void intrusive_ptr_add_ref( fcontext * ctx) {
-            ++ctx->use_count;
-        }
-
-        friend void intrusive_ptr_release( fcontext * ctx) {
-            BOOST_ASSERT( nullptr != ctx);
-
-            if ( 0 == --ctx->use_count) {
-                ctx->~fcontext();
+            if ( 0 == --ar->use_count) {
+                ar->deallocate();
             }
         }
     };
 
     template< typename Fn, typename StackAlloc >
-    class worker_fcontext : public fcontext {
+    class capture_record : public activation_record {
     private:
         StackAlloc      salloc_;
         Fn              fn_;
 
-        static void destroy( worker_fcontext * p) {
+        static void destroy( capture_record * p) {
             StackAlloc salloc( p->salloc_);
             stack_context sctx( p->sctx);
-            p->~worker_fcontext();
+            // deallocate activation record
+            p->~capture_record();
+            // destroy stack with stack allocator
             salloc.deallocate( sctx);
         }
 
     public:
-        explicit worker_fcontext( stack_context sctx, StackAlloc const& salloc, fcontext_t fctx, Fn && fn) noexcept :
-            fcontext( fctx, sctx),
+        explicit capture_record( stack_context sctx, StackAlloc const& salloc, fcontext_t fctx, Fn && fn, bool use_segmented_stack) noexcept :
+            activation_record( fctx, sctx, use_segmented_stack),
             salloc_( salloc),
             fn_( std::forward< Fn >( fn) ) {
         }
@@ -121,41 +198,61 @@ private:
             destroy( this);
         }
 
-        void run() noexcept override final {
-            fn_();
+        void run() noexcept {
+            try {
+                fn_();
+            } catch (...) {
+                BOOST_ASSERT( ! parents.empty() );
+                // store exception in parent's exception_ptr
+                // because exception is re-thrown in parent's context
+                parents.top()->except = std::current_exception();
+            }
+            // set termination flag
+            flags |= flag_terminated;
+            BOOST_ASSERT( ! parents.empty() );
+            BOOST_ASSERT( 0 == (flags & flag_main_ctx) );
+            // return to parent context
+            // use preserve_fpu flag of parent because it
+            // is resumed and the current context has terminated
+            ptr_t parent;
+            do {
+               parent = parents.top();
+               parents.pop();
+            } while ( parent && 0 != ( parent->flags & flag_terminated) );
+            BOOST_ASSERT( parent);
+            parent->resume( parent->flags & flag_preserve_fpu);
         }
     };
 
+    // tampoline function
+    // entered if the execution context
+    // is resumed for the first time
+    template< typename AR >
     static void entry_func( intptr_t p) noexcept {
         BOOST_ASSERT( 0 != p);
 
-        fcontext * bp( reinterpret_cast< fcontext * >( p) );
-        BOOST_ASSERT( nullptr != bp);
+        AR * ar( reinterpret_cast< AR * >( p) );
+        BOOST_ASSERT( nullptr != ar);
 
-        bp->run();
+        // start execution of toplevel context-function
+        ar->run();
     }
 
-    typedef boost::intrusive_ptr< fcontext >    ptr_t;
+    typedef boost::intrusive_ptr< activation_record >    ptr_t;
 
-    thread_local static fcontext                main_ctx_;
-    thread_local static ptr_t                   current_ctx_;
-
-    boost::intrusive_ptr< fcontext >            ptr_;
-# if defined(BOOST_USE_SEGMENTED_STACKS)
-    bool                                        use_segmented_stack_ = false;
-# endif
+    ptr_t   ptr_;
 
     template< typename StackAlloc, typename Fn >
-    static fcontext * create_context( StackAlloc salloc, Fn && fn) {
-        typedef worker_fcontext< Fn, StackAlloc >  func_t;
+    static activation_record * create_context( StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
+        typedef capture_record< Fn, StackAlloc >  capture_t;
 
         stack_context sctx( salloc.allocate() );
         // reserve space for control structure
-        std::size_t size = sctx.size - sizeof( func_t);
-        void * sp = static_cast< char * >( sctx.sp) - sizeof( func_t);
+        std::size_t size = sctx.size - sizeof( capture_t);
+        void * sp = static_cast< char * >( sctx.sp) - sizeof( capture_t);
 #if 0
-        constexpr std::size_t func_alignment = 64; // alignof( func_t);
-        constexpr std::size_t func_size = sizeof( func_t);
+        constexpr std::size_t func_alignment = 64; // alignof( capture_t);
+        constexpr std::size_t func_size = sizeof( capture_t);
         // reserve space on stack
         void * sp = static_cast< char * >( sctx.sp) - func_size - func_alignment;
         // align sp pointer
@@ -165,22 +262,22 @@ private:
         std::size_t size = sctx.size - ( static_cast< char * >( sctx.sp) - static_cast< char * >( sp) );
 #endif
         // create fast-context
-        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
+        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
         // placment new for control structure on fast-context stack
-        return new ( sp) func_t( sctx, salloc, fctx, std::forward< Fn >( fn) );
+        return new ( sp) capture_t( sctx, salloc, fctx, std::forward< Fn >( fn), use_segmented_stack);
     }
 
     template< typename StackAlloc, typename Fn >
-    static fcontext * create_context( preallocated palloc, StackAlloc salloc, Fn && fn) {
-        typedef worker_fcontext< Fn, StackAlloc >  func_t;
+    static activation_record * create_context( preallocated palloc, StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
+        typedef capture_record< Fn, StackAlloc >  capture_t;
 
         // reserve space for control structure
-        std::size_t size = palloc.size - sizeof( func_t);
-        void * sp = static_cast< char * >( palloc.sp) - sizeof( func_t);
+        std::size_t size = palloc.size - sizeof( capture_t);
+        void * sp = static_cast< char * >( palloc.sp) - sizeof( capture_t);
 #if 0
-        constexpr std::size_t func_alignment = 64; // alignof( func_t);
-        constexpr std::size_t func_size = sizeof( func_t);
+        constexpr std::size_t func_alignment = 64; // alignof( capture_t);
+        constexpr std::size_t func_size = sizeof( capture_t);
         // reserve space on stack
         void * sp = static_cast< char * >( palloc.sp) - func_size - func_alignment;
         // align sp pointer
@@ -190,48 +287,53 @@ private:
         std::size_t size = palloc.size - ( static_cast< char * >( palloc.sp) - static_cast< char * >( sp) );
 #endif
         // create fast-context
-        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func);
+        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
         // placment new for control structure on fast-context stack
-        return new ( sp) func_t( palloc.sctx, salloc, fctx, std::forward< Fn >( fn) );
+        return new ( sp) capture_t( palloc.sctx, salloc, fctx, std::forward< Fn >( fn), use_segmented_stack);
     }
 
     template< typename StackAlloc, typename Fn, typename Tpl, std::size_t ... I >
-    static fcontext * create_worker_fcontext( StackAlloc salloc,
-                                              Fn && fn_, Tpl && tpl_,
-                                              std::index_sequence< I ... >) {
+    static activation_record * create_capture_record( StackAlloc salloc,
+                                                      Fn && fn_, Tpl && tpl_,
+                                                      std::index_sequence< I ... >,
+                                                      bool use_segmented_stack) {
         return create_context( salloc,
+                               // lambda, executed in new execution context
                                [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable {
-                                   try {
                                        fn(
+                                           // non-type template parameter pack used to extract the
+                                           // parameters (arguments) from the tuple and pass them to fn
+                                           // via parameter pack expansion
                                            // std::tuple_element<> does not perfect forwarding
                                            std::forward< decltype( std::get< I >( std::declval< Tpl >() ) ) >(
                                                 std::get< I >( std::forward< Tpl >( tpl) ) ) ... );
-                                   } catch (...) {
-                                       std::terminate();
-                                   }
-                               });
+                               },
+                               use_segmented_stack);
     }
 
     template< typename StackAlloc, typename Fn, typename Tpl, std::size_t ... I >
-    static fcontext * create_worker_fcontext( preallocated palloc, StackAlloc salloc,
-                                              Fn && fn_, Tpl && tpl_,
-                                              std::index_sequence< I ... >) {
+    static activation_record * create_capture_record( preallocated palloc, StackAlloc salloc,
+                                                      Fn && fn_, Tpl && tpl_,
+                                                      std::index_sequence< I ... >,
+                                                      bool use_segmented_stack) {
         return create_context( palloc, salloc,
+                               // lambda, executed in new execution context
                                [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable {
-                                   try {
                                        fn(
+                                           // non-type template parameter pack used to extract the
+                                           // parameters (arguments) from the tuple and pass them to fn
+                                           // via parameter pack expansion
                                            // std::tuple_element<> does not perfect forwarding
                                            std::forward< decltype( std::get< I >( std::declval< Tpl >() ) ) >(
                                                 std::get< I >( std::forward< Tpl >( tpl) ) ) ... );
-                                   } catch (...) {
-                                       std::terminate();
-                                   }
-                               });
+                               },
+                               use_segmented_stack);
     }
 
     execution_context() :
-        ptr_( current_ctx_) {
+        // default constructed with current activation_record
+        ptr_( activation_record::current_rec) {
     }
 
 public:
@@ -242,57 +344,68 @@ public:
 # if defined(BOOST_USE_SEGMENTED_STACKS)
     template< typename Fn, typename ... Args >
     explicit execution_context( segmented_stack salloc, Fn && fn, Args && ... args) :
-        ptr_( create_worker_fcontext( salloc,
-                                      std::forward< Fn >( fn),
-                                      std::make_tuple( std::forward< Args >( args) ... ),
-                                      std::index_sequence_for< Args ... >() ) ),
-        use_segmented_stack_( true) {
+        // deferred execution of fn and its arguments
+        // arguments are stored in std::tuple<>
+        // non-type template parameter pack via std::index_sequence_for<>
+        // preserves the number of arguments
+        // used to extract the function arguments from std::tuple<>
+        ptr_( create_capture_record( salloc,
+                                     std::forward< Fn >( fn),
+                                     std::make_tuple( std::forward< Args >( args) ... ),
+                                     std::index_sequence_for< Args ... >(), true) ) {
     }
 
     template< typename Fn, typename ... Args >
     explicit execution_context( preallocated palloc, segmented_stack salloc, Fn && fn, Args && ... args) :
-        ptr_( create_worker_fcontext( palloc, salloc,
-                                      std::forward< Fn >( fn),
-                                      std::make_tuple( std::forward< Args >( args) ... ),
-                                      std::index_sequence_for< Args ... >() ) ),
-        use_segmented_stack_( true) {
+        // deferred execution of fn and its arguments
+        // arguments are stored in std::tuple<>
+        // non-type template parameter pack via std::index_sequence_for<>
+        // preserves the number of arguments
+        // used to extract the function arguments from std::tuple<>
+        ptr_( create_capture_record( palloc, salloc,
+                                     std::forward< Fn >( fn),
+                                     std::make_tuple( std::forward< Args >( args) ... ),
+                                     std::index_sequence_for< Args ... >(), true) ) {
     }
 # endif
 
     template< typename StackAlloc, typename Fn, typename ... Args >
     explicit execution_context( StackAlloc salloc, Fn && fn, Args && ... args) :
-        ptr_( create_worker_fcontext( salloc,
-                                      std::forward< Fn >( fn),
-                                      std::make_tuple( std::forward< Args >( args) ... ),
-                                      std::index_sequence_for< Args ... >() ) ) {
+        // deferred execution of fn and its arguments
+        // arguments are stored in std::tuple<>
+        // non-type template parameter pack via std::index_sequence_for<>
+        // preserves the number of arguments
+        // used to extract the function arguments from std::tuple<>
+        ptr_( create_capture_record( salloc,
+                                     std::forward< Fn >( fn),
+                                     std::make_tuple( std::forward< Args >( args) ... ),
+                                     std::index_sequence_for< Args ... >(), false) ) {
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
     explicit execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
-        ptr_( create_worker_fcontext( palloc, salloc,
-                                      std::forward< Fn >( fn),
-                                      std::make_tuple( std::forward< Args >( args) ... ),
-                                      std::index_sequence_for< Args ... >() ) ) {
+        // deferred execution of fn and its arguments
+        // arguments are stored in std::tuple<>
+        // non-type template parameter pack via std::index_sequence_for<>
+        // preserves the number of arguments
+        // used to extract the function arguments from std::tuple<>
+        ptr_( create_capture_record( palloc, salloc,
+                                     std::forward< Fn >( fn),
+                                     std::make_tuple( std::forward< Args >( args) ... ),
+                                     std::index_sequence_for< Args ... >(), false) ) {
     }
 
-    void resume( bool preserve_fpu = false) noexcept {
-        fcontext * old_ctx( current_ctx_.get() );
-        fcontext * new_ctx( ptr_.get() );
-        current_ctx_ = ptr_;
-# if defined(BOOST_USE_SEGMENTED_STACKS)
-        if ( use_segmented_stack_) {
-            __splitstack_getcontext( old_ctx->sctx.segments_ctx);
-            __splitstack_setcontext( new_ctx->sctx.segments_ctx);
+    execution_context & operator()( bool preserve_fpu = false) {
+        ptr_->resume( preserve_fpu);
+        return * this;
+    }
 
-            jump_fcontext( & old_ctx->fctx, new_ctx->fctx, reinterpret_cast< intptr_t >( new_ctx), preserve_fpu);
+    explicit operator bool() const noexcept {
+        return nullptr != ptr_.get() && 0 == (ptr_->flags & activation_record::flag_terminated);
+    }
 
-            __splitstack_setcontext( old_ctx->sctx.segments_ctx);
-        } else {
-            jump_fcontext( & old_ctx->fctx, new_ctx->fctx, reinterpret_cast< intptr_t >( new_ctx), preserve_fpu);
-        }
-# else
-        jump_fcontext( & old_ctx->fctx, new_ctx->fctx, reinterpret_cast< intptr_t >( new_ctx), preserve_fpu);
-# endif
+    bool operator!() const noexcept {
+        return ! ( nullptr != ptr_.get() && 0 == (ptr_->flags & activation_record::flag_terminated) );
     }
 };
 

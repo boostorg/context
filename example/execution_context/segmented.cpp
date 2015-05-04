@@ -57,10 +57,10 @@ int main() {
 #endif
         [& main_ctx, count](){
             bar( count);
-            main_ctx.resume();   
+            main_ctx();   
         });
     
-    bar_ctx.resume();
+    bar_ctx();
 
     std::cout << "main: done" << std::endl;
 
