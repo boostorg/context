@@ -14,9 +14,7 @@
 # include <cstddef>
 # include <cstdint>
 # include <cstdlib>
-# include <exception>
 # include <memory>
-# include <stack>
 # include <tuple>
 # include <utility>
 
@@ -62,9 +60,8 @@ private:
 
         enum flag_t {
             flag_main_ctx   = 1 << 1,
-            flag_terminated = 1 << 2,
-            flag_preserve_fpu = 1 << 3,
-            flag_segmented_stack = 1 << 4
+            flag_preserve_fpu = 1 << 2,
+            flag_segmented_stack = 1 << 3
         };
 
         thread_local static activation_record       toplevel_rec;
@@ -73,8 +70,6 @@ private:
         std::size_t             use_count;
         fcontext_t              fctx;
         stack_context           sctx;
-        std::stack< ptr_t >     parents;
-        std::exception_ptr      except;
         int                     flags;
 
         // used for toplevel-context
@@ -83,8 +78,6 @@ private:
             use_count( 1),
             fctx( nullptr),
             sctx(),
-            parents(),
-            except(),
             flags( flag_main_ctx) {
         } 
 
@@ -92,19 +85,12 @@ private:
             use_count( 0),
             fctx( fctx_),
             sctx( sctx_),
-            parents(),
-            except(),
             flags( use_segmented_stack ? flag_segmented_stack : 0) {
         } 
 
         virtual ~activation_record() noexcept = default;
 
-        void resume( bool fpu = false) {
-            // get parent context
-            if ( 0 == ( current_rec->flags & flag_terminated) &&
-                 0 == ( flags & flag_main_ctx) )  {
-                parents.push( current_rec);
-            }
+        void resume( bool fpu = false) noexcept {
             // store current activation record in local variable
             activation_record * from = current_rec.get();
             // store `this` in static, thread local pointer
@@ -139,22 +125,6 @@ private:
             jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), fpu);
             // parent context resumed
 # endif
-            // re-throw exception in parent's context
-            // if running context throws an exception
-            // the context is terminated and the parent context
-            // (context which has resumed the throwin context by
-            // calling execution_context::operator()) is resumed
-            if ( from->except) {
-                // store local copy of exception_ptr
-                std::exception_ptr ex( from->except);
-                // reset exception_ptr of parent context
-                from->except = nullptr;
-                // re-throw excpetion
-                // the exception is thrown out of
-                // `throwing context`->execution_context::operator()
-                // in parent's context
-                std::rethrow_exception( ex);
-            }
         }
 
         virtual void deallocate() {}
@@ -202,25 +172,9 @@ private:
             try {
                 fn_();
             } catch (...) {
-                BOOST_ASSERT( ! parents.empty() );
-                // store exception in parent's exception_ptr
-                // because exception is re-thrown in parent's context
-                parents.top()->except = std::current_exception();
+                std::terminate();
             }
-            // set termination flag
-            flags |= flag_terminated;
-            BOOST_ASSERT( ! parents.empty() );
             BOOST_ASSERT( 0 == (flags & flag_main_ctx) );
-            // return to parent context
-            // use preserve_fpu flag of parent because it
-            // is resumed and the current context has terminated
-            ptr_t parent;
-            do {
-               parent = parents.top();
-               parents.pop();
-            } while ( parent && 0 != ( parent->flags & flag_terminated) );
-            BOOST_ASSERT( parent);
-            parent->resume( parent->flags & flag_preserve_fpu);
         }
     };
 
@@ -395,17 +349,8 @@ public:
                                      std::index_sequence_for< Args ... >(), false) ) {
     }
 
-    execution_context & operator()( bool preserve_fpu = false) {
+    void operator()( bool preserve_fpu = false) noexcept {
         ptr_->resume( preserve_fpu);
-        return * this;
-    }
-
-    explicit operator bool() const noexcept {
-        return nullptr != ptr_.get() && 0 == (ptr_->flags & activation_record::flag_terminated);
-    }
-
-    bool operator!() const noexcept {
-        return ! ( nullptr != ptr_.get() && 0 == (ptr_->flags & activation_record::flag_terminated) );
     }
 };
 

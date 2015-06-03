@@ -232,14 +232,12 @@ void f11() {
 
 void f12( int i) {
     value1 = i;
+    ( * mctx)();
 }
 
 void f13( int i) {
     value1 = i;
-}
-
-void f14( std::string const& msg) {
-    throw std::runtime_error( msg);
+    ( * mctx)();
 }
 
 void f15() {
@@ -257,6 +255,8 @@ void test_ectx() {
 }
 
 void test_return() {
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    mctx = & ctx;
     value1 = 0;
     ctx::fixedsize_stack alloc;
     ctx::execution_context ectx( alloc, f13, 3);
@@ -264,19 +264,9 @@ void test_return() {
     BOOST_CHECK_EQUAL( 3, value1);
 }
 
-void test_valid() {
+void test_variadric() {
     boost::context::execution_context ctx( boost::context::execution_context::current() );
     mctx = & ctx;
-    ctx::fixedsize_stack alloc;
-    ctx::execution_context ectx( alloc, f15);
-    BOOST_CHECK( ectx);
-    ectx();
-    BOOST_CHECK( ectx);
-    ectx();
-    BOOST_CHECK( ! ectx);
-}
-
-void test_variadric() {
     value1 = 0;
     ctx::fixedsize_stack alloc;
     ctx::execution_context ectx( alloc, f12, 5);
@@ -284,19 +274,9 @@ void test_variadric() {
     BOOST_CHECK_EQUAL( 5, value1);
 }
 
-void test_error() {
-    std::string msg("abc"), value;
-    ctx::fixedsize_stack alloc;
-    ctx::execution_context ectx( alloc, f14, msg);
-    try {
-        ectx();
-    } catch ( std::runtime_error const& ex) {
-        value = ex.what();
-    }
-    BOOST_CHECK_EQUAL( msg, value);
-}
-
 void test_prealloc() {
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    mctx = & ctx;
     value1 = 0;
     ctx::fixedsize_stack alloc;
     ctx::stack_context sctx( alloc.allocate() );
@@ -326,9 +306,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 #if ! defined(BOOST_CONTEXT_NO_EXECUTION_CONTEXT)
     test->add( BOOST_TEST_CASE( & test_ectx) );
     test->add( BOOST_TEST_CASE( & test_return) );
-    test->add( BOOST_TEST_CASE( & test_valid) );
     test->add( BOOST_TEST_CASE( & test_variadric) );
-    test->add( BOOST_TEST_CASE( & test_error) );
     test->add( BOOST_TEST_CASE( & test_prealloc) );
 #endif
 

@@ -29,8 +29,9 @@ int main() {
         });
     for(int i=0;i<10;++i){
         ctx();
-        std::cout<<p<<std::endl;
+        std::cout<<p<<" ";
     }
+    std::cout<<std::endl;
 
     std::cout << "main: done" << std::endl;
 }
