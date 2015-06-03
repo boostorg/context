@@ -28,31 +28,51 @@ __econtext__ permits access to the current, active context via
         int main() {
             std::istringstream is("1+1");
             char c;
+            bool done=false;
+            std::exception_ptr except;
 
             // create handle to main execution context
-            boost::context::execution_context main_ctx(
-                boost::context::execution_context::current() );
+            auto main_ctx( boost::context::execution_context::current() );
 
-            // executes parser in new execution context
+            // execute parser in new execution context
             boost::context::execution_context parser_ctx(
-                boost::context::fixedsize_stack(),
-                [&main_ctx,&is,&c](){
+                    boost::context::fixedsize_stack(),
+                    [&main_ctx,&is,&c,&done,&except](){
                     // create parser with callback function
-                    Parser p(is,
-                             [&main_ctx,&c](char ch){
-                                 c=ch;
-                                 // resume main execution context
-                                 main_ctx();
-                             });
-                    // start recursive parsing
-                    p.run();
-                });
+                    Parser p( is,
+                              [&main_ctx,&c](char ch){
+                                    c=ch;
+                                    // resume main execution context
+                                    main_ctx();
+                            });
+                        try {
+                            // start recursive parsing
+                            p.run();
+                        } catch ( ... ) {
+                            // store other exceptions in exception-pointer
+                            except = std::current_exception();
+                        }
+                        // set termination flag
+                        done=true;
+                        // resume main execution context
+                        main_ctx();
+                    });
 
             // user-code pulls parsed data from parser
-            // inverted control flow
-            while ( parser_ctx() ) {
-                printf("Parsed: %c\n",c);
+            // invert control flow
+            parser_ctx();
+            if ( except) {
+                std::rethrow_exception( except);
             }
+            while( ! done) {
+                printf("Parsed: %c\n",c);
+                parser_ctx();
+                if ( except) {
+                    std::rethrow_exception( except);
+                }
+            }
+
+            std::cout << "main: done" << std::endl;
         }
 
         output:
@@ -69,9 +89,9 @@ pulls parsed symbols from the parser - instead to get pushed from the parser
 The interface of __econtext__ does not transfer data. This is not required
 because usually sharing data's address (pointer/reference of lvalues) is sufficient.
 
-If the code executed by __econtext__ emits an exception, the context is terminated,
-the parent __econtext__ (context that has resumed the throwing context) is resumed
-(return from ['execution_context::operator()]) and the exception is re-thrown.
+If the code executed by __econtext__ emits an exception, the applciation is termianted.
+['std::exception_ptr] can be used to transfer exceptions between different execution
+contexts.
 
 Sometimes it is necessary to unwind the stack of an unfinished context to
 destroy local stack variables so they can release allocated resources (RAII
@@ -110,17 +130,19 @@ of the stack.]
         };
 
 [heading exception handling]
-If the function executed inside a __econtext__ emitts ans exception, the context is terminated,
-the parent context (context that has resumed the throwing __econtext__) is resumed and the
-exception is re-thrown.
+If the function executed inside a __econtext__ emitts ans exception, the
+application is terminated by calling ['std::terminate(). ['std::exception_ptr]
+can be used to transfer exceptions between different execution contexts.
 
 [heading parameter passing]
-Input and output parameters are transfered via a lambda capture list and references/pointers.
+Input and output parameters are transfered via a lambda capture list and
+references/pointers.
 
         class X {
         private:
             int * inp_;
             std::string outp_;
+            std::exception_ptr excptr_;
             boost::context::execution_context caller_;
             boost::context::execution_context callee_;
 
@@ -128,18 +150,26 @@ Input and output parameters are transfered via a lambda capture list and referen
             X() :
                 inp_( nullptr),
                 outp_(),
+                excptr_(),
                 caller_( boost::context::execution_context::current() ),
                 callee_( boost::context::fixedsize_stack(),
                          [=] () {
+                            try {
                                 int i = * inp_;
                                 outp_ = boost::lexical_cast< std::string >( i);
                                 caller_();
+                            } catch (...) {
+                                excptr_=std::current_exception();
+                            }
                          })
             {}
 
             std::string operator()( int i) {
                 inp_ = & i;
                 callee_();
+                if(excptr_){
+                    std::rethrow_exception(excptr_);
+                }
                 return outp_;
             }
         };
@@ -169,11 +199,7 @@ Input and output parameters are transfered via a lambda capture list and referen
             template< typename StackAlloc, typename Fn, typename ... Args >
             execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args);
 
-            execution_context & operator()();
-
-            explicit operator bool() const noexcept;
-
-            bool operator!() const noexcept;
+            void operator()() noexcept;
         };
 
 [heading `static execution_context current()`]
@@ -207,7 +233,7 @@ execution context.]]
 `fn`. Used to store control structures on top of the stack.]]
 ]
 
-[heading `execution_context & operator()()`]
+[heading `void operator()() noexcept`]
 [variablelist
 [[Effects:] [Stores internally the current context data (stack pointer,
 instruction pointer, and CPU registers) to the current active context and
@@ -215,23 +241,8 @@ restores the context data from `*this`, which implies jumping to `*this`'s
 execution context.]]
 [[Note:] [The behaviour is undefined if `operator()()` is called while `execution_context::current()`
 returns `*this` (e.g. resuming an alredy running cotnext). If the top-level context
-function returns, the parent execution context (which has called ['operator()()] before)
-is resumed (e.g. return from `operator()()`.]]
+function returns, `std::exit()` is called.]]
 [[Returns:] [Reference to `*this`.]]
-[[Throws:] [Exception thrown by `child`-context.]]
-]
-
-[heading `explicit operator bool() const`]
-[variablelist
-[[Returns:] [If `*this` refers to an invalid context or the context-function
-has returned (completed), the function returns `false`. Otherwise `true`.]]
-[[Throws:] [Nothing.]]
-]
-
-[heading `bool operator!() const`]
-[variablelist
-[[Returns:] [If `*this` refers to an invalid context or the context-function
-has returned (completed), the function returns `true`. Otherwise `false`.]]
 [[Throws:] [Nothing.]]
 ]
 

@@ -90,14 +90,16 @@ int main() {
     try {
         std::istringstream is("1+1");
         char c;
+        bool done=false;
+        std::exception_ptr except;
 
         // create handle to main execution context
         auto main_ctx( boost::context::execution_context::current() );
 
-        // executes parser in new execution context
+        // execute parser in new execution context
         boost::context::execution_context parser_ctx(
                 boost::context::fixedsize_stack(),
-                [&main_ctx,&is,&c](){
+                [&main_ctx,&is,&c,&done,&except](){
                 // create parser with callback function
                 Parser p( is,
                           [&main_ctx,&c](char ch){
@@ -105,14 +107,31 @@ int main() {
                                 // resume main execution context
                                 main_ctx();
                         });
-                    // start recursive parsing
-                    p.run();
+                    try {
+                        // start recursive parsing
+                        p.run();
+                    } catch ( ... ) {
+                        // store other exceptions in exception-pointer
+                        except = std::current_exception();
+                    }
+                    // set termination flag
+                    done=true;
+                    // resume main execution context
+                    main_ctx();
                 });
 
         // user-code pulls parsed data from parser
         // invert control flow
-        while( parser_ctx() ) {
+        parser_ctx();
+        if ( except) {
+            std::rethrow_exception( except);
+        }
+        while( ! done) {
             printf("Parsed: %c\n",c);
+            parser_ctx();
+            if ( except) {
+                std::rethrow_exception( except);
+            }
         }
 
         std::cout << "main: done" << std::endl;
