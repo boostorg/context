@@ -43,7 +43,7 @@ void pagesize_( std::size_t * size)
 void stacksize_limit_( rlimit * limit)
 {
     // conforming to POSIX.1-2001
-#if defined(BOOST_DISABLE_ASSERTS)
+#if defined(BOOST_DISABLE_ASSERTS) || defined(NDEBUG)
     ::getrlimit( RLIMIT_STACK, limit);
 #else
     const int result = ::getrlimit( RLIMIT_STACK, limit);
