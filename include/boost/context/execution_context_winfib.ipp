@@ -174,7 +174,7 @@ private:
 
         // hackish
         std::size_t fsize = salloc.size_;
-        salloc.size_ = sizeof( capture_t);
+        salloc.size_ = StackAlloc::traits_type::minimum_size();
 
         stack_context sctx( salloc.allocate() );
         // reserve space for control structure
@@ -194,7 +194,7 @@ private:
 
         // hackish
         std::size_t fsize = salloc.size_;
-        salloc.size_ = sizeof( capture_t);
+        salloc.size_ = StackAlloc::traits_type::minimum_size();
 
         // reserve space for control structure
         void * sp = static_cast< char * >( palloc.sp) - sizeof( capture_t);
