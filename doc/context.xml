@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2015/06/03 06:56:10 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2015/06/05 18:00:47 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -913,6 +913,16 @@
         </listitem>
       </varlistentry>
     </variablelist>
+    <section id="context.econtext.winfibers">
+      <title><link linkend="context.econtext.winfibers">Using WinFiber-API</link></title>
+      <para>
+        Because the TIB (thread information block) is not fully described in the
+        MSDN it might be possible that not all required TIB-parts are swapped. With
+        compiler flag <code><phrase role="identifier">BOOST_USE_WINFIBERS</phrase></code>
+        <code><phrase role="identifier">execution_context</phrase></code> uses internally
+        Windows Fiber API.
+      </para>
+    </section>
   </section>
   <section id="context.stack">
     <title><link linkend="context.stack">Stack allocation</link></title>
