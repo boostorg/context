@@ -185,11 +185,12 @@ private:
         BOOST_ASSERT( nullptr != sp);
 #endif
         // placment new for control structure on fast-context stack
-        capture_t cr = new ( sp) capture_t( sctx, salloc, std::forward< Fn >( fn), use_segmented_stack);
+        capture_t * cr = new ( sp) capture_t( sctx, salloc, std::forward< Fn >( fn), use_segmented_stack);
         // create fiber
         // use default stacksize
-        cr->fiber = CreateFiber( 0, execution_context::entry_func< capture_t >, this);
+        cr->fiber = CreateFiber( 0, execution_context::entry_func< capture_t >, cr);
         BOOST_ASSERT( nullptr != cr->fiber);
+        return cr;
     }
 
     template< typename StackAlloc, typename Fn >
@@ -208,11 +209,12 @@ private:
         BOOST_ASSERT( nullptr != sp);
 #endif
         // placment new for control structure on fast-context stack
-        capture_t cr = new ( sp) capture_t( palloc.sctx, salloc, std::forward< Fn >( fn), use_segmented_stack);
+        capture_t * cr = new ( sp) capture_t( palloc.sctx, salloc, std::forward< Fn >( fn), use_segmented_stack);
         // create fiber
         // use default stacksize
-        cr->fiber = CreateFiber( 0, execution_context::entry_func< capture_t >, this);
+        cr->fiber = CreateFiber( 0, execution_context::entry_func< capture_t >, cr);
         BOOST_ASSERT( nullptr != cr->fiber);
+        return cr;
     }
 
     template< typename StackAlloc, typename Fn, typename Tpl, std::size_t ... I >
