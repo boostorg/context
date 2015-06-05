@@ -31,6 +31,8 @@ namespace context {
 template< typename traitsT >
 class basic_protected_fixedsize_stack {
 private:
+    friend class execution_context;
+
     std::size_t     size_;
 
 public:

@@ -65,7 +65,7 @@ private:
    }
 
    void S(){
-      if (std::isdigit(next)){
+      if (isdigit(next)){
          cb(next);
          scan();
       }
