@@ -172,23 +172,18 @@ private:
     static activation_record * create_context( StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
         typedef capture_record< Fn, StackAlloc >  capture_t;
 
+        // hackish
+        std::size_t fsize = salloc.size_;
+        salloc.size_ = sizeof( capture_t);
+
         stack_context sctx( salloc.allocate() );
         // reserve space for control structure
         void * sp = static_cast< char * >( sctx.sp) - sizeof( capture_t);
-#if 0
-        constexpr std::size_t func_alignment = 64; // alignof( capture_t);
-        constexpr std::size_t func_size = sizeof( capture_t);
-        // reserve space on stack
-        void * sp = static_cast< char * >( sctx.sp) - func_size - func_alignment;
-        // align sp pointer
-        sp = std::align( func_alignment, func_size, sp, func_size + func_alignment);
-        BOOST_ASSERT( nullptr != sp);
-#endif
         // placment new for control structure on fast-context stack
         capture_t * cr = new ( sp) capture_t( sctx, salloc, std::forward< Fn >( fn), use_segmented_stack);
         // create fiber
         // use default stacksize
-        cr->fiber = CreateFiber( 0, execution_context::entry_func< capture_t >, cr);
+        cr->fiber = CreateFiber( fsize, execution_context::entry_func< capture_t >, cr);
         BOOST_ASSERT( nullptr != cr->fiber);
         return cr;
     }
@@ -197,22 +192,17 @@ private:
     static activation_record * create_context( preallocated palloc, StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
         typedef capture_record< Fn, StackAlloc >  capture_t;
 
+        // hackish
+        std::size_t fsize = salloc.size_;
+        salloc.size_ = sizeof( capture_t);
+
         // reserve space for control structure
         void * sp = static_cast< char * >( palloc.sp) - sizeof( capture_t);
-#if 0
-        constexpr std::size_t func_alignment = 64; // alignof( capture_t);
-        constexpr std::size_t func_size = sizeof( capture_t);
-        // reserve space on stack
-        void * sp = static_cast< char * >( palloc.sp) - func_size - func_alignment;
-        // align sp pointer
-        sp = std::align( func_alignment, func_size, sp, func_size + func_alignment);
-        BOOST_ASSERT( nullptr != sp);
-#endif
         // placment new for control structure on fast-context stack
         capture_t * cr = new ( sp) capture_t( palloc.sctx, salloc, std::forward< Fn >( fn), use_segmented_stack);
         // create fiber
         // use default stacksize
-        cr->fiber = CreateFiber( 0, execution_context::entry_func< capture_t >, cr);
+        cr->fiber = CreateFiber( fsize, execution_context::entry_func< capture_t >, cr);
         BOOST_ASSERT( nullptr != cr->fiber);
         return cr;
     }

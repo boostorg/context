@@ -32,6 +32,10 @@ namespace context {
 template< typename traitsT >
 class basic_fixedsize_stack {
 private:
+#if defined(BOOST_USE_WINFIBERS)
+    friend class execution_context;
+#endif
+
     std::size_t     size_;
 
 public:
