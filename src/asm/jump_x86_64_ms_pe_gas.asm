@@ -115,7 +115,7 @@ jump_fcontext:
     pushq  %rax
 
     /* prepare stack for FPU */
-    leal  -0xa8(%rsp), %rsp
+    leaq  -0xa8(%rsp), %rsp
 
     /* test for flag preserve_fpu */
     testq  %r9, %r9
@@ -193,13 +193,13 @@ jump_fcontext:
     /* restore fiber local storage */
     popq  %rax
     movq  %rax, 0x18(%r10)
-    ; restore deallocation stack
+    /* restore deallocation stack */
     popq  %rax
     movq  %rax, 0x1478(%r10)
-    ; restore stack limit
+    /* restore stack limit */
     popq  %rax
     movq  %rax, 0x10(%r10)
-    ; restore stack base
+    /* restore stack base */
     popq  %rax
     movq  %rax, 0x8(%r10)
 
