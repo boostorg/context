@@ -29,7 +29,7 @@
 .globl	_jump_fcontext
 .def	_jump_fcontext;	.scl	2;	.type	32;	.endef
 _jump_fcontext:
-    ; fourth arg of jump_fcontext() == flag indicating preserving FPU
+    /* fourth arg of jump_fcontext() == flag indicating preserving FPU */
     movl  0x10(%esp), %ecx
 
     pushl  %ebp  /* save EBP */

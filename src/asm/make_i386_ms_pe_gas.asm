@@ -34,7 +34,7 @@ _make_fcontext:
 
     /* reserve space for first argument of context-function */
     /* EAX might already point to a 16byte border */
-    leal  0x08(%eax), %eax
+    leal  -0x08(%eax), %eax
 
     /* shift address in EAX to lower 16 byte boundary */
     andl  $-16, %eax
