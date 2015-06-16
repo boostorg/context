@@ -89,7 +89,7 @@ pulls parsed symbols from the parser - instead to get pushed from the parser
 The interface of __econtext__ does not transfer data. This is not required
 because usually sharing data's address (pointer/reference of lvalues) is sufficient.
 
-If the code executed by __econtext__ emits an exception, the applciation is termianted.
+If the code executed by __econtext__ emits an exception, the application is terminated.
 ['std::exception_ptr] can be used to transfer exceptions between different execution
 contexts.
 
@@ -97,14 +97,14 @@ Sometimes it is necessary to unwind the stack of an unfinished context to
 destroy local stack variables so they can release allocated resources (RAII
 pattern). The user is responsible for this task.
 
-[heading allocating control strutures on top of stack]
+[heading allocating control structures on top of stack]
 Allocating control structures on top of the stack requires to allocated the
 __stack_context__ and create the control structure with placement new before
 __econtext__ is created.
 [note The user is responsible for destructing the control structure at the top
 of the stack.]
 
-        // stack-alloctor used for (de-)allocating stack
+        // stack-allocator used for (de-)allocating stack
         fixedsize_stack salloc( 4048);
         // allocate stack space
         stack_context sctx( salloc.allocate() );
@@ -130,12 +130,12 @@ of the stack.]
         };
 
 [heading exception handling]
-If the function executed inside a __econtext__ emitts ans exception, the
+If the function executed inside a __econtext__ emits ans exception, the
 application is terminated by calling ['std::terminate(). ['std::exception_ptr]
 can be used to transfer exceptions between different execution contexts.
 
 [heading parameter passing]
-Input and output parameters are transfered via a lambda capture list and
+Input and output parameters are transferred via a lambda capture list and
 references/pointers.
 
         class X {
@@ -240,7 +240,7 @@ instruction pointer, and CPU registers) to the current active context and
 restores the context data from `*this`, which implies jumping to `*this`'s
 execution context.]]
 [[Note:] [The behaviour is undefined if `operator()()` is called while `execution_context::current()`
-returns `*this` (e.g. resuming an alredy running cotnext). If the top-level context
+returns `*this` (e.g. resuming an already running context). If the top-level context
 function returns, `std::exit()` is called.]]
 [[Returns:] [Reference to `*this`.]]
 [[Throws:] [Nothing.]]
@@ -259,7 +259,7 @@ function returns, `std::exit()` is called.]]
 
 [heading `preallocated( void * sp, std:size_t size, stack_allocator sctx)`]
 [variablelist
-[[Effects:] [Crreates an object of preallocated.]]
+[[Effects:] [Creates an object of preallocated.]]
 ]
 
 [section:winfibers Using WinFiber-API]
@@ -268,6 +268,10 @@ Because the TIB (thread information block) is not fully described in the MSDN,
 it might be possible that not all required TIB-parts are swapped.
 With compiler flag `BOOST_USE_WINFIBERS` `execution_context` uses internally the
 Windows Fiber API.
+[note The first call of `execution_context::operator()` converts the thread into a Windows fiber
+by invoking `ConvertThreadToFiber()`.
+If desired, `ConvertFiberToThread()` has to be called by the user explicitly in order to
+release resources allocated by `ConvertThreadToFiber()` (e.g. after using boost.context).]
 
 [endsect]
 
