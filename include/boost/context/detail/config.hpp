@@ -7,6 +7,9 @@
 #ifndef BOOST_CONTEXT_DETAIL_CONFIG_H
 #define BOOST_CONTEXT_DETAIL_CONFIG_H
 
+// required for SD-6 compile-time integer sequences
+#include <utility>
+
 #include <boost/config.hpp>
 #include <boost/detail/workaround.hpp>
 
@@ -55,18 +58,19 @@
 #endif
 
 #undef BOOST_CONTEXT_NO_EXECUTION_CONTEXT
-#if defined( BOOST_NO_CXX11_DECLTYPE) || \
-    defined( BOOST_NO_CXX11_DELETED_FUNCTIONS) || \
-    defined( BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS) || \
-    defined( BOOST_NO_CXX11_HDR_TUPLE) || \
-    defined( BOOST_NO_CXX11_LAMBDAS) || \
-    defined( BOOST_NO_CXX11_NOEXCEPT) || \
-    defined( BOOST_NO_CXX11_NULLPTR) || \
-    defined( BOOST_NO_CXX11_TEMPLATE_ALIASES) || \
-    defined( BOOST_NO_CXX11_RVALUE_REFERENCES) || \
-    defined( BOOST_NO_CXX11_VARIADIC_MACROS) || \
-    defined( BOOST_NO_CXX11_VARIADIC_TEMPLATES) || \
-    defined( BOOST_NO_CXX14_INITIALIZED_LAMBDA_CAPTURES) 
+#if defined(BOOST_NO_CXX11_DECLTYPE) || \
+    defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) || \
+    defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS) || \
+    defined(BOOST_NO_CXX11_HDR_TUPLE) || \
+    defined(BOOST_NO_CXX11_LAMBDAS) || \
+    defined(BOOST_NO_CXX11_NOEXCEPT) || \
+    defined(BOOST_NO_CXX11_NULLPTR) || \
+    defined(BOOST_NO_CXX11_TEMPLATE_ALIASES) || \
+    defined(BOOST_NO_CXX11_RVALUE_REFERENCES) || \
+    defined(BOOST_NO_CXX11_VARIADIC_MACROS) || \
+    defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || \
+    defined(BOOST_NO_CXX14_INITIALIZED_LAMBDA_CAPTURES) || \
+    ! defined(__cpp_lib_integer_sequence) && __cpp_lib_integer_sequence < 201304
 # define BOOST_CONTEXT_NO_EXECUTION_CONTEXT
 #endif
 
