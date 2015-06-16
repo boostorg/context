@@ -88,15 +88,23 @@ private:
             // returned by execution_context::current()
             current_rec = this;
             // context switch from parent context to `this`-context
-            if ( ! IsThreadAFiber() ) {
-                from->fiber = ConvertThreadToFiber( nullptr);
-                SwitchToFiber( fiber);
-                ConvertFiberToThread();
-                from->fiber = nullptr;
+#if ( _WIN32_WINNT > 0x0600)
+            if ( ::IsThreadAFiber() ) {
+                from->fiber = ::GetCurrentFiber();
             } else {
-                from->fiber = GetCurrentFiber();
-                SwitchToFiber( fiber);
+                from->fiber = ::ConvertThreadToFiber( nullptr);
             }
+#else
+            from->fiber = ::ConvertThreadToFiber( nullptr);
+            if ( nullptr == from->fiber) {
+                DWORD err = ::GetLastError();
+                BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
+                from->fiber = ::GetCurrentFiber(); 
+                BOOST_ASSERT( nullptr != from->fiber);
+                BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != from->fiber);
+            }
+#endif
+            ::SwitchToFiber( fiber);
         }
 
         virtual void deallocate() {}
@@ -161,7 +169,7 @@ private:
         // start execution of toplevel context-function
         ar->run();
         //ctx->fn_(ctx->param_);
-        DeleteFiber( ar->fiber);
+        ::DeleteFiber( ar->fiber);
     }
 
     typedef boost::intrusive_ptr< activation_record >    ptr_t;
@@ -174,7 +182,7 @@ private:
 
         // hackish
         std::size_t fsize = salloc.size_;
-        salloc.size_ = StackAlloc::traits_type::minimum_size();
+        salloc.size_ = sizeof( capture_t);
 
         stack_context sctx( salloc.allocate() );
         // reserve space for control structure
@@ -183,7 +191,7 @@ private:
         capture_t * cr = new ( sp) capture_t( sctx, salloc, std::forward< Fn >( fn), use_segmented_stack);
         // create fiber
         // use default stacksize
-        cr->fiber = CreateFiber( fsize, execution_context::entry_func< capture_t >, cr);
+        cr->fiber = ::CreateFiber( fsize, execution_context::entry_func< capture_t >, cr);
         BOOST_ASSERT( nullptr != cr->fiber);
         return cr;
     }
@@ -194,7 +202,7 @@ private:
 
         // hackish
         std::size_t fsize = salloc.size_;
-        salloc.size_ = StackAlloc::traits_type::minimum_size();
+        salloc.size_ = sizeof( capture_t);
 
         // reserve space for control structure
         void * sp = static_cast< char * >( palloc.sp) - sizeof( capture_t);
@@ -202,7 +210,7 @@ private:
         capture_t * cr = new ( sp) capture_t( palloc.sctx, salloc, std::forward< Fn >( fn), use_segmented_stack);
         // create fiber
         // use default stacksize
-        cr->fiber = CreateFiber( fsize, execution_context::entry_func< capture_t >, cr);
+        cr->fiber = ::CreateFiber( fsize, execution_context::entry_func< capture_t >, cr);
         BOOST_ASSERT( nullptr != cr->fiber);
         return cr;
     }

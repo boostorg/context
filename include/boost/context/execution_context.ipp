@@ -202,15 +202,17 @@ private:
 
         stack_context sctx( salloc.allocate() );
         // reserve space for control structure
+#if defined(BOOST_NO_CXX14_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
         std::size_t size = sctx.size - sizeof( capture_t);
         void * sp = static_cast< char * >( sctx.sp) - sizeof( capture_t);
-#if 0
+#else
         constexpr std::size_t func_alignment = 64; // alignof( capture_t);
         constexpr std::size_t func_size = sizeof( capture_t);
         // reserve space on stack
         void * sp = static_cast< char * >( sctx.sp) - func_size - func_alignment;
         // align sp pointer
-        sp = std::align( func_alignment, func_size, sp, func_size + func_alignment);
+        std::size_t space = func_size + func_alignment;
+        sp = std::align( func_alignment, func_size, sp, space);
         BOOST_ASSERT( nullptr != sp);
         // calculate remaining size
         std::size_t size = sctx.size - ( static_cast< char * >( sctx.sp) - static_cast< char * >( sp) );
@@ -227,15 +229,17 @@ private:
         typedef capture_record< Fn, StackAlloc >  capture_t;
 
         // reserve space for control structure
+#if defined(BOOST_NO_CXX14_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
         std::size_t size = palloc.size - sizeof( capture_t);
         void * sp = static_cast< char * >( palloc.sp) - sizeof( capture_t);
-#if 0
+#else
         constexpr std::size_t func_alignment = 64; // alignof( capture_t);
         constexpr std::size_t func_size = sizeof( capture_t);
         // reserve space on stack
         void * sp = static_cast< char * >( palloc.sp) - func_size - func_alignment;
         // align sp pointer
-        sp = std::align( func_alignment, func_size, sp, func_size + func_alignment);
+        std::size_t space = func_size + func_alignment;
+        sp = std::align( func_alignment, func_size, sp, space);
         BOOST_ASSERT( nullptr != sp);
         // calculate remaining size
         std::size_t size = palloc.size - ( static_cast< char * >( palloc.sp) - static_cast< char * >( sp) );
