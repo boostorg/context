@@ -73,5 +73,9 @@
     ! defined(__cpp_lib_integer_sequence) && __cpp_lib_integer_sequence < 201304
 # define BOOST_CONTEXT_NO_EXECUTION_CONTEXT
 #endif
+// workaroud: MSVC 14 does not provide macros to test for compile-time integer sequence
+#if _MSC_VER > 1800 // _MSC_VER == 1800 -> MS Visual Studio 2013
+# undef BOOST_CONTEXT_NO_EXECUTION_CONTEXT
+#endif
 
 #endif // BOOST_CONTEXT_DETAIL_CONFIG_H
