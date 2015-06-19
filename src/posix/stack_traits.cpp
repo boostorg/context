@@ -20,7 +20,7 @@ extern "C" {
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-# include <boost/thread.hpp>
+#include <boost/thread.hpp>
 
 #if !defined (SIGSTKSZ)
 # define SIGSTKSZ (8 * 1024)
@@ -31,8 +31,7 @@ extern "C" {
 #  include BOOST_ABI_PREFIX
 #endif
 
-namespace boost {
-namespace context {
+namespace {
 
 void pagesize_( std::size_t * size)
 {
@@ -67,6 +66,11 @@ rlimit stacksize_limit()
     boost::call_once( flag, stacksize_limit_, & limit);
     return limit;
 }
+
+}
+
+namespace boost {
+namespace context {
 
 bool
 stack_traits::is_unbounded() BOOST_NOEXCEPT
