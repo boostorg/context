@@ -42,6 +42,14 @@ void f15() {
     ( * mctx)();
 }
 
+struct X {
+    int foo( int i) {
+        value1 = i;
+        ( * mctx)();
+        return i;
+    }
+};
+
 void test_ectx() {
     boost::context::execution_context ctx( boost::context::execution_context::current() );
     mctx = & ctx;
@@ -72,6 +80,17 @@ void test_variadric() {
     BOOST_CHECK_EQUAL( 5, value1);
 }
 
+void test_memfn() {
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    mctx = & ctx;
+    value1 = 0;
+    X x;
+    ctx::fixedsize_stack alloc;
+    ctx::execution_context ectx( alloc, & X::foo, x, 7);
+    ectx();
+    BOOST_CHECK_EQUAL( 7, value1);
+}
+
 void test_prealloc() {
     boost::context::execution_context ctx( boost::context::execution_context::current() );
     mctx = & ctx;
@@ -93,6 +112,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_ectx) );
     test->add( BOOST_TEST_CASE( & test_return) );
     test->add( BOOST_TEST_CASE( & test_variadric) );
+    test->add( BOOST_TEST_CASE( & test_memfn) );
     test->add( BOOST_TEST_CASE( & test_prealloc) );
 
     return test;

@@ -11,9 +11,11 @@
 
 #if ! defined(BOOST_CONTEXT_NO_EXECUTION_CONTEXT)
 
+# include <algorithm>
 # include <cstddef>
 # include <cstdint>
 # include <cstdlib>
+# include <functional>
 # include <memory>
 # include <tuple>
 # include <utility>
@@ -23,6 +25,7 @@
 # include <boost/context/fcontext.hpp>
 # include <boost/intrusive_ptr.hpp>
 
+# include <boost/context/detail/invoke.hpp>
 # include <boost/context/stack_context.hpp>
 # include <boost/context/segmented_stack.hpp>
 
@@ -259,7 +262,7 @@ private:
         return create_context( salloc,
                                // lambda, executed in new execution context
                                [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable {
-                                       fn(
+                                    detail::invoke( fn,
                                            // non-type template parameter pack used to extract the
                                            // parameters (arguments) from the tuple and pass them to fn
                                            // via parameter pack expansion
@@ -278,7 +281,7 @@ private:
         return create_context( palloc, salloc,
                                // lambda, executed in new execution context
                                [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable {
-                                       fn(
+                                    detail::invoke( fn,
                                            // non-type template parameter pack used to extract the
                                            // parameters (arguments) from the tuple and pass them to fn
                                            // via parameter pack expansion
