@@ -259,18 +259,19 @@ private:
                                                       Fn && fn_, Tpl && tpl_,
                                                       std::index_sequence< I ... >,
                                                       bool use_segmented_stack) {
-        return create_context( salloc,
-                               // lambda, executed in new execution context
-                               [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable {
-                                    detail::invoke( fn,
-                                           // non-type template parameter pack used to extract the
-                                           // parameters (arguments) from the tuple and pass them to fn
-                                           // via parameter pack expansion
-                                           // std::tuple_element<> does not perfect forwarding
-                                           std::forward< decltype( std::get< I >( std::declval< Tpl >() ) ) >(
-                                                std::get< I >( std::forward< Tpl >( tpl) ) ) ... );
-                               },
-                               use_segmented_stack);
+        return create_context(
+            salloc,
+            // lambda, executed in new execution context
+            [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable -> decltype( auto) {
+                 detail::invoke( fn,
+                        // non-type template parameter pack used to extract the
+                        // parameters (arguments) from the tuple and pass them to fn
+                        // via parameter pack expansion
+                        // std::tuple_element<> does not perfect forwarding
+                        std::forward< decltype( std::get< I >( std::declval< Tpl >() ) ) >(
+                             std::get< I >( std::forward< Tpl >( tpl) ) ) ... );
+            },
+            use_segmented_stack);
     }
 
     template< typename StackAlloc, typename Fn, typename Tpl, std::size_t ... I >
@@ -278,18 +279,19 @@ private:
                                                       Fn && fn_, Tpl && tpl_,
                                                       std::index_sequence< I ... >,
                                                       bool use_segmented_stack) {
-        return create_context( palloc, salloc,
-                               // lambda, executed in new execution context
-                               [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable {
-                                    detail::invoke( fn,
-                                           // non-type template parameter pack used to extract the
-                                           // parameters (arguments) from the tuple and pass them to fn
-                                           // via parameter pack expansion
-                                           // std::tuple_element<> does not perfect forwarding
-                                           std::forward< decltype( std::get< I >( std::declval< Tpl >() ) ) >(
-                                                std::get< I >( std::forward< Tpl >( tpl) ) ) ... );
-                               },
-                               use_segmented_stack);
+        return create_context(
+            palloc, salloc,
+            // lambda, executed in new execution context
+            [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable -> decltype( auto) {
+                 detail::invoke( fn,
+                        // non-type template parameter pack used to extract the
+                        // parameters (arguments) from the tuple and pass them to fn
+                        // via parameter pack expansion
+                        // std::tuple_element<> does not perfect forwarding
+                        std::forward< decltype( std::get< I >( std::declval< Tpl >() ) ) >(
+                             std::get< I >( std::forward< Tpl >( tpl) ) ) ... );
+            },
+            use_segmented_stack);
     }
 
     execution_context() :
