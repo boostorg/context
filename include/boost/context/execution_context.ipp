@@ -254,46 +254,6 @@ private:
         return new ( sp) capture_t( palloc.sctx, salloc, fctx, std::forward< Fn >( fn), use_segmented_stack);
     }
 
-    template< typename StackAlloc, typename Fn, typename Tpl, std::size_t ... I >
-    static activation_record * create_capture_record( StackAlloc salloc,
-                                                      Fn && fn_, Tpl && tpl_,
-                                                      std::index_sequence< I ... >,
-                                                      bool use_segmented_stack) {
-        return create_context(
-            salloc,
-            // lambda, executed in new execution context
-            [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable -> decltype( auto) {
-                 detail::invoke( fn,
-                        // non-type template parameter pack used to extract the
-                        // parameters (arguments) from the tuple and pass them to fn
-                        // via parameter pack expansion
-                        // std::tuple_element<> does not perfect forwarding
-                        std::forward< decltype( std::get< I >( std::declval< Tpl >() ) ) >(
-                             std::get< I >( std::forward< Tpl >( tpl) ) ) ... );
-            },
-            use_segmented_stack);
-    }
-
-    template< typename StackAlloc, typename Fn, typename Tpl, std::size_t ... I >
-    static activation_record * create_capture_record( preallocated palloc, StackAlloc salloc,
-                                                      Fn && fn_, Tpl && tpl_,
-                                                      std::index_sequence< I ... >,
-                                                      bool use_segmented_stack) {
-        return create_context(
-            palloc, salloc,
-            // lambda, executed in new execution context
-            [fn=std::forward< Fn >( fn_),tpl=std::forward< Tpl >( tpl_)] () mutable -> decltype( auto) {
-                 detail::invoke( fn,
-                        // non-type template parameter pack used to extract the
-                        // parameters (arguments) from the tuple and pass them to fn
-                        // via parameter pack expansion
-                        // std::tuple_element<> does not perfect forwarding
-                        std::forward< decltype( std::get< I >( std::declval< Tpl >() ) ) >(
-                             std::get< I >( std::forward< Tpl >( tpl) ) ) ... );
-            },
-            use_segmented_stack);
-    }
-
     execution_context() :
         // default constructed with current activation_record
         ptr_( activation_record::current_rec) {
@@ -312,10 +272,15 @@ public:
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        ptr_( create_capture_record( salloc,
-                                     std::forward< Fn >( fn),
-                                     std::make_tuple( std::forward< Args >( args) ... ),
-                                     std::index_sequence_for< Args ... >(), true) ) {
+        ptr_( create_context( salloc,
+                              // lambda, executed in new execution context
+                              // mutable: generated operator() is not const -> enables std::move( fn)
+                              // std::make_tuple: stores decayed copies of its args, implicitly unwraps std::reference_wrapper
+                              [fn=std::forward< Fn >( fn),tpl=std::make_tuple( std::forward< Args >( args) ...)] () mutable -> decltype( auto) {
+                                    // FIXME: use std::invoke() or std::apply()
+                                    detail::invoke_helper( std::move( fn), std::move( tpl) );
+                              },
+                              true) ) {
     }
 
     template< typename Fn, typename ... Args >
@@ -325,10 +290,15 @@ public:
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        ptr_( create_capture_record( palloc, salloc,
-                                     std::forward< Fn >( fn),
-                                     std::make_tuple( std::forward< Args >( args) ... ),
-                                     std::index_sequence_for< Args ... >(), true) ) {
+        ptr_( create_context( palloc, salloc,
+                              // lambda, executed in new execution context
+                              // mutable: generated operator() is not const -> enables std::move( fn)
+                              // std::make_tuple: stores decayed copies of its args, implicitly unwraps std::reference_wrapper
+                              [fn=std::forward< Fn >( fn),tpl=std::make_tuple( std::forward< Args >( args) ...)] () mutable -> decltype( auto) {
+                                    // FIXME: use std::invoke() or std::apply()
+                                    detail::invoke_helper( std::move( fn), std::move( tpl) );
+                              },
+                              true) ) {
     }
 # endif
 
@@ -339,10 +309,15 @@ public:
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        ptr_( create_capture_record( salloc,
-                                     std::forward< Fn >( fn),
-                                     std::make_tuple( std::forward< Args >( args) ... ),
-                                     std::index_sequence_for< Args ... >(), false) ) {
+        ptr_( create_context( salloc,
+                              // lambda, executed in new execution context
+                              // mutable: generated operator() is not const -> enables std::move( fn)
+                              // std::make_tuple: stores decayed copies of its args, implicitly unwraps std::reference_wrapper
+                              [fn=std::forward< Fn >( fn),tpl=std::make_tuple( std::forward< Args >( args) ...)] () mutable -> decltype( auto) {
+                                    // FIXME: use std::invoke() or std::apply()
+                                    detail::invoke_helper( std::move( fn), std::move( tpl) );
+                              },
+                              false) ) {
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
@@ -352,10 +327,15 @@ public:
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        ptr_( create_capture_record( palloc, salloc,
-                                     std::forward< Fn >( fn),
-                                     std::make_tuple( std::forward< Args >( args) ... ),
-                                     std::index_sequence_for< Args ... >(), false) ) {
+        ptr_( create_context( palloc, salloc,
+                              // lambda, executed in new execution context
+                              // mutable: generated operator() is not const -> enables std::move( fn)
+                              // std::make_tuple: stores decayed copies of its args, implicitly unwraps std::reference_wrapper
+                              [fn=std::forward< Fn >( fn),tpl=std::make_tuple( std::forward< Args >( args) ...)] () mutable -> decltype( auto) {
+                                    // FIXME: use std::invoke() or std::apply()
+                                    detail::invoke_helper( std::move( fn), std::move( tpl) );
+                              },
+                              false) ) {
     }
 
     void operator()( bool preserve_fpu = false) noexcept {
