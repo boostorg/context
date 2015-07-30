@@ -78,7 +78,7 @@ public:
 
     void deallocate( stack_context & sctx) {
         BOOST_ASSERT( sctx.sp);
-#if defined(BOOST_USE_WINFIBERS)
+#if ! defined(BOOST_USE_WINFIBERS)
         BOOST_ASSERT( traits_type::minimum_size() <= sctx.size);
         BOOST_ASSERT( traits_type::is_unbounded() || ( traits_type::maximum_size() >= sctx.size) );
 #endif
