@@ -122,6 +122,7 @@ context switches. There is no explicit calling convention for these registers."
 [footnote [@http://msdn.microsoft.com/en-us/library/9z1stfyw%28v=vs.100%29.aspx MSDN
 article 'Register Usage']]
 
+For safe SEH the property 'asmflags=\safeseh' must be specified at b2 command line.
 
 [heading SysV]
 
