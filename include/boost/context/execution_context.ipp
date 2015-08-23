@@ -81,7 +81,11 @@ private:
             use_count( 1),
             fctx( nullptr),
             sctx(),
-            flags( flag_main_ctx) {
+            flags( flag_main_ctx
+# if defined(BOOST_USE_SEGMENTED_STACKS)
+                | flag_segmented_stack
+# endif
+            ) {
         } 
 
         activation_record( fcontext_t fctx_, stack_context sctx_, bool use_segmented_stack) noexcept :
@@ -109,25 +113,17 @@ private:
                 this->flags &= ~flag_preserve_fpu;
             }
 # if defined(BOOST_USE_SEGMENTED_STACKS)
-            if ( 0 != (flags & flag_segmented_stack) ) {
+            if ( 0 != (from->flags & flag_segmented_stack) ) {
                 // adjust segmented stack properties
                 __splitstack_getcontext( from->sctx.segments_ctx);
-                __splitstack_setcontext( sctx.segments_ctx);
-                // context switch from parent context to `this`-context
-                jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), fpu);
-                // parent context resumed
-                // adjust segmented stack properties
-                __splitstack_setcontext( from->sctx.segments_ctx);
-            } else {
-                // context switch from parent context to `this`-context
-                jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), fpu);
-                // parent context resumed
             }
-# else
+            if ( 0 != (flags & flag_segmented_stack) ) {
+                __splitstack_setcontext( sctx.segments_ctx);
+            }
+# endif
             // context switch from parent context to `this`-context
             jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), fpu);
             // parent context resumed
-# endif
         }
 
         virtual void deallocate() {}
