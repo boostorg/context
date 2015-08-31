@@ -28,6 +28,8 @@ project boost/context
       <toolset>clang,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <toolset>clang,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <toolset>clang,<segmented-stacks>on:<linkflags>"-static-libgcc"
+      <toolset>intel,<link>shared:<define>BOOST_CONTEXT_EXPORT=EXPORT
+      <toolset>intel,<link>static:<define>BOOST_CONTEXT_EXPORT=
       <toolset>msvc,<link>shared:<define>BOOST_CONTEXT_EXPORT=EXPORT
       <toolset>msvc,<link>static:<define>BOOST_CONTEXT_EXPORT=
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
