@@ -1986,7 +1986,7 @@
         <ulink url="http://msdn.microsoft.com/en-us/library/4ks26t93.aspx">MSDN article
         'Inline Assembler'</ulink>
       </para>
-      </footnote>. Inlined assembler generates code bloating which his not welcome
+      </footnote>. Inlined assembler generates code bloating which is not welcome
       on embedded systems.
     </para>
     <bridgehead renderas="sect3" id="context.rationale.h1">
