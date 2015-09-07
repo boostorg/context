@@ -19,13 +19,14 @@
 namespace boost {
 namespace context {
 
-thread_local
-execution_context::activation_record
-execution_context::activation_record::toplevel_rec;
+static detail::activation_record * main_rec() {
+    thread_local static detail::activation_record rec;
+    return & rec;
+}
 
 thread_local
-execution_context::activation_record::ptr_t
-execution_context::activation_record::current_rec = & execution_context::activation_record::toplevel_rec;
+detail::activation_record::ptr_t
+detail::activation_record::current_rec = main_rec();
 
 }}
 
