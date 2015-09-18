@@ -13,6 +13,7 @@
 
 #include <windows.h>
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -58,10 +59,10 @@ private:
         thread_local static activation_record       toplevel_rec;
         thread_local static ptr_t                   current_rec;
 
-        std::size_t             use_count;
-        LPVOID                  fiber;
-        stack_context           sctx;
-        int                     flags;
+        std::atomic< std::size_t >  use_count;
+        LPVOID                      fiber;
+        stack_context               sctx;
+        int                         flags;
 
         // used for toplevel-context
         // (e.g. main context, thread-entry context)

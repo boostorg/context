@@ -12,6 +12,7 @@
 #if ! defined(BOOST_CONTEXT_NO_EXECUTION_CONTEXT)
 
 # include <algorithm>
+# include <atomic>
 # include <cstddef>
 # include <cstdint>
 # include <cstdlib>
@@ -58,10 +59,10 @@ struct activation_record {
 
     thread_local static ptr_t   current_rec;
 
-    std::size_t             use_count;
-    fcontext_t              fctx;
-    stack_context           sctx;
-    int                     flags;
+    std::atomic< std::size_t >  use_count;
+    fcontext_t                  fctx;
+    stack_context               sctx;
+    int                         flags;
 
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
