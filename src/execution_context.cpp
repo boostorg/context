@@ -11,6 +11,7 @@
 # include "boost/context/execution_context.hpp"
 
 # include <boost/config.hpp>
+# include <boost/thread/tss.hpp>
 
 # ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -20,11 +21,11 @@ namespace boost {
 namespace context {
 
 static detail::activation_record * main_rec() {
-    thread_local static detail::activation_record rec;
-    return & rec;
+    static boost::thread_specific_ptr<detail::activation_record> rec;
+    if (!rec.get()) rec.reset(new detail::activation_record);
+    return rec.get();
 }
 
-thread_local
 detail::activation_record::ptr_t
 detail::activation_record::current_rec = main_rec();
 
