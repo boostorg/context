@@ -57,7 +57,7 @@ struct activation_record {
         flag_segmented_stack = 1 << 3
     };
 
-    thread_local static ptr_t   current_rec;
+    static ptr_t   current_rec;
 
     std::atomic< std::size_t >  use_count;
     fcontext_t                  fctx;
