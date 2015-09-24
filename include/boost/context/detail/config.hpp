@@ -77,5 +77,10 @@
 #if _MSC_VER > 1800 // _MSC_VER == 1800 -> MS Visual Studio 2013
 # undef BOOST_CONTEXT_NO_EXECUTION_CONTEXT
 #endif
-
+// workaround: Xcode clang feature detection
+#if ! defined(__cpp_lib_integer_sequence) && __cpp_lib_integer_sequence < 201304
+#  if _LIBCPP_STD_VER > 11
+#     undef BOOST_CONTEXT_NO_EXECUTION_CONTEXT
+#  endif
+#endif
 #endif // BOOST_CONTEXT_DETAIL_CONFIG_H
