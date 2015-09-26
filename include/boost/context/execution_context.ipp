@@ -337,6 +337,12 @@ public:
                               false) ) {
     }
 
+    execution_context( execution_context const&) = default;
+    execution_context( execution_context &&) = default;
+
+    execution_context & operator=( execution_context const&) = default;
+    execution_context & operator=( execution_context &&) = default;
+
     void operator()( bool preserve_fpu = false) noexcept {
         ptr_->resume( preserve_fpu);
     }
