@@ -14,19 +14,19 @@ namespace ctx=boost::context;
 ctx::execution_context * other = nullptr;
 
 int main() {
-    ctx::execution_context ctx1( ctx::fixedsize_stack(),
+    ctx::execution_context ctx1(
                [] () mutable {
                     std::cout << "ctx1 started" << std::endl;
                     ( * other)();
                     std::cout << "ctx1 will terminate" << std::endl;
                });
-    ctx::execution_context ctx2( ctx::fixedsize_stack(),
+    ctx::execution_context ctx2(
                [&ctx1] () mutable {
                     std::cout << "ctx2 started" << std::endl;
                     ctx1();
                     std::cout << "ctx2 will terminate" << std::endl;
                });
-    ctx::execution_context ctx3( ctx::fixedsize_stack(),
+    ctx::execution_context ctx3(
                [&ctx1, &ctx2] () mutable {
                     std::cout << "ctx3 started" << std::endl;
                     ctx2();

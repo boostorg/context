@@ -27,6 +27,7 @@
 # include <boost/intrusive_ptr.hpp>
 
 # include <boost/context/detail/invoke.hpp>
+# include <boost/context/fixedsize_stack.hpp>
 # include <boost/context/stack_context.hpp>
 # include <boost/context/segmented_stack.hpp>
 
@@ -263,9 +264,27 @@ public:
         return execution_context();
     }
 
+    template< typename Fn, typename ... Args >
+    explicit execution_context( Fn && fn, Args && ... args) :
+        // deferred execution of fn and its arguments
+        // arguments are stored in std::tuple<>
+        // non-type template parameter pack via std::index_sequence_for<>
+        // preserves the number of arguments
+        // used to extract the function arguments from std::tuple<>
+        ptr_( create_context( fixedsize_stack(),
+                              // lambda, executed in new execution context
+                              // mutable: generated operator() is not const -> enables std::move( fn)
+                              // std::make_tuple: stores decayed copies of its args, implicitly unwraps std::reference_wrapper
+                              [fn=std::forward< Fn >( fn),tpl=std::make_tuple( std::forward< Args >( args) ...)] () mutable -> decltype( auto) {
+                                    // FIXME: use std::invoke() or std::apply()
+                                    detail::invoke_helper( std::move( fn), std::move( tpl) );
+                              },
+                              false) ) {
+    }
+
 # if defined(BOOST_USE_SEGMENTED_STACKS)
     template< typename Fn, typename ... Args >
-    explicit execution_context( segmented_stack salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( std::allocator_arg_t, segmented_stack salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
@@ -283,7 +302,7 @@ public:
     }
 
     template< typename Fn, typename ... Args >
-    explicit execution_context( preallocated palloc, segmented_stack salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( std::allocator_arg_t, preallocated palloc, segmented_stack salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
@@ -302,7 +321,7 @@ public:
 # endif
 
     template< typename StackAlloc, typename Fn, typename ... Args >
-    explicit execution_context( StackAlloc salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
@@ -320,7 +339,7 @@ public:
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
-    explicit execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>

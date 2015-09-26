@@ -6,6 +6,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 
 #include <boost/config.hpp>
 
@@ -50,6 +51,7 @@ int main() {
         boost::context::execution_context::current() );
 
     boost::context::execution_context bar_ctx(
+        std::allocator_arg,
 #if defined(BOOST_USE_SEGMENTED_STACKS)
         boost::context::segmented_stack(),
 #else

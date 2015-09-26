@@ -30,9 +30,9 @@ void f2() {
 
 int main() {
     {
-        boost::context::execution_context ctx1_( boost::context::fixedsize_stack(), f1, 3);
+        boost::context::execution_context ctx1_( f1, 3);
         ctx1 = & ctx1_;
-        boost::context::execution_context ctx2_( boost::context::protected_fixedsize_stack(), f2);
+        boost::context::execution_context ctx2_( f2);
         ctx2 = & ctx2_;
         boost::context::execution_context ctx_( boost::context::execution_context::current() );
         ctx = & ctx_;

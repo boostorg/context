@@ -6,6 +6,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 
 #include <boost/context/all.hpp>
 
@@ -16,8 +17,7 @@ int main() {
     int p=0;
     boost::context::execution_context mctx( boost::context::execution_context::current() );
     boost::context::execution_context ctx(
-        boost::context::fixedsize_stack(),
-        [n,&p,mctx]()mutable{
+        [n,&p,&mctx]()mutable{
             int a=0;
             int b=1;
             while(n-->0){

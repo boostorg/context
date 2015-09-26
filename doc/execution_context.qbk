@@ -36,6 +36,7 @@ __econtext__ permits access to the current, active context via
 
             // execute parser in new execution context
             boost::context::execution_context parser_ctx(
+                    std::allocator_arg,
                     boost::context::fixedsize_stack(),
                     [&main_ctx,&is,&c,&done,&except](){
                     // create parser with callback function
@@ -124,7 +125,7 @@ of the stack.]
             template< typename StackAllocator >
             my_control_structure( void * sp, std::size_t size, stack_context sctx, StackAllocator salloc) :
                 // create execution context
-                ectx( preallocated( sp, size, sctx), salloc, entry_func) {
+                ectx( std::allocator_arg, preallocated( sp, size, sctx), salloc, entry_func) {
             }
             ...
         };
@@ -152,8 +153,7 @@ references/pointers.
                 outp_(),
                 excptr_(),
                 caller_( boost::context::execution_context::current() ),
-                callee_( boost::context::fixedsize_stack(),
-                         [=] () {
+                callee_( [=] () {
                             try {
                                 int i = * inp_;
                                 outp_ = boost::lexical_cast< std::string >( i);
@@ -187,17 +187,14 @@ references/pointers.
         public:
             static execution_context current() noexcept;
 
-            template< typename StackAlloc, typename Fn >
-            execution_context( StackAlloc salloc, Fn && fn);
+            template< typename Fn, typename ... Args >
+            execution_context( Fn && fn, Args && ... args);
 
             template< typename StackAlloc, typename Fn, typename ... Args >
-            execution_context( StackAlloc salloc, Fn && fn, Args && ... args);
-
-            template< typename StackAlloc, typename Fn >
-            execution_context( preallocated palloc, StackAlloc salloc, Fn && fn);
+            execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args);
 
             template< typename StackAlloc, typename Fn, typename ... Args >
-            execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args);
+            execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args);
 
             void operator()() noexcept;
         };
@@ -209,25 +206,19 @@ execution context.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `template< typename StackAlloc, typname Fn > execution_context( StackAlloc salloc, Fn && fn)`]
+[heading `template< typname Fn, typename ... Args > execution_context( Fn && fn, Args && ... args)`]
+[variablelist
+[[Effects:] [Creates a new execution context and prepares the context to execute
+`fn`. `fixedsize_stack` is used as default stack allocator (stack size == fixedsize_stack::traits::default_size().]]
+]
+
+[heading `template< typename StackAlloc, typname Fn, typename ... Args > execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args)`]
 [variablelist
 [[Effects:] [Creates a new execution context and prepares the context to execute
 `fn`.]]
 ]
 
-[heading `template< typename StackAlloc, typname Fn, typename ... Args > execution_context( StackAlloc salloc, Fn && fn, Args && ... args)`]
-[variablelist
-[[Effects:] [Creates a new execution context and prepares the context to execute
-`fn`.]]
-]
-
-[heading `template< typename StackAlloc, typname Fn > execution_context( preallocated palloc, StackAlloc salloc, Fn && fn)`]
-[variablelist
-[[Effects:] [Creates a new execution context and prepares the context to execute
-`fn`. Used to store control structures on top of the stack.]]
-]
-
-[heading `template< typename StackAlloc, typname Fn, typename ... Args > execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args)`]
+[heading `template< typename StackAlloc, typname Fn, typename ... Args > execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args)`]
 [variablelist
 [[Effects:] [Creates a new execution context and prepares the context to execute
 `fn`. Used to store control structures on top of the stack.]]

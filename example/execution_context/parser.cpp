@@ -8,6 +8,7 @@
 #include <exception>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <sstream>
 
 #include <boost/context/all.hpp>
@@ -98,6 +99,7 @@ int main() {
 
         // execute parser in new execution context
         boost::context::execution_context parser_ctx(
+                std::allocator_arg,
                 boost::context::fixedsize_stack(),
                 [&main_ctx,&is,&c,&done,&except](){
                 // create parser with callback function
