@@ -35,6 +35,125 @@
 
 namespace boost {
 namespace context {
+namespace detail {
+
+struct activation_record {
+    typedef boost::intrusive_ptr< activation_record >    ptr_t;
+
+    enum flag_t {
+        flag_main_ctx   = 1 << 1,
+        flag_preserve_fpu = 1 << 2,
+        flag_segmented_stack = 1 << 3
+    };
+
+    thread_local static ptr_t                   current_rec;
+
+    std::atomic< std::size_t >  use_count;
+    LPVOID                      fiber;
+    stack_context               sctx;
+    int                         flags;
+
+    // used for toplevel-context
+    // (e.g. main context, thread-entry context)
+    activation_record() noexcept :
+        use_count( 1),
+        fiber( nullptr),
+        sctx(),
+        flags( flag_main_ctx
+# if defined(BOOST_USE_SEGMENTED_STACKS)
+            | flag_segmented_stack
+# endif
+        ) {
+    } 
+
+    activation_record( stack_context sctx_, bool use_segmented_stack) noexcept :
+        use_count( 0),
+        fiber( nullptr),
+        sctx( sctx_),
+        flags( use_segmented_stack ? flag_segmented_stack : 0) {
+    } 
+
+    virtual ~activation_record() noexcept = default;
+
+    void resume() noexcept {
+        // store current activation record in local variable
+        activation_record * from = current_rec.get();
+        // store `this` in static, thread local pointer
+        // `this` will become the active (running) context
+        // returned by execution_context::current()
+        current_rec = this;
+        // context switch from parent context to `this`-context
+#if ( _WIN32_WINNT > 0x0600)
+        if ( ::IsThreadAFiber() ) {
+            from->fiber = ::GetCurrentFiber();
+        } else {
+            from->fiber = ::ConvertThreadToFiber( nullptr);
+        }
+#else
+        from->fiber = ::ConvertThreadToFiber( nullptr);
+        if ( nullptr == from->fiber) {
+            DWORD err = ::GetLastError();
+            BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
+            from->fiber = ::GetCurrentFiber(); 
+            BOOST_ASSERT( nullptr != from->fiber);
+            BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != from->fiber);
+        }
+#endif
+        ::SwitchToFiber( fiber);
+    }
+
+    virtual void deallocate() {}
+
+    friend void intrusive_ptr_add_ref( activation_record * ar) {
+        ++ar->use_count;
+    }
+
+    friend void intrusive_ptr_release( activation_record * ar) {
+        BOOST_ASSERT( nullptr != ar);
+
+        if ( 0 == --ar->use_count) {
+            ar->deallocate();
+        }
+    }
+};
+
+template< typename Fn, typename StackAlloc >
+class capture_record : public activation_record {
+private:
+    StackAlloc      salloc_;
+    Fn              fn_;
+
+    static void destroy( capture_record * p) {
+        StackAlloc salloc( p->salloc_);
+        stack_context sctx( p->sctx);
+        // deallocate activation record
+        p->~capture_record();
+        // destroy stack with stack allocator
+        salloc.deallocate( sctx);
+    }
+
+public:
+    explicit capture_record( stack_context sctx, StackAlloc const& salloc, Fn && fn, bool use_segmented_stack) noexcept :
+        activation_record( sctx, use_segmented_stack),
+        salloc_( salloc),
+        fn_( std::forward< Fn >( fn) ) {
+    }
+
+    void deallocate() override final {
+        destroy( this);
+    }
+
+    void run() noexcept {
+        try {
+            fn_();
+        } catch (...) {
+            std::terminate();
+        }
+        BOOST_ASSERT( 0 == (flags & flag_main_ctx) );
+    }
+};
+
+}
 
 struct preallocated {
     void        *   sp;
@@ -48,119 +167,6 @@ struct preallocated {
 
 class BOOST_CONTEXT_DECL execution_context {
 private:
-    struct activation_record {
-        typedef boost::intrusive_ptr< activation_record >    ptr_t;
-
-        enum flag_t {
-            flag_main_ctx   = 1 << 1,
-            flag_preserve_fpu = 1 << 2,
-            flag_segmented_stack = 1 << 3
-        };
-
-        thread_local static activation_record       toplevel_rec;
-        thread_local static ptr_t                   current_rec;
-
-        std::atomic< std::size_t >  use_count;
-        LPVOID                      fiber;
-        stack_context               sctx;
-        int                         flags;
-
-        // used for toplevel-context
-        // (e.g. main context, thread-entry context)
-        activation_record() noexcept :
-            use_count( 1),
-            fiber( nullptr),
-            sctx(),
-            flags( flag_main_ctx) {
-        } 
-
-        activation_record( stack_context sctx_, bool use_segmented_stack) noexcept :
-            use_count( 0),
-            fiber( nullptr),
-            sctx( sctx_),
-            flags( use_segmented_stack ? flag_segmented_stack : 0) {
-        } 
-
-        virtual ~activation_record() noexcept = default;
-
-        void resume() noexcept {
-            // store current activation record in local variable
-            activation_record * from = current_rec.get();
-            // store `this` in static, thread local pointer
-            // `this` will become the active (running) context
-            // returned by execution_context::current()
-            current_rec = this;
-            // context switch from parent context to `this`-context
-#if ( _WIN32_WINNT > 0x0600)
-            if ( ::IsThreadAFiber() ) {
-                from->fiber = ::GetCurrentFiber();
-            } else {
-                from->fiber = ::ConvertThreadToFiber( nullptr);
-            }
-#else
-            from->fiber = ::ConvertThreadToFiber( nullptr);
-            if ( nullptr == from->fiber) {
-                DWORD err = ::GetLastError();
-                BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
-                from->fiber = ::GetCurrentFiber(); 
-                BOOST_ASSERT( nullptr != from->fiber);
-                BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != from->fiber);
-            }
-#endif
-            ::SwitchToFiber( fiber);
-        }
-
-        virtual void deallocate() {}
-
-        friend void intrusive_ptr_add_ref( activation_record * ar) {
-            ++ar->use_count;
-        }
-
-        friend void intrusive_ptr_release( activation_record * ar) {
-            BOOST_ASSERT( nullptr != ar);
-
-            if ( 0 == --ar->use_count) {
-                ar->deallocate();
-            }
-        }
-    };
-
-    template< typename Fn, typename StackAlloc >
-    class capture_record : public activation_record {
-    private:
-        StackAlloc      salloc_;
-        Fn              fn_;
-
-        static void destroy( capture_record * p) {
-            StackAlloc salloc( p->salloc_);
-            stack_context sctx( p->sctx);
-            // deallocate activation record
-            p->~capture_record();
-            // destroy stack with stack allocator
-            salloc.deallocate( sctx);
-        }
-
-    public:
-        explicit capture_record( stack_context sctx, StackAlloc const& salloc, Fn && fn, bool use_segmented_stack) noexcept :
-            activation_record( sctx, use_segmented_stack),
-            salloc_( salloc),
-            fn_( std::forward< Fn >( fn) ) {
-        }
-
-        void deallocate() override final {
-            destroy( this);
-        }
-
-        void run() noexcept {
-            try {
-                fn_();
-            } catch (...) {
-                std::terminate();
-            }
-            BOOST_ASSERT( 0 == (flags & flag_main_ctx) );
-        }
-    };
-
     // tampoline function
     // entered if the execution context
     // is resumed for the first time
@@ -175,7 +181,7 @@ private:
         ::DeleteFiber( ar->fiber);
     }
 
-    typedef boost::intrusive_ptr< activation_record >    ptr_t;
+    typedef boost::intrusive_ptr< detail::activation_record >    ptr_t;
 
     ptr_t   ptr_;
 
