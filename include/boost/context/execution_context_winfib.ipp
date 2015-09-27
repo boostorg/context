@@ -186,8 +186,8 @@ private:
     ptr_t   ptr_;
 
     template< typename StackAlloc, typename Fn >
-    static activation_record * create_context( StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
-        typedef capture_record< Fn, StackAlloc >  capture_t;
+    static detail::activation_record * create_context( StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
+        typedef detail::capture_record< Fn, StackAlloc >  capture_t;
 
         // hackish
         std::size_t fsize = salloc.size_;
@@ -206,8 +206,8 @@ private:
     }
 
     template< typename StackAlloc, typename Fn >
-    static activation_record * create_context( preallocated palloc, StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
-        typedef capture_record< Fn, StackAlloc >  capture_t;
+    static detail::activation_record * create_context( preallocated palloc, StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
+        typedef detail::capture_record< Fn, StackAlloc >  capture_t;
 
         // hackish
         std::size_t fsize = salloc.size_;
@@ -226,7 +226,7 @@ private:
 
     execution_context() :
         // default constructed with current activation_record
-        ptr_( activation_record::current_rec) {
+        ptr_( detail::activation_record::current_rec) {
     }
 
 public:
