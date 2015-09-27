@@ -356,11 +356,29 @@ public:
                               false) ) {
     }
 
-    execution_context( execution_context const&) = default;
-    execution_context( execution_context &&) = default;
+    execution_context( execution_context const& other) noexcept :
+        ptr_( other.ptr_) {
+    }
 
-    execution_context & operator=( execution_context const&) = default;
-    execution_context & operator=( execution_context &&) = default;
+    execution_context( execution_context && other) noexcept :
+        ptr_( other.ptr_) {
+        other.ptr_.reset();
+    }
+
+    execution_context & operator=( execution_context const& other) noexcept {
+        if ( this != & other) {
+            ptr_ = other.ptr_;
+        }
+        return * this;
+    }
+
+    execution_context & operator=( execution_context && other) noexcept {
+        if ( this != & other) {
+            ptr_ = other.ptr_;
+            other.ptr_.reset();
+        }
+        return * this;
+    }
 
     void operator()( bool preserve_fpu = false) noexcept {
         ptr_->resume( preserve_fpu);
