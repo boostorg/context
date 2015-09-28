@@ -138,3 +138,6 @@ _jump_fcontext:
 
     /* indirect jump to context */
     jmp  *%edx
+
+.section .drectve
+.ascii " -export:\"jump_fcontext\""
