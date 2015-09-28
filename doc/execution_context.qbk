@@ -196,6 +196,15 @@ references/pointers.
             template< typename StackAlloc, typename Fn, typename ... Args >
             execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args);
 
+            execution_context( execution_context const& other) noexcept;
+            execution_context( execution_context && other) noexcept;
+
+            execution_context & operator=( execution_context const& other) noexcept;
+            execution_context & operator=( execution_context && other) noexcept;
+
+            explicit operator bool() const noexcept;
+            bool operator!() const noexcept;
+
             void operator()() noexcept;
         };
 
@@ -222,6 +231,43 @@ execution context.]]
 [variablelist
 [[Effects:] [Creates a new execution context and prepares the context to execute
 `fn`. Used to store control structures on top of the stack.]]
+]
+
+[heading `execution_context( execution_context const& other)`]
+[variablelist
+[[Effects:] [Copies `other`, e.g. underlying capture record is shared
+with `*this`.]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `execution_context( execution_context && other)`]
+[variablelist
+[[Effects:] [Moves underlying capture record to `*this`.]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `execution_context & operator=( execution_context const& other)`]
+[variablelist
+[[Effects:] [Copies the state of `other` to `*this`, state (capture record) is shared.]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `execution_context & operator=( execution_context && other)`]
+[variablelist
+[[Effects:] [Moves the state of `other` to `*this` using move semantics.]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `explicit operator bool() const noexcept`]
+[variablelist
+[[Returns:] [`true` if `*this` points to a capture record.]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `bool operator!() const noexcept`]
+[variablelist
+[[Returns:] [`true` if `*this` does not point to a capture record.]]
+[[Throws:] [Nothing.]]
 ]
 
 [heading `void operator()() noexcept`]

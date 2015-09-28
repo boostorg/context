@@ -380,6 +380,14 @@ public:
         return * this;
     }
 
+    explicit operator bool() const noexcept {
+        return nullptr != ptr_.get();
+    }
+
+    bool operator!() const noexcept {
+        return nullptr == ptr_.get();
+    }
+
     void operator()( bool preserve_fpu = false) noexcept {
         ptr_->resume( preserve_fpu);
     }
