@@ -27,7 +27,7 @@ typename std::enable_if<
       ! std::is_function< Fn >::value &&
       ! std::is_function< typename std::remove_pointer< Fn >::type >::value
     ),
-    typename std::result_of< Fn&( Args && ... ) >::type
+    typename std::result_of< Fn( Args ... ) >::type
 >::type
 invoke_( Fn & fn, Args && ... args) {
     return fn( std::forward< Args >( args) ... );
@@ -39,7 +39,7 @@ typename std::enable_if<
       ! std::is_function< Fn >::value &&
       ! std::is_function< typename std::remove_pointer< Fn >::type >::value
     ),
-    typename std::result_of< Fn( Args && ... ) >::type
+    typename std::result_of< Fn( Args ... ) >::type
 >::type
 invoke_( Fn & fn, Args && ... args) {
     return std::mem_fn( fn)( std::forward< Args >( args) ... );
@@ -50,7 +50,7 @@ typename std::enable_if<
     ( std::is_pointer< Fn >::value &&
       std::is_function< typename std::remove_pointer< Fn >::type >::value
     ),
-    typename std::result_of< Fn( Args && ... ) >::type
+    typename std::result_of< Fn( Args ... ) >::type
 >::type
 invoke_( Fn fn, Args && ... args) {
     return fn( std::forward< Args >( args) ... );
@@ -58,10 +58,10 @@ invoke_( Fn fn, Args && ... args) {
 
 template< typename Fn, typename Tpl, std::size_t... I >
 decltype( auto) do_invoke( Fn && fn, Tpl && tpl, std::index_sequence< I ... >) {
-    return invoke_( std::forward< Fn >( fn),
+    return invoke_( fn,
                     // std::tuple_element<> does not perfect forwarding
-                    std::forward< decltype( std::get< I >( std::declval< Tpl >() ) ) >(
-                        std::get< I >( std::forward< Tpl >( tpl) ) ) ... );
+                    std::forward< decltype( std::get< I >( std::declval< typename std::decay< Tpl >::type >() ) ) >(
+                        std::get< I >( std::forward< typename std::decay< Tpl >::type >( tpl) ) ) ... );
 }
 
 
