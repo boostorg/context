@@ -21,6 +21,9 @@ namespace boost {
 namespace context {
 namespace detail {
 
+# if _MSC_VER > 1800 
+using std::invoke;
+# else
 template< typename Fn, typename ... Args >
 typename std::enable_if<
     ( ! std::is_member_pointer< Fn >::value &&
@@ -55,6 +58,7 @@ typename std::enable_if<
 invoke_( Fn fn, Args && ... args) {
     return fn( std::forward< Args >( args) ... );
 }
+# endif
 
 template< typename Fn, typename Tpl, std::size_t... I >
 decltype( auto) do_invoke( Fn && fn, Tpl && tpl, std::index_sequence< I ... >) {
