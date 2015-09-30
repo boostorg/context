@@ -32,7 +32,7 @@ typename std::enable_if<
     ),
     typename std::result_of< Fn( Args ... ) >::type
 >::type
-invoke_( Fn & fn, Args && ... args) {
+invoke( Fn & fn, Args && ... args) {
     return fn( std::forward< Args >( args) ... );
 }
 
@@ -44,7 +44,7 @@ typename std::enable_if<
     ),
     typename std::result_of< Fn( Args ... ) >::type
 >::type
-invoke_( Fn & fn, Args && ... args) {
+invoke( Fn & fn, Args && ... args) {
     return std::mem_fn( fn)( std::forward< Args >( args) ... );
 }
 
@@ -55,14 +55,14 @@ typename std::enable_if<
     ),
     typename std::result_of< Fn( Args ... ) >::type
 >::type
-invoke_( Fn fn, Args && ... args) {
+invoke( Fn fn, Args && ... args) {
     return fn( std::forward< Args >( args) ... );
 }
 # endif
 
 template< typename Fn, typename Tpl, std::size_t... I >
 decltype( auto) do_invoke( Fn && fn, Tpl && tpl, std::index_sequence< I ... >) {
-    return invoke_( fn,
+    return invoke( fn,
                     // std::tuple_element<> does not perfect forwarding
                     std::forward< decltype( std::get< I >( std::declval< typename std::decay< Tpl >::type >() ) ) >(
                         std::get< I >( std::forward< typename std::decay< Tpl >::type >( tpl) ) ) ... );
