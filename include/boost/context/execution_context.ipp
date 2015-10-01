@@ -67,8 +67,8 @@ struct activation_record {
 
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
-    activation_record() noexcept :
-        use_count( 1),
+    constexpr activation_record() noexcept :
+        use_count( 0),
         fctx( nullptr),
         sctx(),
         flags( flag_main_ctx
@@ -127,6 +127,23 @@ struct activation_record {
 
         if ( 0 == --ar->use_count) {
             ar->deallocate();
+        }
+    }
+};
+
+struct activation_record_initializer {
+    std::size_t counter;
+
+    constexpr activation_record_initializer() :
+        counter( 0) {
+        if ( 0 == counter++) {
+            activation_record::current_rec.reset( new activation_record() );
+        }
+    }
+
+    ~activation_record_initializer() {
+        if ( 0 == --counter) {
+            activation_record::current_rec.reset();
         }
     }
 };
@@ -274,9 +291,7 @@ private:
     }
 
 public:
-    static execution_context current() noexcept {
-        return execution_context();
-    }
+    static execution_context current() noexcept;
 
     template< typename Fn, typename ... Args >
     explicit execution_context( Fn && fn, Args && ... args) :
