@@ -102,7 +102,9 @@ struct activation_record {
         ::SwitchToFiber( fiber);
     }
 
-    virtual void deallocate() {}
+    virtual void deallocate() {
+        delete this;
+    }
 
     friend void intrusive_ptr_add_ref( activation_record * ar) {
         ++ar->use_count;
