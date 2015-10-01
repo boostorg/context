@@ -55,7 +55,7 @@ struct activation_record {
 
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
-    constexpr activation_record() noexcept :
+    activation_record() noexcept :
         use_count( 0),
         fiber( nullptr),
         sctx(),
@@ -120,20 +120,8 @@ struct activation_record {
 };
 
 struct activation_record_initializer {
-    std::size_t counter;
-
-    constexpr activation_record_initializer() :
-        counter( 0) {
-        if ( 0 == counter++) {
-            activation_record::current_rec.reset( new activation_record() );
-        }
-    }
-
-    ~activation_record_initializer() {
-        if ( 0 == --counter) {
-            activation_record::current_rec.reset();
-        }
-    }
+    activation_record_initializer();
+    ~activation_record_initializer();
 };
 
 template< typename Fn, typename Tpl, typename StackAlloc >

@@ -18,10 +18,27 @@
 
 namespace boost {
 namespace context {
+namespace detail {
 
 thread_local
 detail::activation_record::ptr_t
 detail::activation_record::current_rec;
+
+thread_local static std::size_t counter;
+
+activation_record_initializer::activation_record_initializer() {
+    if ( 0 == counter++) {
+        activation_record::current_rec.reset( new activation_record() );
+    }
+}
+
+activation_record_initializer::~activation_record_initializer() {
+    if ( 0 == --counter) {
+        activation_record::current_rec.reset();
+    }
+}
+
+}
 
 execution_context
 execution_context::current() noexcept {
