@@ -26,6 +26,7 @@
 #include <boost/intrusive_ptr.hpp>
 
 #include <boost/context/detail/invoke.hpp>
+#include <boost/context/fixedsize_stack.hpp>
 #include <boost/context/stack_context.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
@@ -34,6 +35,137 @@
 
 namespace boost {
 namespace context {
+namespace detail {
+
+struct activation_record {
+    typedef boost::intrusive_ptr< activation_record >    ptr_t;
+
+    enum flag_t {
+        flag_main_ctx   = 1 << 1,
+        flag_preserve_fpu = 1 << 2,
+        flag_segmented_stack = 1 << 3
+    };
+
+    thread_local static ptr_t                   current_rec;
+
+    std::atomic< std::size_t >  use_count;
+    LPVOID                      fiber;
+    stack_context               sctx;
+    int                         flags;
+
+    // used for toplevel-context
+    // (e.g. main context, thread-entry context)
+    activation_record() noexcept :
+        use_count( 0),
+        fiber( nullptr),
+        sctx(),
+        flags( flag_main_ctx
+# if defined(BOOST_USE_SEGMENTED_STACKS)
+            | flag_segmented_stack
+# endif
+        ) {
+    } 
+
+    activation_record( stack_context sctx_, bool use_segmented_stack) noexcept :
+        use_count( 0),
+        fiber( nullptr),
+        sctx( sctx_),
+        flags( use_segmented_stack ? flag_segmented_stack : 0) {
+    } 
+
+    virtual ~activation_record() noexcept = default;
+
+    void resume() noexcept {
+        // store current activation record in local variable
+        activation_record * from = current_rec.get();
+        // store `this` in static, thread local pointer
+        // `this` will become the active (running) context
+        // returned by execution_context::current()
+        current_rec = this;
+        // context switch from parent context to `this`-context
+#if ( _WIN32_WINNT > 0x0600)
+        if ( ::IsThreadAFiber() ) {
+            from->fiber = ::GetCurrentFiber();
+        } else {
+            from->fiber = ::ConvertThreadToFiber( nullptr);
+        }
+#else
+        from->fiber = ::ConvertThreadToFiber( nullptr);
+        if ( nullptr == from->fiber) {
+            DWORD err = ::GetLastError();
+            BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
+            from->fiber = ::GetCurrentFiber(); 
+            BOOST_ASSERT( nullptr != from->fiber);
+            BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != from->fiber);
+        }
+#endif
+        ::SwitchToFiber( fiber);
+    }
+
+    virtual void deallocate() {
+        delete this;
+    }
+
+    friend void intrusive_ptr_add_ref( activation_record * ar) {
+        ++ar->use_count;
+    }
+
+    friend void intrusive_ptr_release( activation_record * ar) {
+        BOOST_ASSERT( nullptr != ar);
+
+        if ( 0 == --ar->use_count) {
+            ar->deallocate();
+        }
+    }
+};
+
+struct activation_record_initializer {
+    activation_record_initializer();
+    ~activation_record_initializer();
+};
+
+template< typename Fn, typename Tpl, typename StackAlloc >
+class capture_record : public activation_record {
+private:
+    StackAlloc      salloc_;
+    Fn              fn_;
+    Tpl             tpl_;
+
+    static void destroy( capture_record * p) {
+        StackAlloc salloc( p->salloc_);
+        stack_context sctx( p->sctx);
+        // deallocate activation record
+        p->~capture_record();
+        // destroy stack with stack allocator
+        salloc.deallocate( sctx);
+    }
+
+public:
+    explicit capture_record(
+            stack_context sctx, StackAlloc const& salloc,
+            Fn && fn, Tpl && tpl,
+            bool use_segmented_stack) noexcept :
+        activation_record( sctx, use_segmented_stack),
+        salloc_( salloc),
+        fn_( std::forward< Fn >( fn) ),
+        tpl_( std::forward< Tpl >( tpl) ) {
+    }
+
+    void deallocate() override final {
+        destroy( this);
+    }
+
+    void run() noexcept {
+        try {
+            do_invoke( fn_, tpl_);
+        } catch (...) {
+            std::terminate();
+        }
+        BOOST_ASSERT( 0 == (flags & flag_main_ctx) );
+    }
+};
+
+}
 
 struct preallocated {
     void        *   sp;
@@ -47,119 +179,6 @@ struct preallocated {
 
 class BOOST_CONTEXT_DECL execution_context {
 private:
-    struct activation_record {
-        typedef boost::intrusive_ptr< activation_record >    ptr_t;
-
-        enum flag_t {
-            flag_main_ctx   = 1 << 1,
-            flag_preserve_fpu = 1 << 2,
-            flag_segmented_stack = 1 << 3
-        };
-
-        thread_local static activation_record       toplevel_rec;
-        thread_local static ptr_t                   current_rec;
-
-        std::atomic< std::size_t >  use_count;
-        LPVOID                      fiber;
-        stack_context               sctx;
-        int                         flags;
-
-        // used for toplevel-context
-        // (e.g. main context, thread-entry context)
-        activation_record() noexcept :
-            use_count( 1),
-            fiber( nullptr),
-            sctx(),
-            flags( flag_main_ctx) {
-        } 
-
-        activation_record( stack_context sctx_, bool use_segmented_stack) noexcept :
-            use_count( 0),
-            fiber( nullptr),
-            sctx( sctx_),
-            flags( use_segmented_stack ? flag_segmented_stack : 0) {
-        } 
-
-        virtual ~activation_record() noexcept = default;
-
-        void resume() noexcept {
-            // store current activation record in local variable
-            activation_record * from = current_rec.get();
-            // store `this` in static, thread local pointer
-            // `this` will become the active (running) context
-            // returned by execution_context::current()
-            current_rec = this;
-            // context switch from parent context to `this`-context
-#if ( _WIN32_WINNT > 0x0600)
-            if ( ::IsThreadAFiber() ) {
-                from->fiber = ::GetCurrentFiber();
-            } else {
-                from->fiber = ::ConvertThreadToFiber( nullptr);
-            }
-#else
-            from->fiber = ::ConvertThreadToFiber( nullptr);
-            if ( nullptr == from->fiber) {
-                DWORD err = ::GetLastError();
-                BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
-                from->fiber = ::GetCurrentFiber(); 
-                BOOST_ASSERT( nullptr != from->fiber);
-                BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != from->fiber);
-            }
-#endif
-            ::SwitchToFiber( fiber);
-        }
-
-        virtual void deallocate() {}
-
-        friend void intrusive_ptr_add_ref( activation_record * ar) {
-            ++ar->use_count;
-        }
-
-        friend void intrusive_ptr_release( activation_record * ar) {
-            BOOST_ASSERT( nullptr != ar);
-
-            if ( 0 == --ar->use_count) {
-                ar->deallocate();
-            }
-        }
-    };
-
-    template< typename Fn, typename StackAlloc >
-    class capture_record : public activation_record {
-    private:
-        StackAlloc      salloc_;
-        Fn              fn_;
-
-        static void destroy( capture_record * p) {
-            StackAlloc salloc( p->salloc_);
-            stack_context sctx( p->sctx);
-            // deallocate activation record
-            p->~capture_record();
-            // destroy stack with stack allocator
-            salloc.deallocate( sctx);
-        }
-
-    public:
-        explicit capture_record( stack_context sctx, StackAlloc const& salloc, Fn && fn, bool use_segmented_stack) noexcept :
-            activation_record( sctx, use_segmented_stack),
-            salloc_( salloc),
-            fn_( std::forward< Fn >( fn) ) {
-        }
-
-        void deallocate() override final {
-            destroy( this);
-        }
-
-        void run() noexcept {
-            try {
-                fn_();
-            } catch (...) {
-                std::terminate();
-            }
-            BOOST_ASSERT( 0 == (flags & flag_main_ctx) );
-        }
-    };
-
     // tampoline function
     // entered if the execution context
     // is resumed for the first time
@@ -174,13 +193,16 @@ private:
         ::DeleteFiber( ar->fiber);
     }
 
-    typedef boost::intrusive_ptr< activation_record >    ptr_t;
+    typedef boost::intrusive_ptr< detail::activation_record >    ptr_t;
 
     ptr_t   ptr_;
 
-    template< typename StackAlloc, typename Fn >
-    static activation_record * create_context( StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
-        typedef capture_record< Fn, StackAlloc >  capture_t;
+    template< typename StackAlloc, typename Fn ,typename Tpl >
+    static detail::activation_record * create_context(
+            StackAlloc salloc,
+            Fn && fn, Tpl && tpl,
+            bool use_segmented_stack) {
+        typedef detail::capture_record< Fn, Tpl, StackAlloc >  capture_t;
 
         // hackish
         std::size_t fsize = salloc.size_;
@@ -190,7 +212,8 @@ private:
         // reserve space for control structure
         void * sp = static_cast< char * >( sctx.sp) - sizeof( capture_t);
         // placment new for control structure on fast-context stack
-        capture_t * cr = new ( sp) capture_t( sctx, salloc, std::forward< Fn >( fn), use_segmented_stack);
+        capture_t * cr = new ( sp) capture_t(
+                sctx, salloc, std::forward< Fn >( fn), std::forward< Tpl >( tpl), use_segmented_stack);
         // create fiber
         // use default stacksize
         cr->fiber = ::CreateFiber( fsize, execution_context::entry_func< capture_t >, cr);
@@ -198,9 +221,12 @@ private:
         return cr;
     }
 
-    template< typename StackAlloc, typename Fn >
-    static activation_record * create_context( preallocated palloc, StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
-        typedef capture_record< Fn, StackAlloc >  capture_t;
+    template< typename StackAlloc, typename Fn , typename Tpl >
+    static detail::activation_record * create_context(
+            preallocated palloc, StackAlloc salloc,
+            Fn && fn, Tpl && tpl,
+            bool use_segmented_stack) {
+        typedef detail::capture_record< Fn, Tpl, StackAlloc >  capture_t;
 
         // hackish
         std::size_t fsize = salloc.size_;
@@ -209,7 +235,8 @@ private:
         // reserve space for control structure
         void * sp = static_cast< char * >( palloc.sp) - sizeof( capture_t);
         // placment new for control structure on fast-context stack
-        capture_t * cr = new ( sp) capture_t( palloc.sctx, salloc, std::forward< Fn >( fn), use_segmented_stack);
+        capture_t * cr = new ( sp) capture_t(
+                palloc.sctx, salloc, std::forward< Fn >( fn), std::forward< Tpl >( tpl), use_segmented_stack);
         // create fiber
         // use default stacksize
         cr->fiber = ::CreateFiber( fsize, execution_context::entry_func< capture_t >, cr);
@@ -219,48 +246,81 @@ private:
 
     execution_context() :
         // default constructed with current activation_record
-        ptr_( activation_record::current_rec) {
+        ptr_( detail::activation_record::current_rec) {
     }
 
 public:
-    static execution_context current() noexcept {
-        return execution_context();
+    static execution_context current() noexcept;
+
+    template< typename Fn, typename ... Args >
+    explicit execution_context( Fn && fn, Args && ... args) :
+        // deferred execution of fn and its arguments
+        // arguments are stored in std::tuple<>
+        // non-type template parameter pack via std::index_sequence_for<>
+        // preserves the number of arguments
+        // used to extract the function arguments from std::tuple<>
+        ptr_( create_context( fixedsize_stack(),
+                              std::forward< Fn >( fn),
+                              std::make_tuple( std::forward< Args >( args) ...),
+                              false) ) {
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
-    explicit execution_context( StackAlloc salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
         ptr_( create_context( salloc,
-                              // lambda, executed in new execution context
-                              // mutable: generated operator() is not const -> enables std::move( fn)
-                              // std::make_tuple: stores decayed copies of its args, implicitly unwraps std::reference_wrapper
-                              [fn=std::forward< Fn >( fn),tpl=std::make_tuple( std::forward< Args >( args) ...)] () mutable -> decltype( auto) {
-                                    // FIXME: use std::invoke() or std::apply()
-                                    detail::invoke_helper( std::move( fn), std::move( tpl) );
-                              },
+                              std::forward< Fn >( fn),
+                              std::make_tuple( std::forward< Args >( args) ...),
                               false) ) {
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
-    explicit execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
         ptr_( create_context( palloc, salloc,
-                              // lambda, executed in new execution context
-                              // mutable: generated operator() is not const -> enables std::move( fn)
-                              // std::make_tuple: stores decayed copies of its args, implicitly unwraps std::reference_wrapper
-                              [fn=std::forward< Fn >( fn),tpl=std::make_tuple( std::forward< Args >( args) ...)] () mutable -> decltype( auto) {
-                                    // FIXME: use std::invoke() or std::apply()
-                                    detail::invoke_helper( std::move( fn), std::move( tpl) );
-                              },
+                              std::forward< Fn >( fn),
+                              std::make_tuple( std::forward< Args >( args) ...),
                               false) ) {
+    }
+
+    execution_context( execution_context const& other) noexcept :
+        ptr_( other.ptr_) {
+    }
+
+    execution_context( execution_context && other) noexcept :
+        ptr_( other.ptr_) {
+        other.ptr_.reset();
+    }
+
+    execution_context & operator=( execution_context const& other) noexcept {
+        if ( this != & other) {
+            ptr_ = other.ptr_;
+        }
+        return * this;
+    }
+
+    execution_context & operator=( execution_context && other) noexcept {
+        if ( this != & other) {
+            ptr_ = other.ptr_;
+            other.ptr_.reset();
+        }
+        return * this;
+    }
+
+    explicit operator bool() const noexcept {
+        return nullptr != ptr_.get();
+    }
+
+    bool operator!() const noexcept {
+        return nullptr == ptr_.get();
     }
 
     void operator()( bool preserve_fpu = false) noexcept {

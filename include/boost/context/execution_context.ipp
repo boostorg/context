@@ -27,6 +27,7 @@
 # include <boost/intrusive_ptr.hpp>
 
 # include <boost/context/detail/invoke.hpp>
+# include <boost/context/fixedsize_stack.hpp>
 # include <boost/context/stack_context.hpp>
 # include <boost/context/segmented_stack.hpp>
 
@@ -67,7 +68,7 @@ struct activation_record {
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
     activation_record() noexcept :
-        use_count( 1),
+        use_count( 0),
         fctx( nullptr),
         sctx(),
         flags( flag_main_ctx
@@ -115,7 +116,9 @@ struct activation_record {
         // parent context resumed
     }
 
-    virtual void deallocate() {}
+    virtual void deallocate() {
+        delete this;
+    }
 
     friend void intrusive_ptr_add_ref( activation_record * ar) {
         ++ar->use_count;
@@ -130,11 +133,17 @@ struct activation_record {
     }
 };
 
-template< typename Fn, typename StackAlloc >
+struct activation_record_initializer {
+    activation_record_initializer();
+    ~activation_record_initializer();
+};
+
+template< typename Fn, typename Tpl, typename StackAlloc >
 class capture_record : public activation_record {
 private:
     StackAlloc      salloc_;
     Fn              fn_;
+    Tpl             tpl_;
 
     static void destroy( capture_record * p) {
         StackAlloc salloc( p->salloc_);
@@ -146,10 +155,15 @@ private:
     }
 
 public:
-    explicit capture_record( stack_context sctx, StackAlloc const& salloc, fcontext_t fctx, Fn && fn, bool use_segmented_stack) noexcept :
+    explicit capture_record(
+            stack_context sctx, StackAlloc const& salloc,
+            fcontext_t fctx,
+            Fn && fn, Tpl && tpl,
+            bool use_segmented_stack) noexcept :
         activation_record( fctx, sctx, use_segmented_stack),
         salloc_( salloc),
-        fn_( std::forward< Fn >( fn) ) {
+        fn_( std::forward< Fn >( fn) ),
+        tpl_( std::forward< Tpl >( tpl) ) {
     }
 
     void deallocate() override final {
@@ -158,7 +172,7 @@ public:
 
     void run() noexcept {
         try {
-            fn_();
+            do_invoke( fn_, tpl_);
         } catch (...) {
             std::terminate();
         }
@@ -198,9 +212,12 @@ private:
 
     ptr_t   ptr_;
 
-    template< typename StackAlloc, typename Fn >
-    static detail::activation_record * create_context( StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
-        typedef detail::capture_record< Fn, StackAlloc >  capture_t;
+    template< typename StackAlloc, typename Fn ,typename Tpl >
+    static detail::activation_record * create_context(
+            StackAlloc salloc,
+            Fn && fn, Tpl && tpl,
+            bool use_segmented_stack) {
+        typedef detail::capture_record< Fn, Tpl, StackAlloc >  capture_t;
 
         stack_context sctx( salloc.allocate() );
         // reserve space for control structure
@@ -223,12 +240,16 @@ private:
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
         // placment new for control structure on fast-context stack
-        return new ( sp) capture_t( sctx, salloc, fctx, std::forward< Fn >( fn), use_segmented_stack);
+        return new ( sp) capture_t(
+                sctx, salloc, fctx, std::forward< Fn >( fn), std::forward< Tpl >( tpl), use_segmented_stack);
     }
 
-    template< typename StackAlloc, typename Fn >
-    static detail::activation_record * create_context( preallocated palloc, StackAlloc salloc, Fn && fn, bool use_segmented_stack) {
-        typedef detail::capture_record< Fn, StackAlloc >  capture_t;
+    template< typename StackAlloc, typename Fn , typename Tpl >
+    static detail::activation_record * create_context(
+            preallocated palloc, StackAlloc salloc,
+            Fn && fn, Tpl && tpl,
+            bool use_segmented_stack) {
+        typedef detail::capture_record< Fn, Tpl, StackAlloc >  capture_t;
 
         // reserve space for control structure
 #if defined(BOOST_NO_CXX14_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
@@ -250,7 +271,8 @@ private:
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
         // placment new for control structure on fast-context stack
-        return new ( sp) capture_t( palloc.sctx, salloc, fctx, std::forward< Fn >( fn), use_segmented_stack);
+        return new ( sp) capture_t(
+                palloc.sctx, salloc, fctx, std::forward< Fn >( fn), std::forward< Tpl >( tpl), use_segmented_stack);
     }
 
     execution_context() :
@@ -259,82 +281,105 @@ private:
     }
 
 public:
-    static execution_context current() noexcept {
-        return execution_context();
+    static execution_context current() noexcept;
+
+    template< typename Fn, typename ... Args >
+    explicit execution_context( Fn && fn, Args && ... args) :
+        // deferred execution of fn and its arguments
+        // arguments are stored in std::tuple<>
+        // non-type template parameter pack via std::index_sequence_for<>
+        // preserves the number of arguments
+        // used to extract the function arguments from std::tuple<>
+        ptr_( create_context( fixedsize_stack(),
+                              std::forward< Fn >( fn),
+                              std::make_tuple( std::forward< Args >( args) ...),
+                              false) ) {
     }
 
 # if defined(BOOST_USE_SEGMENTED_STACKS)
     template< typename Fn, typename ... Args >
-    explicit execution_context( segmented_stack salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( std::allocator_arg_t, segmented_stack salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
         ptr_( create_context( salloc,
-                              // lambda, executed in new execution context
-                              // mutable: generated operator() is not const -> enables std::move( fn)
-                              // std::make_tuple: stores decayed copies of its args, implicitly unwraps std::reference_wrapper
-                              [fn=std::forward< Fn >( fn),tpl=std::make_tuple( std::forward< Args >( args) ...)] () mutable -> decltype( auto) {
-                                    // FIXME: use std::invoke() or std::apply()
-                                    detail::invoke_helper( std::move( fn), std::move( tpl) );
-                              },
+                              std::forward< Fn >( fn),
+                              std::make_tuple( std::forward< Args >( args) ...),
                               true) ) {
     }
 
     template< typename Fn, typename ... Args >
-    explicit execution_context( preallocated palloc, segmented_stack salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( std::allocator_arg_t, preallocated palloc, segmented_stack salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
         ptr_( create_context( palloc, salloc,
-                              // lambda, executed in new execution context
-                              // mutable: generated operator() is not const -> enables std::move( fn)
-                              // std::make_tuple: stores decayed copies of its args, implicitly unwraps std::reference_wrapper
-                              [fn=std::forward< Fn >( fn),tpl=std::make_tuple( std::forward< Args >( args) ...)] () mutable -> decltype( auto) {
-                                    // FIXME: use std::invoke() or std::apply()
-                                    detail::invoke_helper( std::move( fn), std::move( tpl) );
-                              },
+                              std::forward< Fn >( fn),
+                              std::make_tuple( std::forward< Args >( args) ...),
                               true) ) {
     }
 # endif
 
     template< typename StackAlloc, typename Fn, typename ... Args >
-    explicit execution_context( StackAlloc salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
         ptr_( create_context( salloc,
-                              // lambda, executed in new execution context
-                              // mutable: generated operator() is not const -> enables std::move( fn)
-                              // std::make_tuple: stores decayed copies of its args, implicitly unwraps std::reference_wrapper
-                              [fn=std::forward< Fn >( fn),tpl=std::make_tuple( std::forward< Args >( args) ...)] () mutable -> decltype( auto) {
-                                    // FIXME: use std::invoke() or std::apply()
-                                    detail::invoke_helper( std::move( fn), std::move( tpl) );
-                              },
+                              std::forward< Fn >( fn),
+                              std::make_tuple( std::forward< Args >( args) ...),
                               false) ) {
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
-    explicit execution_context( preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
+    explicit execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
         ptr_( create_context( palloc, salloc,
-                              // lambda, executed in new execution context
-                              // mutable: generated operator() is not const -> enables std::move( fn)
-                              // std::make_tuple: stores decayed copies of its args, implicitly unwraps std::reference_wrapper
-                              [fn=std::forward< Fn >( fn),tpl=std::make_tuple( std::forward< Args >( args) ...)] () mutable -> decltype( auto) {
-                                    // FIXME: use std::invoke() or std::apply()
-                                    detail::invoke_helper( std::move( fn), std::move( tpl) );
-                              },
+                              std::forward< Fn >( fn),
+                              std::make_tuple( std::forward< Args >( args) ...),
                               false) ) {
+    }
+
+    execution_context( execution_context const& other) noexcept :
+        ptr_( other.ptr_) {
+    }
+
+    execution_context( execution_context && other) noexcept :
+        ptr_( other.ptr_) {
+        other.ptr_.reset();
+    }
+
+    execution_context & operator=( execution_context const& other) noexcept {
+        if ( this != & other) {
+            ptr_ = other.ptr_;
+        }
+        return * this;
+    }
+
+    execution_context & operator=( execution_context && other) noexcept {
+        if ( this != & other) {
+            ptr_ = other.ptr_;
+            other.ptr_.reset();
+        }
+        return * this;
+    }
+
+    explicit operator bool() const noexcept {
+        return nullptr != ptr_.get();
+    }
+
+    bool operator!() const noexcept {
+        return nullptr == ptr_.get();
     }
 
     void operator()( bool preserve_fpu = false) noexcept {

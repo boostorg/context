@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <exception>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include <boost/context/all.hpp>
@@ -26,7 +27,9 @@ public:
         outp_(),
         excptr_(),
         caller_(boost::context::execution_context::current()),
-        callee_(boost::context::fixedsize_stack(),
+        callee_(
+             std::allocator_arg,
+             boost::context::protected_fixedsize_stack(),
              [=](){
                 try {
                     int i = * inp_;
