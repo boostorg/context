@@ -45,9 +45,10 @@ project boost/context
 local rule default_binary_format ( )
 {
     local tmp = elf ;
-    if [ os.name ] = "MACOSX" { tmp = mach-o ; }
     if [ os.name ] = "NT" { tmp = pe ; }
-    if [ os.name ] = "AIX" { tmp = xcoff ; }
+    else if [ os.name ] = "CYGWIN" { tmp = pe ; }
+    else if [ os.name ] = "AIX" { tmp = xcoff ; }
+    else if [ os.name ] = "MACOSX" { tmp = mach-o ; }
     return $(tmp) ;
 }
 
@@ -65,6 +66,7 @@ local rule default_abi ( )
 {
     local tmp = sysv ;
     if [ os.name ] = "NT" { tmp = ms ; }
+    else if [ os.name ] = "CYGWIN" { tmp = ms ; }
     else if [ os.platform ] = "ARM" { tmp = aapcs ; }
     else if [ os.platform ] = "MIPS" { tmp = o32 ; }
     return $(tmp) ;
