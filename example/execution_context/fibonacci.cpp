@@ -17,7 +17,7 @@ int main() {
     int p=0;
     boost::context::execution_context mctx( boost::context::execution_context::current() );
     boost::context::execution_context ctx(
-        [n,&p,&mctx]()mutable{
+        [n,&p,&mctx](void*)mutable{
             int a=0;
             int b=1;
             while(n-->0){

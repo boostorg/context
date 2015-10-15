@@ -90,7 +90,6 @@ private:
 int main() {
     try {
         std::istringstream is("1+1");
-        char c;
         bool done=false;
         std::exception_ptr except;
 
@@ -101,13 +100,12 @@ int main() {
         boost::context::execution_context parser_ctx(
                 std::allocator_arg,
                 boost::context::fixedsize_stack(),
-                [&main_ctx,&is,&c,&done,&except](){
+                [&main_ctx,&is,&done,&except](void*){
                 // create parser with callback function
                 Parser p( is,
-                          [&main_ctx,&c](char ch){
-                                c=ch;
+                          [&main_ctx](char ch){
                                 // resume main execution context
-                                main_ctx();
+                                main_ctx( & ch);
                         });
                     try {
                         // start recursive parsing
@@ -124,13 +122,13 @@ int main() {
 
         // user-code pulls parsed data from parser
         // invert control flow
-        parser_ctx();
+        void * vp = parser_ctx();
         if ( except) {
             std::rethrow_exception( except);
         }
         while( ! done) {
-            printf("Parsed: %c\n",c);
-            parser_ctx();
+            printf("Parsed: %c\n",* static_cast< char* >( vp) );
+            vp = parser_ctx();
             if ( except) {
                 std::rethrow_exception( except);
             }

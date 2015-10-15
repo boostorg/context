@@ -87,7 +87,7 @@ struct activation_record {
 
     virtual ~activation_record() noexcept = default;
 
-    void resume( bool fpu = false) noexcept {
+    void * resume( void * vp, bool fpu) noexcept {
         // store current activation record in local variable
         activation_record * from = current_rec.get();
         // store `this` in static, thread local pointer
@@ -112,8 +112,9 @@ struct activation_record {
        }
 # endif
         // context switch from parent context to `this`-context
-        jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( this), fpu);
+        intptr_t ret = jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( vp), fpu);
         // parent context resumed
+        return reinterpret_cast< void * >( ret);
     }
 
     virtual void deallocate() {
@@ -144,6 +145,7 @@ private:
     StackAlloc      salloc_;
     Fn              fn_;
     Tpl             tpl_;
+    activation_record   *   caller_;
 
     static void destroy( capture_record * p) {
         StackAlloc salloc( p->salloc_);
@@ -159,11 +161,13 @@ public:
             stack_context sctx, StackAlloc const& salloc,
             fcontext_t fctx,
             Fn && fn, Tpl && tpl,
+            activation_record * caller,
             bool use_segmented_stack) noexcept :
         activation_record( fctx, sctx, use_segmented_stack),
         salloc_( salloc),
         fn_( std::forward< Fn >( fn) ),
-        tpl_( std::forward< Tpl >( tpl) ) {
+        tpl_( std::forward< Tpl >( tpl) ),
+        caller_( caller) {
     }
 
     void deallocate() override final {
@@ -172,7 +176,8 @@ public:
 
     void run() noexcept {
         try {
-            do_invoke( fn_, tpl_);
+            void * vp = caller_->resume( caller_, true);
+            do_invoke( fn_, std::tuple_cat( tpl_, std::tie( vp) ) );
         } catch (...) {
             std::terminate();
         }
@@ -239,9 +244,11 @@ private:
         // create fast-context
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
+        // get current activation record
+        ptr_t curr = execution_context::current().ptr_;
         // placment new for control structure on fast-context stack
         return new ( sp) capture_t(
-                sctx, salloc, fctx, std::forward< Fn >( fn), std::forward< Tpl >( tpl), use_segmented_stack);
+                sctx, salloc, fctx, std::forward< Fn >( fn), std::forward< Tpl >( tpl), curr.get(), use_segmented_stack);
     }
 
     template< typename StackAlloc, typename Fn , typename Tpl >
@@ -270,9 +277,11 @@ private:
         // create fast-context
         fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
+        // get current activation record
+        ptr_t curr = execution_context::current().ptr_;
         // placment new for control structure on fast-context stack
         return new ( sp) capture_t(
-                palloc.sctx, salloc, fctx, std::forward< Fn >( fn), std::forward< Tpl >( tpl), use_segmented_stack);
+                palloc.sctx, salloc, fctx, std::forward< Fn >( fn), std::forward< Tpl >( tpl), curr.get(), use_segmented_stack);
     }
 
     execution_context() :
@@ -294,6 +303,7 @@ public:
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...),
                               false) ) {
+        ptr_->resume( ptr_.get(), true);
     }
 
 # if defined(BOOST_USE_SEGMENTED_STACKS)
@@ -308,6 +318,7 @@ public:
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...),
                               true) ) {
+        ptr_->resume( ptr_.get(), true);
     }
 
     template< typename Fn, typename ... Args >
@@ -321,6 +332,7 @@ public:
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...),
                               true) ) {
+        ptr_->resume( ptr_.get(), true);
     }
 # endif
 
@@ -335,6 +347,7 @@ public:
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...),
                               false) ) {
+        ptr_->resume( ptr_.get(), true);
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
@@ -348,6 +361,7 @@ public:
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...),
                               false) ) {
+        ptr_->resume( ptr_.get(), true);
     }
 
     execution_context( execution_context const& other) noexcept :
@@ -382,8 +396,8 @@ public:
         return nullptr == ptr_.get();
     }
 
-    void operator()( bool preserve_fpu = false) noexcept {
-        ptr_->resume( preserve_fpu);
+    void * operator()( void * vp = nullptr, bool preserve_fpu = false) noexcept {
+        return ptr_->resume( vp, preserve_fpu);
     }
 };
 

@@ -57,7 +57,7 @@ int main() {
 #else
         boost::context::fixedsize_stack(),
 #endif
-        [& main_ctx, count](){
+        [& main_ctx, count]( void *){
             bar( count);
             main_ctx();   
         });

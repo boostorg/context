@@ -24,123 +24,123 @@ namespace ctx = boost::context;
 int value1 = 0;
 std::string value2;
 double value3 = 0.;
-ctx::execution_context * mctx = nullptr;
 
-void fn1() {
+void fn1( void * vp) {
     value1 = 3;
+    ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
     ( * mctx)();
 }
 
-void fn2( int i) {
+void fn2( int i, void * vp) {
     value1 = i;
+    ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
     ( * mctx)();
 }
 
-void fn3( const char * what) {
-    try
-    { throw std::runtime_error( what); }
-    catch ( std::runtime_error const& e)
-    { value2 = e.what(); }
+void fn3( const char * what, void * vp) {
+    try {
+        throw std::runtime_error( what);
+    } catch ( std::runtime_error const& e) {
+        value2 = e.what();
+    }
+    ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
     ( * mctx)();
 }
 
-void fn4( double d) {
+void fn4( double d, void * vp) {
     d += 3.45;
     value3 = d;
+    ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
     ( * mctx)();
 }
 
-void fn6( ctx::execution_context * ctx) {
+void fn6( void * vp) {
     value1 = 3;
-    ( * ctx)();
+    ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
+    ( * mctx)();
 }
 
-void fn5() {
+void fn5( void * vp) {
     std::cout << "fn5: entered" << std::endl;
-    boost::context::execution_context ctx( boost::context::execution_context::current() );
     ctx::fixedsize_stack alloc;
-    ctx::execution_context ectx( std::allocator_arg, alloc, fn6, & ctx);
-    ectx();
+    ctx::execution_context ectx( std::allocator_arg, alloc, fn6);
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    ectx( & ctx);
     value3 = 3.14;
+    ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
     ( * mctx)();
 }
 
 struct X {
-    int foo( int i) {
+    int foo( int i, void * vp) {
         value1 = i;
+        ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
         ( * mctx)();
         return i;
     }
 };
 
 void test_ectx() {
-    boost::context::execution_context ctx( boost::context::execution_context::current() );
-    mctx = & ctx;
     value1 = 0;
     ctx::execution_context ectx( fn1);
-    ectx();
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    ectx( & ctx);
     BOOST_CHECK_EQUAL( 3, value1);
 }
 
 void test_variadric() {
-    boost::context::execution_context ctx( boost::context::execution_context::current() );
-    mctx = & ctx;
     value1 = 0;
     ctx::execution_context ectx( fn2, 5);
-    ectx();
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    ectx( & ctx);
     BOOST_CHECK_EQUAL( 5, value1);
 }
 
 void test_memfn() {
-    boost::context::execution_context ctx( boost::context::execution_context::current() );
-    mctx = & ctx;
     value1 = 0;
     X x;
     ctx::protected_fixedsize_stack alloc;
     ctx::execution_context ectx( std::allocator_arg, alloc, & X::foo, x, 7);
-    ectx();
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    ectx( & ctx);
     BOOST_CHECK_EQUAL( 7, value1);
 }
 
 void test_exception() {
-    boost::context::execution_context ctx( boost::context::execution_context::current() );
-    mctx = & ctx;
     const char * what = "hello world";
     ctx::execution_context ectx( fn3, what);
-    ectx();
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    ectx( & ctx);
     BOOST_CHECK_EQUAL( std::string( what), value2);
 }
 
 void test_fp() {
-    boost::context::execution_context ctx( boost::context::execution_context::current() );
-    mctx = & ctx;
     double d = 7.13;
     ctx::execution_context ectx( fn4, d);
-    ectx();
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    ectx( & ctx);
     BOOST_CHECK_EQUAL( 10.58, value3);
 }
 
 void test_stacked() {
     value1 = 0;
     value3 = 0.;
-    boost::context::execution_context ctx( boost::context::execution_context::current() );
-    mctx = & ctx;
     ctx::execution_context ectx( fn5);
-    ectx();
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    ectx( & ctx);
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK_EQUAL( 3.14, value3);
 }
 
 void test_prealloc() {
-    boost::context::execution_context ctx( boost::context::execution_context::current() );
-    mctx = & ctx;
     value1 = 0;
     ctx::protected_fixedsize_stack alloc;
     ctx::stack_context sctx( alloc.allocate() );
     void * sp = static_cast< char * >( sctx.sp) - 10;
     std::size_t size = sctx.size - 10;
     ctx::execution_context ectx( std::allocator_arg, ctx::preallocated( sp, size, sctx), alloc, fn2, 7);
-    ectx();
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    ectx( & ctx);
     BOOST_CHECK_EQUAL( 7, value1);
 }
 

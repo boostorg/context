@@ -13,7 +13,7 @@ boost::context::execution_context * ctx1 = nullptr;
 boost::context::execution_context * ctx2 = nullptr;
 boost::context::execution_context * ctx = nullptr;
 
-void f1( int i) {
+void f1( int i, void *) {
     std::cout << "f1: entered" << std::endl;
     std::cout << "i == " << i << std::endl;
     ( * ctx2)();
@@ -21,7 +21,7 @@ void f1( int i) {
     ( * ctx2)();
 }
 
-void f2() {
+void f2( void *) {
     std::cout << "f2: entered" << std::endl;
     ( * ctx1)();
     std::cout << "f2: re-entered" << std::endl;
