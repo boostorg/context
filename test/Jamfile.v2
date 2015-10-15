@@ -34,7 +34,8 @@ run test_execution_context.cpp :
                cxx11_decltype
                cxx11_deleted_functions
                cxx11_explicit_conversion_operators
-               cxx11_hdr_tuple cxx11_lambdas
+               cxx11_hdr_tuple
+               cxx11_lambdas
                cxx11_noexcept
                cxx11_nullptr
                cxx11_template_aliases
