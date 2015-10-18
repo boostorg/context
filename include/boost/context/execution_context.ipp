@@ -18,6 +18,7 @@
 # include <cstdlib>
 # include <functional>
 # include <memory>
+# include <ostream>
 # include <tuple>
 # include <utility>
 
@@ -384,6 +385,10 @@ public:
         return * this;
     }
 
+    void * operator()( void * vp = nullptr, bool preserve_fpu = false) noexcept {
+        return ptr_->resume( vp, preserve_fpu);
+    }
+
     explicit operator bool() const noexcept {
         return nullptr != ptr_.get();
     }
@@ -392,10 +397,49 @@ public:
         return nullptr == ptr_.get();
     }
 
-    void * operator()( void * vp = nullptr, bool preserve_fpu = false) noexcept {
-        return ptr_->resume( vp, preserve_fpu);
+    bool operator==( execution_context const& other) const noexcept {
+        return ptr_ == other.ptr_;
+    }
+
+    bool operator!=( execution_context const& other) const noexcept {
+        return ptr_ != other.ptr_;
+    }
+
+    bool operator<( execution_context const& other) const noexcept {
+        return ptr_ < other.ptr_;
+    }
+
+    bool operator>( execution_context const& other) const noexcept {
+        return other.ptr_ < ptr_;
+    }
+
+    bool operator<=( execution_context const& other) const noexcept {
+        return ! ( * this > other);
+    }
+
+    bool operator>=( execution_context const& other) const noexcept {
+        return ! ( * this < other);
+    }
+
+    template< typename charT, class traitsT >
+    friend std::basic_ostream< charT, traitsT > &
+    operator<<( std::basic_ostream< charT, traitsT > & os, execution_context const& other) {
+        if ( nullptr != other.ptr_) {
+            return os << other.ptr_;
+        } else {
+            return os << "{not-valid}";
+        }
+    }
+
+    void swap( execution_context & other) noexcept {
+        ptr_.swap( other.ptr_);
     }
 };
+
+inline
+void swap( execution_context & l, execution_context & r) noexcept {
+    l.swap( r);
+}
 
 }}
 

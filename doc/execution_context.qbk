@@ -201,6 +201,22 @@ __ec_op__, in one context, is returned by __ec_op__ in the other context.
             bool operator!() const noexcept;
 
             void * operator()( void * vp = nullptr) noexcept;
+
+            bool operator==( execution_context const& other) const noexcept;
+
+            bool operator!=( execution_context const& other) const noexcept;
+            
+            bool operator<( execution_context const& other) const noexcept;
+            
+            bool operator>( execution_context const& other) const noexcept;
+            
+            bool operator<=( execution_context const& other) const noexcept;
+            
+            bool operator>=( execution_context const& other) const noexcept;
+
+            template< typename charT, class traitsT >
+            friend std::basic_ostream< charT, traitsT > &
+            operator<<( std::basic_ostream< charT, traitsT > & os, execution_context const& other);
         };
 
 [heading `static execution_context current()`]
@@ -279,6 +295,74 @@ function returns, `std::exit()` is called.]]
 [[Returns:] [The void pointer argument passed to the most recent call to
 `execution_context::operator()`, if any.]]
 [[Throws:] [Nothing.]]
+]
+
+[heading `operator==`]
+
+        bool operator==( execution_context const& other) const noexcept;
+
+[variablelist
+[[Returns:] [`true` if `*this` and `other` represent the same execution context,
+`false` otherwise.]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `operator!=`]
+
+        bool operator!=( execution_context const& other) const noexcept;
+
+[variablelist
+[[Returns:] [[`! (other == * this)]]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `operator<`]
+
+        bool operator<( execution_context const& other) const noexcept;
+
+[variablelist
+[[Returns:] [`true` if `*this != other` is true and the
+implementation-defined total order of `execution_context` values places `*this` before
+`other`, false otherwise.]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `operator>`]
+
+        bool operator>( execution_context const& other) const noexcept;
+
+[variablelist
+[[Returns:] [`other < * this`]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `operator<=`]
+
+        bool operator<=( execution_context const& other) const noexcept;
+
+[variablelist
+[[Returns:] [`! (other < * this)`]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `operator>=`]
+
+        bool operator>=( execution_context const& other) const noexcept;
+
+[variablelist
+[[Returns:] [`! (* this < other)`]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `operator<<`]
+
+        template< typename charT, class traitsT >
+        std::basic_ostream< charT, traitsT > &
+        operator<<( std::basic_ostream< charT, traitsT > & os, execution_context const& other);
+
+[variablelist
+[[Efects:] [Writes the representation of `other` to stream `os`.]]
+[[Returns:] [`os`]]
 ]
 
 

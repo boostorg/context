@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2015/10/15 12:21:18 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2015/10/18 18:54:02 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -507,7 +507,7 @@
     <phrase role="comment">// execute parser in new execution context</phrase>
     <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">parser_ctx</phrase><phrase role="special">(</phrase>
             <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">allocator_arg</phrase><phrase role="special">,</phrase>
-            <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">fixedsize_stack</phrase><phrase role="special">(),</phrase>
+            <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">fixedsize_stack</phrase><phrase role="special">(</phrase><phrase role="number">4096</phrase><phrase role="special">),</phrase>
             <phrase role="special">[&amp;</phrase><phrase role="identifier">main_ctx</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">is</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">done</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">except</phrase><phrase role="special">](</phrase><phrase role="keyword">void</phrase><phrase role="special">*){</phrase>
             <phrase role="comment">// create parser with callback function</phrase>
             <phrase role="identifier">Parser</phrase> <phrase role="identifier">p</phrase><phrase role="special">(</phrase> <phrase role="identifier">is</phrase><phrase role="special">,</phrase>
@@ -696,6 +696,22 @@
     <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">!()</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 
     <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="keyword">nullptr</phrase><phrase role="special">)</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+
+    <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">==(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+
+    <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">!=(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+
+    <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">&lt;(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+
+    <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">&gt;(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+
+    <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">&lt;=(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+
+    <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">&gt;=(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+
+    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">charT</phrase><phrase role="special">,</phrase> <phrase role="keyword">class</phrase> <phrase role="identifier">traitsT</phrase> <phrase role="special">&gt;</phrase>
+    <phrase role="keyword">friend</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">basic_ostream</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">charT</phrase><phrase role="special">,</phrase> <phrase role="identifier">traitsT</phrase> <phrase role="special">&gt;</phrase> <phrase role="special">&amp;</phrase>
+    <phrase role="keyword">operator</phrase><phrase role="special">&lt;&lt;(</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">basic_ostream</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">charT</phrase><phrase role="special">,</phrase> <phrase role="identifier">traitsT</phrase> <phrase role="special">&gt;</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">os</phrase><phrase role="special">,</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">);</phrase>
 <phrase role="special">};</phrase>
 </programlisting>
     <bridgehead renderas="sect3" id="context.econtext.h4">
@@ -1039,6 +1055,199 @@
       </varlistentry>
     </variablelist>
     <bridgehead renderas="sect3" id="context.econtext.h15">
+      <phrase id="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special______phrase___code_"/><link
+      linkend="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special______phrase___code_"><code><phrase
+      role="keyword">operator</phrase><phrase role="special">==</phrase></code></link>
+    </bridgehead>
+<programlisting><phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">==(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+</programlisting>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Returns:</term>
+        <listitem>
+          <para>
+            <code><phrase role="keyword">true</phrase></code> if <code><phrase role="special">*</phrase><phrase
+            role="keyword">this</phrase></code> and <code><phrase role="identifier">other</phrase></code>
+            represent the same execution context, <code><phrase role="keyword">false</phrase></code>
+            otherwise.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Throws:</term>
+        <listitem>
+          <para>
+            Nothing.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <bridgehead renderas="sect3" id="context.econtext.h16">
+      <phrase id="context.econtext.code_phrase_role_keyword_operat0"/><link linkend="context.econtext.code_phrase_role_keyword_operat0"><code><phrase
+      role="keyword">operator</phrase><phrase role="special">!=</phrase></code></link>
+    </bridgehead>
+<programlisting><phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">!=(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+</programlisting>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Returns:</term>
+        <listitem>
+          <para>
+            [`! (other == * this)
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      [[Throws:] [Nothing.]] ]
+    </para>
+    <bridgehead renderas="sect3" id="context.econtext.h17">
+      <phrase id="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt___phrase___code_"/><link
+      linkend="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt___phrase___code_"><code><phrase
+      role="keyword">operator</phrase><phrase role="special">&lt;</phrase></code></link>
+    </bridgehead>
+<programlisting><phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">&lt;(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+</programlisting>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Returns:</term>
+        <listitem>
+          <para>
+            <code><phrase role="keyword">true</phrase></code> if <code><phrase role="special">*</phrase><phrase
+            role="keyword">this</phrase> <phrase role="special">!=</phrase> <phrase
+            role="identifier">other</phrase></code> is true and the implementation-defined
+            total order of <code><phrase role="identifier">execution_context</phrase></code>
+            values places <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
+            before <code><phrase role="identifier">other</phrase></code>, false otherwise.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Throws:</term>
+        <listitem>
+          <para>
+            Nothing.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <bridgehead renderas="sect3" id="context.econtext.h18">
+      <phrase id="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___gt___phrase___code_"/><link
+      linkend="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___gt___phrase___code_"><code><phrase
+      role="keyword">operator</phrase><phrase role="special">&gt;</phrase></code></link>
+    </bridgehead>
+<programlisting><phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">&gt;(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+</programlisting>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Returns:</term>
+        <listitem>
+          <para>
+            <code><phrase role="identifier">other</phrase> <phrase role="special">&lt;</phrase>
+            <phrase role="special">*</phrase> <phrase role="keyword">this</phrase></code>
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Throws:</term>
+        <listitem>
+          <para>
+            Nothing.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <bridgehead renderas="sect3" id="context.econtext.h19">
+      <phrase id="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt____phrase___code_"/><link
+      linkend="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt____phrase___code_"><code><phrase
+      role="keyword">operator</phrase><phrase role="special">&lt;=</phrase></code></link>
+    </bridgehead>
+<programlisting><phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">&lt;=(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+</programlisting>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Returns:</term>
+        <listitem>
+          <para>
+            <code><phrase role="special">!</phrase> <phrase role="special">(</phrase><phrase
+            role="identifier">other</phrase> <phrase role="special">&lt;</phrase>
+            <phrase role="special">*</phrase> <phrase role="keyword">this</phrase><phrase
+            role="special">)</phrase></code>
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Throws:</term>
+        <listitem>
+          <para>
+            Nothing.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <bridgehead renderas="sect3" id="context.econtext.h20">
+      <phrase id="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___gt____phrase___code_"/><link
+      linkend="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___gt____phrase___code_"><code><phrase
+      role="keyword">operator</phrase><phrase role="special">&gt;=</phrase></code></link>
+    </bridgehead>
+<programlisting><phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">&gt;=(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
+</programlisting>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Returns:</term>
+        <listitem>
+          <para>
+            <code><phrase role="special">!</phrase> <phrase role="special">(*</phrase>
+            <phrase role="keyword">this</phrase> <phrase role="special">&lt;</phrase>
+            <phrase role="identifier">other</phrase><phrase role="special">)</phrase></code>
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Throws:</term>
+        <listitem>
+          <para>
+            Nothing.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <bridgehead renderas="sect3" id="context.econtext.h21">
+      <phrase id="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt__lt___phrase___code_"/><link
+      linkend="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt__lt___phrase___code_"><code><phrase
+      role="keyword">operator</phrase><phrase role="special">&lt;&lt;</phrase></code></link>
+    </bridgehead>
+<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">charT</phrase><phrase role="special">,</phrase> <phrase role="keyword">class</phrase> <phrase role="identifier">traitsT</phrase> <phrase role="special">&gt;</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">basic_ostream</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">charT</phrase><phrase role="special">,</phrase> <phrase role="identifier">traitsT</phrase> <phrase role="special">&gt;</phrase> <phrase role="special">&amp;</phrase>
+<phrase role="keyword">operator</phrase><phrase role="special">&lt;&lt;(</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">basic_ostream</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">charT</phrase><phrase role="special">,</phrase> <phrase role="identifier">traitsT</phrase> <phrase role="special">&gt;</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">os</phrase><phrase role="special">,</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">);</phrase>
+</programlisting>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Efects:</term>
+        <listitem>
+          <para>
+            Writes the representation of <code><phrase role="identifier">other</phrase></code>
+            to stream <code><phrase role="identifier">os</phrase></code>.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Returns:</term>
+        <listitem>
+          <para>
+            <code><phrase role="identifier">os</phrase></code>
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <bridgehead renderas="sect3" id="context.econtext.h22">
       <phrase id="context.econtext.struct__code__phrase_role__identifier__preallocated__phrase___code_"/><link
       linkend="context.econtext.struct__code__phrase_role__identifier__preallocated__phrase___code_">Struct
       <code><phrase role="identifier">preallocated</phrase></code></link>
@@ -1051,7 +1260,7 @@
     <phrase role="identifier">preallocated</phrase><phrase role="special">(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">sp</phrase><phrase role="special">,</phrase> <phrase role="identifier">std</phrase><phrase role="special">:</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase><phrase role="special">,</phrase> <phrase role="identifier">stack_allocator</phrase> <phrase role="identifier">sctx</phrase><phrase role="special">)</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 <phrase role="special">};</phrase>
 </programlisting>
-    <bridgehead renderas="sect3" id="context.econtext.h16">
+    <bridgehead renderas="sect3" id="context.econtext.h23">
       <phrase id="context.econtext._code__phrase_role__identifier__preallocated__phrase__phrase_role__special_____phrase___phrase_role__keyword__void__phrase___phrase_role__special_____phrase___phrase_role__identifier__sp__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special_____phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_allocator__phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"/><link
       linkend="context.econtext._code__phrase_role__identifier__preallocated__phrase__phrase_role__special_____phrase___phrase_role__keyword__void__phrase___phrase_role__special_____phrase___phrase_role__identifier__sp__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special_____phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_allocator__phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"><code><phrase
       role="identifier">preallocated</phrase><phrase role="special">(</phrase> <phrase
@@ -1574,6 +1783,12 @@
           </listitem>
         </varlistentry>
       </variablelist>
+      <note>
+        <para>
+          If the library is compiled for segmented stacks, __segmented_stack__ is
+          the only available stack allocator.
+        </para>
+      </note>
     </section>
     <section id="context.stack.stack_traits">
       <title><link linkend="context.stack.stack_traits">Class <emphasis>stack_traits</emphasis></link></title>

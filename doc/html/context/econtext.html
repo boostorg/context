@@ -64,7 +64,7 @@
     <span class="comment">// execute parser in new execution context</span>
     <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span> <span class="identifier">parser_ctx</span><span class="special">(</span>
             <span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg</span><span class="special">,</span>
-            <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">fixedsize_stack</span><span class="special">(),</span>
+            <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">fixedsize_stack</span><span class="special">(</span><span class="number">4096</span><span class="special">),</span>
             <span class="special">[&amp;</span><span class="identifier">main_ctx</span><span class="special">,&amp;</span><span class="identifier">is</span><span class="special">,&amp;</span><span class="identifier">done</span><span class="special">,&amp;</span><span class="identifier">except</span><span class="special">](</span><span class="keyword">void</span><span class="special">*){</span>
             <span class="comment">// create parser with callback function</span>
             <span class="identifier">Parser</span> <span class="identifier">p</span><span class="special">(</span> <span class="identifier">is</span><span class="special">,</span>
@@ -259,6 +259,22 @@
     <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">!()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
 
     <span class="keyword">void</span> <span class="special">*</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="keyword">void</span> <span class="special">*</span> <span class="identifier">vp</span> <span class="special">=</span> <span class="keyword">nullptr</span><span class="special">)</span> <span class="keyword">noexcept</span><span class="special">;</span>
+
+    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">==(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+
+    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">!=(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+
+    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&lt;(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+
+    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&gt;(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+
+    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&lt;=(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+
+    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&gt;=(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+
+    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">charT</span><span class="special">,</span> <span class="keyword">class</span> <span class="identifier">traitsT</span> <span class="special">&gt;</span>
+    <span class="keyword">friend</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">basic_ostream</span><span class="special">&lt;</span> <span class="identifier">charT</span><span class="special">,</span> <span class="identifier">traitsT</span> <span class="special">&gt;</span> <span class="special">&amp;</span>
+    <span class="keyword">operator</span><span class="special">&lt;&lt;(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">basic_ostream</span><span class="special">&lt;</span> <span class="identifier">charT</span><span class="special">,</span> <span class="identifier">traitsT</span> <span class="special">&gt;</span> <span class="special">&amp;</span> <span class="identifier">os</span><span class="special">,</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">);</span>
 <span class="special">};</span>
 </pre>
 <h4>
@@ -488,6 +504,150 @@
 </div>
 <h4>
 <a name="context.econtext.h15"></a>
+      <span><a name="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special______phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special______phrase___code_"><code class="computeroutput"><span class="keyword">operator</span><span class="special">==</span></code></a>
+    </h4>
+<pre class="programlisting"><span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">==(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+</pre>
+<div class="variablelist">
+<p class="title"><b></b></p>
+<dl>
+<dt><span class="term">Returns:</span></dt>
+<dd><p>
+            <code class="computeroutput"><span class="keyword">true</span></code> if <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code> and <code class="computeroutput"><span class="identifier">other</span></code>
+            represent the same execution context, <code class="computeroutput"><span class="keyword">false</span></code>
+            otherwise.
+          </p></dd>
+<dt><span class="term">Throws:</span></dt>
+<dd><p>
+            Nothing.
+          </p></dd>
+</dl>
+</div>
+<h4>
+<a name="context.econtext.h16"></a>
+      <span><a name="context.econtext.code_phrase_role_keyword_operat0"></a></span><a class="link" href="econtext.html#context.econtext.code_phrase_role_keyword_operat0"><code class="computeroutput"><span class="keyword">operator</span><span class="special">!=</span></code></a>
+    </h4>
+<pre class="programlisting"><span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">!=(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+</pre>
+<div class="variablelist">
+<p class="title"><b></b></p>
+<dl>
+<dt><span class="term">Returns:</span></dt>
+<dd><p>
+            [`! (other == * this)
+          </p></dd>
+</dl>
+</div>
+<p>
+      [[Throws:] [Nothing.]] ]
+    </p>
+<h4>
+<a name="context.econtext.h17"></a>
+      <span><a name="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt___phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt___phrase___code_"><code class="computeroutput"><span class="keyword">operator</span><span class="special">&lt;</span></code></a>
+    </h4>
+<pre class="programlisting"><span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&lt;(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+</pre>
+<div class="variablelist">
+<p class="title"><b></b></p>
+<dl>
+<dt><span class="term">Returns:</span></dt>
+<dd><p>
+            <code class="computeroutput"><span class="keyword">true</span></code> if <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span> <span class="special">!=</span> <span class="identifier">other</span></code> is true and the implementation-defined
+            total order of <code class="computeroutput"><span class="identifier">execution_context</span></code>
+            values places <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>
+            before <code class="computeroutput"><span class="identifier">other</span></code>, false otherwise.
+          </p></dd>
+<dt><span class="term">Throws:</span></dt>
+<dd><p>
+            Nothing.
+          </p></dd>
+</dl>
+</div>
+<h4>
+<a name="context.econtext.h18"></a>
+      <span><a name="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___gt___phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___gt___phrase___code_"><code class="computeroutput"><span class="keyword">operator</span><span class="special">&gt;</span></code></a>
+    </h4>
+<pre class="programlisting"><span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&gt;(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+</pre>
+<div class="variablelist">
+<p class="title"><b></b></p>
+<dl>
+<dt><span class="term">Returns:</span></dt>
+<dd><p>
+            <code class="computeroutput"><span class="identifier">other</span> <span class="special">&lt;</span>
+            <span class="special">*</span> <span class="keyword">this</span></code>
+          </p></dd>
+<dt><span class="term">Throws:</span></dt>
+<dd><p>
+            Nothing.
+          </p></dd>
+</dl>
+</div>
+<h4>
+<a name="context.econtext.h19"></a>
+      <span><a name="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt____phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt____phrase___code_"><code class="computeroutput"><span class="keyword">operator</span><span class="special">&lt;=</span></code></a>
+    </h4>
+<pre class="programlisting"><span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&lt;=(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+</pre>
+<div class="variablelist">
+<p class="title"><b></b></p>
+<dl>
+<dt><span class="term">Returns:</span></dt>
+<dd><p>
+            <code class="computeroutput"><span class="special">!</span> <span class="special">(</span><span class="identifier">other</span> <span class="special">&lt;</span>
+            <span class="special">*</span> <span class="keyword">this</span><span class="special">)</span></code>
+          </p></dd>
+<dt><span class="term">Throws:</span></dt>
+<dd><p>
+            Nothing.
+          </p></dd>
+</dl>
+</div>
+<h4>
+<a name="context.econtext.h20"></a>
+      <span><a name="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___gt____phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___gt____phrase___code_"><code class="computeroutput"><span class="keyword">operator</span><span class="special">&gt;=</span></code></a>
+    </h4>
+<pre class="programlisting"><span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&gt;=(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+</pre>
+<div class="variablelist">
+<p class="title"><b></b></p>
+<dl>
+<dt><span class="term">Returns:</span></dt>
+<dd><p>
+            <code class="computeroutput"><span class="special">!</span> <span class="special">(*</span>
+            <span class="keyword">this</span> <span class="special">&lt;</span>
+            <span class="identifier">other</span><span class="special">)</span></code>
+          </p></dd>
+<dt><span class="term">Throws:</span></dt>
+<dd><p>
+            Nothing.
+          </p></dd>
+</dl>
+</div>
+<h4>
+<a name="context.econtext.h21"></a>
+      <span><a name="context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt__lt___phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__keyword__operator__phrase__phrase_role__special___lt__lt___phrase___code_"><code class="computeroutput"><span class="keyword">operator</span><span class="special">&lt;&lt;</span></code></a>
+    </h4>
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">charT</span><span class="special">,</span> <span class="keyword">class</span> <span class="identifier">traitsT</span> <span class="special">&gt;</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">basic_ostream</span><span class="special">&lt;</span> <span class="identifier">charT</span><span class="special">,</span> <span class="identifier">traitsT</span> <span class="special">&gt;</span> <span class="special">&amp;</span>
+<span class="keyword">operator</span><span class="special">&lt;&lt;(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">basic_ostream</span><span class="special">&lt;</span> <span class="identifier">charT</span><span class="special">,</span> <span class="identifier">traitsT</span> <span class="special">&gt;</span> <span class="special">&amp;</span> <span class="identifier">os</span><span class="special">,</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">);</span>
+</pre>
+<div class="variablelist">
+<p class="title"><b></b></p>
+<dl>
+<dt><span class="term">Efects:</span></dt>
+<dd><p>
+            Writes the representation of <code class="computeroutput"><span class="identifier">other</span></code>
+            to stream <code class="computeroutput"><span class="identifier">os</span></code>.
+          </p></dd>
+<dt><span class="term">Returns:</span></dt>
+<dd><p>
+            <code class="computeroutput"><span class="identifier">os</span></code>
+          </p></dd>
+</dl>
+</div>
+<h4>
+<a name="context.econtext.h22"></a>
       <span><a name="context.econtext.struct__code__phrase_role__identifier__preallocated__phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext.struct__code__phrase_role__identifier__preallocated__phrase___code_">Struct
       <code class="computeroutput"><span class="identifier">preallocated</span></code></a>
     </h4>
@@ -500,7 +660,7 @@
 <span class="special">};</span>
 </pre>
 <h4>
-<a name="context.econtext.h16"></a>
+<a name="context.econtext.h23"></a>
       <span><a name="context.econtext._code__phrase_role__identifier__preallocated__phrase__phrase_role__special_____phrase___phrase_role__keyword__void__phrase___phrase_role__special_____phrase___phrase_role__identifier__sp__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special_____phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_allocator__phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"></a></span><a class="link" href="econtext.html#context.econtext._code__phrase_role__identifier__preallocated__phrase__phrase_role__special_____phrase___phrase_role__keyword__void__phrase___phrase_role__special_____phrase___phrase_role__identifier__sp__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special_____phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_allocator__phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"><code class="computeroutput"><span class="identifier">preallocated</span><span class="special">(</span> <span class="keyword">void</span> <span class="special">*</span> <span class="identifier">sp</span><span class="special">,</span> <span class="identifier">std</span><span class="special">:</span><span class="identifier">size_t</span> <span class="identifier">size</span><span class="special">,</span> <span class="identifier">stack_allocator</span>
       <span class="identifier">sctx</span><span class="special">)</span></code></a>
     </h4>
