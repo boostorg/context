@@ -13,11 +13,11 @@
 
 #include <windows.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <math>
 #include <memory>
 #include <tuple>
 #include <utility>
