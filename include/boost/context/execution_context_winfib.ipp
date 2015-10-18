@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <math>
 #include <memory>
 #include <tuple>
 #include <utility>
@@ -218,7 +219,8 @@ private:
 
         // hackish
         std::size_t fsize = salloc.size_;
-        salloc.size_ = sizeof( capture_t);
+        // protected_fixedsize_stack needs at least 2*page-size
+        salloc.size_ = ( std::max)( sizeof( capture_t), 2 * stack_traits::page_size() );
 
         stack_context sctx( salloc.allocate() );
         // reserve space for control structure
@@ -244,7 +246,8 @@ private:
 
         // hackish
         std::size_t fsize = salloc.size_;
-        salloc.size_ = sizeof( capture_t);
+        // protected_fixedsize_stack needs at least 2*page-size
+        salloc.size_ = ( std::max)( sizeof( capture_t), 2 * stack_traits::page_size() );
 
         // reserve space for control structure
         void * sp = static_cast< char * >( palloc.sp) - sizeof( capture_t);
