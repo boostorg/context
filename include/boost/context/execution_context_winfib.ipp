@@ -51,6 +51,7 @@ struct activation_record {
     std::atomic< std::size_t >  use_count;
     LPVOID                      fiber;
     stack_context               sctx;
+    void                    *   data;
     int                         flags;
 
     // used for toplevel-context
@@ -70,12 +71,13 @@ struct activation_record {
         use_count( 0),
         fiber( nullptr),
         sctx( sctx_),
+        data( nullptr),
         flags( use_segmented_stack ? flag_segmented_stack : 0) {
     } 
 
     virtual ~activation_record() noexcept = default;
 
-    void resume() noexcept {
+    void * resume( void * vp, bool fpu) noexcept {
         // store current activation record in local variable
         activation_record * from = current_rec.get();
         // store `this` in static, thread local pointer
@@ -99,7 +101,9 @@ struct activation_record {
             BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != from->fiber);
         }
 #endif
+        data = vp;
         ::SwitchToFiber( fiber);
+        return ::GetFiberData()->data;
     }
 
     virtual void deallocate() {
@@ -130,6 +134,7 @@ private:
     StackAlloc      salloc_;
     Fn              fn_;
     Tpl             tpl_;
+    activation_record   *   caller_;
 
     static void destroy( capture_record * p) {
         StackAlloc salloc( p->salloc_);
@@ -144,11 +149,13 @@ public:
     explicit capture_record(
             stack_context sctx, StackAlloc const& salloc,
             Fn && fn, Tpl && tpl,
+            activation_record * caller,
             bool use_segmented_stack) noexcept :
         activation_record( sctx, use_segmented_stack),
         salloc_( salloc),
         fn_( std::forward< Fn >( fn) ),
-        tpl_( std::forward< Tpl >( tpl) ) {
+        tpl_( std::forward< Tpl >( tpl) ),
+        caller_( caller) {
     }
 
     void deallocate() override final {
@@ -157,7 +164,8 @@ public:
 
     void run() noexcept {
         try {
-            do_invoke( fn_, tpl_);
+            void * vp = caller_->resume( caller_, true);
+            do_invoke( fn_, std::tuple_cat( tpl_, std::tie( vp) ) );
         } catch (...) {
             std::terminate();
         }
@@ -211,9 +219,11 @@ private:
         stack_context sctx( salloc.allocate() );
         // reserve space for control structure
         void * sp = static_cast< char * >( sctx.sp) - sizeof( capture_t);
-        // placment new for control structure on fast-context stack
+        // get current activation record
+        ptr_t curr = execution_context::current().ptr_;
+        // placement new for control structure on fast-context stack
         capture_t * cr = new ( sp) capture_t(
-                sctx, salloc, std::forward< Fn >( fn), std::forward< Tpl >( tpl), use_segmented_stack);
+                sctx, salloc, std::forward< Fn >( fn), std::forward< Tpl >( tpl), curr.get(), use_segmented_stack);
         // create fiber
         // use default stacksize
         cr->fiber = ::CreateFiber( fsize, execution_context::entry_func< capture_t >, cr);
@@ -234,9 +244,11 @@ private:
 
         // reserve space for control structure
         void * sp = static_cast< char * >( palloc.sp) - sizeof( capture_t);
-        // placment new for control structure on fast-context stack
+        // get current activation record
+        ptr_t curr = execution_context::current().ptr_;
+        // placement new for control structure on fast-context stack
         capture_t * cr = new ( sp) capture_t(
-                palloc.sctx, salloc, std::forward< Fn >( fn), std::forward< Tpl >( tpl), use_segmented_stack);
+                palloc.sctx, salloc, std::forward< Fn >( fn), std::forward< Tpl >( tpl), curr.get(), use_segmented_stack);
         // create fiber
         // use default stacksize
         cr->fiber = ::CreateFiber( fsize, execution_context::entry_func< capture_t >, cr);
@@ -263,6 +275,7 @@ public:
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...),
                               false) ) {
+        ptr_->resume( ptr_.get(), true);
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
@@ -276,6 +289,7 @@ public:
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...),
                               false) ) {
+        ptr_->resume( ptr_.get(), true);
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
@@ -289,6 +303,7 @@ public:
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...),
                               false) ) {
+        ptr_->resume( ptr_.get(), true);
     }
 
     execution_context( execution_context const& other) noexcept :
@@ -323,8 +338,8 @@ public:
         return nullptr == ptr_.get();
     }
 
-    void operator()( bool preserve_fpu = false) noexcept {
-        ptr_->resume();
+    void * operator()( void * vp = nullptr, bool preserve_fpu = false) noexcept {
+        return ptr_->resume( vp, preserve_fpu);
     }
 };
 
