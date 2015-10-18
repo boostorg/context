@@ -101,9 +101,13 @@ struct activation_record {
             BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != from->fiber);
         }
 #endif
+        // store passed argument (void pointer)
         data = vp;
+        // context switch
         ::SwitchToFiber( fiber);
-        return ::GetFiberData()->data;
+        // access the activation-record of the current fiber
+        activation_record * ar = static_cast< activation_record * >( GetFiberData() );
+        return nullptr != ar ? ar->data : nullptr;
     }
 
     virtual void deallocate() {
