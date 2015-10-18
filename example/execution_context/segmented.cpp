@@ -51,12 +51,6 @@ int main() {
         boost::context::execution_context::current() );
 
     boost::context::execution_context bar_ctx(
-        std::allocator_arg,
-#if defined(BOOST_USE_SEGMENTED_STACKS)
-        boost::context::segmented_stack(),
-#else
-        boost::context::fixedsize_stack(),
-#endif
         [& main_ctx, count]( void *){
             bar( count);
             main_ctx();   

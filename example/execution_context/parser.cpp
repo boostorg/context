@@ -98,8 +98,6 @@ int main() {
 
         // execute parser in new execution context
         boost::context::execution_context parser_ctx(
-                std::allocator_arg,
-                boost::context::fixedsize_stack(),
                 [&main_ctx,&is,&done,&except](void*){
                 // create parser with callback function
                 Parser p( is,

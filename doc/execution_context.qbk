@@ -36,7 +36,7 @@ __econtext__ permits access to the current, active context via
             // execute parser in new execution context
             boost::context::execution_context parser_ctx(
                     std::allocator_arg,
-                    boost::context::fixedsize_stack(),
+                    boost::context::fixedsize_stack(4096),
                     [&main_ctx,&is,&done,&except](void*){
                     // create parser with callback function
                     Parser p( is,

@@ -24,8 +24,6 @@ public:
         excptr_(),
         caller_(boost::context::execution_context::current()),
         callee_(
-             std::allocator_arg,
-             boost::context::protected_fixedsize_stack(),
              [=]( void * vp){
                 try {
                     int i = * static_cast< int * >( vp);
