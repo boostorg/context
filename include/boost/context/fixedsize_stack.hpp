@@ -77,6 +77,9 @@ public:
 };
 
 typedef basic_fixedsize_stack< stack_traits >  fixedsize_stack;
+# if ! defined(BOOST_USE_SEGMENTED_STACKS)
+typedef fixedsize_stack default_stack;
+# endif
 
 }}
 

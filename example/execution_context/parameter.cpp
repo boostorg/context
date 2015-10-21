@@ -15,26 +15,20 @@
 
 class X{
 private:
-    int * inp_;
-    std::string outp_;
     std::exception_ptr excptr_;
     boost::context::execution_context caller_;
     boost::context::execution_context callee_;
 
 public:
     X():
-        inp_( nullptr),
-        outp_(),
         excptr_(),
         caller_(boost::context::execution_context::current()),
         callee_(
-             std::allocator_arg,
-             boost::context::protected_fixedsize_stack(),
-             [=](){
+             [=]( void * vp){
                 try {
-                    int i = * inp_;
-                    outp_ = boost::lexical_cast<std::string>(i);
-                    caller_();
+                    int i = * static_cast< int * >( vp);
+                    std::string str = boost::lexical_cast<std::string>(i);
+                    caller_( & str);
                 } catch (...) {
                     excptr_=std::current_exception();
                 }
@@ -42,12 +36,11 @@ public:
     {}
 
     std::string operator()(int i){
-        inp_ = & i;
-        callee_();
+        void * ret = callee_( & i);
         if(excptr_){
             std::rethrow_exception(excptr_);
         }
-        return outp_;
+        return * static_cast< std::string * >( ret);
     }
 };
 

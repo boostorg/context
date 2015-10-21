@@ -13,6 +13,7 @@ context/stack/stack_context.html
 context/stack/valgrind.html
 context/performance.html
 context/architectures.html
+context/architectures/crosscompiling.html
 context/rationale.html
 context/rationale/other_apis_.html
 context/rationale/x86_and_floating_point_env.html
