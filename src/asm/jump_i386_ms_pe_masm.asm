@@ -9,14 +9,14 @@
 ;  ---------------------------------------------------------------------------------
 ;  |    0h   |   04h   |   08h   |   0ch   |   010h  |   014h  |   018h  |   01ch  |
 ;  ---------------------------------------------------------------------------------
-;  | fc_mxcsr|fc_x87_cw| fc_strg |fc_deallo|  limit  |   base  |  fc_seh |   EDI   |
+;  | fc_strg |fc_deallo|  limit  |   base  |  fc_seh |   EDI   |   ESI   |   EBX   |
 ;  ---------------------------------------------------------------------------------
 ;  ---------------------------------------------------------------------------------
 ;  |    8    |    9    |   10    |    11   |    12   |    13   |    14   |    15   |
 ;  ---------------------------------------------------------------------------------
 ;  |   020h  |  024h   |  028h   |   02ch  |   030h  |   034h  |   038h  |   03ch  |
 ;  ---------------------------------------------------------------------------------
-;  |   ESI   |   EBX   |   EBP   |   EIP   |   EXIT  |         | SEH NXT |SEH HNDLR|
+;  |   EBP   |   EIP   |   EXIT  |                             | SEH NXT |SEH HNDLR|
 ;  ---------------------------------------------------------------------------------
 
 .386
@@ -25,9 +25,6 @@
 .code
 
 jump_fcontext PROC BOOST_CONTEXT_EXPORT
-    ; fourth arg of jump_fcontext() == flag indicating preserving FPU
-    mov  ecx, [esp+010h]
-
     push  ebp  ; save EBP 
     push  ebx  ; save EBX 
     push  esi  ; save ESI 
@@ -58,46 +55,20 @@ jump_fcontext PROC BOOST_CONTEXT_EXPORT
     mov  eax, [edx+010h]
     push  eax
 
-    ; prepare stack for FPU
-    lea  esp, [esp-08h]
-
-    ; test for flag preserve_fpu
-    test  ecx, ecx
-    je  nxt1
-
-    ; save MMX control- and status-word
-    stmxcsr  [esp]
-    ; save x87 control-word
-    fnstcw  [esp+04h]
-
-nxt1:
     ; first arg of jump_fcontext() == context jumping from
-    mov  eax, [esp+030h]
+    mov  eax, [esp+028h]
 
     ; store ESP (pointing to context-data) in EAX
     mov  [eax], esp
 
     ; second arg of jump_fcontext() == context jumping to
-    mov  edx, [esp+034h]
+    mov  edx, [esp+02ch]
 
     ; third arg of jump_fcontext() == value to be returned after jump
-    mov  eax, [esp+038h]
+    mov  eax, [esp+030h]
 
     ; restore ESP (pointing to context-data) from EDX
     mov  esp, edx
-
-    ; test for flag preserve_fpu
-    test  ecx, ecx
-    je  nxt2
-
-    ; restore MMX control- and status-word
-    ldmxcsr  [esp]
-    ; restore x87 control-word
-    fldcw  [esp+04h]
-
-nxt2:
-    ; prepare stack for FPU
-    lea  esp, [esp+08h]
 
     assume  fs:nothing
     ; load NT_TIB into ECX
