@@ -36,7 +36,6 @@ make_fcontext:
     andq  $-16, %rax
 
     /* reserve space for context-data on context-stack */
-    /* size for fc_mxcsr .. RIP + return-address for context-function */
     /* on context-function entry: (RSP -0x8) % 16 == 0 */
     leaq  -0x40(%rax), %rax
 
