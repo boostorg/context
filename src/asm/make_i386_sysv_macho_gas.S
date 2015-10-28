@@ -5,17 +5,17 @@
           http://www.boost.org/LICENSE_1_0.txt)
 */
 
-/****************************************************************************************
- *                                                                                      *
- *  ----------------------------------------------------------------------------------  *
- *  |    0    |    1    |    2    |    3    |    4     |    5    |    6    |    7    |  *
- *  ----------------------------------------------------------------------------------  *
- *  |   0x0   |   0x4   |   0x8   |   0xc   |   0x10   |   0x14  |   0x18  |   0x1c  |  *
- *  ----------------------------------------------------------------------------------  *
- *  | fc_mxcsr|fc_x87_cw|   EDI   |   ESI   |   EBX    |   EBP   |   EIP   |   EXIT  |  *
- *  ----------------------------------------------------------------------------------  *
- *                                                                                      *
- ****************************************************************************************/
+/********************************************************************
+ *                                                                  *
+ *  --------------------------------------------------------------  *
+ *  |    0    |    1    |    2    |    3    |    4     |    5    |  *
+ *  --------------------------------------------------------------  *
+ *  |   0x0   |   0x4   |   0x8   |   0xc   |   0x10   |   0x14  |  *
+ *  --------------------------------------------------------------  *
+ *  |   EDI   |   ESI   |   EBX   |   EBP   |   EIP    |   EXIT  |  *
+ *  --------------------------------------------------------------  *
+ *                                                                  *
+ ********************************************************************/
 
 .text
 .globl _make_fcontext
@@ -34,16 +34,11 @@ _make_fcontext:
     /* reserve space for context-data on context-stack */
     /* size for fc_mxcsr .. EIP + return-address for context-function */
     /* on context-function entry: (ESP -0x4) % 8 == 0 */
-    leal  -0x20(%eax), %eax
+    leal  -0x18(%eax), %eax
 
     /* thrid arg of make_fcontext() == address of context-function */
     movl  0xc(%esp), %edx
-    movl  %edx, 0x18(%eax)
-
-    /* save MMX control- and status-word */
-    stmxcsr  (%eax)
-    /* save x87 control-word */
-    fnstcw  0x4(%eax)
+    movl  %edx, 0x10(%eax)
 
     /* compute abs address of label finish */
     call  1f
@@ -53,7 +48,7 @@ _make_fcontext:
     addl  $finish-1b, %ecx
     /* save address of finish as return-address for context-function */
     /* will be entered after context-function returns */
-    movl  %ecx, 0x1c(%eax)
+    movl  %ecx, 0x14(%eax)
 
     ret /* return pointer to context-data */
 
