@@ -151,17 +151,6 @@ If the __context_fn__ emits an exception, the behaviour is undefined.
 exception in another execution context.]
 
 
-[heading Preserving floating point registers]
-
-Preserving the floating point registers increases the cycle count for a context
-switch (see performance tests).
-The fourth argument of __jump_fcontext__ controls if fpu registers should be
-preserved by the context jump.
-
-[important The use of the fpu controlling argument of __jump_fcontext__ must
-be consistent in the application. Otherwise the behaviour is undefined.]
-
-
 [heading Stack unwinding]
 
 Sometimes it is necessary to unwind the stack of an unfinished context to
@@ -179,7 +168,7 @@ pattern). The user is responsible for this task.
 
         typedef <opaque pointer > fcontext_t;
 
-        intptr_t jump_fcontext(fcontext_t* ofc,fcontext_t nfc,intptr_t vp,bool preserve_fpu=true);
+        intptr_t jump_fcontext(fcontext_t* ofc,fcontext_t nfc,intptr_t vp);
         fcontext_t make_fcontext(void* sp,std::size_t size,void(*fn)(intptr_t));
 
 [heading `sp`]
@@ -198,14 +187,13 @@ downwards or upwards).]]
 [[Member:] [Tracks the memory for the context's stack.]]
 ]
 
-[heading `intptr_t jump_fcontext(fcontext_t* ofc,fcontext_t nfc,intptr_t p,bool preserve_fpu=true)`]
+[heading `intptr_t jump_fcontext(fcontext_t* ofc,fcontext_t nfc,intptr_t p)
 [variablelist
 [[Effects:] [Stores the current context data (stack pointer, instruction
 pointer, and CPU registers) to `*ofc` and restores the context data from `nfc`,
 which implies jumping to `nfc`'s execution context. The intptr_t argument, `p`,
 is passed to the current context to be returned by the most recent call to
-`jump_fcontext()` in the same thread. The last argument controls if fpu registers
-have to be preserved.]]
+`jump_fcontext()` in the same thread.]]
 [[Returns:] [The third pointer argument passed to the most recent call to
 `jump_fcontext()`, if any.]]
 ]
