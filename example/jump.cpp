@@ -27,7 +27,7 @@ ctx::fcontext_t fc1 = 0;
 void f1( intptr_t)
 {
     std::cout << "f1: entered" << std::endl;
-    ctx::jump_fcontext( & fc1, fcm, 0, false);
+    ctx::jump_fcontext( & fc1, fcm, 0);
 }
 
 int main( int argc, char * argv[])
@@ -38,7 +38,7 @@ int main( int argc, char * argv[])
     fc1 = ctx::make_fcontext( base1, stack_allocator::default_stacksize(), f1);
 
     std::cout << "main: call start_fcontext( & fcm, fc1, 0)" << std::endl;
-    ctx::jump_fcontext( & fcm, fc1, 0, false);
+    ctx::jump_fcontext( & fcm, fc1, 0);
 
     std::cout << "main: done" << std::endl;
 
