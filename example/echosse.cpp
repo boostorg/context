@@ -26,8 +26,7 @@ typedef ctx::simple_stack_allocator<
 ctx::fcontext_t fcm = 0;
 ctx::fcontext_t fc = 0;
 
-void echoSSE( int i)
-{
+void echoSSE( int i) {
     __m128i xmm;
     xmm = _mm_set_epi32(i, i+1, i+2, i+3);
     uint32_t v32[4];
@@ -40,28 +39,24 @@ void echoSSE( int i)
     std::cout << v32[3]; 
 }
 
-void echo( intptr_t param)
-{
-    int i = ( int) ctx::jump_fcontext( & fc, fcm, 0);
-    for (;;)
-    {
+void echo( void * param) {
+    int i =  *( int *) ctx::jump_fcontext( & fc, fcm, 0);
+    for (;;) {
         std::cout << i;
         echoSSE( i);
         std::cout << " ";
-        i = ( int) ctx::jump_fcontext( & fc, fcm, 0);
+        i = * ( int *) ctx::jump_fcontext( & fc, fcm, 0);
     }
 }
 
-int main( int argc, char * argv[])
-{
+int main( int argc, char * argv[]) {
     stack_allocator alloc;
     void * sp = alloc.allocate( stack_allocator::default_stacksize() );
     fc = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), echo);
     ctx::jump_fcontext( & fcm, fc, 0);
-    for ( int i = 0; i < 10; ++i)
-        ctx::jump_fcontext( & fcm, fc, ( intptr_t) i);
-
+    for ( int i = 0; i < 10; ++i) {
+        ctx::jump_fcontext( & fcm, fc, & i);
+    }
     std::cout << "\nDone" << std::endl;
-
     return EXIT_SUCCESS;
 }

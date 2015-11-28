@@ -24,8 +24,7 @@ ctx::fcontext_t fcm = 0;
 ctx::fcontext_t fc = 0;
 boost::exception_ptr except;
 
-void f( intptr_t arg)
-{
+void f( void * arg) {
     std::cout << "calling caller..." << std::endl;
     ctx::jump_fcontext( & fc, fcm, arg);
     try {
@@ -43,20 +42,17 @@ void f( intptr_t arg)
     std::cout << "exiting mycoro..." << std::endl;
 }
 
-int main( int argc, char * argv[])
-{
+int main( int argc, char * argv[]) {
     stack_allocator alloc;
-
     void * base = alloc.allocate( stack_allocator::default_stacksize());
     fc = ctx::make_fcontext( base, stack_allocator::default_stacksize(), f);
-
-    ctx::jump_fcontext( & fcm, fc, ( intptr_t) 0);
+    ctx::jump_fcontext( & fcm, fc, 0);
     try {
         try {
             throw std::runtime_error("main exception");
         } catch( std::exception const& e) {
             std::cout << "calling callee in the catch block..." << std::endl;
-            ctx::jump_fcontext( & fcm, fc, ( intptr_t) 0);
+            ctx::jump_fcontext( & fcm, fc, 0);
             std::cout << "rethrowing main exception..." << std::endl;
             throw;
         }
@@ -64,8 +60,8 @@ int main( int argc, char * argv[])
         std::cout << "main caught: " << e.what() << std::endl;
     }
     std::cout << "calling callee one last time..." << std::endl;
-    ctx::jump_fcontext( & fcm, fc, ( intptr_t) 0);
+    ctx::jump_fcontext( & fcm, fc, 0);
     std::cout << "exiting main..." << std::endl;
-
-    return EXIT_SUCCESS;
+    return E
+        XIT_SUCCESS;
 }

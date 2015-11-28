@@ -53,17 +53,12 @@ namespace detail {
 struct activation_record {
     typedef boost::intrusive_ptr< activation_record >    ptr_t;
 
-    enum flag_t {
-        flag_main_ctx   = 1 << 1,
-        flag_preserve_fpu = 1 << 2
-    };
-
     thread_local static ptr_t   current_rec;
 
     std::atomic< std::size_t >  use_count;
     fcontext_t                  fctx;
     stack_context               sctx;
-    int                         flags;
+    bool                        main_ctx;
 
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
@@ -71,42 +66,32 @@ struct activation_record {
         use_count( 0),
         fctx( nullptr),
         sctx(),
-        flags( flag_main_ctx) {
+        main_ctx( true) {
     } 
 
     activation_record( fcontext_t fctx_, stack_context sctx_) noexcept :
         use_count( 0),
         fctx( fctx_),
         sctx( sctx_),
-        flags( 0) {
+        main_ctx( false) {
     } 
 
     virtual ~activation_record() noexcept = default;
 
-    void * resume( void * vp, bool fpu) noexcept {
+    void * resume( void * vp) noexcept {
         // store current activation record in local variable
         activation_record * from = current_rec.get();
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
         // returned by execution_context::current()
         current_rec = this;
-        // set FPU flag
-        if (fpu) {
-            from->flags |= flag_preserve_fpu;
-            this->flags |= flag_preserve_fpu;
-        } else {
-            from->flags &= ~flag_preserve_fpu;
-            this->flags &= ~flag_preserve_fpu;
-        }
 # if defined(BOOST_USE_SEGMENTED_STACKS)
         // adjust segmented stack properties
         __splitstack_getcontext( from->sctx.segments_ctx);
         __splitstack_setcontext( sctx.segments_ctx);
 # endif
         // context switch from parent context to `this`-context
-        intptr_t ret = jump_fcontext( & from->fctx, fctx, reinterpret_cast< intptr_t >( vp), fpu);
-        // parent context resumed
-        return reinterpret_cast< void * >( ret);
+        return jump_fcontext( & from->fctx, fctx, vp);
     }
 
     virtual void deallocate() {
@@ -134,9 +119,9 @@ struct activation_record_initializer {
 template< typename Fn, typename Tpl, typename StackAlloc >
 class capture_record : public activation_record {
 private:
-    StackAlloc      salloc_;
-    Fn              fn_;
-    Tpl             tpl_;
+    StackAlloc              salloc_;
+    Fn                      fn_;
+    Tpl                     tpl_;
     activation_record   *   caller_;
 
     static void destroy( capture_record * p) {
@@ -167,12 +152,12 @@ public:
 
     void run() noexcept {
         try {
-            void * vp = caller_->resume( caller_, true);
+            void * vp = caller_->resume( caller_);
             do_invoke( fn_, std::tuple_cat( tpl_, std::tie( vp) ) );
         } catch (...) {
             std::terminate();
         }
-        BOOST_ASSERT( 0 == (flags & flag_main_ctx) );
+        BOOST_ASSERT( ! main_ctx);
     }
 };
 
@@ -194,10 +179,8 @@ private:
     // entered if the execution context
     // is resumed for the first time
     template< typename AR >
-    static void entry_func( intptr_t p) noexcept {
-        BOOST_ASSERT( 0 != p);
-
-        AR * ar( reinterpret_cast< AR * >( p) );
+    static void entry_func( void * vp) noexcept {
+        AR * ar( reinterpret_cast< AR * >( vp) );
         BOOST_ASSERT( nullptr != ar);
 
         // start execution of toplevel context-function
@@ -292,7 +275,7 @@ public:
         ptr_( create_context( segmented_stack(),
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...) ) ) {
-        ptr_->resume( ptr_.get(), true);
+        ptr_->resume( ptr_.get() );
     }
 
     template< typename Fn, typename ... Args >
@@ -305,7 +288,7 @@ public:
         ptr_( create_context( salloc,
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...) ) ) {
-        ptr_->resume( ptr_.get(), true);
+        ptr_->resume( ptr_.get() );
     }
 
     template< typename Fn, typename ... Args >
@@ -318,7 +301,7 @@ public:
         ptr_( create_context( palloc, salloc,
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...) ) ) {
-        ptr_->resume( ptr_.get(), true);
+        ptr_->resume( ptr_.get() );
     }
 # else
     template< typename Fn, typename ... Args >
@@ -331,7 +314,7 @@ public:
         ptr_( create_context( fixedsize_stack(),
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...) ) ) {
-        ptr_->resume( ptr_.get(), true);
+        ptr_->resume( ptr_.get() );
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
@@ -344,7 +327,7 @@ public:
         ptr_( create_context( salloc,
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...) ) ) {
-        ptr_->resume( ptr_.get(), true);
+        ptr_->resume( ptr_.get() );
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
@@ -357,7 +340,7 @@ public:
         ptr_( create_context( palloc, salloc,
                               std::forward< Fn >( fn),
                               std::make_tuple( std::forward< Args >( args) ...) ) ) {
-        ptr_->resume( ptr_.get(), true);
+        ptr_->resume( ptr_.get() );
     }
 # endif
 
@@ -385,8 +368,8 @@ public:
         return * this;
     }
 
-    void * operator()( void * vp = nullptr, bool preserve_fpu = false) noexcept {
-        return ptr_->resume( vp, preserve_fpu);
+    void * operator()( void * vp = nullptr) noexcept {
+        return ptr_->resume( vp);
     }
 
     explicit operator bool() const noexcept {

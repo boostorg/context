@@ -26,31 +26,24 @@ ctx::fcontext_t fc1 = 0;
 
 typedef std::pair< int, int >   pair_t;
 
-void f1( intptr_t param)
-{
+void f1( void * param) {
     pair_t * p = ( pair_t *) param;
-
-    p = ( pair_t *) ctx::jump_fcontext( & fc1, fcm, ( intptr_t) ( p->first + p->second) );
-
-    ctx::jump_fcontext( & fc1, fcm, ( intptr_t) ( p->first + p->second) );
+    int res = p->first + p->second;
+    p = ( pair_t *) ctx::jump_fcontext( & fc1, fcm, & res);
+    res = p->first + p->second;
+    ctx::jump_fcontext( & fc1, fcm, & res);
 }
 
-int main( int argc, char * argv[])
-{
+int main( int argc, char * argv[]) {
     stack_allocator alloc;
-
     void * sp = alloc.allocate( stack_allocator::default_stacksize() );
     fc1 = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f1);
-
     pair_t p( std::make_pair( 2, 7) );
-    int res = ( int) ctx::jump_fcontext( & fcm, fc1, ( intptr_t) & p);
+    int res = * ( int *) ctx::jump_fcontext( & fcm, fc1, & p);
     std::cout << p.first << " + " << p.second << " == " << res << std::endl;
-
     p = std::make_pair( 5, 6);
-    res = ( int) ctx::jump_fcontext( & fcm, fc1, ( intptr_t) & p);
+    res = * ( int *) ctx::jump_fcontext( & fcm, fc1, & p);
     std::cout << p.first << " + " << p.second << " == " << res << std::endl;
-
     std::cout << "main: done" << std::endl;
-
     return EXIT_SUCCESS;
 }
