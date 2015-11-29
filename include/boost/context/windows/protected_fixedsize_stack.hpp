@@ -31,10 +31,6 @@ namespace context {
 template< typename traitsT >
 class basic_protected_fixedsize_stack {
 private:
-#if defined(BOOST_USE_WINFIBERS)
-    friend class execution_context;
-#endif
-
     std::size_t     size_;
 
 public:
@@ -76,12 +72,10 @@ public:
         return sctx;
     }
 
-    void deallocate( stack_context & sctx) {
+    void deallocate( stack_context & sctx) BOOST_NOEXCEPT_OR_NOTHROW {
         BOOST_ASSERT( sctx.sp);
-#if ! defined(BOOST_USE_WINFIBERS)
         BOOST_ASSERT( traits_type::minimum_size() <= sctx.size);
         BOOST_ASSERT( traits_type::is_unbounded() || ( traits_type::maximum_size() >= sctx.size) );
-#endif
 
         void * vp = static_cast< char * >( sctx.sp) - sctx.size;
         ::VirtualFree( vp, 0, MEM_RELEASE);

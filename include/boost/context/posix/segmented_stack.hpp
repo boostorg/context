@@ -65,7 +65,7 @@ public:
         return sctx;
     }
 
-    void deallocate( stack_context & sctx) {
+    void deallocate( stack_context & sctx) BOOST_NOEXCEPT_OR_NOTHROW {
         __splitstack_releasecontext( sctx.segments_ctx);
     }
 };

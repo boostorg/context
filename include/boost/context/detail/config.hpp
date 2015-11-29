@@ -57,7 +57,7 @@
 # define BOOST_CONTEXT_SEGMENTS 10
 #endif
 
-#undef BOOST_CONTEXT_NO_EXECUTION_CONTEXT
+#undef BOOST_CONTEXT_NO_CPP14
 #if defined(BOOST_NO_CXX11_CONSTEXPR) || \
     defined(BOOST_NO_CXX11_DECLTYPE) || \
     defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) || \
@@ -72,16 +72,16 @@
     defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || \
     defined(BOOST_NO_CXX14_INITIALIZED_LAMBDA_CAPTURES) || \
     ! defined(__cpp_lib_integer_sequence) && __cpp_lib_integer_sequence < 201304
-# define BOOST_CONTEXT_NO_EXECUTION_CONTEXT
+# define BOOST_CONTEXT_NO_CPP14
 #endif
 // workaroud: MSVC 14 does not provide macros to test for compile-time integer sequence
 #if _MSC_VER > 1800 // _MSC_VER == 1800 -> MS Visual Studio 2013
-# undef BOOST_CONTEXT_NO_EXECUTION_CONTEXT
+# undef BOOST_CONTEXT_NO_CPP14
 #endif
 // workaround: Xcode clang feature detection
 #if ! defined(__cpp_lib_integer_sequence) && __cpp_lib_integer_sequence < 201304
 #  if _LIBCPP_STD_VER > 11
-#     undef BOOST_CONTEXT_NO_EXECUTION_CONTEXT
+#     undef BOOST_CONTEXT_NO_CPP14
 #  endif
 #endif
 

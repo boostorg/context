@@ -86,7 +86,7 @@ public:
         return sctx;
     }
 
-    void deallocate( stack_context & sctx) {
+    void deallocate( stack_context & sctx) BOOST_NOEXCEPT_OR_NOTHROW {
         BOOST_ASSERT( sctx.sp);
         BOOST_ASSERT( traits_type::minimum_size() <= sctx.size);
         BOOST_ASSERT( traits_type::is_unbounded() || ( traits_type::maximum_size() >= sctx.size) );

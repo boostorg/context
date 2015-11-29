@@ -20,7 +20,11 @@ extern "C" {
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <boost/thread.hpp>
+#if ! defined(BOOST_CONTEXT_NO_CPP14)
+# include <boost/thread.hpp>
+#else
+# include <mutex>
+#endif
 
 #if !defined (SIGSTKSZ)
 # define SIGSTKSZ (8 * 1024)
@@ -33,39 +37,67 @@ extern "C" {
 
 namespace {
 
-void pagesize_( std::size_t * size)
-{
+#if ! defined(BOOST_CONTEXT_NO_CPP14)
+void pagesize_( std::size_t * size) {
     // conform to POSIX.1-2001
     * size = ::sysconf( _SC_PAGESIZE);
 }
 
-void stacksize_limit_( rlimit * limit)
-{
+void stacksize_limit_( rlimit * limit) {
     // conforming to POSIX.1-2001
-#if defined(BOOST_DISABLE_ASSERTS) || defined(NDEBUG)
+# if defined(BOOST_DISABLE_ASSERTS) || defined(NDEBUG)
     ::getrlimit( RLIMIT_STACK, limit);
-#else
+# else
     const int result = ::getrlimit( RLIMIT_STACK, limit);
     BOOST_ASSERT( 0 == result);
     (void)result;
-#endif
+# endif
 }
 
-std::size_t pagesize()
-{
+std::size_t pagesize() {
     static std::size_t size = 0;
     static boost::once_flag flag;
     boost::call_once( flag, pagesize_, & size);
     return size;
 }
 
-rlimit stacksize_limit()
-{
+rlimit stacksize_limit() {
     static rlimit limit;
     static boost::once_flag flag;
     boost::call_once( flag, stacksize_limit_, & limit);
     return limit;
 }
+#else
+std::size_t pagesize() {
+    static std::size_t size = 0;
+    static std::once_flag flag;
+    std::call_once( flag,
+                    [&size](){
+                        // conform to POSIX.1-2001
+                        size = ::sysconf( _SC_PAGESIZE);
+                        // conforming to POSIX.1-2001
+                    });
+    return size;
+}
+
+rlimit stacksize_limit() {
+    static rlimit limit;
+    static std::once_flag flag;
+    std::call_once( flag,
+                    [&limit](){
+                        // conforming to POSIX.1-2001
+# if defined(BOOST_DISABLE_ASSERTS) || defined(NDEBUG)
+                        ::getrlimit( RLIMIT_STACK, & limit);
+# else
+                        const int result = ::getrlimit( RLIMIT_STACK, & limit);
+                        BOOST_ASSERT( 0 == result);
+                        (void)result;
+# endif
+                        const int result = ::getrlimit( RLIMIT_STACK, & limit);
+                    });
+    return limit;
+}
+#endif
 
 }
 
@@ -73,18 +105,21 @@ namespace boost {
 namespace context {
 
 bool
-stack_traits::is_unbounded() BOOST_NOEXCEPT
-{ return RLIM_INFINITY == stacksize_limit().rlim_max; }
+stack_traits::is_unbounded() BOOST_NOEXCEPT_OR_NOTHROW {
+    return RLIM_INFINITY == stacksize_limit().rlim_max;
+}
 
 std::size_t
-stack_traits::page_size() BOOST_NOEXCEPT
-{ return pagesize(); }
+stack_traits::page_size() BOOST_NOEXCEPT_OR_NOTHROW {
+    return pagesize();
+}
 
 std::size_t
-stack_traits::default_size() BOOST_NOEXCEPT
-{
+stack_traits::default_size() BOOST_NOEXCEPT_OR_NOTHROW {
     std::size_t size = 8 * minimum_size();
-    if ( is_unbounded() ) return size;
+    if ( is_unbounded() ) {
+        return size;
+    }
 
     BOOST_ASSERT( maximum_size() >= minimum_size() );
     return maximum_size() == size
@@ -93,12 +128,12 @@ stack_traits::default_size() BOOST_NOEXCEPT
 }
 
 std::size_t
-stack_traits::minimum_size() BOOST_NOEXCEPT
-{ return SIGSTKSZ; }
+stack_traits::minimum_size() BOOST_NOEXCEPT_OR_NOTHROW {
+    return SIGSTKSZ;
+}
 
 std::size_t
-stack_traits::maximum_size() BOOST_NOEXCEPT
-{
+stack_traits::maximum_size() BOOST_NOEXCEPT_OR_NOTHROW {
     BOOST_ASSERT( ! is_unbounded() );
     return static_cast< std::size_t >( stacksize_limit().rlim_max);
 }
