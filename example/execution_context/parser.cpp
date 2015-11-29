@@ -92,10 +92,8 @@ int main() {
         std::istringstream is("1+1");
         bool done=false;
         std::exception_ptr except;
-
         // create handle to main execution context
         auto main_ctx( boost::context::execution_context::current() );
-
         // execute parser in new execution context
         boost::context::execution_context parser_ctx(
                 [&main_ctx,&is,&done,&except](void*){
@@ -131,9 +129,7 @@ int main() {
                 std::rethrow_exception( except);
             }
         }
-
         std::cout << "main: done" << std::endl;
-
         return EXIT_SUCCESS;
     } catch ( std::exception const& e) {
         std::cerr << "exception: " << e.what() << std::endl;

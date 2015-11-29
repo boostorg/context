@@ -6,7 +6,7 @@
 
 #include <boost/context/detail/config.hpp>
 
-#if ! defined(BOOST_CONTEXT_NO_EXECUTION_CONTEXT)
+#if ! defined(BOOST_CONTEXT_NO_CPP14)
 
 # include "boost/context/execution_context.hpp"
 
@@ -34,9 +34,11 @@ activation_record_initializer::activation_record_initializer() {
     }
 }
 
-activation_record_initializer::~activation_record_initializer() {
+activation_record_initializer::~activation_record_initializer() noexcept {
     if ( 0 == --counter) {
-        activation_record::current_rec.reset();
+        BOOST_ASSERT( activation_record::current_rec->is_main_context() );
+        delete activation_record::current_rec.detach();
+
     }
 }
 

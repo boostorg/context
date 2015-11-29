@@ -17,17 +17,13 @@ __declspec(noinline) void access( char *buf);
 #else // GCC
 void access( char *buf) __attribute__ ((noinline));
 #endif
-void access( char *buf)
-{
+void access( char *buf) {
   buf[0] = '\0';
 }
 
-void bar( int i)
-{
+void bar( int i) {
     char buf[4 * 1024];
-
-    if ( i > 0)
-    {
+    if ( i > 0) {
         access( buf);
         std::cout << i << ". iteration" << std::endl;
         bar( i - 1);
@@ -36,7 +32,6 @@ void bar( int i)
 
 int main() {
     int count = 384;
-
 #if defined(BOOST_USE_SEGMENTED_STACKS)
     std::cout << "using segmented_stack stacks: allocates " << count << " * 4kB == " << 4 * count << "kB on stack, ";
     std::cout << "initial stack size = " << boost::context::segmented_stack::traits_type::default_size() / 1024 << "kB" << std::endl;
@@ -46,19 +41,14 @@ int main() {
     std::cout << "initial stack size = " << boost::context::fixedsize_stack::traits_type::default_size() / 1024 << "kB" << std::endl;
     std::cout << "application might fail" << std::endl;
 #endif
-
     boost::context::execution_context main_ctx(
         boost::context::execution_context::current() );
-
     boost::context::execution_context bar_ctx(
         [& main_ctx, count]( void *){
             bar( count);
             main_ctx();   
         });
-    
     bar_ctx();
-
     std::cout << "main: done" << std::endl;
-
-    return 0;
+    return EXIT_SUCCESS;
 }
