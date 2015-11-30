@@ -22,7 +22,7 @@ namespace context {
 typedef void*   fcontext_t;
 
 extern "C" BOOST_CONTEXT_DECL
-void * BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t * from, const fcontext_t to, void * vp);
+void * BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t const * from, fcontext_t const to, void * vp);
 extern "C" BOOST_CONTEXT_DECL
 fcontext_t BOOST_CONTEXT_CALLDECL make_fcontext( void * sp, std::size_t size, void (* fn)( void *) );
 

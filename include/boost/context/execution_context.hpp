@@ -63,10 +63,9 @@ struct activation_record {
 
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
-    activation_record() = default;
+    constexpr activation_record() noexcept = default;
 
     activation_record( fcontext_t fctx_, stack_context sctx_) noexcept :
-        use_count{ 0 },
         fctx{ fctx_ },
         sctx( sctx_ ), // sctx{ sctx_ } - clang-3.6: no viable conversion from 'boost::context::stack_context' to 'std::size_t'
         main_ctx{ false } {
@@ -80,7 +79,7 @@ struct activation_record {
 
     void * resume( void * vp) {
         // store current activation record in local variable
-        activation_record * from = current_rec.get();
+        auto from = current_rec.get();
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
         // returned by execution_context::current()
@@ -103,7 +102,6 @@ struct activation_record {
 
     friend void intrusive_ptr_release( activation_record * ar) noexcept {
         BOOST_ASSERT( nullptr != ar);
-
         if ( 0 == --ar->use_count) {
             ar->deallocate();
         }
@@ -111,7 +109,7 @@ struct activation_record {
 };
 
 struct activation_record_initializer {
-    activation_record_initializer();
+    activation_record_initializer() noexcept;
     ~activation_record_initializer() noexcept;
 };
 
@@ -183,10 +181,10 @@ private:
             Fn && fn, Tpl && tpl) {
         typedef detail::capture_record< Fn, Tpl, StackAlloc >  capture_t;
 
-        stack_context sctx = salloc.allocate();
+        auto sctx = salloc.allocate();
         // reserve space for control structure
 #if defined(BOOST_NO_CXX14_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
-        std::size_t size = sctx.size - sizeof( capture_t);
+        const std::size_t size = sctx.size - sizeof( capture_t);
         void * sp = static_cast< char * >( sctx.sp) - sizeof( capture_t);
 #else
         constexpr std::size_t func_alignment = 64; // alignof( capture_t);
@@ -198,10 +196,10 @@ private:
         sp = std::align( func_alignment, func_size, sp, space);
         BOOST_ASSERT( nullptr != sp);
         // calculate remaining size
-        std::size_t size = sctx.size - ( static_cast< char * >( sctx.sp) - static_cast< char * >( sp) );
+        const std::size_t size = sctx.size - ( static_cast< char * >( sctx.sp) - static_cast< char * >( sp) );
 #endif
         // create fast-context
-        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
+        const fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
         // get current activation record
         auto curr = execution_context::current().ptr_;
@@ -218,7 +216,7 @@ private:
 
         // reserve space for control structure
 #if defined(BOOST_NO_CXX14_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
-        std::size_t size = palloc.size - sizeof( capture_t);
+        const std::size_t size = palloc.size - sizeof( capture_t);
         void * sp = static_cast< char * >( palloc.sp) - sizeof( capture_t);
 #else
         constexpr std::size_t func_alignment = 64; // alignof( capture_t);
@@ -230,10 +228,10 @@ private:
         sp = std::align( func_alignment, func_size, sp, space);
         BOOST_ASSERT( nullptr != sp);
         // calculate remaining size
-        std::size_t size = palloc.size - ( static_cast< char * >( palloc.sp) - static_cast< char * >( sp) );
+        const std::size_t size = palloc.size - ( static_cast< char * >( palloc.sp) - static_cast< char * >( sp) );
 #endif
         // create fast-context
-        fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
+        const fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
         // get current activation record
         auto curr = execution_context::current().ptr_;

@@ -21,9 +21,9 @@ extern "C" {
 #include <boost/assert.hpp>
 #include <boost/context/detail/config.hpp>
 #if ! defined(BOOST_CONTEXT_NO_CPP14)
-# include <boost/thread.hpp>
-#else
 # include <mutex>
+#else
+# include <boost/thread.hpp>
 #endif
 
 #include <boost/context/stack_context.hpp>
@@ -48,34 +48,27 @@ extern "C" {
 
 namespace {
 
-#if ! defined(BOOST_CONTEXT_NO_CPP14)
-void system_info_( SYSTEM_INFO * si) {
+void system_info_( SYSTEM_INFO * si) BOOST_NOEXCEPT_OR_NOTHROW {
     ::GetSystemInfo( si);
 }
 
-SYSTEM_INFO system_info() {
+SYSTEM_INFO system_info() BOOST_NOEXCEPT_OR_NOTHROW {
     static SYSTEM_INFO si;
+#if ! defined(BOOST_CONTEXT_NO_CPP14)
+    static std::once_flag flag;
+    std::call_once( flag, static_cast< void(*)( SYSTEM_INFO *) >( system_info_), & si);
+#else
     static boost::once_flag flag;
     boost::call_once( flag, static_cast< void(*)( SYSTEM_INFO *) >( system_info_), & si);
-    return si;
-}
-#else
-SYSTEM_INFO system_info() {
-    static SYSTEM_INFO si;
-    static std::once_flag flag;
-    std::call_once( flag,
-                    [&si](){
-                        ::GetSystemInfo( & si);
-                    });
-    return si;
-}
 #endif
+    return si;
+}
 
-std::size_t pagesize() {
+std::size_t pagesize() BOOST_NOEXCEPT_OR_NOTHROW {
     return static_cast< std::size_t >( system_info().dwPageSize);
 }
 
-std::size_t page_count( std::size_t stacksize) {
+std::size_t page_count( std::size_t stacksize) BOOST_NOEXCEPT_OR_NOTHROW {
     return static_cast< std::size_t >(
         std::floor(
             static_cast< float >( stacksize) / pagesize() ) );
@@ -103,11 +96,10 @@ stack_traits::page_size() BOOST_NOEXCEPT_OR_NOTHROW {
 BOOST_CONTEXT_DECL
 std::size_t
 stack_traits::default_size() BOOST_NOEXCEPT_OR_NOTHROW {
-    std::size_t size = 64 * 1024; // 64 kB
+    const std::size_t size = 64 * 1024; // 64 kB
     if ( is_unbounded() ) {
         return (std::max)( size, minimum_size() );
     }
-
     BOOST_ASSERT( maximum_size() >= minimum_size() );
     return maximum_size() == minimum_size()
         ? minimum_size()

@@ -21,9 +21,9 @@ extern "C" {
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #if ! defined(BOOST_CONTEXT_NO_CPP14)
-# include <boost/thread.hpp>
-#else
 # include <mutex>
+#else
+# include <boost/thread.hpp>
 #endif
 
 #if !defined (SIGSTKSZ)
@@ -37,67 +37,39 @@ extern "C" {
 
 namespace {
 
-#if ! defined(BOOST_CONTEXT_NO_CPP14)
-void pagesize_( std::size_t * size) {
+void pagesize_( std::size_t * size) BOOST_NOEXCEPT_OR_NOTHROW {
     // conform to POSIX.1-2001
     * size = ::sysconf( _SC_PAGESIZE);
 }
 
-void stacksize_limit_( rlimit * limit) {
+void stacksize_limit_( rlimit * limit) BOOST_NOEXCEPT_OR_NOTHROW {
     // conforming to POSIX.1-2001
-# if defined(BOOST_DISABLE_ASSERTS) || defined(NDEBUG)
     ::getrlimit( RLIMIT_STACK, limit);
-# else
-    const int result = ::getrlimit( RLIMIT_STACK, limit);
-    BOOST_ASSERT( 0 == result);
-    (void)result;
-# endif
 }
 
-std::size_t pagesize() {
+std::size_t pagesize() BOOST_NOEXCEPT_OR_NOTHROW {
     static std::size_t size = 0;
+#if ! defined(BOOST_CONTEXT_NO_CPP14)
+    static std::once_flag flag;
+    std::call_once( flag, pagesize_, & size);
+#else
     static boost::once_flag flag;
     boost::call_once( flag, pagesize_, & size);
+#endif
     return size;
 }
 
-rlimit stacksize_limit() {
+rlimit stacksize_limit() BOOST_NOEXCEPT_OR_NOTHROW {
     static rlimit limit;
+#if ! defined(BOOST_CONTEXT_NO_CPP14)
+    static std::once_flag flag;
+    std::call_once( flag, stacksize_limit_, & limit);
+#else
     static boost::once_flag flag;
     boost::call_once( flag, stacksize_limit_, & limit);
-    return limit;
-}
-#else
-std::size_t pagesize() {
-    static std::size_t size = 0;
-    static std::once_flag flag;
-    std::call_once( flag,
-                    [&size](){
-                        // conform to POSIX.1-2001
-                        size = ::sysconf( _SC_PAGESIZE);
-                        // conforming to POSIX.1-2001
-                    });
-    return size;
-}
-
-rlimit stacksize_limit() {
-    static rlimit limit;
-    static std::once_flag flag;
-    std::call_once( flag,
-                    [&limit](){
-                        // conforming to POSIX.1-2001
-# if defined(BOOST_DISABLE_ASSERTS) || defined(NDEBUG)
-                        ::getrlimit( RLIMIT_STACK, & limit);
-# else
-                        const int result = ::getrlimit( RLIMIT_STACK, & limit);
-                        BOOST_ASSERT( 0 == result);
-                        (void)result;
-# endif
-                        const int result = ::getrlimit( RLIMIT_STACK, & limit);
-                    });
-    return limit;
-}
 #endif
+    return limit;
+}
 
 }
 

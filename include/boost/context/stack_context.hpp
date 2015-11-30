@@ -34,8 +34,6 @@ struct stack_context {
 # if defined(BOOST_USE_VALGRIND)
     unsigned                valgrind_stack_id{ 0 };
 # endif
-
-    constexpr stack_context() noexcept = default;
 };
 #else
 struct stack_context {

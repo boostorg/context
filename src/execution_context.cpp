@@ -28,7 +28,7 @@ detail::activation_record::current_rec;
 thread_local static std::size_t counter;
 
 // schwarz counter
-activation_record_initializer::activation_record_initializer() {
+activation_record_initializer::activation_record_initializer() noexcept {
     if ( 0 == counter++) {
         activation_record::current_rec.reset( new activation_record() );
     }
