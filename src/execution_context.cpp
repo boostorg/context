@@ -34,11 +34,10 @@ activation_record_initializer::activation_record_initializer() noexcept {
     }
 }
 
-activation_record_initializer::~activation_record_initializer() noexcept {
+activation_record_initializer::~activation_record_initializer() {
     if ( 0 == --counter) {
         BOOST_ASSERT( activation_record::current_rec->is_main_context() );
         delete activation_record::current_rec.detach();
-
     }
 }
 

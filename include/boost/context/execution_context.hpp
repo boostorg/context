@@ -63,7 +63,7 @@ struct activation_record {
 
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
-    constexpr activation_record() noexcept = default;
+    constexpr activation_record() = default;
 
     activation_record( fcontext_t fctx_, stack_context sctx_) noexcept :
         fctx{ fctx_ },
@@ -71,7 +71,7 @@ struct activation_record {
         main_ctx{ false } {
     } 
 
-    virtual ~activation_record() noexcept = default;
+    virtual ~activation_record() = default;
 
     bool is_main_context() const noexcept {
         return main_ctx;
@@ -110,7 +110,7 @@ struct activation_record {
 
 struct activation_record_initializer {
     activation_record_initializer() noexcept;
-    ~activation_record_initializer() noexcept;
+    ~activation_record_initializer();
 };
 
 template< typename Fn, typename Tpl, typename StackAlloc >
@@ -142,8 +142,6 @@ public:
         tpl_( std::forward< Tpl >( tpl) ),// tpl_{ std::forward< Tpl >( tpl) } - clang-3.6: excess elements in struct initializer
         caller_{ caller } {
     }
-
-    ~capture_record() noexcept = default;
 
     void deallocate() noexcept override final {
         destroy( this);
