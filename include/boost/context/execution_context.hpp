@@ -27,7 +27,7 @@
 # include <boost/context/fcontext.hpp>
 # include <boost/intrusive_ptr.hpp>
 
-# include <boost/context/detail/invoke.hpp>
+# include <boost/context/detail/apply.hpp>
 # include <boost/context/fixedsize_stack.hpp>
 # include <boost/context/preallocated.hpp>
 # include <boost/context/stack_context.hpp>
@@ -149,7 +149,7 @@ public:
 
     void run() {
         auto data = caller_->resume( nullptr);
-        do_invoke( fn_, std::tuple_cat( tpl_, std::tie( data) ) );
+        apply( fn_, std::tuple_cat( tpl_, std::tie( data) ) );
         BOOST_ASSERT_MSG( ! main_ctx, "main-context does not execute activation-record::run()");
     }
 };

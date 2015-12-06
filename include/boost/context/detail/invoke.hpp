@@ -13,6 +13,8 @@
 
 #include <boost/config.hpp>
 
+#include <boost/context/detail/config.hpp>
+
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_PREFIX
 #endif
@@ -59,23 +61,6 @@ invoke( Fn fn, Args && ... args) {
     return fn( std::forward< Args >( args) ... );
 }
 # endif
-
-template< typename Fn, typename Tpl, std::size_t... I >
-decltype( auto) do_invoke( Fn && fn, Tpl && tpl, std::index_sequence< I ... >) {
-    return invoke( fn,
-                    // std::tuple_element<> does not perfect forwarding
-                    std::forward< decltype( std::get< I >( std::declval< typename std::decay< Tpl >::type >() ) ) >(
-                        std::get< I >( std::forward< typename std::decay< Tpl >::type >( tpl) ) ) ... );
-}
-
-
-template< typename Fn, typename Tpl >
-decltype( auto) do_invoke( Fn && fn, Tpl && tpl) {
-    constexpr auto Size = std::tuple_size< typename std::decay< Tpl >::type >::value;
-    return do_invoke( std::forward< Fn >( fn),
-                      std::forward< Tpl >( tpl),
-                      std::make_index_sequence< Size >{});
-}
 
 }}}
 
