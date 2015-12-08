@@ -7,7 +7,7 @@
 
 [section:econtext Class execution_context]
 
-[important __econtext__ requires C++14.]
+[important __econtext__ requires C++11.]
 
 Class __econtext__ encapsulates __fcontext__ and related functions (
 __jump_fcontext__ and __make_fcontext__) as well as stack management.
