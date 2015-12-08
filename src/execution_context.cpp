@@ -21,8 +21,8 @@ namespace context {
 namespace detail {
 
 thread_local
-detail::activation_record::ptr_t
-detail::activation_record::current_rec;
+activation_record::ptr_t
+activation_record::current_rec;
 
 // zero-initialization
 thread_local static std::size_t counter;
