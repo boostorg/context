@@ -20,7 +20,7 @@ extern "C" {
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#if ! defined(BOOST_CONTEXT_NO_CPP14)
+#if ! defined(BOOST_CONTEXT_NO_CPP11)
 # include <mutex>
 #else
 # include <boost/thread.hpp>
@@ -49,7 +49,7 @@ void stacksize_limit_( rlimit * limit) BOOST_NOEXCEPT_OR_NOTHROW {
 
 std::size_t pagesize() BOOST_NOEXCEPT_OR_NOTHROW {
     static std::size_t size = 0;
-#if ! defined(BOOST_CONTEXT_NO_CPP14)
+#if ! defined(BOOST_CONTEXT_NO_CPP11)
     static std::once_flag flag;
     std::call_once( flag, pagesize_, & size);
 #else
@@ -61,7 +61,7 @@ std::size_t pagesize() BOOST_NOEXCEPT_OR_NOTHROW {
 
 rlimit stacksize_limit() BOOST_NOEXCEPT_OR_NOTHROW {
     static rlimit limit;
-#if ! defined(BOOST_CONTEXT_NO_CPP14)
+#if ! defined(BOOST_CONTEXT_NO_CPP11)
     static std::once_flag flag;
     std::call_once( flag, stacksize_limit_, & limit);
 #else

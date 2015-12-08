@@ -4,11 +4,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/context/detail/config.hpp>
-
-#if ! defined(BOOST_CONTEXT_NO_CPP14)
-
 # include "boost/context/execution_context.hpp"
+
+#if ! defined(BOOST_CONTEXT_NO_CPP11)
 
 # include <boost/config.hpp>
 

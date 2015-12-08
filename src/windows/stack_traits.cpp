@@ -20,7 +20,7 @@ extern "C" {
 
 #include <boost/assert.hpp>
 #include <boost/context/detail/config.hpp>
-#if ! defined(BOOST_CONTEXT_NO_CPP14)
+#if ! defined(BOOST_CONTEXT_NO_CPP11)
 # include <mutex>
 #else
 # include <boost/thread.hpp>
@@ -54,7 +54,7 @@ void system_info_( SYSTEM_INFO * si) BOOST_NOEXCEPT_OR_NOTHROW {
 
 SYSTEM_INFO system_info() BOOST_NOEXCEPT_OR_NOTHROW {
     static SYSTEM_INFO si;
-#if ! defined(BOOST_CONTEXT_NO_CPP14)
+#if ! defined(BOOST_CONTEXT_NO_CPP11)
     static std::once_flag flag;
     std::call_once( flag, static_cast< void(*)( SYSTEM_INFO *) >( system_info_), & si);
 #else
