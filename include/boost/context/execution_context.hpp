@@ -9,7 +9,7 @@
 
 #include <boost/context/detail/config.hpp>
 
-#if ! defined(BOOST_CONTEXT_NO_CPP14)
+#if ! defined(BOOST_CONTEXT_NO_CPP11)
 
 # include <algorithm>
 # include <atomic>
@@ -411,6 +411,6 @@ void swap( execution_context & l, execution_context & r) noexcept {
 # include BOOST_ABI_SUFFIX
 # endif
 
-#endif // BOOST_CONTEXT_NO_CPP14
+#endif // BOOST_CONTEXT_NO_CPP11
 
 #endif // BOOST_CONTEXT_EXECUTION_CONTEXT_H
