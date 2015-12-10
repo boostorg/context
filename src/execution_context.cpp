@@ -6,7 +6,7 @@
 
 # include "boost/context/execution_context.hpp"
 
-#if ! defined(BOOST_CONTEXT_NO_CPP11)
+#if ! defined(BOOST_CONTEXT_NO_CXX11)
 
 # include <boost/config.hpp>
 

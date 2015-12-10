@@ -20,7 +20,7 @@
 namespace boost {
 namespace context {
 
-#if ! defined(BOOST_CONTEXT_NO_CPP11)
+#if ! defined(BOOST_CONTEXT_NO_CXX11)
 struct stack_context {
 # if defined(BOOST_USE_SEGMENTED_STACKS)
     typedef void *  segments_context[BOOST_CONTEXT_SEGMENTS];

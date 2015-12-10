@@ -15,7 +15,7 @@
 
 #include <boost/context/detail/config.hpp>
 #include <boost/context/detail/invoke.hpp>
-#if defined(BOOST_CONTEXT_NO_INTEGER_SEQUENCE)
+#if defined(BOOST_CONTEXT_NO_CXX14_INTEGER_SEQUENCE)
 #include <boost/context/detail/index_sequence.hpp>
 #endif
 
@@ -27,7 +27,7 @@ namespace boost {
 namespace context {
 namespace detail {
 
-#if defined(BOOST_CONTEXT_NO_INTEGER_SEQUENCE)
+#if defined(BOOST_CONTEXT_NO_CXX14_INTEGER_SEQUENCE)
 template< std::size_t ... I >
 using _index_sequence = index_sequence< I ... >;
 template< std::size_t I >

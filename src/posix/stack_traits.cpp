@@ -20,10 +20,10 @@ extern "C" {
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#if ! defined(BOOST_CONTEXT_NO_CPP11)
-# include <mutex>
-#else
+#if defined(BOOST_NO_CXX11_HDR_MUTEX)
 # include <boost/thread.hpp>
+#else
+# include <mutex>
 #endif
 
 #if !defined (SIGSTKSZ)
@@ -49,24 +49,24 @@ void stacksize_limit_( rlimit * limit) BOOST_NOEXCEPT_OR_NOTHROW {
 
 std::size_t pagesize() BOOST_NOEXCEPT_OR_NOTHROW {
     static std::size_t size = 0;
-#if ! defined(BOOST_CONTEXT_NO_CPP11)
-    static std::once_flag flag;
-    std::call_once( flag, pagesize_, & size);
-#else
+#if defined(BOOST_NO_CXX11_HDR_MUTEX)
     static boost::once_flag flag;
     boost::call_once( flag, pagesize_, & size);
+#else
+    static std::once_flag flag;
+    std::call_once( flag, pagesize_, & size);
 #endif
     return size;
 }
 
 rlimit stacksize_limit() BOOST_NOEXCEPT_OR_NOTHROW {
     static rlimit limit;
-#if ! defined(BOOST_CONTEXT_NO_CPP11)
-    static std::once_flag flag;
-    std::call_once( flag, stacksize_limit_, & limit);
-#else
+#if defined(BOOST_NO_CXX11_HDR_MUTEX)
     static boost::once_flag flag;
     boost::call_once( flag, stacksize_limit_, & limit);
+#else
+    static std::once_flag flag;
+    std::call_once( flag, stacksize_limit_, & limit);
 #endif
     return limit;
 }

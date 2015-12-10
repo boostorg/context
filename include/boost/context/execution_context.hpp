@@ -9,7 +9,7 @@
 
 #include <boost/context/detail/config.hpp>
 
-#if ! defined(BOOST_CONTEXT_NO_CPP11)
+#if ! defined(BOOST_CONTEXT_NO_CXX11)
 
 # include <algorithm>
 # include <atomic>
@@ -181,7 +181,7 @@ private:
 
         auto sctx = salloc.allocate();
         // reserve space for control structure
-#if defined(BOOST_NO_CXX14_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
+#if defined(BOOST_NO_CXX11_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
         const std::size_t size = sctx.size - sizeof( capture_t);
         void * sp = static_cast< char * >( sctx.sp) - sizeof( capture_t);
 #else
@@ -213,7 +213,7 @@ private:
         typedef detail::capture_record< Fn, Tpl, StackAlloc >  capture_t;
 
         // reserve space for control structure
-#if defined(BOOST_NO_CXX14_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
+#if defined(BOOST_NO_CXX11_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
         const std::size_t size = palloc.size - sizeof( capture_t);
         void * sp = static_cast< char * >( palloc.sp) - sizeof( capture_t);
 #else
@@ -411,6 +411,6 @@ void swap( execution_context & l, execution_context & r) noexcept {
 # include BOOST_ABI_SUFFIX
 # endif
 
-#endif // BOOST_CONTEXT_NO_CPP11
+#endif // BOOST_CONTEXT_NO_CXX11
 
 #endif // BOOST_CONTEXT_EXECUTION_CONTEXT_H
