@@ -23,44 +23,27 @@ namespace boost {
 namespace context {
 namespace detail {
 
-# if _MSC_VER > 1800 
+#if _MSC_VER > 1800 
 using std::invoke;
-# else
+#else
 template< typename Fn, typename ... Args >
 typename std::enable_if<
-    ( ! std::is_member_pointer< Fn >::value &&
-      ! std::is_function< Fn >::value &&
-      ! std::is_function< typename std::remove_pointer< Fn >::type >::value
-    ),
-    typename std::result_of< Fn( Args ... ) >::type
+    std::is_member_pointer< typename std::decay< Fn >::type >::value,
+    typename std::result_of< Fn &&( Args && ... ) >::type
 >::type
-invoke( Fn & fn, Args && ... args) {
-    return fn( std::forward< Args >( args) ... );
+invoke( Fn && fn, Args && ... args) {
+    return std::mem_fn( fn)( std::forward< Args >( args) ... );   
 }
 
 template< typename Fn, typename ... Args >
 typename std::enable_if<
-    ( std::is_member_pointer< Fn >::value &&
-      ! std::is_function< Fn >::value &&
-      ! std::is_function< typename std::remove_pointer< Fn >::type >::value
-    ),
-    typename std::result_of< Fn( Args ... ) >::type
+    ! std::is_member_pointer< typename std::decay< Fn >::type >::value,
+    typename std::result_of< Fn &&( Args && ... ) >::type
 >::type
-invoke( Fn & fn, Args && ... args) {
-    return std::mem_fn( fn)( std::forward< Args >( args) ... );
+invoke( Fn && fn, Args && ... args) {
+    return std::forward< Fn >( fn)( std::forward< Args >( args) ... );
 }
-
-template< typename Fn, typename ... Args >
-typename std::enable_if<
-    ( std::is_pointer< Fn >::value &&
-      std::is_function< typename std::remove_pointer< Fn >::type >::value
-    ),
-    typename std::result_of< Fn( Args ... ) >::type
->::type
-invoke( Fn fn, Args && ... args) {
-    return fn( std::forward< Args >( args) ... );
-}
-# endif
+#endif
 
 }}}
 

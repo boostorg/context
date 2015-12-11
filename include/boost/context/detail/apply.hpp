@@ -8,6 +8,7 @@
 #define BOOST_CONTEXT_DETAIL_APPLY_H
 
 #include <functional>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -27,54 +28,31 @@ namespace boost {
 namespace context {
 namespace detail {
 
-#if defined(BOOST_CONTEXT_NO_CXX14_INTEGER_SEQUENCE)
+#if ! defined(BOOST_CONTEXT_NO_CXX14_INTEGER_SEQUENCE)
 template< std::size_t ... I >
-using _index_sequence = index_sequence< I ... >;
+using index_sequence = std::index_sequence< I ... >;
 template< std::size_t I >
-using _make_index_sequence = make_index_sequence< I >;
-#else
-template< std::size_t ... I >
-using _index_sequence = std::index_sequence< I ... >;
-template< std::size_t I >
-using _make_index_sequence = std::make_index_sequence< I >;
+using make_index_sequence = std::make_index_sequence< I >;
 #endif
 
 template< typename Fn, typename Tpl, std::size_t ... I >
-#if defined( BOOST_NO_CXX14_DECLTYPE_AUTO)
 auto
-#else
-decltype(auto)
-#endif
-apply_impl( Fn && fn, Tpl && tpl, _index_sequence< I ... >) 
-#if defined( BOOST_NO_CXX14_DECLTYPE_AUTO)
-    -> decltype( invoke( fn,
-                         std::forward< decltype( std::get< I >( std::declval< typename std::decay< Tpl >::type >() ) ) >(
-                           std::get< I >( std::forward< typename std::decay< Tpl >::type >( tpl) ) ) ... ) )
-#endif
-    {
-    return invoke( fn,
-                   std::forward< decltype( std::get< I >( std::declval< typename std::decay< Tpl >::type >() ) ) >(
-                       std::get< I >( std::forward< typename std::decay< Tpl >::type >( tpl) ) ) ... );
+apply_impl( Fn && fn, Tpl && tpl, index_sequence< I ... >) 
+    -> decltype( invoke( std::forward< Fn >( fn), std::get< I >( std::forward< Tpl >( tpl) ) ... ) )
+{
+    return invoke( std::forward< Fn >( fn), std::get< I >( std::forward< Tpl >( tpl) ) ... );
 }
 
-
 template< typename Fn, typename Tpl >
-#if defined( BOOST_NO_CXX14_DECLTYPE_AUTO)
 auto
-#else
-decltype(auto)
-#endif
 apply( Fn && fn, Tpl && tpl) 
-#if defined( BOOST_NO_CXX14_DECLTYPE_AUTO)
     -> decltype( apply_impl( std::forward< Fn >( fn),
                  std::forward< Tpl >( tpl),
-                 _make_index_sequence< std::tuple_size< typename std::decay< Tpl >::type >::value >{}) )
-#endif
-    {
-    constexpr auto Size = std::tuple_size< typename std::decay< Tpl >::type >::value;
+                 make_index_sequence< std::tuple_size< typename std::decay< Tpl >::type >::value >{}) )
+{
     return apply_impl( std::forward< Fn >( fn),
                        std::forward< Tpl >( tpl),
-                       _make_index_sequence< Size >{});
+                       make_index_sequence< std::tuple_size< typename std::decay< Tpl >::type >::value >{});
 }
 
 }}}
