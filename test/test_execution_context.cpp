@@ -148,14 +148,12 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
         BOOST_TEST_SUITE("Boost.Context: execution_context test suite");
 
     test->add( BOOST_TEST_CASE( & test_ectx) );
-#if 0
     test->add( BOOST_TEST_CASE( & test_variadric) );
     test->add( BOOST_TEST_CASE( & test_memfn) );
     test->add( BOOST_TEST_CASE( & test_exception) );
     test->add( BOOST_TEST_CASE( & test_fp) );
     test->add( BOOST_TEST_CASE( & test_stacked) );
     test->add( BOOST_TEST_CASE( & test_prealloc) );
-#endif
 
     return test;
 }
