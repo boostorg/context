@@ -28,6 +28,7 @@
 # include <boost/intrusive_ptr.hpp>
 
 # include <boost/context/detail/apply.hpp>
+# include <boost/context/detail/decay_copy.hpp>
 # include <boost/context/fixedsize_stack.hpp>
 # include <boost/context/preallocated.hpp>
 # include <boost/context/stack_context.hpp>
@@ -113,13 +114,13 @@ struct activation_record_initializer {
     ~activation_record_initializer();
 };
 
-template< typename Fn, typename Tpl, typename StackAlloc >
+template< typename StackAlloc, typename Fn, typename ... Args >
 class capture_record : public activation_record {
 private:
-    StackAlloc              salloc_;
-    Fn                      fn_;
-    Tpl                     tpl_;
-    activation_record   *   caller_;
+    StackAlloc                                          salloc_;
+    typename std::decay< Fn >::type                     fn_;
+    std::tuple< typename std::decay< Args >::type ... > args_;
+    activation_record                               *   caller_;
 
     static void destroy( capture_record * p) noexcept {
         StackAlloc salloc = p->salloc_;
@@ -131,15 +132,14 @@ private:
     }
 
 public:
-    capture_record(
-            stack_context sctx, StackAlloc const& salloc,
-            fcontext_t fctx,
-            Fn && fn, Tpl && tpl,
-            activation_record * caller) noexcept :
+    capture_record( stack_context sctx, StackAlloc const& salloc,
+                    fcontext_t fctx,
+                    activation_record * caller,
+                    Fn && fn, Args && ... args) noexcept :
         activation_record{ fctx, sctx },
         salloc_{ salloc },
-        fn_( std::forward< Fn >( fn) ), // fn_{ std::forward< Fn >( fn) } - msvc-14.0: void(__cdecl&)(double,void*) can not be converted to void(__cdecl&)(double,void*)
-        tpl_( std::forward< Tpl >( tpl) ),// tpl_{ std::forward< Tpl >( tpl) } - clang-3.6: excess elements in struct initializer
+        fn_( std::forward< Fn >( fn) ),
+        args_( std::forward< Args >( args) ... ),
         caller_{ caller } {
     }
 
@@ -149,7 +149,7 @@ public:
 
     void run() {
         auto data = caller_->resume( nullptr);
-        apply( fn_, std::tuple_cat( tpl_, std::tie( data) ) );
+        apply( std::move( fn_), std::tuple_cat( args_, std::tie( data) ) );
         BOOST_ASSERT_MSG( ! main_ctx, "main-context does not execute activation-record::run()");
     }
 };
@@ -173,11 +173,12 @@ private:
 
     ptr_t   ptr_;
 
-    template< typename StackAlloc, typename Fn ,typename Tpl >
-    static detail::activation_record * create_context(
-            StackAlloc salloc,
-            Fn && fn, Tpl && tpl) {
-        typedef detail::capture_record< Fn, Tpl, StackAlloc >  capture_t;
+    template< typename StackAlloc, typename Fn, typename ... Args >
+    static detail::activation_record * create_context( StackAlloc salloc,
+                                                       Fn && fn, Args && ... args) {
+        typedef detail::capture_record<
+            StackAlloc, Fn, Args ...
+        >                                           capture_t;
 
         auto sctx = salloc.allocate();
         // reserve space for control structure
@@ -203,14 +204,15 @@ private:
         auto curr = execution_context::current().ptr_;
         // placment new for control structure on fast-context stack
         return new ( sp) capture_t{
-                sctx, salloc, fctx, std::forward< Fn >( fn), std::forward< Tpl >( tpl), curr.get() };
+                sctx, salloc, fctx, curr.get(), std::forward< Fn >( fn), std::forward< Args >( args) ... };
     }
 
-    template< typename StackAlloc, typename Fn , typename Tpl >
-    static detail::activation_record * create_context(
-            preallocated palloc, StackAlloc salloc,
-            Fn && fn, Tpl && tpl) {
-        typedef detail::capture_record< Fn, Tpl, StackAlloc >  capture_t;
+    template< typename StackAlloc, typename Fn, typename ... Args >
+    static detail::activation_record * create_context( preallocated palloc, StackAlloc salloc,
+                                                       Fn && fn, Args && ... args) {
+        typedef detail::capture_record<
+            StackAlloc, Fn, Args ...
+        >                                           capture_t;
 
         // reserve space for control structure
 #if defined(BOOST_NO_CXX11_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
@@ -235,7 +237,7 @@ private:
         auto curr = execution_context::current().ptr_;
         // placment new for control structure on fast-context stack
         return new ( sp) capture_t{
-                palloc.sctx, salloc, fctx, std::forward< Fn >( fn), std::forward< Tpl >( tpl), curr.get() };
+                palloc.sctx, salloc, fctx, curr.get(), std::forward< Fn >( fn), std::forward< Args >( args) ... };
     }
 
     execution_context() noexcept :
@@ -256,7 +258,7 @@ public:
         // used to extract the function arguments from std::tuple<>
         ptr_{ create_context( segmented_stack(),
                               std::forward< Fn >( fn),
-                              std::make_tuple( std::forward< Args >( args) ...) ) } {
+                              std::forward< Args >( args) ...) } {
         ptr_->resume( ptr_.get() );
     }
 
@@ -269,7 +271,7 @@ public:
         // used to extract the function arguments from std::tuple<>
         ptr_{ create_context( salloc,
                               std::forward< Fn >( fn),
-                              std::make_tuple( std::forward< Args >( args) ...) ) } {
+                              std::forward< Args >( args) ...) } {
         ptr_->resume( ptr_.get() );
     }
 
@@ -282,7 +284,7 @@ public:
         // used to extract the function arguments from std::tuple<>
         ptr_{ create_context( palloc, salloc,
                               std::forward< Fn >( fn),
-                              std::make_tuple( std::forward< Args >( args) ...) ) } {
+                              std::forward< Args >( args) ...) } {
         ptr_->resume( ptr_.get() );
     }
 # else
@@ -295,7 +297,7 @@ public:
         // used to extract the function arguments from std::tuple<>
         ptr_{ create_context( fixedsize_stack(),
                               std::forward< Fn >( fn),
-                              std::make_tuple( std::forward< Args >( args) ...) ) } {
+                              std::forward< Args >( args) ...) } {
         ptr_->resume( ptr_.get() );
     }
 
@@ -308,7 +310,7 @@ public:
         // used to extract the function arguments from std::tuple<>
         ptr_{ create_context( salloc,
                               std::forward< Fn >( fn),
-                              std::make_tuple( std::forward< Args >( args) ...) ) } {
+                              std::forward< Args >( args) ...) } {
         ptr_->resume( ptr_.get() );
     }
 
@@ -321,7 +323,7 @@ public:
         // used to extract the function arguments from std::tuple<>
         ptr_{ create_context( palloc, salloc,
                               std::forward< Fn >( fn),
-                              std::make_tuple( std::forward< Args >( args) ...) ) } {
+                              std::forward< Args >( args) ...) } {
         ptr_->resume( ptr_.get() );
     }
 # endif
