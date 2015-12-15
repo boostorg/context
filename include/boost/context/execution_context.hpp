@@ -149,7 +149,7 @@ public:
 
     void run() {
         auto data = caller_->resume( nullptr);
-        apply( std::move( fn_), std::tuple_cat( args_, std::tie( data) ) );
+        apply( fn_, std::tuple_cat( args_, std::tie( data) ) );
         BOOST_ASSERT_MSG( ! main_ctx, "main-context does not execute activation-record::run()");
     }
 };
