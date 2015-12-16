@@ -28,6 +28,7 @@
 # include <boost/intrusive_ptr.hpp>
 
 # include <boost/context/detail/apply.hpp>
+# include <boost/context/detail/disable_overload.hpp>
 # include <boost/context/fixedsize_stack.hpp>
 # include <boost/context/preallocated.hpp>
 # include <boost/context/stack_context.hpp>
@@ -248,7 +249,10 @@ public:
     static execution_context current() noexcept;
 
 # if defined(BOOST_USE_SEGMENTED_STACKS)
-    template< typename Fn, typename ... Args >
+    template< typename Fn,
+              typename ... Args,
+              typename = detail::disable_overload< execution_context, Fn >
+    >
     execution_context( Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
@@ -261,7 +265,10 @@ public:
         ptr_->resume( ptr_.get() );
     }
 
-    template< typename Fn, typename ... Args >
+    template< typename Fn,
+              typename ... Args,
+              typename = detail::disable_overload< execution_context, Fn >
+    >
     execution_context( std::allocator_arg_t, segmented_stack salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
@@ -274,7 +281,10 @@ public:
         ptr_->resume( ptr_.get() );
     }
 
-    template< typename Fn, typename ... Args >
+    template< typename Fn,
+              typename ... Args,
+              typename = detail::disable_overload< execution_context, Fn >
+    >
     execution_context( std::allocator_arg_t, preallocated palloc, segmented_stack salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
@@ -287,7 +297,10 @@ public:
         ptr_->resume( ptr_.get() );
     }
 # else
-    template< typename Fn, typename ... Args >
+    template< typename Fn,
+              typename ... Args,
+              typename = detail::disable_overload< execution_context, Fn >
+    >
     execution_context( Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
@@ -300,7 +313,11 @@ public:
         ptr_->resume( ptr_.get() );
     }
 
-    template< typename StackAlloc, typename Fn, typename ... Args >
+    template< typename StackAlloc,
+              typename Fn,
+              typename ... Args,
+              typename = detail::disable_overload< execution_context, Fn >
+    >
     execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
@@ -313,7 +330,11 @@ public:
         ptr_->resume( ptr_.get() );
     }
 
-    template< typename StackAlloc, typename Fn, typename ... Args >
+    template< typename StackAlloc,
+              typename Fn,
+              typename ... Args,
+              typename = detail::disable_overload< execution_context, Fn >
+    >
     execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
