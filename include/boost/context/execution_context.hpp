@@ -28,7 +28,6 @@
 # include <boost/intrusive_ptr.hpp>
 
 # include <boost/context/detail/apply.hpp>
-# include <boost/context/detail/decay_copy.hpp>
 # include <boost/context/fixedsize_stack.hpp>
 # include <boost/context/preallocated.hpp>
 # include <boost/context/stack_context.hpp>
