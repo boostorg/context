@@ -266,8 +266,7 @@ public:
     }
 
     template< typename Fn,
-              typename ... Args,
-              typename = detail::disable_overload< execution_context, Fn >
+              typename ... Args
     >
     execution_context( std::allocator_arg_t, segmented_stack salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
@@ -282,8 +281,7 @@ public:
     }
 
     template< typename Fn,
-              typename ... Args,
-              typename = detail::disable_overload< execution_context, Fn >
+              typename ... Args
     >
     execution_context( std::allocator_arg_t, preallocated palloc, segmented_stack salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
@@ -315,8 +313,7 @@ public:
 
     template< typename StackAlloc,
               typename Fn,
-              typename ... Args,
-              typename = detail::disable_overload< execution_context, Fn >
+              typename ... Args
     >
     execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
@@ -332,8 +329,7 @@ public:
 
     template< typename StackAlloc,
               typename Fn,
-              typename ... Args,
-              typename = detail::disable_overload< execution_context, Fn >
+              typename ... Args
     >
     execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
