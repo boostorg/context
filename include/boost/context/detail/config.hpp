@@ -57,22 +57,6 @@
 # define BOOST_CONTEXT_SEGMENTS 10
 #endif
 
-#undef BOOST_CONTEXT_NO_CXX11
-#if defined(BOOST_NO_CXX11_AUTO_DECLARATIONS) || \
-    defined(BOOST_NO_CXX11_CONSTEXPR) || \
-    defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS) || \
-    defined(BOOST_NO_CXX11_FINAL) || \
-    defined(BOOST_NO_CXX11_HDR_TUPLE) || \
-    defined(BOOST_NO_CXX11_NOEXCEPT) || \
-    defined(BOOST_NO_CXX11_NULLPTR) || \
-    defined(BOOST_NO_CXX11_RVALUE_REFERENCES) || \
-    defined(BOOST_NO_CXX11_TEMPLATE_ALIASES) || \
-    defined(BOOST_NO_CXX11_UNIFIED_INITIALISATION_SYNTAX) || \
-    defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || \
-    defined(BOOST_NO_HDR_ATOMIC) || \
-    defined(BOOST_NO_HDR_TUPLE) 
-# define BOOST_CONTEXT_NO_CXX11
-#endif
 
 #define BOOST_CONTEXT_NO_CXX14_INTEGER_SEQUENCE
 // use rd6 macros for std::integer_sequence
@@ -88,6 +72,28 @@
 # if _LIBCPP_STD_VER > 11
 #  undef BOOST_CONTEXT_NO_CXX14_INTEGER_SEQUENCE
 # endif
+#endif
+
+// workaroud: MSVC 14 does support constexpr
+#if _MSC_VER > 1800 // _MSC_VER == 1800 -> MS Visual Studio 2013
+# undef BOOST_NO_CXX11_CONSTEXPR
+#endif
+
+#undef BOOST_CONTEXT_NO_CXX11
+#if defined(BOOST_NO_CXX11_AUTO_DECLARATIONS) || \
+    defined(BOOST_NO_CXX11_CONSTEXPR) || \
+    defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS) || \
+    defined(BOOST_NO_CXX11_FINAL) || \
+    defined(BOOST_NO_CXX11_HDR_TUPLE) || \
+    defined(BOOST_NO_CXX11_NOEXCEPT) || \
+    defined(BOOST_NO_CXX11_NULLPTR) || \
+    defined(BOOST_NO_CXX11_RVALUE_REFERENCES) || \
+    defined(BOOST_NO_CXX11_TEMPLATE_ALIASES) || \
+    defined(BOOST_NO_CXX11_UNIFIED_INITIALISATION_SYNTAX) || \
+    defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) || \
+    defined(BOOST_NO_HDR_ATOMIC) || \
+    defined(BOOST_NO_HDR_TUPLE) 
+# define BOOST_CONTEXT_NO_CXX11
 #endif
 
 #endif // BOOST_CONTEXT_DETAIL_CONFIG_H
