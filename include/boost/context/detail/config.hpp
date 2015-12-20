@@ -59,7 +59,6 @@
 
 #undef BOOST_CONTEXT_NO_CXX11
 #if defined(BOOST_NO_CXX11_AUTO_DECLARATIONS) || \
-    defined(BOOST_NO_CXX11_CONSTEXPR) || \
     defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS) || \
     defined(BOOST_NO_CXX11_FINAL) || \
     defined(BOOST_NO_CXX11_HDR_TUPLE) || \
