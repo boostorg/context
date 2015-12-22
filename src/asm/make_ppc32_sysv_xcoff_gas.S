@@ -15,10 +15,10 @@ make_fcontext:
 
     # reserve space for context-data on context-stack
     # including 64 byte of linkage + parameter area (R1 % 16 == 0)
-    subi  3, 3, 304
+    subi  3, 3, 152
 
     # third arg of make_fcontext() == address of context-function
-    stw  5, 236(3)
+    stw  5, 84(3)
 
     # load LR
     mflr  0
@@ -33,7 +33,7 @@ make_fcontext:
     mtlr  0
     # save address of finish as return-address for context-function
     # will be entered after context-function returns
-    stw  4, 232(3)
+    stw  4, 80(3)
 
     # restore return address from R6
     mtlr  6

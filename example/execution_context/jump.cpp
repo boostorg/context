@@ -39,8 +39,6 @@ int main() {
         
         ( * ctx1)();
     }
-
     std::cout << "main: done" << std::endl;
-
     return EXIT_SUCCESS;
 }

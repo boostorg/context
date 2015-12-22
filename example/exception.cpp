@@ -24,12 +24,12 @@ ctx::fcontext_t fcm = 0;
 ctx::fcontext_t fc = 0;
 boost::exception_ptr except;
 
-void f( intptr_t arg)
-{
-    try
-    { throw std::runtime_error( ( char *) arg); }
-    catch ( std::runtime_error const& e)
-    { except = boost::current_exception(); }
+void f( void * arg) {
+    try {
+        throw std::runtime_error( ( char *) arg);
+    } catch ( std::runtime_error const& e) {
+        except = boost::current_exception();
+    }
     ctx::jump_fcontext( & fc, fcm, arg);
 }
 
@@ -42,13 +42,14 @@ int main( int argc, char * argv[])
 
     std::cout << "main: call start_fcontext( & fcm, fc, 0)" << std::endl;
     const char * what = "hello world";
-    ctx::jump_fcontext( & fcm, fc, ( intptr_t) what);
-    try
-    { if ( except) boost::rethrow_exception( except); }
-    catch ( std::exception const& ex)
-    { std::cerr << "exception: " << ex.what() << std::endl; }
-
+    ctx::jump_fcontext( & fcm, fc, ( void *) what);
+    try {
+        if ( except) {
+            boost::rethrow_exception( except);
+        }
+    } catch ( std::exception const& ex) {
+        std::cerr << "exception: " << ex.what() << std::endl;
+    }
     std::cout << "main: done" << std::endl;
-
     return EXIT_SUCCESS;
 }

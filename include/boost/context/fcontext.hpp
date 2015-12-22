@@ -7,14 +7,6 @@
 #ifndef BOOST_CONTEXT_FCONTEXT_H
 #define BOOST_CONTEXT_FCONTEXT_H
 
-#if defined(__PGI)
-#include <stdint.h>
-#endif
-
-#if defined(_WIN32_WCE)
-typedef int intptr_t;
-#endif
-
 #include <boost/config.hpp>
 #include <boost/cstdint.hpp>
 
@@ -30,10 +22,9 @@ namespace context {
 typedef void*   fcontext_t;
 
 extern "C" BOOST_CONTEXT_DECL
-intptr_t BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t * ofc, fcontext_t nfc,
-                                               intptr_t vp, bool preserve_fpu = false);
+void * BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t const * from, fcontext_t const to, void * vp);
 extern "C" BOOST_CONTEXT_DECL
-fcontext_t BOOST_CONTEXT_CALLDECL make_fcontext( void * sp, std::size_t size, void (* fn)( intptr_t) );
+fcontext_t BOOST_CONTEXT_CALLDECL make_fcontext( void * sp, std::size_t size, void (* fn)( void *) );
 
 }}
 

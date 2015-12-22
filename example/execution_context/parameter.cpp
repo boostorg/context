@@ -23,16 +23,15 @@ public:
     X():
         excptr_(),
         caller_(boost::context::execution_context::current()),
-        callee_(
-             [=]( void * vp){
-                try {
-                    int i = * static_cast< int * >( vp);
-                    std::string str = boost::lexical_cast<std::string>(i);
-                    caller_( & str);
-                } catch (...) {
-                    excptr_=std::current_exception();
-                }
-             })
+        callee_( [this]( void * vp){
+                    try {
+                        int i = * static_cast< int * >( vp);
+                        std::string str = boost::lexical_cast<std::string>(i);
+                        caller_( & str);
+                    } catch (...) {
+                        excptr_=std::current_exception();
+                    }
+                 })
     {}
 
     std::string operator()(int i){
@@ -48,4 +47,5 @@ int main() {
     X x;
     std::cout<<x(7)<<std::endl;
     std::cout << "done" << std::endl;
+    return EXIT_SUCCESS;
 }

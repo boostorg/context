@@ -4,11 +4,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/context/detail/config.hpp>
-
-#if ! defined(BOOST_CONTEXT_NO_EXECUTION_CONTEXT)
-
 # include "boost/context/execution_context.hpp"
+
+#if ! defined(BOOST_CONTEXT_NO_CXX11)
 
 # include <boost/config.hpp>
 
@@ -21,14 +19,14 @@ namespace context {
 namespace detail {
 
 thread_local
-detail::activation_record::ptr_t
-detail::activation_record::current_rec;
+activation_record::ptr_t
+activation_record::current_rec;
 
 // zero-initialization
 thread_local static std::size_t counter;
 
 // schwarz counter
-activation_record_initializer::activation_record_initializer() {
+activation_record_initializer::activation_record_initializer() noexcept {
     if ( 0 == counter++) {
         activation_record::current_rec.reset( new activation_record() );
     }
@@ -36,7 +34,8 @@ activation_record_initializer::activation_record_initializer() {
 
 activation_record_initializer::~activation_record_initializer() {
     if ( 0 == --counter) {
-        activation_record::current_rec.reset();
+        BOOST_ASSERT( activation_record::current_rec->is_main_context() );
+        delete activation_record::current_rec.detach();
     }
 }
 

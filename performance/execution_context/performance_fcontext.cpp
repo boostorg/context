@@ -18,41 +18,26 @@
 #include "../cycle.hpp"
 #include "../../example/simple_stack_allocator.hpp"
 
-typedef boost::context::simple_stack_allocator<
-            8 * 1024 * 1024, 64 * 1024, 8 * 1024
-        >                                       stack_allocator;
-
 boost::uint64_t jobs = 1000;
 
-struct transfer_t {
-    void                    *   data;
-    boost::context::fcontext_t  fctx;
-};
+boost::context::execution_context * mctx;
 
-static void foo( void * data) {
-    transfer_t * t_ = static_cast< transfer_t * >( data);
+static void foo( void *) {
     while ( true) {
-        transfer_t t = { 0, 0 };
-        t_ = static_cast< transfer_t * >(
-                boost::context::jump_fcontext( & t.fctx, t_->fctx, & t) );
+        ( * mctx)();
     }
 }
 
 duration_type measure_time_fc() {
-    stack_allocator stack_alloc;
-    boost::context::fcontext_t fctx = boost::context::make_fcontext(
-            stack_alloc.allocate( stack_allocator::default_stacksize() ),
-            stack_allocator::default_stacksize(),
-            foo);
-    transfer_t t = { 0, 0 };
+    boost::context::execution_context ctx_ =
+        boost::context::execution_context::current();
+    mctx = & ctx_;
+    boost::context::execution_context ctx( foo);
     // cache warum-up
-    transfer_t * t_ = static_cast< transfer_t * >( 
-            boost::context::jump_fcontext( & t.fctx, fctx, & t) );
+    ctx();
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        transfer_t t = { 0, 0 };
-        t_ = static_cast< transfer_t * >(
-                boost::context::jump_fcontext( & t.fctx, t_->fctx, & t) );
+        ctx();
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -63,20 +48,15 @@ duration_type measure_time_fc() {
 
 #ifdef BOOST_CONTEXT_CYCLE
 cycle_type measure_cycles_fc() {
-    stack_allocator stack_alloc;
-    boost::context::fcontext_t fctx = boost::context::make_fcontext(
-            stack_alloc.allocate( stack_allocator::default_stacksize() ),
-            stack_allocator::default_stacksize(),
-            foo);
-    transfer_t t = { 0, 0 };
+    boost::context::execution_context ctx_ =
+        boost::context::execution_context::current();
+    mctx = & ctx_;
+    boost::context::execution_context ctx( foo);
     // cache warum-up
-    transfer_t * t_ = static_cast< transfer_t * >(
-            boost::context::jump_fcontext( & t.fctx, fctx, & t) );
+    ctx();
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        transfer_t t = { 0, 0 };
-        t_ = static_cast< transfer_t * >(
-                boost::context::jump_fcontext( & t.fctx, t_->fctx, & t) );
+        ctx();
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
@@ -107,10 +87,10 @@ int main( int argc, char * argv[]) {
             return EXIT_SUCCESS;
         }
         boost::uint64_t res = measure_time_fc().count();
-        std::cout << "fcontext_t: average of " << res << " nano seconds" << std::endl;
+        std::cout << "execution_context: average of " << res << " nano seconds" << std::endl;
 #ifdef BOOST_CONTEXT_CYCLE
         res = measure_cycles_fc();
-        std::cout << "fcontext_t: average of " << res << " cpu cycles" << std::endl;
+        std::cout << "execution_context: average of " << res << " cpu cycles" << std::endl;
 #endif
         return EXIT_SUCCESS;
     } catch ( std::exception const& e) {

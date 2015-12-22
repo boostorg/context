@@ -37,6 +37,24 @@
 ; *  -------------------------------------------------  *
 ; *                                                     *
 ; *******************************************************
+; *******************************************************
+; *                                                     *
+; *  -------------------------------------------------  *
+; *  |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  *
+; *  -------------------------------------------------  *
+; *  | 0x0 | 0x4 | 0x8 | 0xc | 0x10| 0x14| 0x18| 0x1c|  *
+; *  -------------------------------------------------  *
+; *  |deall|limit| base|  v1 |  v2 |  v3 |  v4 |  v5 |  *
+; *  -------------------------------------------------  *
+; *  -------------------------------------------------  *
+; *  |  8  |  9  |  10 |  11 |  12 |  13 |  14 |  15 |  *
+; *  -------------------------------------------------  *
+; *  | 0x20| 0x24| 0x28| 0x2c| 0x30| 0x34| 0x38| 0x3c|  *
+; *  -------------------------------------------------  *
+; *  |  v6 |  v7 |  v8 |  lr |  pc |                 |  *
+; *  -------------------------------------------------  *
+; *                                                     *
+; *******************************************************
 
     AREA |.text|, CODE
     ALIGN 4
@@ -48,30 +66,19 @@ jump_fcontext PROC
     @ save V1-V8,LR
     push {v1-v8,lr}
 
-    @ prepare stack for FPU
-    sub  sp, sp, #0x4c
-
-    @ test if fpu env should be preserved
-    cmp  a4, #0
-    beq  1f
-
-    @ save S16-S31
-    vstmia  sp, {d8-d15}
-
-1:
     ; load TIB to save/restore thread size and limit.
     ; we do not need preserve CPU flag and can use it's arg register
     mrc     p15, #0, v1, c13, c0, #2
 
     ; save current stack base
     ldr  a5, [v1,#0x04]
-    str  a5, [sp,#0x48]
+    str  a5, [sp,#0x8]
     ; save current stack limit
     ldr  a5, [v1,#0x08]
-    str  a5, [sp,#0x44]
+    str  a5, [sp,#0x4]
     ; save current deallocation stack
     ldr  a5, [v1,#0xe0c]
-    str  a5, [sp,#0x40]
+    str  a5, [sp,#0x0]
 
     @ store RSP (pointing to context-data) in A1
     str  sp, [a1]
@@ -79,26 +86,15 @@ jump_fcontext PROC
     @ restore RSP (pointing to context-data) from A2
     mov  sp, a2
 
-    @ test if fpu env should be preserved
-    cmp  a4, #0
-    beq  2f
-
-    @ restore S16-S31
-    vldmia  sp, {d8-d15}
-
-2:
     ; restore stack base
-    ldr  a5, [sp,#0x48]
+    ldr  a5, [sp,#0x8]
     str  a5, [v1,#0x04]
     ; restore stack limit
-    ldr  a5, [sp,#0x44]
+    ldr  a5, [sp,#0x4]
     str  a5, [v1,#0x08]
     ; restore deallocation stack
-    ldr  a5, [sp,#0x40]
+    ldr  a5, [sp,#0x0]
     str  a5, [v1,#0xe0c]
-
-    @ prepare stack for FPU
-    add  sp, sp, #0x4c
 
     ; use third arg as return value after jump
     ; and as first arg in context function

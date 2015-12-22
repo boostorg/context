@@ -31,7 +31,6 @@ int main() {
         ctx();
         std::cout<<p<<" ";
     }
-    std::cout<<std::endl;
-
-    std::cout << "main: done" << std::endl;
+    std::cout << "\nmain: done" << std::endl;
+    return EXIT_SUCCESS;
 }
