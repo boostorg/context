@@ -14,7 +14,7 @@
 ;  ----------------------------------------------------------------------------------
 ;  |     8   |    9    |    10    |    11   |    12   |    13   |    14   |    15   |
 ;  ----------------------------------------------------------------------------------
-;  |   0xc20 |  0x24   |   0x28   |   0x2c  |   0x30  |   0x34  |   0x38  |   0x3c  |
+;  |   0x20  |  0x24   |   0x28   |   0x2c  |   0x30  |   0x34  |   0x38  |   0x3c  |
 ;  ----------------------------------------------------------------------------------
 ;  |        R12        |         R13        |        R14        |        R15        |
 ;  ----------------------------------------------------------------------------------
@@ -30,7 +30,21 @@
 ;  ----------------------------------------------------------------------------------
 ;  |   0x60  |   0x64  |   0x68   |   0x6c  |   0x70  |   0x74  |   0x78  |   0x7c  |
 ;  ----------------------------------------------------------------------------------
-;  |        RIP        |        EXIT        |                                       |
+;  |        hidden     |         RIP        |       EXIT        |   parameter area  |
+;  ----------------------------------------------------------------------------------
+;  ----------------------------------------------------------------------------------
+;  |    32   |   32    |    33    |   34    |    35   |    36   |    37   |    38   |
+;  ----------------------------------------------------------------------------------
+;  |   0x80  |   0x84  |   0x88   |   0x8c  |   0x90  |   0x94  |   0x98  |   0x9c  |
+;  ----------------------------------------------------------------------------------
+;  |                       parameter area                       |        FCTX       |
+;  ----------------------------------------------------------------------------------
+;  ----------------------------------------------------------------------------------
+;  |    39   |   40    |    41    |   42    |    43   |    44   |    45   |    46   |
+;  ----------------------------------------------------------------------------------
+;  |   0xa0  |   0xa4  |   0xa8   |   0xac  |   0xb0  |   0xb4  |   0xb8  |   0xbc  |
+;  ----------------------------------------------------------------------------------
+;  |       DATA        |                    |                   |                   |
 ;  ----------------------------------------------------------------------------------
 
 ; standard C library function
@@ -45,20 +59,16 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     ; first arg of make_fcontext() == top of context-stack
     mov  rax, rcx
 
-    ; reserve 32byte shadow-space for context-function
-    sub  rax, 028h
-
     ; shift address in RAX to lower 16 byte boundary
     ; == pointer to fcontext_t and address of context stack
     and  rax, -16
 
     ; reserve space for context-data on context-stack
-    ; size for fc_mxcsr .. RIP + return-address for context-function
     ; on context-function entry: (RSP -0x8) % 16 == 0
-    sub  rax, 070h
+    sub  rax, 0b8h
 
     ; third arg of make_fcontext() == address of context-function
-    mov  [rax+060h], r8
+    mov  [rax+068h], r8
 
     ; first arg of make_fcontext() == top of context-stack
     ; save top address of context stack as 'base'
@@ -73,17 +83,20 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     ; save address of context stack limit as 'dealloction stack'
     mov  [rax+08h], rcx
 
+    ; compute address of transport_t
+    lea rcx, [rax+098h]
+    ; store address of transport_t in hidden field
+    mov [rax+060h], rcx
+
     ; compute abs address of label finish
     lea  rcx, finish
     ; save address of finish as return-address for context-function
     ; will be entered after context-function returns
-    mov  [rax+068h], rcx
+    mov  [rax+070h], rcx
 
     ret ; return pointer to context-data
 
 finish:
-    ; 32byte shadow-space for _exit() are
-    ; already reserved by make_fcontext()
     ; exit code is zero
     xor  rcx, rcx
     ; exit application

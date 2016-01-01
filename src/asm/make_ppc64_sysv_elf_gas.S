@@ -40,14 +40,28 @@
  *  -------------------------------------------------  *
  *  | 128 | 132 | 136 | 140 | 144 | 148 | 152 | 156 |  *
  *  -------------------------------------------------  *
- *  |    R29    |    R30    |    R31    |     CR    |  *
+ *  |    R29    |    R30    |    R31    |   hidden  |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  40 |  41 |  42 |  43 |  44 |  45 |  46 |  47 |  *
  *  -------------------------------------------------  *
  *  | 160 | 164 | 168 | 172 | 176 | 180 | 184 | 188 |  *
  *  -------------------------------------------------  *
- *  |     LR    |     PC    |                       |  *
+ *  |     CR    |     LR    |     PC    | back-chain|  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  48 |  49 |  50 |  51 |  52 |  53 |  54 |  55 |  *
+ *  -------------------------------------------------  *
+ *  | 192 | 196 | 200 | 204 | 208 | 212 | 216 | 220 |  *
+ *  -------------------------------------------------  *
+ *  |  cr saved |  lr saved |  compiler |   linker  |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  56 |  57 |  58 |  59 |  60 |  61 |  62 |  63 |  *
+ *  -------------------------------------------------  *
+ *  | 224 | 228 | 232 | 236 | 240 | 244 | 248 | 252 |  *
+ *  -------------------------------------------------  *
+ *  | TOC saved |    FCTX   |    DATA   |           |  *
  *  -------------------------------------------------  *
  *                                                     *
  *******************************************************/
@@ -90,21 +104,30 @@ make_fcontext:
 
     # reserve space for context-data on context-stack
     # including 64 byte of linkage + parameter area (R1 % 16 == 0)
-    subi  %r3, %r3, 240
+    subi  %r3, %r3, 248
 
     # third arg of make_fcontext() == address of context-function
     # entry point (ELFv2) or descriptor (ELFv1)
 #if _CALL_ELF == 2
     # save address of context-function entry point
-    std  %r5, 168(%r3)
+    std  %r5, 176(%r3)
 #else
     # save address of context-function entry point
     ld   %r4, 0(%r5)
-    std  %r4, 168(%r3)
+    std  %r4, 176(%r3)
     # save TOC of context-function
     ld   %r4, 8(%r5)
     std  %r4, 0(%r3)
 #endif
+
+    # set back-chain to zero
+    li   %r0, 0
+    std  %r0, 184(%r3)
+
+    # compute address of returned transfer_t
+    addi %r0, %r3, 232
+    mr   %r4, %r0
+    std  %r4, 152(%r3)
 
     # load LR
     mflr  %r0
@@ -119,7 +142,7 @@ make_fcontext:
     mtlr  %r0
     # save address of finish as return-address for context-function
     # will be entered after context-function returns
-    std  %r4, 160(%r3)
+    std  %r4, 168(%r3)
 
     # restore return address from R6
     mtlr  %r6

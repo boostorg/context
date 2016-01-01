@@ -45,3 +45,7 @@ exe fibonacci
 exe parameter
     : parameter.cpp
     ;
+
+exe ontop
+    : ontop.cpp
+    ;

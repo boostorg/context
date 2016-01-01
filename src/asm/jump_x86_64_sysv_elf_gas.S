@@ -36,11 +36,11 @@ jump_fcontext:
     pushq  %r13  /* save R13 */
     pushq  %r12  /* save R12 */
 
-    /* store RSP (pointing to context-data) in RDI */
-    movq  %rsp, (%rdi)
+    /* store RSP (pointing to context-data) in RAX */
+    movq  %rsp, %rax
 
-    /* restore RSP (pointing to context-data) from RSI */
-    movq  %rsi, %rsp
+    /* restore RSP (pointing to context-data) from RDI */
+    movq  %rdi, %rsp
 
     popq  %r12  /* restrore R12 */
     popq  %r13  /* restrore R13 */
@@ -52,10 +52,12 @@ jump_fcontext:
     /* restore return-address */
     popq  %r8
 
-    /* use third arg as return-value after jump */
-    movq  %rdx, %rax
-    /* use third arg as first arg in context function */
-    movq  %rdx, %rdi
+    /* return transfer_t from jump */
+    /* RAX == fctx, RDX == data */
+    movq  %rsi, %rdx
+    /* pass transfer_t as first arg in context function */
+    /* RDI == fctx, RSI == data */
+    movq  %rax, %rdi
 
     /* indirect jump to context */
     jmp  *%r8

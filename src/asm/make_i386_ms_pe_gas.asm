@@ -19,7 +19,7 @@
 *  --------------------------------------------------------------------------------- *
 *  |   020h  |  024h   |  028h   |   02ch  |   030h  |   034h  |   038h  |   03ch  | *
 *  --------------------------------------------------------------------------------- *
-*  |   EBP   |   EIP   |   EXIT  |         |  EH NXT |SEH HNDLR|                   | *
+*  |   EBP   |   EIP   |    to   |   data  |         |  EH NXT |SEH HNDLR|         | *
 *  --------------------------------------------------------------------------------- *
 *************************************************************************************/
 
@@ -43,12 +43,12 @@ _make_fcontext:
     /* size for fc_mxcsr .. EIP + return-address for context-function */
     /* on context-function entry: (ESP -0x4) % 8 == 0 */
     /* additional space is required for SEH */
-    leal  -0x3c(%eax), %eax
+    leal  -0x40(%eax), %eax
 
     /* first arg of make_fcontext() == top of context-stack */
     movl  0x04(%esp), %ecx
     /* save top address of context stack as 'base' */
-    movl  %ecx, 0x1c(%eax)
+    movl  %ecx, 0xc(%eax)
     /* second arg of make_fcontext() == size of context-stack */
     movl  0x08(%esp), %edx
     /* negate stack size for LEA instruction (== substraction) */
@@ -61,14 +61,21 @@ _make_fcontext:
     movl  %ecx, 0x4(%eax)
 
     /* third arg of make_fcontext() == address of context-function */
+    /* stored in EBX */
     movl  0xc(%esp), %ecx
+    movl  %ecx, 0x1c(%eax)
+
+    /* compute abs address of label trampoline */
+    movl  $trampoline, %ecx
+    /* save address of trampoline as return-address for context-function */
+    /* will be entered after calling jump_fcontext() first time */
     movl  %ecx, 0x24(%eax)
 
     /* compute abs address of label finish */
     movl  $finish, %ecx
     /* save address of finish as return-address for context-function */
     /* will be entered after context-function returns */
-    movl  %ecx, 0x28(%eax)
+    movl  %ecx, 0x20(%eax)
 
     /* traverse current seh chain to get the last exception handler installed by Windows */
     /* note that on Windows Server 2008 and 2008 R2, SEHOP is activated by default */
@@ -94,18 +101,28 @@ found:
     /* load 'handler' member of SEH == address of last SEH handler installed by Windows */
     movl  0x04(%ecx), %ecx
     /* save address in ECX as SEH handler for context */
-    movl  %ecx, 0x34(%eax)
+    movl  %ecx, 0x38(%eax)
     /* set ECX to -1 */
     movl  $0xffffffff, %ecx
     /* save ECX as next SEH item */
-    movl  %ecx, 0x30(%eax)
+    movl  %ecx, 0x34(%eax)
     /* load address of next SEH item */
-    leal  0x30(%eax), %ecx
+    leal  0x34(%eax), %ecx
     /* save next SEH */
     movl  %ecx, 0x10(%eax)
 
     /* return pointer to context-data */
     ret
+
+trampoline:
+    /* move transport_t for entering context-function */
+    /* FCTX == EAX, DATA == EDX */
+    movl  %eax, (%esp)
+    movl  %edx, 0x4(%esp)
+    /* label finish as return-address */
+    pushl %ebp
+    /* jump to context-function */
+    jmp  *%ebx
 
 finish:
     /* ESP points to same address as ESP on entry of context function + 0x4 */

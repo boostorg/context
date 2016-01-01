@@ -19,7 +19,7 @@
 *  --------------------------------------------------------------------------------- *
 *  |   020h  |  024h   |  028h   |   02ch  |   030h  |   034h  |   038h  |   03ch  | *
 *  --------------------------------------------------------------------------------- *
-*  |   EBP   |   EIP   |   EXIT  |         |  EH NXT |SEH HNDLR|                   | *
+*  |   EBP   |   EIP   |    to   |   data  |         |  EH NXT |SEH HNDLR|         | *
 *  --------------------------------------------------------------------------------- *
 *************************************************************************************/
 
@@ -57,20 +57,14 @@ _jump_fcontext:
     movl  0x10(%edx), %eax
     push  %eax
 
-    /* first arg of jump_fcontext() == context jumping from */
-    movl  0x28(%esp), %eax
-
     /* store ESP (pointing to context-data) in EAX */
-    movl  %esp, (%eax)
+    movl  %esp, %eax
 
-    /* second arg of jump_fcontext() == context jumping to */
-    movl  0x2c(%esp), %edx
-
-    /* third arg of jump_fcontext() == value to be returned after jump */
-    movl  0x30(%esp), %eax
+    /* first arg of jump_fcontext() == fcontext to jump to */
+    movl  0x28(%esp), %ecx
 
     /* restore ESP (pointing to context-data) from EDX */
-    movl  %edx, %esp
+    movl  %ecx, %esp
 
     /* load NT_TIB into ECX */
     movl  %fs:(0x18), %edx
@@ -100,12 +94,9 @@ _jump_fcontext:
     popl  %ebx  /* save EBX */
     popl  %ebp  /* save EBP */
 
-    /* restore return-address */
-    popl  %edx
+    /* return transfer_t */
+    /* FCTX == EAX, DATA == EDX */
+    movl  0x2c(%eax), %edx
 
-    /* use value in EAX as return-value after jump */
-    /* use value in EAX as first arg in context function */
-    movl  %eax, 0x04(%esp)
-
-    /* indirect jump to context */
-    jmp  *%edx
+    /* jump to context */
+    ret

@@ -21,10 +21,19 @@ namespace context {
 
 typedef void*   fcontext_t;
 
+struct transfer_t {
+    fcontext_t  fctx;
+    void    *   data;
+};
+
 extern "C" BOOST_CONTEXT_DECL
-void * BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t const * from, fcontext_t const to, void * vp);
+transfer_t BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t const to, void * vp);
 extern "C" BOOST_CONTEXT_DECL
-fcontext_t BOOST_CONTEXT_CALLDECL make_fcontext( void * sp, std::size_t size, void (* fn)( void *) );
+fcontext_t BOOST_CONTEXT_CALLDECL make_fcontext( void * sp, std::size_t size, void (* fn)( transfer_t) );
+
+// based on an idea of Giovanni Derreta
+extern "C" BOOST_CONTEXT_DECL
+transfer_t BOOST_CONTEXT_CALLDECL ontop_fcontext( fcontext_t const to, void * vp, transfer_t (* fn)( transfer_t) );
 
 }}
 

@@ -16,7 +16,7 @@
 ;  ---------------------------------------------------------------------------------
 ;  |   020h  |  024h   |  028h   |   02ch  |   030h  |   034h  |   038h  |   03ch  |
 ;  ---------------------------------------------------------------------------------
-;  |   EBP   |   EIP   |   EXIT  |                             | SEH NXT |SEH HNDLR|
+;  |   EBP   |   EIP   |    to   |   data  |         |  EH NXT |SEH HNDLR|         |
 ;  ---------------------------------------------------------------------------------
 
 .386
@@ -55,23 +55,17 @@ jump_fcontext PROC BOOST_CONTEXT_EXPORT
     mov  eax, [edx+010h]
     push  eax
 
-    ; first arg of jump_fcontext() == context jumping from
-    mov  eax, [esp+028h]
-
     ; store ESP (pointing to context-data) in EAX
-    mov  [eax], esp
+    mov  eax, esp
 
-    ; second arg of jump_fcontext() == context jumping to
-    mov  edx, [esp+02ch]
-
-    ; third arg of jump_fcontext() == value to be returned after jump
-    mov  eax, [esp+030h]
-
-    ; restore ESP (pointing to context-data) from EDX
-    mov  esp, edx
+    ; firstarg of jump_fcontext() == fcontext to jump to
+    mov  ecx, [esp+028h]
+    
+    ; restore ESP (pointing to context-data) from EAX
+    mov  esp, ecx
 
     assume  fs:nothing
-    ; load NT_TIB into ECX
+    ; load NT_TIB into EDX
     mov  edx, fs:[018h]
     assume  fs:error
 
@@ -98,16 +92,13 @@ jump_fcontext PROC BOOST_CONTEXT_EXPORT
     pop  edi  ; save EDI 
     pop  esi  ; save ESI 
     pop  ebx  ; save EBX 
-    pop  ebp  ; save EBP 
+    pop  ebp  ; save EBP
 
-    ; restore return-address
-    pop  edx
+    ; return transfer_t
+    ; FCTX == EAX, DATA == EDX
+    mov  edx, [eax+02ch]
 
-    ; use value in EAX as return-value after jump
-    ; use value in EAX as first arg in context function
-    mov  [esp+04h], eax
-
-    ; indirect jump to context
-    jmp  edx
+    ; jump to context
+    ret
 jump_fcontext ENDP
 END

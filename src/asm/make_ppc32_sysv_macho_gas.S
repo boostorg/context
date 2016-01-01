@@ -26,7 +26,14 @@
  *  -------------------------------------------------  *
  *  |  64 |  68 |  72 |  76 |  80 |  84 |  88 |  92 |  *
  *  -------------------------------------------------  *
- *  | R29 | R30 | R31 |  CR |  LR |  PC |           |  *
+ *  | R29 | R30 | R31 |hiddn|  CR |  LR |  PC |bchai|  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  24 |  25 |  26 |  27 |  28 |  29 |  30 |  31 |  *
+ *  -------------------------------------------------  *
+ *  |  96 | 100 | 104 | 108 | 112 | 116 | 120 | 124 |  *
+ *  -------------------------------------------------  *
+ *  |linkr| FCTX| DATA|                             |  * 
  *  -------------------------------------------------  *
  *                                                     *
  *******************************************************/
@@ -44,10 +51,19 @@ _make_fcontext:
 
     ; reserve space for context-data on context-stack
     ; including 64 byte of linkage + parameter area (R1 % 16 == 0)
-    subi  r3, r3, 152
+    subi  r3, r3, 172
 
     ; third arg of make_fcontext() == address of context-function
-    stw  r5, 84(r3)
+    stw  r5, 88(r3)
+
+    ; set back-chain to zero
+    li   r0, 0
+    stw  r0, 92(r3)
+
+    ; compute address of returned transfer_t
+    addi  r0, r3, 100
+    mr    r4, r0 
+    stw   r4, 76(r3) 
 
     ; load LR
     mflr  r0
@@ -62,7 +78,7 @@ l1:
     mtlr  r0
     ; save address of finish as return-address for context-function
     ; will be entered after context-function returns
-    stw  r4, 80(r3)
+    stw  r4, 84(r3)
 
     ; restore return address from R6
     mtlr  r6

@@ -28,7 +28,7 @@ static void foo( void *) {
     }
 }
 
-duration_type measure_time_fc() {
+duration_type measure_time() {
     boost::context::execution_context ctx_ =
         boost::context::execution_context::current();
     mctx = & ctx_;
@@ -47,7 +47,7 @@ duration_type measure_time_fc() {
 }
 
 #ifdef BOOST_CONTEXT_CYCLE
-cycle_type measure_cycles_fc() {
+cycle_type measure_cycles() {
     boost::context::execution_context ctx_ =
         boost::context::execution_context::current();
     mctx = & ctx_;
@@ -86,10 +86,10 @@ int main( int argc, char * argv[]) {
             std::cout << desc << std::endl;
             return EXIT_SUCCESS;
         }
-        boost::uint64_t res = measure_time_fc().count();
+        boost::uint64_t res = measure_time().count();
         std::cout << "execution_context: average of " << res << " nano seconds" << std::endl;
 #ifdef BOOST_CONTEXT_CYCLE
-        res = measure_cycles_fc();
+        res = measure_cycles();
         std::cout << "execution_context: average of " << res << " cpu cycles" << std::endl;
 #endif
         return EXIT_SUCCESS;

@@ -19,7 +19,7 @@
  *  -------------------------------------------------  *
  *  |  32 |  36 |  40 |  44 |  48 |  52 |  56 |  60 |  *
  *  -------------------------------------------------  *
- *  |  FP |  RA |  PC |                             |  *
+ *  |  FP |hiddn|  RA |  PC |  GP | FCTX| DATA|     |  *
  *  -------------------------------------------------  *
  *                                                     *
  * *****************************************************/
@@ -31,7 +31,7 @@
 .ent jump_fcontext
 jump_fcontext:
     # reserve space on stack
-    addiu $sp, $sp, -92
+    addiu $sp, $sp, -108
 
     sw  $s0, ($sp)  # save S0
     sw  $s1, 4($sp)  # save S1
@@ -42,11 +42,12 @@ jump_fcontext:
     sw  $s6, 24($sp)  # save S6
     sw  $s7, 28($sp)  # save S7
     sw  $fp, 32($sp)  # save FP
-    sw  $ra, 36($sp)  # save RA
-    sw  $ra, 40($sp)  # save RA as PC
+    sw  $a0, 36($sp)  # save hidden, address of returned transfer_t
+    sw  $ra, 40($sp)  # save RA
+    sw  $ra, 44($sp)  # save RA as PC
 
     # store SP (pointing to context-data) in A0
-    sw  $sp, ($a0)
+    move  $a0, $sp
 
     # restore SP (pointing to context-data) from A1
     move  $sp, $a1
@@ -60,18 +61,21 @@ jump_fcontext:
     lw  $s6, 24($sp)  # restore S6
     lw  $s7, 28($sp)  # restore S7
     lw  $fp, 32($sp)  # restore FP
-    lw  $ra, 36($sp)  # restore RA
+    lw  $t0, 36($sp)  # restore hidden, address of returned transfer_t
+    lw  $ra, 40($sp)  # restore RA
 
     # load PC
-    lw  $t9, 40($sp)
+    lw  $t9, 44($sp)
 
     # adjust stack
-    addiu $sp, $sp, 92
-
-    # use third arg as return value after jump
-    move  $v0, $a2
-    # use third arg as first arg in context function
-    move  $a0, $a2
+    addiu $sp, $sp, 108
+    
+    # return transfer_t from jump
+    sw  $a0, ($t0)  # fctx of transfer_t
+    sw  $a1, 4($t0) # data of transfer_t
+    # pass transfer_t as first arg in context function
+    # A0 == fctx, A1 == data
+    move  $a1, $a2 
 
     # jump to context
     jr  $t9

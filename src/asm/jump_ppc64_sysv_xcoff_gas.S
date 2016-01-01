@@ -2,7 +2,7 @@
 .globl .jump_fcontext
 .jump_fcontext:
     # reserve space on stack
-    subi  1, 1, 176
+    subi  1, 1, 184
 
     std  13, 0(1)  # save R13
     std  14, 8(1)  # save R14
@@ -23,18 +23,19 @@
     std  29, 128(1)  # save R29
     std  30, 136(1)  # save R30
     std  31, 144(1)  # save R31
+    std  3,  152(1)  # save hidden
 
     # save CR
     mfcr  0
-    std  0, 152(1)
+    std  0, 160(1)
     # save LR
     mflr  0
-    std  0, 160(1)
-    # save LR as PC
     std  0, 168(1)
+    # save LR as PC
+    std  0, 176(1)
 
-    # store RSP (pointing to context-data) in R3
-    stw  1, 0(3)
+    # store RSP (pointing to context-data) in R6
+    mr  6, 1
 
     # restore RSP (pointing to context-data) from R4
     mr  1, 4
@@ -58,25 +59,26 @@
     ld  29, 128(1)  # restore R29
     ld  30, 136(1)  # restore R30
     ld  31, 144(1)  # restore R31
+    ld  3,  152(1)  # restore hidden
 
     # restore CR
-    ld  0, 152(1)
+    ld  0, 160(1)
     mtcr  0
     # restore LR
-    ld  0, 160(1)
+    ld  0, 168(1)
     mtlr  0
 
     # load PC
-    ld  0, 168(1)
+    ld  0, 176(1)
     # restore CTR
     mtctr  0
 
     # adjust stack
-    addi  1, 1, 176
+    addi  1, 1, 184
 
-    # use third arg as return value after jump
-    # use third arg as first arg in context function
-    mr  3, 5
+    # return transfer_t
+    std  6, 0(3)
+    std  5, 8(3)
 
     # jump to context
     bctr

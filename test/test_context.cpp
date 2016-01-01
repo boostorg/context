@@ -28,164 +28,206 @@ typedef ctx::simple_stack_allocator<
     8 * 1024 // 8kB
 >       stack_allocator;
 
-ctx::fcontext_t fcm = 0;
-ctx::fcontext_t fc = 0;
-ctx::fcontext_t fc1 = 0;
-ctx::fcontext_t fc2 = 0;
 int value1 = 0;
 std::string value2;
 double value3 = 0.;
+void * value4 = 0;
 
-void f1( void *) {
+void f1( ctx::transfer_t t) {
     ++value1;
-    ctx::jump_fcontext( & fc, fcm, 0);
+    ctx::jump_fcontext( t.fctx, t.data);
 }
 
-void f3( void *) {
+void f3( ctx::transfer_t t_) {
     ++value1;
-    ctx::jump_fcontext( & fc, fcm, 0);
+    ctx::transfer_t t = ctx::jump_fcontext( t_.fctx, 0);
     ++value1;
-    ctx::jump_fcontext( & fc, fcm, 0);
+    ctx::jump_fcontext( t.fctx, t.data);
 }
 
-void f4( void *) {
+void f4( ctx::transfer_t t) {
     int i = 7;
-    ctx::jump_fcontext( & fc, fcm, & i);
+    ctx::jump_fcontext( t.fctx, & i);
 }
 
-void f5( void * arg) {
-    ctx::jump_fcontext( & fc, fcm, arg);
+void f5( ctx::transfer_t t) {
+    ctx::jump_fcontext( t.fctx, t.data);
 }
 
-void f6( void * arg) {
-    std::pair< int, int > data = * ( std::pair< int, int > * ) arg;
+void f6( ctx::transfer_t t_) {
+    std::pair< int, int > data = * ( std::pair< int, int > * ) t_.data;
     int res = data.first + data.second;
-    data = * ( std::pair< int, int > *)
-        ctx::jump_fcontext( & fc, fcm, & res);
+    ctx::transfer_t t = ctx::jump_fcontext( t_.fctx, & res);
+    data = * ( std::pair< int, int > *) t.data;
     res = data.first + data.second;
-    ctx::jump_fcontext( & fc, fcm, & res);
+    ctx::jump_fcontext( t.fctx, & res);
 }
 
-void f7( void * arg) {
+void f7( ctx::transfer_t t) {
     try {
-        throw std::runtime_error( ( char *) arg);
+        throw std::runtime_error( * ( std::string *) t.data);
     } catch ( std::runtime_error const& e) {
         value2 = e.what();
     }
-    ctx::jump_fcontext( & fc, fcm, arg);
+    ctx::jump_fcontext( t.fctx, t.data);
 }
 
-void f8( void * arg) {
-    double d = * ( double *) arg;
+void f8( ctx::transfer_t t) {
+    double d = * ( double *) t.data;
     d += 3.45;
     value3 = d;
-    ctx::jump_fcontext( & fc, fcm, 0);
+    ctx::jump_fcontext( t.fctx, 0);
 }
 
-void f10( void *) {
+void f10( ctx::transfer_t t) {
     value1 = 3;
-    ctx::jump_fcontext( & fc2, fc1, 0);
+    ctx::jump_fcontext( t.fctx, 0);
 }
 
-void f9( void *) {
+void f9( ctx::transfer_t t) {
     std::cout << "f1: entered" << std::endl;
     stack_allocator alloc;
     void * sp = alloc.allocate( stack_allocator::default_stacksize());
-    fc2 = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f10);
-    ctx::jump_fcontext( & fc1, fc2, 0);
-    ctx::jump_fcontext( & fc1, fcm, 0);
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f10);
+    ctx::jump_fcontext( ctx, 0);
+    ctx::jump_fcontext( t.fctx, 0);
+}
+
+ctx::transfer_t f11( ctx::transfer_t t_) {
+    value4 = t_.data;
+    ctx::transfer_t t = { t_.fctx, t_.data };
+    return t;
+}
+
+void f12( ctx::transfer_t t_) {
+    ctx::transfer_t t = ctx::jump_fcontext( t_.fctx, t_.data);
+    value1 = * ( int *) t.data;
+    ctx::jump_fcontext( t.fctx, t.data);
 }
 
 void test_setup() {
     stack_allocator alloc;
-    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f1);
-    BOOST_CHECK( fc);
+    void * sp = alloc.allocate( stack_allocator::default_stacksize() );
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f1);
+    BOOST_CHECK( ctx);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
 void test_start() {
     value1 = 0;
     stack_allocator alloc;
-    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f1);
-    BOOST_CHECK( fc);
+    void * sp = alloc.allocate( stack_allocator::default_stacksize() );
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f1);
+    BOOST_CHECK( ctx);
+
     BOOST_CHECK_EQUAL( 0, value1);
-    ctx::jump_fcontext( & fcm, fc, 0);
+    ctx::jump_fcontext( ctx, 0);
     BOOST_CHECK_EQUAL( 1, value1);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
 void test_jump() {
     value1 = 0;
     stack_allocator alloc;
-    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f3);
-    BOOST_CHECK( fc);
+    void * sp = alloc.allocate( stack_allocator::default_stacksize() );
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f3);
+    BOOST_CHECK( ctx);
     BOOST_CHECK_EQUAL( 0, value1);
-    ctx::jump_fcontext( & fcm, fc, 0);
+    ctx::transfer_t t = ctx::jump_fcontext( ctx, 0);
     BOOST_CHECK_EQUAL( 1, value1);
-    ctx::jump_fcontext( & fcm, fc, 0);
+    ctx::jump_fcontext( t.fctx, 0);
     BOOST_CHECK_EQUAL( 2, value1);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
 void test_result() {
     stack_allocator alloc;
-    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f4);
-    BOOST_CHECK( fc);
-    int result = * ( int *) ctx::jump_fcontext( & fcm, fc, 0);
+    void * sp = alloc.allocate( stack_allocator::default_stacksize() );
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f4);
+    BOOST_CHECK( ctx);
+    ctx::transfer_t t = ctx::jump_fcontext( ctx, 0);
+    int result = * ( int *) t.data;
     BOOST_CHECK_EQUAL( 7, result);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
 void test_arg() {
     stack_allocator alloc;
     int i = 7;
-    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f5);
-    BOOST_CHECK( fc);
-    int result = * ( int *) ctx::jump_fcontext( & fcm, fc, & i);
+    void * sp = alloc.allocate( stack_allocator::default_stacksize() );
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f5);
+    BOOST_CHECK( ctx);
+    ctx::transfer_t t = ctx::jump_fcontext( ctx, & i);
+    int result = * ( int *) t.data;
     BOOST_CHECK_EQUAL( i, result);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
 void test_transfer() {
     stack_allocator alloc;
     std::pair< int, int > data = std::make_pair( 3, 7);
-    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f6);
-    BOOST_CHECK( fc);
-    int result = * ( int *) ctx::jump_fcontext( & fcm, fc, & data);
+    void * sp = alloc.allocate( stack_allocator::default_stacksize() );
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f6);
+    BOOST_CHECK( ctx);
+    ctx::transfer_t t = ctx::jump_fcontext( ctx, & data);
+    int result = * ( int *) t.data;
     BOOST_CHECK_EQUAL( 10, result);
     data = std::make_pair( 7, 7);
-    result = * ( int *) ctx::jump_fcontext( & fcm, fc, & data);
+    t = ctx::jump_fcontext( t.fctx, & data);
+    result = * ( int *) t.data;
     BOOST_CHECK_EQUAL( 14, result);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
 void test_exception() {
     stack_allocator alloc;
-    const char * what = "hello world";
+    std::string what("hello world");
     void * sp = alloc.allocate( stack_allocator::default_stacksize() );
-    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f7);
-    BOOST_CHECK( fc);
-    ctx::jump_fcontext( & fcm, fc, ( void *) what);
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f7);
+    BOOST_CHECK( ctx);
+    ctx::jump_fcontext( ctx, & what);
     BOOST_CHECK_EQUAL( std::string( what), value2);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
 void test_fp() {
     stack_allocator alloc;
     double d = 7.13;
-    void * sp = alloc.allocate( stack_allocator::minimum_stacksize() );
-    fc = ctx::make_fcontext( sp, stack_allocator::minimum_stacksize(), f8);
-    BOOST_CHECK( fc);
-    ctx::jump_fcontext( & fcm, fc, & d);
+    void * sp = alloc.allocate( stack_allocator::default_stacksize() );
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f8);
+    BOOST_CHECK( ctx);
+    ctx::jump_fcontext( ctx, & d);
     BOOST_CHECK_EQUAL( 10.58, value3);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
 void test_stacked() {
     value1 = 0;
     stack_allocator alloc;
     void * sp = alloc.allocate( stack_allocator::default_stacksize());
-    fc1 = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f9);
-    ctx::jump_fcontext( & fcm, fc1, 0);
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f9);
+    ctx::jump_fcontext( ctx, 0);
     BOOST_CHECK_EQUAL( 3, value1);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
+}
+
+void test_ontop() {
+    value1 = 0;
+    value4 = 0;
+    stack_allocator alloc;
+    void * sp = alloc.allocate( stack_allocator::default_stacksize() );
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f12);
+    BOOST_CHECK( ctx);
+    ctx::transfer_t t = ctx::jump_fcontext( ctx, 0);
+    BOOST_CHECK_EQUAL( 0, value1);
+    BOOST_CHECK( 0 == value4);
+    int i = -3;
+    t = ctx::ontop_fcontext( t.fctx, & i, f11);
+    BOOST_CHECK_EQUAL( -3, value1);
+    BOOST_CHECK_EQUAL( & i, value4);
+    BOOST_CHECK_EQUAL( -3, * ( int *) t.data);
+    BOOST_CHECK_EQUAL( & i, ( int *) t.data);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
 boost::unit_test::test_suite * init_unit_test_suite( int, char* []) {
@@ -200,5 +242,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* []) {
     test->add( BOOST_TEST_CASE( & test_exception) );
     test->add( BOOST_TEST_CASE( & test_fp) );
     test->add( BOOST_TEST_CASE( & test_stacked) );
+    test->add( BOOST_TEST_CASE( & test_ontop) );
+
     return test;
 }
