@@ -148,7 +148,7 @@ fcontext_t context_create( StackAlloc salloc, Fn && fn, Args && ... args) {
 
     auto sctx = salloc.allocate();
     // reserve space for control structure
-#if defined(BOOST_NO_CXX14_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
+#if defined(BOOST_NO_CXX11_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
     const std::size_t size = sctx.size - sizeof( record_t);
     void * sp = static_cast< char * >( sctx.sp) - sizeof( record_t);
 #else
@@ -178,7 +178,7 @@ fcontext_t context_create( preallocated palloc, StackAlloc salloc, Fn && fn, Arg
     typedef record< Ctx, StackAlloc, Fn, Args ... >  record_t;
 
     // reserve space for control structure
-#if defined(BOOST_NO_CXX14_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
+#if defined(BOOST_NO_CXX11_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
     const std::size_t size = palloc.size - sizeof( record_t);
     void * sp = static_cast< char * >( palloc.sp) - sizeof( record_t);
 #else
@@ -395,6 +395,6 @@ void swap( captured_context & l, captured_context & r) noexcept {
 # include BOOST_ABI_SUFFIX
 # endif
 
-#endif // BOOST_CONTEXT_NO_CPP14
+#endif // BOOST_CONTEXT_NO_CPP11
 
 #endif // BOOST_CONTEXT_CAPTURED_CONTEXT_H
