@@ -21,6 +21,7 @@
 
 namespace ctx = boost::context;
 
+#if ! defined(BOOST_USE_EXECUTION_CONTEXT)
 int value1 = 0;
 std::string value2;
 double value3 = 0.;
@@ -209,12 +210,16 @@ void test_termination() {
     }
     BOOST_CHECK_EQUAL( 7, value1);
 }
+#else
+void test_dummy() {
+}
+#endif
 
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
         BOOST_TEST_SUITE("Boost.Context: captured_context test suite");
-
+#if ! defined(BOOST_USE_EXECUTION_CONTEXT)
     test->add( BOOST_TEST_CASE( & test_move) );
     test->add( BOOST_TEST_CASE( & test_memfn) );
     test->add( BOOST_TEST_CASE( & test_exception) );
@@ -225,6 +230,9 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_ontop) );
     test->add( BOOST_TEST_CASE( & test_ontop_exception) );
     test->add( BOOST_TEST_CASE( & test_termination) );
+#else
+    test->add( BOOST_TEST_CASE( & test_dummy) );
+#endif
 
     return test;
 }

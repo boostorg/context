@@ -19,6 +19,9 @@ feature.compose <segmented-stacks>on : <define>BOOST_USE_SEGMENTED_STACKS ;
 feature.feature valgrind : on : optional propagated composite ;
 feature.compose <valgrind>on : <define>BOOST_USE_VALGRIND ;
 
+feature.feature context-switch : cc ec : optional propagated composite ;
+feature.compose <context-switch>ec : <define>BOOST_USE_EXECUTION_CONTEXT ;
+
 project boost/context
     : requirements
       <library>/boost/thread//boost_thread
