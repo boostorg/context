@@ -5,6 +5,7 @@
           http://www.boost.org/LICENSE_1_0.txt
 ]
 
+[#stack]
 [section:stack Stack allocation]
 
 The memory used by the stack is allocated/deallocated via a __stack_allocator__
