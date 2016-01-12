@@ -97,13 +97,13 @@ int main() {
 
         // execute parser in new execution context
         boost::context::captured_context pctx(
-                [&is,&done,&except](ctx::captured_context mctx,void* ignored)->ctx::captured_context{
+                [&is,&done,&except](ctx::captured_context mctx,void* ignored){
                 // create parser with callback function
                 Parser p( is,
                           [&mctx](char ch){
-                                void* ignored;
                                 // resume main execution context
-                                std::tie(mctx,ignored)=mctx( & ch);
+                                auto result = mctx( & ch);
+                                mctx = std::move( std::get<0>( result) );
                         });
                     try {
                         // start recursive parsing
@@ -120,8 +120,9 @@ int main() {
 
         // user-code pulls parsed data from parser
         // invert control flow
-        void * vp;
-        std::tie(pctx,vp) = pctx();
+        auto result = pctx();
+        pctx = std::move( std::get<0>( result) );
+        void * vp = std::get<1>( result);
         if ( except) {
             std::rethrow_exception( except);
         }

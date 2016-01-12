@@ -14,13 +14,13 @@ namespace ctx = boost::context;
 
 int main() {
     int n=35;
-    void * data;
     ctx::captured_context source(
         [n](ctx::captured_context sink,void* ignored)mutable->ctx::captured_context{
             int a=0;
             int b=1;
             while(n-->0){
-                std::tie(sink,ignored)=sink(&a);
+                auto result=sink(&a);
+                sink=std::move(std::get<0>(result));
                 auto next=a+b;
                 a=b;
                 b=next;
@@ -28,8 +28,9 @@ int main() {
             return sink;
         });
     for(int i=0;i<10;++i){
-        std::tie(source,data)=source();
-        std::cout<<*(int*)data<<" ";
+        auto result=source();
+        source=std::move(std::get<0>(result));
+        std::cout<<*(int*)std::get<1>(result)<<" ";
     }
     std::cout<<std::endl;
 

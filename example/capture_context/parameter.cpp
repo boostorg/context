@@ -24,12 +24,14 @@ public:
     X():
         excptr_(),
         ctx_(
-             [=](ctx::captured_context ctx, void * vp)->ctx::captured_context{
+             [=](ctx::captured_context ctx, void * vp){
                 try {
                     for (;;) {
                         int i = * static_cast< int * >( vp);
                         std::string str = boost::lexical_cast<std::string>(i);
-                        std::tie( ctx, vp) = ctx( & str);
+                        auto result = ctx( & str);
+                        ctx = std::move( std::get<0>( result) );
+                        vp = std::get<1>( result);
                     }
                 } catch ( ctx::detail::forced_unwind const&) {
                     throw;
@@ -41,8 +43,9 @@ public:
     {}
 
     std::string operator()(int i){
-        void * ret;
-        std::tie( ctx_, ret) = ctx_( & i);
+        auto result = ctx_( & i);
+        ctx_ = std::move( std::get<0>( result) );
+        void * ret = std::get<1>( result);
         if(excptr_){
             std::rethrow_exception(excptr_);
         }
