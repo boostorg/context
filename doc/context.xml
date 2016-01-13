@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/01/12 19:06:39 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/01/13 16:01:53 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -117,69 +117,86 @@
   <section id="context.econtext">
     <title><anchor id="econtext"/><link linkend="context.econtext">Class execution_context</link></title>
     <para>
-      Class <emphasis>execution_context</emphasis> encapsulates <emphasis>fcontext_t</emphasis>
-      and manages the context' stack (allocation/deallocation).
+      Class <emphasis>execution_context</emphasis> encapsulates context switching
+      and manages the associated context' stack (allocation/deallocation).
     </para>
     <para>
       <emphasis>execution_context</emphasis> allocates the context stack (using its
       <link linkend="stack"><emphasis>StackAllocator</emphasis></link> argument)
-      and creates a control structure on top of it. This structure controls the life
-      time of the stack. Instances of <emphasis>execution_context</emphasis>, associated
-      with a specific context, share the ownership of the control structure. If the
-      last reference goes out of scope, the control structure is destroyed and the
-      stack gets deallocated via the <emphasis>StackAllocator</emphasis>.
+      and creates a control structure on top of it. This structure is responsible
+      for managing context' stack. Instances of <emphasis>execution_context</emphasis>,
+      associated with a specific context, share the ownership of the control structure.
+      If the last reference goes out of scope, the control structure is destroyed
+      and the stack gets deallocated via the <emphasis>StackAllocator</emphasis>.
     </para>
     <para>
       <emphasis>execution_context</emphasis> is copy-constructible, move-constructible,
       copy-assignable and move-assignable.
     </para>
     <para>
-      <emphasis>execution_context</emphasis> maintains a static, thread-local pointer
-      (smart pointer), accessed by <emphasis>execution_context::current()</emphasis>,
-      pointing to the active context. On each context switch the static thread-local
-      pointer is updated. The usage of this global pointer makes the context switch
-      a little bit slower (due access of thread local storage) but has some advantages.
-      It allows to access the control structure of the current active context from
-      arbitrary code paths required in order to support segmented stacks, which need
-      to call certain maintenance functions (__splitstack_getcontext() etc.) before
-      each context switch (each context switch exchanges the stack). Additionally
-      the destruction of <emphasis>execution_context</emphasis> and thus the stack
-      deallocation is faster compared to <link linkend="ccontext"><emphasis>captured_context</emphasis></link>.
+      <emphasis>execution_context</emphasis> maintains a static (thread-local) pointer,
+      accessed by <emphasis>execution_context::current()</emphasis>, pointing to
+      the active context. On each context switch the pointer is updated. The usage
+      of this global pointer makes the context switch a little bit slower (due access
+      of thread local storage) but has some advantages. It allows to access the control
+      structure of the current active context from arbitrary code paths required
+      in order to support segmented stacks, which require to call certain maintenance
+      functions (like __splitstack_getcontext() etc.) before each context switch
+      (each context switch exchanges the stack). Additionally, because the control
+      structure is directly accessible in the destructor of <emphasis>execution_context</emphasis>
+      (member variable), the deallocation of context' stack is faster compared to
+      <link linkend="ccontext"><emphasis>captured_context</emphasis></link>.
     </para>
     <para>
       <emphasis>execution_context</emphasis> expects a function/functor with signature
       <code><phrase role="keyword">void</phrase><phrase role="special">(</phrase><phrase
       role="keyword">void</phrase><phrase role="special">*</phrase> <phrase role="identifier">vp</phrase><phrase
-      role="special">)</phrase></code> ( <code><phrase role="identifier">vp</phrase></code>
+      role="special">)</phrase></code> (<code><phrase role="identifier">vp</phrase></code>
       is the data passed at the first invocation of <link linkend="execution_context_operator_call"> <code>execution_context::operator()()</code></link>).
     </para>
+    <anchor id="ec_fibonacci"/>
     <bridgehead renderas="sect3" id="context.econtext.h0">
       <phrase id="context.econtext.usage_of__emphasis_execution_context__emphasis_"/><link
       linkend="context.econtext.usage_of__emphasis_execution_context__emphasis_">usage
       of <emphasis>execution_context</emphasis></link>
     </bridgehead>
 <programlisting><phrase role="keyword">int</phrase> <phrase role="identifier">n</phrase><phrase role="special">=</phrase><phrase role="number">35</phrase><phrase role="special">;</phrase>
-<phrase role="keyword">int</phrase> <phrase role="identifier">p</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">mctx</phrase><phrase role="special">(</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">::</phrase><phrase role="identifier">current</phrase><phrase role="special">()</phrase> <phrase role="special">);</phrase>
-<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase>
-    <phrase role="special">[</phrase><phrase role="identifier">n</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">p</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">mctx</phrase><phrase role="special">](</phrase><phrase role="keyword">void</phrase><phrase role="special">*)</phrase><phrase role="keyword">mutable</phrase><phrase role="special">{</phrase>
+<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">sink</phrase><phrase role="special">(</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">::</phrase><phrase role="identifier">current</phrase><phrase role="special">()</phrase> <phrase role="special">);</phrase>
+<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">source</phrase><phrase role="special">(</phrase>
+    <phrase role="special">[</phrase><phrase role="identifier">n</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">sink</phrase><phrase role="special">](</phrase><phrase role="keyword">void</phrase><phrase role="special">*)</phrase><phrase role="keyword">mutable</phrase><phrase role="special">{</phrase>
         <phrase role="keyword">int</phrase> <phrase role="identifier">a</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
         <phrase role="keyword">int</phrase> <phrase role="identifier">b</phrase><phrase role="special">=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
         <phrase role="keyword">while</phrase><phrase role="special">(</phrase><phrase role="identifier">n</phrase><phrase role="special">--&gt;</phrase><phrase role="number">0</phrase><phrase role="special">){</phrase>
-            <phrase role="identifier">yield</phrase><phrase role="special">(</phrase><phrase role="identifier">a</phrase><phrase role="special">);</phrase>
+            <phrase role="identifier">sink</phrase><phrase role="special">(&amp;</phrase><phrase role="identifier">a</phrase><phrase role="special">);</phrase>
             <phrase role="keyword">auto</phrase> <phrase role="identifier">next</phrase><phrase role="special">=</phrase><phrase role="identifier">a</phrase><phrase role="special">+</phrase><phrase role="identifier">b</phrase><phrase role="special">;</phrase>
             <phrase role="identifier">a</phrase><phrase role="special">=</phrase><phrase role="identifier">b</phrase><phrase role="special">;</phrase>
             <phrase role="identifier">b</phrase><phrase role="special">=</phrase><phrase role="identifier">next</phrase><phrase role="special">;</phrase>
         <phrase role="special">}</phrase>
     <phrase role="special">});</phrase>
 <phrase role="keyword">for</phrase><phrase role="special">(</phrase><phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase><phrase role="identifier">i</phrase><phrase role="special">&lt;</phrase><phrase role="number">10</phrase><phrase role="special">;++</phrase><phrase role="identifier">i</phrase><phrase role="special">){</phrase>
-    <phrase role="identifier">ctx</phrase><phrase role="special">();</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase><phrase role="special">&lt;&lt;</phrase><phrase role="identifier">p</phrase><phrase role="special">&lt;&lt;</phrase><phrase role="string">&quot; &quot;</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase><phrase role="special">&lt;&lt;*(</phrase><phrase role="keyword">int</phrase><phrase role="special">*)</phrase><phrase role="identifier">source</phrase><phrase role="special">()&lt;&lt;</phrase><phrase role="string">&quot; &quot;</phrase><phrase role="special">;</phrase>
 <phrase role="special">}</phrase>
 
 <phrase role="identifier">output</phrase><phrase role="special">:</phrase>
     <phrase role="number">0</phrase> <phrase role="number">1</phrase> <phrase role="number">1</phrase> <phrase role="number">2</phrase> <phrase role="number">3</phrase> <phrase role="number">5</phrase> <phrase role="number">8</phrase> <phrase role="number">13</phrase> <phrase role="number">21</phrase> <phrase role="number">34</phrase>
 </programlisting>
+    <para>
+      This simple example demonstrates the basic usage of <emphasis>execution_context</emphasis>.
+      The context <code><phrase role="identifier">sink</phrase></code>, returned
+      by <emphasis>execution_context::current()</emphasis>, represents the <emphasis>main</emphasis>-context
+      (function <emphasis>main()</emphasis> running) and is one of the captured parameters
+      in the lambda expression. The lambda that calculates the Fibonacci numbers
+      is executed inside the context represented by <code><phrase role="identifier">source</phrase></code>.
+      The calculated Fibonacci number is transferred between the two context' via
+      expression <emphasis>sink(&amp;a)</emphasis> (and returned by <emphasis>source()</emphasis>).
+    </para>
+    <para>
+      The locale variables <code><phrase role="identifier">a</phrase></code>, <code><phrase
+      role="identifier">b</phrase></code> and <code> <phrase role="identifier">next</phrase></code>
+      remain their values during each context switch (<emphasis>yield(a)</emphasis>).
+      This is possible due <code><phrase role="identifier">ctx</phrase></code> has
+      its own stack and the stack is exchanged by each context switch.
+    </para>
     <bridgehead renderas="sect3" id="context.econtext.h1">
       <phrase id="context.econtext.inverting_the_control_flow"/><link linkend="context.econtext.inverting_the_control_flow">inverting
       the control flow</link>
@@ -195,53 +212,46 @@
     <phrase role="comment">// implementation omitted; see examples directory</phrase>
 <phrase role="special">};</phrase>
 
-<phrase role="keyword">int</phrase> <phrase role="identifier">main</phrase><phrase role="special">()</phrase> <phrase role="special">{</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">istringstream</phrase> <phrase role="identifier">is</phrase><phrase role="special">(</phrase><phrase role="string">&quot;1+1&quot;</phrase><phrase role="special">);</phrase>
-    <phrase role="keyword">bool</phrase> <phrase role="identifier">done</phrase><phrase role="special">=</phrase><phrase role="keyword">false</phrase><phrase role="special">;</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">exception_ptr</phrase> <phrase role="identifier">except</phrase><phrase role="special">;</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">istringstream</phrase> <phrase role="identifier">is</phrase><phrase role="special">(</phrase><phrase role="string">&quot;1+1&quot;</phrase><phrase role="special">);</phrase>
+<phrase role="keyword">bool</phrase> <phrase role="identifier">done</phrase><phrase role="special">=</phrase><phrase role="keyword">false</phrase><phrase role="special">;</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">exception_ptr</phrase> <phrase role="identifier">except</phrase><phrase role="special">;</phrase>
 
-    <phrase role="comment">// create handle to main execution context</phrase>
-    <phrase role="keyword">auto</phrase> <phrase role="identifier">main_ctx</phrase><phrase role="special">(</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">::</phrase><phrase role="identifier">current</phrase><phrase role="special">()</phrase> <phrase role="special">);</phrase>
+<phrase role="comment">// create handle to main execution context</phrase>
+<phrase role="keyword">auto</phrase> <phrase role="identifier">main_ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">::</phrase><phrase role="identifier">current</phrase><phrase role="special">());</phrase>
+<phrase role="comment">// execute parser in new execution context</phrase>
+<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">source</phrase><phrase role="special">(</phrase>
+        <phrase role="special">[&amp;</phrase><phrase role="identifier">sink</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">is</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">done</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">except</phrase><phrase role="special">](</phrase><phrase role="keyword">void</phrase><phrase role="special">*){</phrase>
+        <phrase role="comment">// create parser with callback function</phrase>
+        <phrase role="identifier">Parser</phrase> <phrase role="identifier">p</phrase><phrase role="special">(</phrase><phrase role="identifier">is</phrase><phrase role="special">,</phrase>
+                 <phrase role="special">[&amp;</phrase><phrase role="identifier">sink</phrase><phrase role="special">](</phrase><phrase role="keyword">char</phrase> <phrase role="identifier">ch</phrase><phrase role="special">){</phrase>
+                        <phrase role="comment">// resume main execution context</phrase>
+                        <phrase role="identifier">sink</phrase><phrase role="special">(&amp;</phrase><phrase role="identifier">ch</phrase><phrase role="special">);</phrase>
+                <phrase role="special">});</phrase>
+            <phrase role="keyword">try</phrase> <phrase role="special">{</phrase>
+                <phrase role="comment">// start recursive parsing</phrase>
+                <phrase role="identifier">p</phrase><phrase role="special">.</phrase><phrase role="identifier">run</phrase><phrase role="special">();</phrase>
+            <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(...)</phrase> <phrase role="special">{</phrase>
+                <phrase role="comment">// store other exceptions in exception-pointer</phrase>
+                <phrase role="identifier">except</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">current_exception</phrase><phrase role="special">();</phrase>
+            <phrase role="special">}</phrase>
+            <phrase role="comment">// set termination flag</phrase>
+            <phrase role="identifier">done</phrase><phrase role="special">=</phrase><phrase role="keyword">true</phrase><phrase role="special">;</phrase>
+            <phrase role="comment">// resume main execution context</phrase>
+            <phrase role="identifier">sink</phrase><phrase role="special">();</phrase>
+        <phrase role="special">});</phrase>
 
-    <phrase role="comment">// execute parser in new execution context</phrase>
-    <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">parser_ctx</phrase><phrase role="special">(</phrase>
-            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">allocator_arg</phrase><phrase role="special">,</phrase>
-            <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">fixedsize_stack</phrase><phrase role="special">(</phrase><phrase role="number">4096</phrase><phrase role="special">),</phrase>
-            <phrase role="special">[&amp;</phrase><phrase role="identifier">main_ctx</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">is</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">done</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">except</phrase><phrase role="special">](</phrase><phrase role="keyword">void</phrase><phrase role="special">*){</phrase>
-            <phrase role="comment">// create parser with callback function</phrase>
-            <phrase role="identifier">Parser</phrase> <phrase role="identifier">p</phrase><phrase role="special">(</phrase> <phrase role="identifier">is</phrase><phrase role="special">,</phrase>
-                      <phrase role="special">[&amp;</phrase><phrase role="identifier">main_ctx</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">c</phrase><phrase role="special">](</phrase><phrase role="keyword">char</phrase> <phrase role="identifier">ch</phrase><phrase role="special">){</phrase>
-                            <phrase role="comment">// resume main execution context</phrase>
-                            <phrase role="identifier">main_ctx</phrase><phrase role="special">(</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">ch</phrase><phrase role="special">);</phrase>
-                    <phrase role="special">});</phrase>
-                <phrase role="keyword">try</phrase> <phrase role="special">{</phrase>
-                    <phrase role="comment">// start recursive parsing</phrase>
-                    <phrase role="identifier">p</phrase><phrase role="special">.</phrase><phrase role="identifier">run</phrase><phrase role="special">();</phrase>
-                <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(</phrase> <phrase role="special">...</phrase> <phrase role="special">)</phrase> <phrase role="special">{</phrase>
-                    <phrase role="comment">// store other exceptions in exception-pointer</phrase>
-                    <phrase role="identifier">except</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">current_exception</phrase><phrase role="special">();</phrase>
-                <phrase role="special">}</phrase>
-                <phrase role="comment">// set termination flag</phrase>
-                <phrase role="identifier">done</phrase><phrase role="special">=</phrase><phrase role="keyword">true</phrase><phrase role="special">;</phrase>
-                <phrase role="comment">// resume main execution context</phrase>
-                <phrase role="identifier">main_ctx</phrase><phrase role="special">();</phrase>
-            <phrase role="special">});</phrase>
-
-    <phrase role="comment">// user-code pulls parsed data from parser</phrase>
-    <phrase role="comment">// invert control flow</phrase>
-    <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="identifier">parser_ctx</phrase><phrase role="special">();</phrase>
-    <phrase role="keyword">if</phrase> <phrase role="special">(</phrase> <phrase role="identifier">except</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-        <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">rethrow_exception</phrase><phrase role="special">(</phrase> <phrase role="identifier">except</phrase><phrase role="special">);</phrase>
+<phrase role="comment">// user-code pulls parsed data from parser</phrase>
+<phrase role="comment">// invert control flow</phrase>
+<phrase role="keyword">void</phrase><phrase role="special">*</phrase> <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="identifier">source</phrase><phrase role="special">();</phrase>
+<phrase role="keyword">if</phrase> <phrase role="special">(</phrase><phrase role="identifier">except</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">rethrow_exception</phrase><phrase role="special">(</phrase><phrase role="identifier">except</phrase><phrase role="special">);</phrase>
+<phrase role="special">}</phrase>
+<phrase role="keyword">while</phrase><phrase role="special">(</phrase> <phrase role="special">!</phrase> <phrase role="identifier">done</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+    <phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;Parsed: %c\n&quot;</phrase><phrase role="special">,*</phrase> <phrase role="keyword">static_cast</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">char</phrase><phrase role="special">*&gt;(</phrase><phrase role="identifier">vp</phrase><phrase role="special">));</phrase>
+    <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="identifier">source</phrase><phrase role="special">();</phrase>
+    <phrase role="keyword">if</phrase> <phrase role="special">(</phrase><phrase role="identifier">except</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+        <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">rethrow_exception</phrase><phrase role="special">(</phrase><phrase role="identifier">except</phrase><phrase role="special">);</phrase>
     <phrase role="special">}</phrase>
-    <phrase role="keyword">while</phrase><phrase role="special">(</phrase> <phrase role="special">!</phrase> <phrase role="identifier">done</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-        <phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;Parsed: %c\n&quot;</phrase><phrase role="special">,*</phrase> <phrase role="keyword">static_cast</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">char</phrase><phrase role="special">*</phrase> <phrase role="special">&gt;(</phrase> <phrase role="identifier">vp</phrase><phrase role="special">)</phrase> <phrase role="special">);</phrase>
-        <phrase role="identifier">parser_ctx</phrase><phrase role="special">();</phrase>
-        <phrase role="keyword">if</phrase> <phrase role="special">(</phrase> <phrase role="identifier">except</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">rethrow_exception</phrase><phrase role="special">(</phrase> <phrase role="identifier">except</phrase><phrase role="special">);</phrase>
-        <phrase role="special">}</phrase>
-    <phrase role="special">}</phrase>
-
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;main: done&quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
 <phrase role="special">}</phrase>
 
 <phrase role="identifier">output</phrase><phrase role="special">:</phrase>
@@ -268,6 +278,7 @@
       local stack variables so they can release allocated resources (RAII pattern).
       The user is responsible for this task.
     </para>
+    <anchor id="ec_prealloc"/>
     <bridgehead renderas="sect3" id="context.econtext.h2">
       <phrase id="context.econtext.allocating_control_structures_on_top_of_stack"/><link
       linkend="context.econtext.allocating_control_structures_on_top_of_stack">allocating
@@ -315,7 +326,7 @@
     </bridgehead>
     <para>
       If the function executed inside a <emphasis>execution_context</emphasis> emits
-      ans exception, the application is terminated by calling ['std::terminate().
+      ans exception, the application is terminated by calling <emphasis>std::terminate()</emphasis>.
       <emphasis>std::exception_ptr</emphasis> can be used to transfer exceptions
       between different execution contexts.
     </para>
@@ -471,16 +482,14 @@
           <para>
             Creates a new execution context and prepares the context to execute
             <code><phrase role="identifier">fn</phrase></code>. <code><phrase role="identifier">fixedsize_stack</phrase></code>
-            is used as default stack allocator (stack size == fixedsize_stack::traits::default_size().
+            is used as default stack allocator (stack size == fixedsize_stack::traits::default_size()).
+            The constructor with argument type <code><phrase role="identifier">preallocated</phrase></code>,
+            is used to create a user defined data <link linkend="ec_prealloc">(for
+            instance additional control structures)</link> on top of the stack.
           </para>
         </listitem>
       </varlistentry>
     </variablelist>
-    <para>
-      [[Effects:] [Creates a new execution context and prepares the context to execute
-      <code><phrase role="identifier">fn</phrase></code>. Used to store control structures
-      on top of the stack.]] ]
-    </para>
     <para>
       <bridgehead renderas="sect4" id="execution_context_copy constructor_bridgehead">
   <phrase id="execution_context_copy constructor"/>
@@ -497,7 +506,7 @@
         <listitem>
           <para>
             Copies <code><phrase role="identifier">other</phrase></code>, e.g. underlying
-            capture record is shared with <code><phrase role="special">*</phrase><phrase
+            control structure is shared with <code><phrase role="special">*</phrase><phrase
             role="keyword">this</phrase></code>.
           </para>
         </listitem>
@@ -526,7 +535,7 @@
         <term>Effects:</term>
         <listitem>
           <para>
-            Moves underlying capture record to <code><phrase role="special">*</phrase><phrase
+            Moves underlying control structure to <code><phrase role="special">*</phrase><phrase
             role="keyword">this</phrase></code>.
           </para>
         </listitem>
@@ -557,7 +566,7 @@
           <para>
             Copies the state of <code><phrase role="identifier">other</phrase></code>
             to <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>,
-            state (capture record) is shared.
+            control structure is shared.
           </para>
         </listitem>
       </varlistentry>
@@ -585,7 +594,7 @@
         <term>Effects:</term>
         <listitem>
           <para>
-            Moves the state of <code><phrase role="identifier">other</phrase></code>
+            Moves the control structure of <code><phrase role="identifier">other</phrase></code>
             to <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
             using move semantics.
           </para>
@@ -616,7 +625,7 @@
         <listitem>
           <para>
             <code><phrase role="keyword">true</phrase></code> if <code><phrase role="special">*</phrase><phrase
-            role="keyword">this</phrase></code> points to a capture record.
+            role="keyword">this</phrase></code> points to a control structure.
           </para>
         </listitem>
       </varlistentry>
@@ -645,7 +654,7 @@
         <listitem>
           <para>
             <code><phrase role="keyword">true</phrase></code> if <code><phrase role="special">*</phrase><phrase
-            role="keyword">this</phrase></code> does not point to a capture record.
+            role="keyword">this</phrase></code> does not point to a control structure.
           </para>
         </listitem>
       </varlistentry>
@@ -666,12 +675,6 @@
 </bridgehead>
     </para>
 <programlisting><phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="keyword">nullptr</phrase><phrase role="special">)</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
-
-<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
-
-<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">data</phrase><phrase role="special">,</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
 </programlisting>
     <variablelist>
       <title></title>
@@ -695,11 +698,10 @@
           </para>
           <para>
             The behaviour is undefined if <code><phrase role="keyword">operator</phrase><phrase
-            role="special">()()</phrase></code> is called while <code><phrase role="identifier">execution_context</phrase><phrase
-            role="special">::</phrase><phrase role="identifier">current</phrase><phrase
-            role="special">()</phrase></code> returns <code><phrase role="special">*</phrase><phrase
-            role="keyword">this</phrase></code> (e.g. resuming an already running
-            context). If the top-level context function returns, <code><phrase role="identifier">std</phrase><phrase
+            role="special">()()</phrase></code> is called while <emphasis>execution_context::current()</emphasis>
+            returns <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
+            (e.g. resuming an already running context). If the top-level context
+            function returns, <code><phrase role="identifier">std</phrase><phrase
             role="special">::</phrase><phrase role="identifier">exit</phrase><phrase
             role="special">()</phrase></code> is called.
           </para>
@@ -709,9 +711,46 @@
         <term>Returns:</term>
         <listitem>
           <para>
-            The void pointer argument passed to the most recent call to <code><phrase
-            role="identifier">execution_context</phrase><phrase role="special">::</phrase><phrase
-            role="keyword">operator</phrase><phrase role="special">()</phrase></code>,
+            The void pointer argument passed to the most recent call to <emphasis>execution_context::operator()</emphasis>,
+            if any.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      <bridgehead renderas="sect4" id="execution_context_operator_call_ontop_bridgehead">
+  <phrase id="execution_context_operator_call_ontop"/>
+  <link linkend="execution_context_operator_call_ontop">Member
+      function <code>operator(exec_ontop_arg_t)</code>()</link>
+</bridgehead>
+    </para>
+<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
+<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
+
+<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
+<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">data</phrase><phrase role="special">,</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
+</programlisting>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Effects:</term>
+        <listitem>
+          <para>
+            Same as <emphasis>execution_context::operator()</emphasis>. Additionally,
+            function <code><phrase role="identifier">fn</phrase></code> is executed
+            with arguments <code><phrase role="identifier">args</phrase></code> in
+            the context of <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
+            (e.g. the stack frame of <code><phrase role="identifier">fn</phrase></code>
+            is allocated on stack of <code><phrase role="special">*</phrase><phrase
+            role="keyword">this</phrase></code>.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Returns:</term>
+        <listitem>
+          <para>
+            The void pointer argument passed to the most recent call to __ec__op__,
             if any.
           </para>
         </listitem>
@@ -934,54 +973,115 @@
   <section id="context.ccontext">
     <title><anchor id="ccontext"/><link linkend="context.ccontext">Class captured_context</link></title>
     <para>
-      Class <emphasis>captured_context</emphasis> encapsulates <emphasis>fcontext_t</emphasis>
-      and manages the context' stack (allocation/deallocation).
+      Class <emphasis>captured_context</emphasis> encapsulates context switching
+      and manages the associated context' stack (allocation/deallocation).
     </para>
     <para>
       <emphasis>captured_context</emphasis> allocates the context stack (using its
-      <emphasis>StackAllocator</emphasis> argument) and creates a control structure
-      on top of it. This structure controls the life time of the stack. The address
-      of the control structure is stored in the first frame of context' stack (e.g.
-      it can not accessed by instances of <emphasis>captured_context</emphasis> directly).
-      In contrast to <emphasis>execution_context</emphasis> the ownership of the
-      control structure is not shared A call of<emphasis>captured_context::operator()</emphasis>
-      enters the context represented by <code><phrase role="special">*</phrase><phrase
-      role="keyword">this</phrase></code> and invalidates <code><phrase role="special">*</phrase><phrase
-      role="keyword">this</phrase></code>. The context that has been suspended by
-      calling <emphasis>captured_context::operator()</emphasis> is passed to the
-      resumed context, e.g. as argument of the context-function if the context was
-      resumed the first time or returned by <emphasis>captured_context::operator()</emphasis>.
+      <link linkend="stack"><emphasis>StackAllocator</emphasis></link> argument)
+      and creates a control structure on top of it. This structure is responsible
+      for managing context' stack. The address of the control structure is stored
+      in the first frame of context' stack (e.g. it can not directly accessed from
+      within <emphasis>captured_context</emphasis>). In contrast to <emphasis>execution_context</emphasis>
+      the ownership of the control structure is not shared (no member variable to
+      control structure in __ccontrol__). __ccontrol__ keeps internally a state that
+      gets moved by a call of <emphasis>captured_context::operator()</emphasis> (<code><phrase
+      role="special">*</phrase><phrase role="keyword">this</phrase></code> will be
+      invalidated), e.g. after a calling <emphasis>captured_context::operator()</emphasis>,
+      <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
+      can not be used for an additional context switch.
+    </para>
+    <para>
       <emphasis>captured_context</emphasis> is only move-constructible and move-assignable.
-      If the last reference (<emphasis>captured_context</emphasis>) goes out of scope,
-      the control structure is destroyed and the stack gets deallocated via the
-      <emphasis>StackAllocator</emphasis>. <emphasis>captured_context</emphasis>
-      maintains a static, thread-local pointer (smart pointer), accessed by <emphasis>execution_context::current()</emphasis>,
-      pointing to the active context. On each context switch the static, thread-local
-      pointer is updated. This makes the context switch a little bit slower, but
-      enables faster context destruction (stack unwinding) compared to <emphasis>captured_context</emphasis>.
+    </para>
+    <para>
+      The moved state is assigned to a new instance of __ccontrol__. This object
+      becomes the first argument of the context-function, if the context was resumed
+      the first time or the object becomes the first element in a tuple returned
+      by <emphasis>captured_context::operator()</emphasis> in the resumed context.
+      In contrast to <link linkend="econtext"><emphasis>execution_context</emphasis></link>,
+      no global pointer etc. is involved in the context switch (that's the reason
+      why segmented stacks are not supported by __ccontrol__).
+    </para>
+    <para>
+      If an instance with valid state goes out of scope, the stack is traversed in
+      order to access the control structure (address stored at the first stack frame)
+      and to deallocate context' stack via the <emphasis>StackAllocator</emphasis>.
+      The stack walking makes the destruction of __ccontrol__ very slow compared
+      to <emphasis>execution_context</emphasis>.
     </para>
     <para>
       <emphasis>captured_context</emphasis> expects a function/functor with signature
-      <code><phrase role="identifier">captured_context</phrase><phrase role="special">(</phrase>
-      <phrase role="identifier">captured_context</phrase> <phrase role="identifier">ctx</phrase><phrase
-      role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase>
+      <code><phrase role="identifier">captured_context</phrase><phrase role="special">(</phrase><phrase
+      role="identifier">captured_context</phrase> <phrase role="identifier">ctx</phrase><phrase
+      role="special">,</phrase> <phrase role="keyword">void</phrase><phrase role="special">*</phrase>
       <phrase role="identifier">vp</phrase><phrase role="special">)</phrase></code>.
       The parameter <code><phrase role="identifier">ctx</phrase></code> represents
       the context from which this context was resumed (e.g. that has called <emphasis>captured_context::operator()</emphasis>
       on <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>)
       and <code><phrase role="identifier">vp</phrase></code> is the data passed to
-      <emphasis>captured_context::operator()</emphasis>. The function/functor has
-      to return the captured_context that has to be resumed, while this context terminates.
+      <emphasis>captured_context::operator()</emphasis>. The return value is the
+      captured_context that has to be resumed, while this context terminates.
     </para>
     <important>
       <para>
-        Segemnted stacks are not supported together with <emphasis>captured_context</emphasis>.
+        Segmented stacks are not supported by <emphasis>captured_context</emphasis>.
       </para>
     </important>
     <bridgehead renderas="sect3" id="context.ccontext.h0">
       <phrase id="context.ccontext.usage_of__emphasis_captured_context__emphasis_"/><link
       linkend="context.ccontext.usage_of__emphasis_captured_context__emphasis_">usage
       of <emphasis>captured_context</emphasis></link>
+    </bridgehead>
+<programlisting><phrase role="keyword">int</phrase> <phrase role="identifier">n</phrase><phrase role="special">=</phrase><phrase role="number">35</phrase><phrase role="special">;</phrase>
+<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">captured_context</phrase> <phrase role="identifier">source</phrase><phrase role="special">(</phrase>
+    <phrase role="special">[</phrase><phrase role="identifier">n</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">captured_context</phrase> <phrase role="identifier">sink</phrase><phrase role="special">,</phrase><phrase role="keyword">void</phrase><phrase role="special">*)</phrase><phrase role="keyword">mutable</phrase><phrase role="special">{</phrase>
+        <phrase role="keyword">int</phrase> <phrase role="identifier">a</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
+        <phrase role="keyword">int</phrase> <phrase role="identifier">b</phrase><phrase role="special">=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
+        <phrase role="keyword">while</phrase><phrase role="special">(</phrase><phrase role="identifier">n</phrase><phrase role="special">--&gt;</phrase><phrase role="number">0</phrase><phrase role="special">){</phrase>
+            <phrase role="keyword">auto</phrase> <phrase role="identifier">result</phrase><phrase role="special">=</phrase><phrase role="identifier">sink</phrase><phrase role="special">(&amp;</phrase><phrase role="identifier">a</phrase><phrase role="special">);</phrase>
+            <phrase role="identifier">sink</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">0</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">result</phrase><phrase role="special">));</phrase>
+            <phrase role="keyword">auto</phrase> <phrase role="identifier">next</phrase><phrase role="special">=</phrase><phrase role="identifier">a</phrase><phrase role="special">+</phrase><phrase role="identifier">b</phrase><phrase role="special">;</phrase>
+            <phrase role="identifier">a</phrase><phrase role="special">=</phrase><phrase role="identifier">b</phrase><phrase role="special">;</phrase>
+            <phrase role="identifier">b</phrase><phrase role="special">=</phrase><phrase role="identifier">next</phrase><phrase role="special">;</phrase>
+        <phrase role="special">}</phrase>
+        <phrase role="keyword">return</phrase> <phrase role="identifier">sink</phrase><phrase role="special">;</phrase>
+    <phrase role="special">});</phrase>
+<phrase role="keyword">for</phrase><phrase role="special">(</phrase><phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase><phrase role="identifier">i</phrase><phrase role="special">&lt;</phrase><phrase role="number">10</phrase><phrase role="special">;++</phrase><phrase role="identifier">i</phrase><phrase role="special">){</phrase>
+    <phrase role="keyword">auto</phrase> <phrase role="identifier">result</phrase><phrase role="special">=</phrase><phrase role="identifier">source</phrase><phrase role="special">();</phrase>
+    <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">0</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">result</phrase><phrase role="special">));</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase><phrase role="special">&lt;&lt;*(</phrase><phrase role="keyword">int</phrase><phrase role="special">*)</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">1</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">result</phrase><phrase role="special">)&lt;&lt;</phrase><phrase role="string">&quot; &quot;</phrase><phrase role="special">;</phrase>
+<phrase role="special">}</phrase>
+
+<phrase role="identifier">output</phrase><phrase role="special">:</phrase>
+    <phrase role="number">0</phrase> <phrase role="number">1</phrase> <phrase role="number">1</phrase> <phrase role="number">2</phrase> <phrase role="number">3</phrase> <phrase role="number">5</phrase> <phrase role="number">8</phrase> <phrase role="number">13</phrase> <phrase role="number">21</phrase> <phrase role="number">34</phrase>
+</programlisting>
+    <para>
+      This simple example demonstrates the basic usage of <emphasis>captured_context</emphasis>.
+      The context <code><phrase role="identifier">sink</phrase></code> represents
+      the <emphasis>main</emphasis>-context (function <emphasis>main()</emphasis>
+      running). <code><phrase role="identifier">sink</phrase></code> is generated
+      by the framework (first element of lambda's parameter list). Because the state
+      is invalidated (== changed) by each call of <emphasis>captured_context::operator()</emphasis>,
+      <code><phrase role="identifier">sink</phrase></code> has to be assigned the
+      new state of the __control__ returned by <emphasis>captured_context::operator()</emphasis>.
+    </para>
+    <para>
+      The lambda that calculates the Fibonacci numbers is executed inside the context
+      represented by <code><phrase role="identifier">source</phrase></code>. The
+      calculated Fibonacci number is transferred between the two context' via expression
+      <emphasis>sink(&amp;a)</emphasis> (and returned by <emphasis>source()</emphasis>).
+    </para>
+    <para>
+      The locale variables <code><phrase role="identifier">a</phrase></code>, <code><phrase
+      role="identifier">b</phrase></code> and <code> <phrase role="identifier">next</phrase></code>
+      remain their values during each context switch (<emphasis>yield(a)</emphasis>).
+      This is possible due <code><phrase role="identifier">ctx</phrase></code> has
+      its own stack and the stack is exchanged by each context switch.
+    </para>
+    <bridgehead renderas="sect3" id="context.ccontext.h1">
+      <phrase id="context.ccontext.inverting_the_control_flow"/><link linkend="context.ccontext.inverting_the_control_flow">inverting
+      the control flow</link>
     </bridgehead>
 <programlisting><phrase role="comment">/*
  * grammar:
@@ -999,41 +1099,41 @@
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">exception_ptr</phrase> <phrase role="identifier">except</phrase><phrase role="special">;</phrase>
 
 <phrase role="comment">// execute parser in new execution context</phrase>
-<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">captured_context</phrase> <phrase role="identifier">pctx</phrase><phrase role="special">(</phrase>
-        <phrase role="special">[&amp;</phrase><phrase role="identifier">is</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">done</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">except</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">captured_context</phrase> <phrase role="identifier">mctx</phrase><phrase role="special">,</phrase><phrase role="keyword">void</phrase><phrase role="special">*</phrase> <phrase role="identifier">ignored</phrase><phrase role="special">){</phrase>
+<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">captured_context</phrase> <phrase role="identifier">source</phrase><phrase role="special">(</phrase>
+        <phrase role="special">[&amp;</phrase><phrase role="identifier">is</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">done</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">except</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">captured_context</phrase> <phrase role="identifier">sink</phrase><phrase role="special">,</phrase><phrase role="keyword">void</phrase><phrase role="special">*){</phrase>
         <phrase role="comment">// create parser with callback function</phrase>
         <phrase role="identifier">Parser</phrase> <phrase role="identifier">p</phrase><phrase role="special">(</phrase> <phrase role="identifier">is</phrase><phrase role="special">,</phrase>
-                  <phrase role="special">[&amp;</phrase><phrase role="identifier">mctx</phrase><phrase role="special">](</phrase><phrase role="keyword">char</phrase> <phrase role="identifier">ch</phrase><phrase role="special">){</phrase>
+                  <phrase role="special">[&amp;</phrase><phrase role="identifier">sink</phrase><phrase role="special">](</phrase><phrase role="keyword">char</phrase> <phrase role="identifier">ch</phrase><phrase role="special">){</phrase>
                         <phrase role="comment">// resume main execution context</phrase>
-                        <phrase role="keyword">auto</phrase> <phrase role="identifier">result</phrase> <phrase role="special">=</phrase> <phrase role="identifier">mctx</phrase><phrase role="special">(</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">ch</phrase><phrase role="special">);</phrase>
-                        <phrase role="identifier">mctx</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">0</phrase><phrase role="special">&gt;(</phrase> <phrase role="identifier">result</phrase><phrase role="special">)</phrase> <phrase role="special">);</phrase>
+                        <phrase role="keyword">auto</phrase> <phrase role="identifier">result</phrase> <phrase role="special">=</phrase> <phrase role="identifier">sink</phrase><phrase role="special">(&amp;</phrase><phrase role="identifier">ch</phrase><phrase role="special">);</phrase>
+                        <phrase role="identifier">sink</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">0</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">result</phrase><phrase role="special">));</phrase>
                 <phrase role="special">});</phrase>
             <phrase role="keyword">try</phrase> <phrase role="special">{</phrase>
                 <phrase role="comment">// start recursive parsing</phrase>
                 <phrase role="identifier">p</phrase><phrase role="special">.</phrase><phrase role="identifier">run</phrase><phrase role="special">();</phrase>
-            <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(</phrase> <phrase role="special">...</phrase> <phrase role="special">)</phrase> <phrase role="special">{</phrase>
+            <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(...)</phrase> <phrase role="special">{</phrase>
                 <phrase role="comment">// store other exceptions in exception-pointer</phrase>
                 <phrase role="identifier">except</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">current_exception</phrase><phrase role="special">();</phrase>
             <phrase role="special">}</phrase>
             <phrase role="comment">// set termination flag</phrase>
             <phrase role="identifier">done</phrase><phrase role="special">=</phrase><phrase role="keyword">true</phrase><phrase role="special">;</phrase>
             <phrase role="comment">// resume main execution context</phrase>
-            <phrase role="keyword">return</phrase> <phrase role="identifier">mctx</phrase><phrase role="special">;</phrase>
+            <phrase role="keyword">return</phrase> <phrase role="identifier">sink</phrase><phrase role="special">;</phrase>
         <phrase role="special">});</phrase>
 
 <phrase role="comment">// user-code pulls parsed data from parser</phrase>
 <phrase role="comment">// invert control flow</phrase>
-<phrase role="keyword">auto</phrase> <phrase role="identifier">result</phrase> <phrase role="special">=</phrase> <phrase role="identifier">pctx</phrase><phrase role="special">();</phrase>
-<phrase role="identifier">pctx</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">0</phrase><phrase role="special">&gt;(</phrase> <phrase role="identifier">result</phrase><phrase role="special">)</phrase> <phrase role="special">);</phrase>
-<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">1</phrase><phrase role="special">&gt;(</phrase> <phrase role="identifier">result</phrase><phrase role="special">);</phrase>
+<phrase role="keyword">auto</phrase> <phrase role="identifier">result</phrase> <phrase role="special">=</phrase> <phrase role="identifier">source</phrase><phrase role="special">();</phrase>
+<phrase role="identifier">source</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">0</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">result</phrase><phrase role="special">));</phrase>
+<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">1</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">result</phrase><phrase role="special">);</phrase>
 <phrase role="keyword">if</phrase> <phrase role="special">(</phrase> <phrase role="identifier">except</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">rethrow_exception</phrase><phrase role="special">(</phrase> <phrase role="identifier">except</phrase><phrase role="special">);</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">rethrow_exception</phrase><phrase role="special">(</phrase><phrase role="identifier">except</phrase><phrase role="special">);</phrase>
 <phrase role="special">}</phrase>
 <phrase role="keyword">while</phrase><phrase role="special">(</phrase> <phrase role="special">!</phrase> <phrase role="identifier">done</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-    <phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;Parsed: %c\n&quot;</phrase><phrase role="special">,*</phrase> <phrase role="keyword">static_cast</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">char</phrase><phrase role="special">*</phrase> <phrase role="special">&gt;(</phrase> <phrase role="identifier">vp</phrase><phrase role="special">)</phrase> <phrase role="special">);</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">pctx</phrase><phrase role="special">,</phrase><phrase role="identifier">vp</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">pctx</phrase><phrase role="special">();</phrase>
-    <phrase role="keyword">if</phrase> <phrase role="special">(</phrase> <phrase role="identifier">except</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-        <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">rethrow_exception</phrase><phrase role="special">(</phrase> <phrase role="identifier">except</phrase><phrase role="special">);</phrase>
+    <phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;Parsed: %c\n&quot;</phrase><phrase role="special">,*</phrase> <phrase role="keyword">static_cast</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">char</phrase><phrase role="special">*&gt;(</phrase><phrase role="identifier">vp</phrase><phrase role="special">));</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">source</phrase><phrase role="special">,</phrase><phrase role="identifier">vp</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">source</phrase><phrase role="special">();</phrase>
+    <phrase role="keyword">if</phrase> <phrase role="special">(</phrase><phrase role="identifier">except</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+        <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">rethrow_exception</phrase><phrase role="special">(</phrase><phrase role="identifier">except</phrase><phrase role="special">);</phrase>
     <phrase role="special">}</phrase>
 <phrase role="special">}</phrase>
 
@@ -1061,7 +1161,8 @@
       local stack variables so they can release allocated resources (RAII pattern).
       The user is responsible for this task.
     </para>
-    <bridgehead renderas="sect3" id="context.ccontext.h1">
+    <anchor id="cc_prealloc"/>
+    <bridgehead renderas="sect3" id="context.ccontext.h2">
       <phrase id="context.ccontext.allocating_control_structures_on_top_of_stack"/><link
       linkend="context.ccontext.allocating_control_structures_on_top_of_stack">allocating
       control structures on top of stack</link>
@@ -1102,17 +1203,17 @@
     <phrase role="special">...</phrase>
 <phrase role="special">};</phrase>
 </programlisting>
-    <bridgehead renderas="sect3" id="context.ccontext.h2">
+    <bridgehead renderas="sect3" id="context.ccontext.h3">
       <phrase id="context.ccontext.exception_handling"/><link linkend="context.ccontext.exception_handling">exception
       handling</link>
     </bridgehead>
     <para>
       If the function executed inside a <emphasis>captured_context</emphasis> emits
-      ans exception, the application is terminated by calling ['std::terminate().
+      ans exception, the application is terminated by calling <emphasis>std::terminate()</emphasis>.
       <emphasis>std::exception_ptr</emphasis> can be used to transfer exceptions
       between different execution contexts.
     </para>
-    <bridgehead renderas="sect3" id="context.ccontext.h3">
+    <bridgehead renderas="sect3" id="context.ccontext.h4">
       <phrase id="context.ccontext.parameter_passing"/><link linkend="context.ccontext.parameter_passing">parameter
       passing</link>
     </bridgehead>
@@ -1132,32 +1233,32 @@
 <phrase role="keyword">public</phrase><phrase role="special">:</phrase>
     <phrase role="identifier">X</phrase><phrase role="special">()</phrase> <phrase role="special">:</phrase>
         <phrase role="identifier">excptr_</phrase><phrase role="special">(),</phrase>
-        <phrase role="identifier">ctx_</phrase><phrase role="special">(</phrase> <phrase role="special">[=](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">captured_context</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase><phrase role="special">)-&gt;</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">captured_context</phrase><phrase role="special">{</phrase>
+        <phrase role="identifier">ctx_</phrase><phrase role="special">([=](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">captured_context</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase><phrase role="special">*</phrase> <phrase role="identifier">vp</phrase><phrase role="special">)</phrase><phrase role="keyword">mutable</phrase><phrase role="special">{</phrase>
                     <phrase role="keyword">try</phrase> <phrase role="special">{</phrase>
                         <phrase role="keyword">for</phrase> <phrase role="special">(;;)</phrase> <phrase role="special">{</phrase>
-                            <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase> <phrase role="special">=</phrase> <phrase role="special">*</phrase> <phrase role="keyword">static_cast</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">int</phrase> <phrase role="special">*</phrase> <phrase role="special">&gt;(</phrase> <phrase role="identifier">vp</phrase><phrase role="special">);</phrase>
+                            <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase> <phrase role="special">=</phrase> <phrase role="special">*</phrase> <phrase role="keyword">static_cast</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">*&gt;(</phrase><phrase role="identifier">vp</phrase><phrase role="special">);</phrase>
                             <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="identifier">str</phrase> <phrase role="special">=</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">lexical_cast</phrase><phrase role="special">&lt;</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">i</phrase><phrase role="special">);</phrase>
-                            <phrase role="keyword">auto</phrase> <phrase role="identifier">result</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">str</phrase><phrase role="special">);</phrase>
-                            <phrase role="identifier">ctx</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">0</phrase><phrase role="special">&gt;(</phrase> <phrase role="identifier">result</phrase><phrase role="special">)</phrase> <phrase role="special">);</phrase>
-                            <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">1</phrase><phrase role="special">&gt;(</phrase> <phrase role="identifier">result</phrase><phrase role="special">);</phrase>
+                            <phrase role="keyword">auto</phrase> <phrase role="identifier">result</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(&amp;</phrase> <phrase role="identifier">str</phrase><phrase role="special">);</phrase>
+                            <phrase role="identifier">ctx</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">0</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">result</phrase><phrase role="special">)</phrase> <phrase role="special">);</phrase>
+                            <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">1</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">result</phrase><phrase role="special">);</phrase>
                         <phrase role="special">}</phrase>
-                    <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">detail</phrase><phrase role="special">::</phrase><phrase role="identifier">forced_unwind</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;)</phrase> <phrase role="special">{</phrase>
+                    <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">detail</phrase><phrase role="special">::</phrase><phrase role="identifier">forced_unwind</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;)</phrase> <phrase role="special">{</phrase>
                         <phrase role="keyword">throw</phrase><phrase role="special">;</phrase>
                     <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(...)</phrase> <phrase role="special">{</phrase>
                         <phrase role="identifier">excptr_</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">current_exception</phrase><phrase role="special">();</phrase>
                     <phrase role="special">}</phrase>
                     <phrase role="keyword">return</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">;</phrase>
-              <phrase role="special">})</phrase>
+             <phrase role="special">})</phrase>
     <phrase role="special">{}</phrase>
 
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-        <phrase role="keyword">auto</phrase> <phrase role="identifier">result</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx_</phrase><phrase role="special">(</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">i</phrase><phrase role="special">);</phrase>
-        <phrase role="identifier">ctx_</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">0</phrase><phrase role="special">&gt;(</phrase> <phrase role="identifier">result</phrase><phrase role="special">)</phrase> <phrase role="special">);</phrase>
-        <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">ret</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">1</phrase><phrase role="special">&gt;(</phrase> <phrase role="identifier">result</phrase><phrase role="special">);</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase><phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+        <phrase role="keyword">auto</phrase> <phrase role="identifier">result</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx_</phrase><phrase role="special">(&amp;</phrase><phrase role="identifier">i</phrase><phrase role="special">);</phrase>
+        <phrase role="identifier">ctx_</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">0</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">result</phrase><phrase role="special">));</phrase>
+        <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">ret</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">1</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">result</phrase><phrase role="special">);</phrase>
         <phrase role="keyword">if</phrase><phrase role="special">(</phrase><phrase role="identifier">excptr_</phrase><phrase role="special">){</phrase>
             <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">rethrow_exception</phrase><phrase role="special">(</phrase><phrase role="identifier">excptr_</phrase><phrase role="special">);</phrase>
         <phrase role="special">}</phrase>
-        <phrase role="keyword">return</phrase> <phrase role="special">*</phrase> <phrase role="keyword">static_cast</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="special">*</phrase> <phrase role="special">&gt;(</phrase> <phrase role="identifier">ret</phrase><phrase role="special">);</phrase>
+        <phrase role="keyword">return</phrase> <phrase role="special">*</phrase> <phrase role="keyword">static_cast</phrase><phrase role="special">&lt;</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase><phrase role="special">*&gt;(</phrase><phrase role="identifier">ret</phrase><phrase role="special">);</phrase>
     <phrase role="special">}</phrase>
 <phrase role="special">};</phrase>
 
@@ -1167,7 +1268,7 @@
 <phrase role="identifier">output</phrase><phrase role="special">:</phrase>
 <phrase role="number">7</phrase>
 </programlisting>
-    <bridgehead renderas="sect3" id="context.ccontext.h4">
+    <bridgehead renderas="sect3" id="context.ccontext.h5">
       <phrase id="context.ccontext.class__code__phrase_role__identifier__captured_context__phrase___code_"/><link
       linkend="context.ccontext.class__code__phrase_role__identifier__captured_context__phrase___code_">Class
       <code><phrase role="identifier">captured_context</phrase></code></link>
@@ -1242,17 +1343,14 @@
           <para>
             Creates a new execution context and prepares the context to execute
             <code><phrase role="identifier">fn</phrase></code>. <code><phrase role="identifier">fixedsize_stack</phrase></code>
-            is used as default stack allocator (stack size == fixedsize_stack::traits::default_size().
+            is used as default stack allocator (stack size == fixedsize_stack::traits::default_size()).
+            The constructor with argument type <code><phrase role="identifier">preallocated</phrase></code>,
+            is used to create a user defined data <link linkend="ec_prealloc">(for
+            instance additional control structures)</link> on top of the stack.
           </para>
         </listitem>
       </varlistentry>
     </variablelist>
-    <para>
-      [[Effects:] [Creates a new execution context and prepares the context to execute
-      <code><phrase role="identifier">fn</phrase></code>.]] ] [[Effects:] [Creates
-      a new execution context and prepares the context to execute <code><phrase role="identifier">fn</phrase></code>.
-      Used to store control structures on top of the stack.]] ]
-    </para>
     <para>
       <bridgehead renderas="sect4" id="captured_context_move constructor_bridgehead">
   <phrase id="captured_context_move constructor"/>
@@ -1378,12 +1476,6 @@
 </bridgehead>
     </para>
 <programlisting><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">captured_context</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">data</phrase> <phrase role="special">=</phrase> <phrase role="keyword">nullptr</phrase><phrase role="special">);</phrase>
-
-<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">captured_context</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
-
-<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">captured_context</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">data</phrase><phrase role="special">,</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
 </programlisting>
     <variablelist>
       <title></title>
@@ -1414,6 +1506,48 @@
             context). If the top-level context function returns, <code><phrase role="identifier">std</phrase><phrase
             role="special">::</phrase><phrase role="identifier">exit</phrase><phrase
             role="special">()</phrase></code> is called.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Returns:</term>
+        <listitem>
+          <para>
+            The tuple of void pointer argument passed to the most recent call to
+            <code><phrase role="identifier">captured_context</phrase><phrase role="special">::</phrase><phrase
+            role="keyword">operator</phrase><phrase role="special">()</phrase></code>,
+            if any and a captured_context representing the context that has been
+            suspended .
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      <bridgehead renderas="sect4" id="captured_context_operator_call_ontop_bridgehead">
+  <phrase id="captured_context_operator_call_ontop"/>
+  <link linkend="captured_context_operator_call_ontop">Member
+      function <code>operator()</code>()</link>
+</bridgehead>
+    </para>
+<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">captured_context</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
+
+<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">captured_context</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">data</phrase><phrase role="special">,</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
+</programlisting>
+    <variablelist>
+      <title></title>
+      <varlistentry>
+        <term>Effects:</term>
+        <listitem>
+          <para>
+            Same as <emphasis>captured_context::operator()</emphasis>. Additionally,
+            function <code><phrase role="identifier">fn</phrase></code> is executed
+            with arguments <code><phrase role="identifier">args</phrase></code> in
+            the context of <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
+            (e.g. the stack frame of <code><phrase role="identifier">fn</phrase></code>
+            is allocated on stack of <code><phrase role="special">*</phrase><phrase
+            role="keyword">this</phrase></code>.
           </para>
         </listitem>
       </varlistentry>

@@ -8,61 +8,72 @@
 [#econtext]
 [section:econtext Class execution_context]
 
-Class __econtext__ encapsulates __fcontext__ and manages the context' stack
-(allocation/deallocation).
+Class __econtext__ encapsulates context switching and manages the associated
+context' stack (allocation/deallocation).
 
-__econtext__ allocates the context stack (using its [link stack __stack_allocator__]
-argument) and creates a control structure on top of it. This structure
-controls the life time of the stack. Instances of __econtext__, associated
-with a specific context, share the ownership of the control structure.
-If the last reference goes out of scope, the control structure is destroyed and
-the stack gets deallocated via the __stack_allocator__.
+__econtext__ allocates the context stack (using its [link stack
+__stack_allocator__] argument) and creates a control structure on top of it.
+This structure is responsible for managing context' stack. Instances of
+__econtext__, associated with a specific context, share the ownership of the
+control structure. If the last reference goes out of scope, the control
+structure is destroyed and the stack gets deallocated via the
+__stack_allocator__.
 
 __econtext__ is  copy-constructible, move-constructible, copy-assignable and
 move-assignable.
 
-__econtext__ maintains a static, thread-local pointer (smart pointer),
-accessed by __ec_current__,  pointing to the active context.
-On each context switch the static thread-local pointer is updated.
+__econtext__ maintains a static (thread-local) pointer, accessed by
+__ec_current__,  pointing to the active context. On each context switch the
+pointer is updated.
 The usage of this global pointer makes the context switch a little bit slower
-(due access of thread local storage) but has some advantages. It allows to access
-the control structure of the current active context from arbitrary code paths
-required in order to support segmented stacks, which need to call certain
-maintenance functions (__splitstack_getcontext() etc.) before each context switch
-(each context switch exchanges the stack).
-Additionally the destruction of __econtext__ and thus the stack deallocation is
-faster compared to [link ccontext __ccontext__].
+(due access of thread local storage) but has some advantages. It allows to
+access the control structure of the current active context from arbitrary code
+paths required in order to support segmented stacks, which require to call
+certain maintenance functions (like __splitstack_getcontext() etc.) before each
+context switch (each context switch exchanges the stack).
+Additionally, because the control structure is directly accessible in the
+destructor of __econtext__ (member variable), the deallocation of context' stack
+is faster compared to [link ccontext __ccontext__].
 
-__econtext__ expects a function/functor with signature `void(void* vp)` (
-`vp` is the data passed at the first invocation of
+__econtext__ expects a function/functor with signature `void(void* vp)` (`vp`
+is the data passed at the first invocation of
 [operator_link execution_context operator_call operator()]).
 
 
+[#ec_fibonacci]
 [heading usage of __econtext__]
 
         int n=35;
-        int p=0;
-        boost::context::execution_context mctx( boost::context::execution_context::current() );
-        boost::context::execution_context ctx(
-            [n,&p,&mctx](void*)mutable{
+        boost::context::execution_context sink( boost::context::execution_context::current() );
+        boost::context::execution_context source(
+            [n,&sink](void*)mutable{
                 int a=0;
                 int b=1;
                 while(n-->0){
-                    yield(a);
+                    sink(&a);
                     auto next=a+b;
                     a=b;
                     b=next;
                 }
             });
         for(int i=0;i<10;++i){
-            ctx();
-            std::cout<<p<<" ";
+            std::cout<<*(int*)source()<<" ";
         }
 
         output:
             0 1 1 2 3 5 8 13 21 34
 
-This simple example demonstrates the basic usage of __econtext__. 
+This simple example demonstrates the basic usage of __econtext__. The context
+`sink`, returned by __ec_current__, represents the ['main]-context (function
+['main()] running) and is one of the captured parameters in the lambda
+expression. The lambda that calculates the Fibonacci numbers is executed inside
+the context represented by `source`. The calculated Fibonacci number is
+transferred between the two context' via expression ['sink(&a)] (and returned by
+['source()]).
+
+The locale variables `a`, `b` and ` next` remain their values during each
+context switch (['yield(a)]). This is possible due `ctx` has its own stack and
+the stack is exchanged by each context switch.
 
 [heading inverting the control flow]
 
@@ -76,54 +87,47 @@ This simple example demonstrates the basic usage of __econtext__.
         class Parser{
             // implementation omitted; see examples directory
         };
+ 
+        std::istringstream is("1+1");
+        bool done=false;
+        std::exception_ptr except;
 
-        int main() {
-            std::istringstream is("1+1");
-            bool done=false;
-            std::exception_ptr except;
+        // create handle to main execution context
+        auto main_ctx(boost::context::execution_context::current());
+        // execute parser in new execution context
+        boost::context::execution_context source(
+                [&sink,&is,&done,&except](void*){
+                // create parser with callback function
+                Parser p(is,
+                         [&sink](char ch){
+                                // resume main execution context
+                                sink(&ch);
+                        });
+                    try {
+                        // start recursive parsing
+                        p.run();
+                    } catch (...) {
+                        // store other exceptions in exception-pointer
+                        except = std::current_exception();
+                    }
+                    // set termination flag
+                    done=true;
+                    // resume main execution context
+                    sink();
+                });
 
-            // create handle to main execution context
-            auto main_ctx( boost::context::execution_context::current() );
-
-            // execute parser in new execution context
-            boost::context::execution_context parser_ctx(
-                    std::allocator_arg,
-                    boost::context::fixedsize_stack(4096),
-                    [&main_ctx,&is,&done,&except](void*){
-                    // create parser with callback function
-                    Parser p( is,
-                              [&main_ctx,&c](char ch){
-                                    // resume main execution context
-                                    main_ctx( & ch);
-                            });
-                        try {
-                            // start recursive parsing
-                            p.run();
-                        } catch ( ... ) {
-                            // store other exceptions in exception-pointer
-                            except = std::current_exception();
-                        }
-                        // set termination flag
-                        done=true;
-                        // resume main execution context
-                        main_ctx();
-                    });
-
-            // user-code pulls parsed data from parser
-            // invert control flow
-            void * vp = parser_ctx();
-            if ( except) {
-                std::rethrow_exception( except);
+        // user-code pulls parsed data from parser
+        // invert control flow
+        void* vp = source();
+        if (except) {
+            std::rethrow_exception(except);
+        }
+        while( ! done) {
+            printf("Parsed: %c\n",* static_cast<char*>(vp));
+            vp = source();
+            if (except) {
+                std::rethrow_exception(except);
             }
-            while( ! done) {
-                printf("Parsed: %c\n",* static_cast< char* >( vp) );
-                parser_ctx();
-                if ( except) {
-                    std::rethrow_exception( except);
-                }
-            }
-
-            std::cout << "main: done" << std::endl;
         }
 
         output:
@@ -147,6 +151,7 @@ Sometimes it is necessary to unwind the stack of an unfinished context to
 destroy local stack variables so they can release allocated resources (RAII
 pattern). The user is responsible for this task.
 
+[#ec_prealloc]
 [heading allocating control structures on top of stack]
 Allocating control structures on top of the stack requires to allocated the
 __stack_context__ and create the control structure with placement new before
@@ -181,7 +186,7 @@ of the stack.]
 
 [heading exception handling]
 If the function executed inside a __econtext__ emits ans exception, the
-application is terminated by calling ['std::terminate(). ['std::exception_ptr]
+application is terminated by calling ['std::terminate()]. ['std::exception_ptr]
 can be used to transfer exceptions between different execution contexts.
 
 [heading parameter passing]
@@ -291,10 +296,10 @@ execution context.]]
 
     template< typename Fn, typename ... Args >
     execution_context( Fn && fn, Args && ... args);
-    
+
     template< typename StackAlloc, typename Fn, typename ... Args >
     execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args);
-    
+
     template< typename StackAlloc, typename Fn, typename ... Args >
     execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args);
 
@@ -302,8 +307,9 @@ execution context.]]
 [[Effects:] [Creates a new execution context and prepares the context to execute
 `fn`. `fixedsize_stack` is used as default stack allocator
 (stack size == fixedsize_stack::traits::default_size()).
-The constructor with argument type `preallocated`, is used to store control
-structures on top of the stack.]]
+The constructor with argument type `preallocated`, is used to create a user
+defined data [link ec_prealloc (for instance additional control structures)] on
+top of the stack.]]
 ]
 
 [copy_constructor_heading execution_context..copy constructor]
@@ -311,8 +317,8 @@ structures on top of the stack.]]
             execution_context( execution_context const& other) noexcept;
 
 [variablelist
-[[Effects:] [Copies `other`, e.g. underlying capture record is shared
-with `*this`.]]
+[[Effects:] [Copies `other`, e.g. underlying control structure is shared with
+`*this`.]]
 [[Throws:] [Nothing.]]
 ]
 
@@ -321,7 +327,7 @@ with `*this`.]]
             execution_context( execution_context && other) noexcept;
 
 [variablelist
-[[Effects:] [Moves underlying capture record to `*this`.]]
+[[Effects:] [Moves underlying control structure to `*this`.]]
 [[Throws:] [Nothing.]]
 ]
 
@@ -330,7 +336,8 @@ with `*this`.]]
     execution_context & operator=( execution_context const& other) noexcept;
 
 [variablelist
-[[Effects:] [Copies the state of `other` to `*this`, state (capture record) is shared.]]
+[[Effects:] [Copies the state of `other` to `*this`, control structure is
+shared.]]
 [[Throws:] [Nothing.]]
 ]
 
@@ -339,7 +346,8 @@ with `*this`.]]
     execution_context & operator=( execution_context && other) noexcept;
 
 [variablelist
-[[Effects:] [Moves the state of `other` to `*this` using move semantics.]]
+[[Effects:] [Moves the control structure of `other` to `*this` using move
+semantics.]]
 [[Throws:] [Nothing.]]
 ]
 
@@ -348,7 +356,7 @@ with `*this`.]]
     explicit operator bool() const noexcept;
 
 [variablelist
-[[Returns:] [`true` if `*this` points to a capture record.]]
+[[Returns:] [`true` if `*this` points to a control structure.]]
 [[Throws:] [Nothing.]]
 ]
 
@@ -357,7 +365,7 @@ with `*this`.]]
     bool operator!() const noexcept;
 
 [variablelist
-[[Returns:] [`true` if `*this` does not point to a capture record.]]
+[[Returns:] [`true` if `*this` does not point to a control structure.]]
 [[Throws:] [Nothing.]]
 ]
 
@@ -373,14 +381,14 @@ context.
 The void pointer argument, `vp`, is passed to the current context to be returned
 by the most recent call to `execution_context::operator()` in the same thread.
 `fn` is executed with arguments `args` on top of the stack of `this`.
-[[Note:] [The behaviour is undefined if `operator()()` is called while `execution_context::current()`
-returns `*this` (e.g. resuming an already running context). If the top-level context
-function returns, `std::exit()` is called.]]
+[[Note:] [The behaviour is undefined if `operator()()` is called while
+__ec_current__ returns `*this` (e.g. resuming an already running context). If
+the top-level context function returns, `std::exit()` is called.]]
 [[Returns:] [The void pointer argument passed to the most recent call to
-`execution_context::operator()`, if any.]]
+__ec_op__, if any.]]
 ]
 
-[operator_heading execution_context..operator_call..operator(exec_ontop_arg_t)]
+[operator_heading execution_context..operator_call_ontop..operator(exec_ontop_arg_t)]
 
     template< typename Fn, typename ... Args >
     void * operator()( exec_ontop_arg_t, Fn && fn, Args && ... args);
@@ -389,11 +397,11 @@ function returns, `std::exit()` is called.]]
     void * operator()( void * data, exec_ontop_arg_t, Fn && fn, Args && ... args);
 
 [variablelist
-[[Effects:] [Same as `operator()(void*)`, additionally function `fn` is executed
-with arguments `args` in the context of `*this` (e.g. the stack frame of `fn` is
+[[Effects:] [Same as __ec_op__. Additionally, function `fn` is executed with
+arguments `args` in the context of `*this` (e.g. the stack frame of `fn` is
 allocated on stack of `*this`.]]
 [[Returns:] [The void pointer argument passed to the most recent call to
-`execution_context::operator()`, if any.]]
+__ec__op__, if any.]]
 ]
 
 [operator_heading execution_context..operator_equal..operator==]
@@ -421,8 +429,8 @@ allocated on stack of `*this`.]]
 
 [variablelist
 [[Returns:] [`true` if `*this != other` is true and the
-implementation-defined total order of `execution_context` values places `*this` before
-`other`, false otherwise.]]
+implementation-defined total order of `execution_context` values places `*this`
+before `other`, false otherwise.]]
 [[Throws:] [Nothing.]]
 ]
 
