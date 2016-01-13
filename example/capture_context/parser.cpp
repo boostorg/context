@@ -96,41 +96,41 @@ int main() {
         std::exception_ptr except;
 
         // execute parser in new execution context
-        boost::context::captured_context pctx(
-                [&is,&done,&except](ctx::captured_context mctx,void* ignored){
+        boost::context::captured_context source(
+                [&is,&done,&except](ctx::captured_context sink,void*){
                 // create parser with callback function
                 Parser p( is,
-                          [&mctx](char ch){
+                          [&sink](char ch){
                                 // resume main execution context
-                                auto result = mctx( & ch);
-                                mctx = std::move( std::get<0>( result) );
+                                auto result = sink(&ch);
+                                sink = std::move(std::get<0>(result));
                         });
                     try {
                         // start recursive parsing
                         p.run();
-                    } catch ( ... ) {
+                    } catch (...) {
                         // store other exceptions in exception-pointer
                         except = std::current_exception();
                     }
                     // set termination flag
                     done=true;
                     // resume main execution context
-                    return mctx;
+                    return sink;
                 });
 
         // user-code pulls parsed data from parser
         // invert control flow
-        auto result = pctx();
-        pctx = std::move( std::get<0>( result) );
-        void * vp = std::get<1>( result);
+        auto result = source();
+        source = std::move(std::get<0>(result));
+        void * vp = std::get<1>(result);
         if ( except) {
-            std::rethrow_exception( except);
+            std::rethrow_exception(except);
         }
         while( ! done) {
-            printf("Parsed: %c\n",* static_cast< char* >( vp) );
-            std::tie(pctx,vp) = pctx();
-            if ( except) {
-                std::rethrow_exception( except);
+            printf("Parsed: %c\n",* static_cast<char*>(vp));
+            std::tie(source,vp) = source();
+            if (except) {
+                std::rethrow_exception(except);
             }
         }
 
