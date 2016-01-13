@@ -26,8 +26,6 @@ project boost/context/test
       <threading>multi
     ;
 
-run test_context.cpp : ;
-
 run test_invoke.cpp :
     : :
     [ requires cxx11_auto_declarations
