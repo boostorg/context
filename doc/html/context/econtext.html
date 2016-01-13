@@ -68,7 +68,7 @@
       of <span class="emphasis"><em>execution_context</em></span></a>
     </h4>
 <pre class="programlisting"><span class="keyword">int</span> <span class="identifier">n</span><span class="special">=</span><span class="number">35</span><span class="special">;</span>
-<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span> <span class="identifier">sink</span><span class="special">(</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">::</span><span class="identifier">current</span><span class="special">()</span> <span class="special">);</span>
+<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span> <span class="identifier">sink</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">::</span><span class="identifier">current</span><span class="special">());</span>
 <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span> <span class="identifier">source</span><span class="special">(</span>
     <span class="special">[</span><span class="identifier">n</span><span class="special">,&amp;</span><span class="identifier">sink</span><span class="special">](</span><span class="keyword">void</span><span class="special">*)</span><span class="keyword">mutable</span><span class="special">{</span>
         <span class="keyword">int</span> <span class="identifier">a</span><span class="special">=</span><span class="number">0</span><span class="special">;</span>
@@ -94,14 +94,14 @@
       (function <span class="emphasis"><em>main()</em></span> running) and is one of the captured parameters
       in the lambda expression. The lambda that calculates the Fibonacci numbers
       is executed inside the context represented by <code class="computeroutput"><span class="identifier">source</span></code>.
-      The calculated Fibonacci number is transferred between the two context' via
-      expression <span class="emphasis"><em>sink(&amp;a)</em></span> (and returned by <span class="emphasis"><em>source()</em></span>).
+      Calculated Fibonacci numbers are transferred between the two context' via expression
+      <span class="emphasis"><em>sink(&amp;a)</em></span> (and returned by <span class="emphasis"><em>source()</em></span>).
     </p>
 <p>
       The locale variables <code class="computeroutput"><span class="identifier">a</span></code>, <code class="computeroutput"><span class="identifier">b</span></code> and <code class="computeroutput"> <span class="identifier">next</span></code>
       remain their values during each context switch (<span class="emphasis"><em>yield(a)</em></span>).
-      This is possible due <code class="computeroutput"><span class="identifier">ctx</span></code> has
-      its own stack and the stack is exchanged by each context switch.
+      This is possible because <code class="computeroutput"><span class="identifier">ctx</span></code>
+      owns a stack (exchanged by context switch).
     </p>
 <h4>
 <a name="context.econtext.h1"></a>
@@ -567,8 +567,7 @@
 <p class="title"><b></b></p>
 <dl>
 <dt><span class="term">Effects:</span></dt>
-<dd>
-<p>
+<dd><p>
             Stores internally the current context data (stack pointer, instruction
             pointer, and CPU registers) of the current active context and restores
             the context data from <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>, which implies jumping to <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>'s
@@ -577,15 +576,14 @@
             to <code class="computeroutput"><span class="identifier">execution_context</span><span class="special">::</span><span class="keyword">operator</span><span class="special">()</span></code> in the same thread. <code class="computeroutput"><span class="identifier">fn</span></code>
             is executed with arguments <code class="computeroutput"><span class="identifier">args</span></code>
             on top of the stack of <code class="computeroutput"><span class="keyword">this</span></code>.
-            [[Note:
-          </p>
-<p>
+          </p></dd>
+<dt><span class="term">Note:</span></dt>
+<dd><p>
             The behaviour is undefined if <code class="computeroutput"><span class="keyword">operator</span><span class="special">()()</span></code> is called while <span class="emphasis"><em>execution_context::current()</em></span>
             returns <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>
             (e.g. resuming an already running context). If the top-level context
             function returns, <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">exit</span><span class="special">()</span></code> is called.
-          </p>
-</dd>
+          </p></dd>
 <dt><span class="term">Returns:</span></dt>
 <dd><p>
             The void pointer argument passed to the most recent call to <span class="emphasis"><em>execution_context::operator()</em></span>,
@@ -619,11 +617,11 @@
             with arguments <code class="computeroutput"><span class="identifier">args</span></code> in
             the context of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>
             (e.g. the stack frame of <code class="computeroutput"><span class="identifier">fn</span></code>
-            is allocated on stack of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>.
+            is allocated on stack of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>).
           </p></dd>
 <dt><span class="term">Returns:</span></dt>
 <dd><p>
-            The void pointer argument passed to the most recent call to __ec__op__,
+            The void pointer argument passed to the most recent call to <span class="emphasis"><em>execution_context::operator()</em></span>,
             if any.
           </p></dd>
 </dl>

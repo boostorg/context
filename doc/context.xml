@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/01/13 16:01:53 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/01/13 16:39:42 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -161,7 +161,7 @@
       of <emphasis>execution_context</emphasis></link>
     </bridgehead>
 <programlisting><phrase role="keyword">int</phrase> <phrase role="identifier">n</phrase><phrase role="special">=</phrase><phrase role="number">35</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">sink</phrase><phrase role="special">(</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">::</phrase><phrase role="identifier">current</phrase><phrase role="special">()</phrase> <phrase role="special">);</phrase>
+<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">sink</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">::</phrase><phrase role="identifier">current</phrase><phrase role="special">());</phrase>
 <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase> <phrase role="identifier">source</phrase><phrase role="special">(</phrase>
     <phrase role="special">[</phrase><phrase role="identifier">n</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">sink</phrase><phrase role="special">](</phrase><phrase role="keyword">void</phrase><phrase role="special">*)</phrase><phrase role="keyword">mutable</phrase><phrase role="special">{</phrase>
         <phrase role="keyword">int</phrase> <phrase role="identifier">a</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
@@ -187,15 +187,15 @@
       (function <emphasis>main()</emphasis> running) and is one of the captured parameters
       in the lambda expression. The lambda that calculates the Fibonacci numbers
       is executed inside the context represented by <code><phrase role="identifier">source</phrase></code>.
-      The calculated Fibonacci number is transferred between the two context' via
-      expression <emphasis>sink(&amp;a)</emphasis> (and returned by <emphasis>source()</emphasis>).
+      Calculated Fibonacci numbers are transferred between the two context' via expression
+      <emphasis>sink(&amp;a)</emphasis> (and returned by <emphasis>source()</emphasis>).
     </para>
     <para>
       The locale variables <code><phrase role="identifier">a</phrase></code>, <code><phrase
       role="identifier">b</phrase></code> and <code> <phrase role="identifier">next</phrase></code>
       remain their values during each context switch (<emphasis>yield(a)</emphasis>).
-      This is possible due <code><phrase role="identifier">ctx</phrase></code> has
-      its own stack and the stack is exchanged by each context switch.
+      This is possible because <code><phrase role="identifier">ctx</phrase></code>
+      owns a stack (exchanged by context switch).
     </para>
     <bridgehead renderas="sect3" id="context.econtext.h1">
       <phrase id="context.econtext.inverting_the_control_flow"/><link linkend="context.econtext.inverting_the_control_flow">inverting
@@ -694,8 +694,12 @@
             role="special">()</phrase></code> in the same thread. <code><phrase role="identifier">fn</phrase></code>
             is executed with arguments <code><phrase role="identifier">args</phrase></code>
             on top of the stack of <code><phrase role="keyword">this</phrase></code>.
-            [[Note:
           </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Note:</term>
+        <listitem>
           <para>
             The behaviour is undefined if <code><phrase role="keyword">operator</phrase><phrase
             role="special">()()</phrase></code> is called while <emphasis>execution_context::current()</emphasis>
@@ -742,7 +746,7 @@
             the context of <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
             (e.g. the stack frame of <code><phrase role="identifier">fn</phrase></code>
             is allocated on stack of <code><phrase role="special">*</phrase><phrase
-            role="keyword">this</phrase></code>.
+            role="keyword">this</phrase></code>).
           </para>
         </listitem>
       </varlistentry>
@@ -750,7 +754,7 @@
         <term>Returns:</term>
         <listitem>
           <para>
-            The void pointer argument passed to the most recent call to __ec__op__,
+            The void pointer argument passed to the most recent call to <emphasis>execution_context::operator()</emphasis>,
             if any.
           </para>
         </listitem>
@@ -984,10 +988,10 @@
       in the first frame of context' stack (e.g. it can not directly accessed from
       within <emphasis>captured_context</emphasis>). In contrast to <emphasis>execution_context</emphasis>
       the ownership of the control structure is not shared (no member variable to
-      control structure in __ccontrol__). __ccontrol__ keeps internally a state that
-      gets moved by a call of <emphasis>captured_context::operator()</emphasis> (<code><phrase
-      role="special">*</phrase><phrase role="keyword">this</phrase></code> will be
-      invalidated), e.g. after a calling <emphasis>captured_context::operator()</emphasis>,
+      control structure in <emphasis>captured_context</emphasis>). <emphasis>captured_context</emphasis>
+      keeps internally a state that is moved by a call of <emphasis>captured_context::operator()</emphasis>
+      (<code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
+      will be invalidated), e.g. after a calling <emphasis>captured_context::operator()</emphasis>,
       <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
       can not be used for an additional context switch.
     </para>
@@ -995,20 +999,20 @@
       <emphasis>captured_context</emphasis> is only move-constructible and move-assignable.
     </para>
     <para>
-      The moved state is assigned to a new instance of __ccontrol__. This object
-      becomes the first argument of the context-function, if the context was resumed
-      the first time or the object becomes the first element in a tuple returned
-      by <emphasis>captured_context::operator()</emphasis> in the resumed context.
-      In contrast to <link linkend="econtext"><emphasis>execution_context</emphasis></link>,
-      no global pointer etc. is involved in the context switch (that's the reason
-      why segmented stacks are not supported by __ccontrol__).
+      The moved state is assigned to a new instance of <emphasis>captured_context</emphasis>.
+      This object becomes the first argument of the context-function, if the context
+      was resumed the first time or the object becomes the first element in a tuple
+      returned by <emphasis>captured_context::operator()</emphasis> that has been
+      called in the resumed context. In contrast to <link linkend="econtext"><emphasis>execution_context</emphasis></link>,
+      the context switch is faster because no global pointer etc. is involved (that's
+      the reason why segmented stacks are not supported by <emphasis>captured_context</emphasis>).
     </para>
     <para>
       If an instance with valid state goes out of scope, the stack is traversed in
       order to access the control structure (address stored at the first stack frame)
       and to deallocate context' stack via the <emphasis>StackAllocator</emphasis>.
-      The stack walking makes the destruction of __ccontrol__ very slow compared
-      to <emphasis>execution_context</emphasis>.
+      The stack walking makes the destruction of <emphasis>captured_context</emphasis>
+      very slow compared to <emphasis>execution_context</emphasis>.
     </para>
     <para>
       <emphasis>captured_context</emphasis> expects a function/functor with signature
@@ -1064,12 +1068,12 @@
       by the framework (first element of lambda's parameter list). Because the state
       is invalidated (== changed) by each call of <emphasis>captured_context::operator()</emphasis>,
       <code><phrase role="identifier">sink</phrase></code> has to be assigned the
-      new state of the __control__ returned by <emphasis>captured_context::operator()</emphasis>.
+      new state of the <emphasis>captured_context</emphasis> returned by <emphasis>captured_context::operator()</emphasis>.
     </para>
     <para>
       The lambda that calculates the Fibonacci numbers is executed inside the context
-      represented by <code><phrase role="identifier">source</phrase></code>. The
-      calculated Fibonacci number is transferred between the two context' via expression
+      represented by <code><phrase role="identifier">source</phrase></code>. Calculated
+      Fibonacci numbers are transferred between the two context' via expression
       <emphasis>sink(&amp;a)</emphasis> (and returned by <emphasis>source()</emphasis>).
     </para>
     <para>
@@ -1495,8 +1499,12 @@
             in the same thread. <code><phrase role="identifier">fn</phrase></code>
             is executed with arguments <code><phrase role="identifier">args</phrase></code>
             on top of the stack of <code><phrase role="keyword">this</phrase></code>.
-            [[Note:
           </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Note:</term>
+        <listitem>
           <para>
             The behaviour is undefined if <code><phrase role="keyword">operator</phrase><phrase
             role="special">()()</phrase></code> is called while <code><phrase role="identifier">captured_context</phrase><phrase
@@ -1547,7 +1555,7 @@
             the context of <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
             (e.g. the stack frame of <code><phrase role="identifier">fn</phrase></code>
             is allocated on stack of <code><phrase role="special">*</phrase><phrase
-            role="keyword">this</phrase></code>.
+            role="keyword">this</phrase></code>).
           </para>
         </listitem>
       </varlistentry>

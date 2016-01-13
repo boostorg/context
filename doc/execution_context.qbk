@@ -44,7 +44,7 @@ is the data passed at the first invocation of
 [heading usage of __econtext__]
 
         int n=35;
-        boost::context::execution_context sink( boost::context::execution_context::current() );
+        boost::context::execution_context sink(boost::context::execution_context::current());
         boost::context::execution_context source(
             [n,&sink](void*)mutable{
                 int a=0;
@@ -67,13 +67,13 @@ This simple example demonstrates the basic usage of __econtext__. The context
 `sink`, returned by __ec_current__, represents the ['main]-context (function
 ['main()] running) and is one of the captured parameters in the lambda
 expression. The lambda that calculates the Fibonacci numbers is executed inside
-the context represented by `source`. The calculated Fibonacci number is
+the context represented by `source`. Calculated Fibonacci numbers are
 transferred between the two context' via expression ['sink(&a)] (and returned by
 ['source()]).
 
 The locale variables `a`, `b` and ` next` remain their values during each
-context switch (['yield(a)]). This is possible due `ctx` has its own stack and
-the stack is exchanged by each context switch.
+context switch (['yield(a)]). This is possible because `ctx` owns a stack
+(exchanged by context switch).
 
 [heading inverting the control flow]
 
@@ -380,7 +380,7 @@ restores the context data from `*this`, which implies jumping to `*this`'s
 context.
 The void pointer argument, `vp`, is passed to the current context to be returned
 by the most recent call to `execution_context::operator()` in the same thread.
-`fn` is executed with arguments `args` on top of the stack of `this`.
+`fn` is executed with arguments `args` on top of the stack of `this`.]]
 [[Note:] [The behaviour is undefined if `operator()()` is called while
 __ec_current__ returns `*this` (e.g. resuming an already running context). If
 the top-level context function returns, `std::exit()` is called.]]
@@ -399,9 +399,9 @@ __ec_op__, if any.]]
 [variablelist
 [[Effects:] [Same as __ec_op__. Additionally, function `fn` is executed with
 arguments `args` in the context of `*this` (e.g. the stack frame of `fn` is
-allocated on stack of `*this`.]]
+allocated on stack of `*this`).]]
 [[Returns:] [The void pointer argument passed to the most recent call to
-__ec__op__, if any.]]
+__ec_op__, if any.]]
 ]
 
 [operator_heading execution_context..operator_equal..operator==]

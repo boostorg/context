@@ -38,9 +38,10 @@
       in the first frame of context' stack (e.g. it can not directly accessed from
       within <span class="emphasis"><em>captured_context</em></span>). In contrast to <span class="emphasis"><em>execution_context</em></span>
       the ownership of the control structure is not shared (no member variable to
-      control structure in __ccontrol__). __ccontrol__ keeps internally a state that
-      gets moved by a call of <span class="emphasis"><em>captured_context::operator()</em></span> (<code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code> will be
-      invalidated), e.g. after a calling <span class="emphasis"><em>captured_context::operator()</em></span>,
+      control structure in <span class="emphasis"><em>captured_context</em></span>). <span class="emphasis"><em>captured_context</em></span>
+      keeps internally a state that is moved by a call of <span class="emphasis"><em>captured_context::operator()</em></span>
+      (<code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>
+      will be invalidated), e.g. after a calling <span class="emphasis"><em>captured_context::operator()</em></span>,
       <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>
       can not be used for an additional context switch.
     </p>
@@ -48,20 +49,20 @@
       <span class="emphasis"><em>captured_context</em></span> is only move-constructible and move-assignable.
     </p>
 <p>
-      The moved state is assigned to a new instance of __ccontrol__. This object
-      becomes the first argument of the context-function, if the context was resumed
-      the first time or the object becomes the first element in a tuple returned
-      by <span class="emphasis"><em>captured_context::operator()</em></span> in the resumed context.
-      In contrast to <a class="link" href="econtext.html#econtext"><span class="emphasis"><em>execution_context</em></span></a>,
-      no global pointer etc. is involved in the context switch (that's the reason
-      why segmented stacks are not supported by __ccontrol__).
+      The moved state is assigned to a new instance of <span class="emphasis"><em>captured_context</em></span>.
+      This object becomes the first argument of the context-function, if the context
+      was resumed the first time or the object becomes the first element in a tuple
+      returned by <span class="emphasis"><em>captured_context::operator()</em></span> that has been
+      called in the resumed context. In contrast to <a class="link" href="econtext.html#econtext"><span class="emphasis"><em>execution_context</em></span></a>,
+      the context switch is faster because no global pointer etc. is involved (that's
+      the reason why segmented stacks are not supported by <span class="emphasis"><em>captured_context</em></span>).
     </p>
 <p>
       If an instance with valid state goes out of scope, the stack is traversed in
       order to access the control structure (address stored at the first stack frame)
       and to deallocate context' stack via the <span class="emphasis"><em>StackAllocator</em></span>.
-      The stack walking makes the destruction of __ccontrol__ very slow compared
-      to <span class="emphasis"><em>execution_context</em></span>.
+      The stack walking makes the destruction of <span class="emphasis"><em>captured_context</em></span>
+      very slow compared to <span class="emphasis"><em>execution_context</em></span>.
     </p>
 <p>
       <span class="emphasis"><em>captured_context</em></span> expects a function/functor with signature
@@ -119,12 +120,12 @@
       by the framework (first element of lambda's parameter list). Because the state
       is invalidated (== changed) by each call of <span class="emphasis"><em>captured_context::operator()</em></span>,
       <code class="computeroutput"><span class="identifier">sink</span></code> has to be assigned the
-      new state of the __control__ returned by <span class="emphasis"><em>captured_context::operator()</em></span>.
+      new state of the <span class="emphasis"><em>captured_context</em></span> returned by <span class="emphasis"><em>captured_context::operator()</em></span>.
     </p>
 <p>
       The lambda that calculates the Fibonacci numbers is executed inside the context
-      represented by <code class="computeroutput"><span class="identifier">source</span></code>. The
-      calculated Fibonacci number is transferred between the two context' via expression
+      represented by <code class="computeroutput"><span class="identifier">source</span></code>. Calculated
+      Fibonacci numbers are transferred between the two context' via expression
       <span class="emphasis"><em>sink(&amp;a)</em></span> (and returned by <span class="emphasis"><em>source()</em></span>).
     </p>
 <p>
@@ -528,8 +529,7 @@
 <p class="title"><b></b></p>
 <dl>
 <dt><span class="term">Effects:</span></dt>
-<dd>
-<p>
+<dd><p>
             Stores internally the current context data (stack pointer, instruction
             pointer, and CPU registers) of the current active context and restores
             the context data from <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>, which implies jumping to <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>'s
@@ -539,13 +539,12 @@
             in the same thread. <code class="computeroutput"><span class="identifier">fn</span></code>
             is executed with arguments <code class="computeroutput"><span class="identifier">args</span></code>
             on top of the stack of <code class="computeroutput"><span class="keyword">this</span></code>.
-            [[Note:
-          </p>
-<p>
+          </p></dd>
+<dt><span class="term">Note:</span></dt>
+<dd><p>
             The behaviour is undefined if <code class="computeroutput"><span class="keyword">operator</span><span class="special">()()</span></code> is called while <code class="computeroutput"><span class="identifier">captured_context</span><span class="special">::</span><span class="identifier">current</span><span class="special">()</span></code> returns <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code> (e.g. resuming an already running
             context). If the top-level context function returns, <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">exit</span><span class="special">()</span></code> is called.
-          </p>
-</dd>
+          </p></dd>
 <dt><span class="term">Returns:</span></dt>
 <dd><p>
             The tuple of void pointer argument passed to the most recent call to
@@ -581,7 +580,7 @@
             with arguments <code class="computeroutput"><span class="identifier">args</span></code> in
             the context of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>
             (e.g. the stack frame of <code class="computeroutput"><span class="identifier">fn</span></code>
-            is allocated on stack of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>.
+            is allocated on stack of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>).
           </p></dd>
 <dt><span class="term">Returns:</span></dt>
 <dd><p>
