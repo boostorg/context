@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CONTEXT_FCONTEXT_H
-#define BOOST_CONTEXT_FCONTEXT_H
+#ifndef BOOST_CONTEXT_DETAIL_FCONTEXT_H
+#define BOOST_CONTEXT_DETAIL_FCONTEXT_H
 
 #include <boost/config.hpp>
 #include <boost/cstdint.hpp>
@@ -18,6 +18,7 @@
 
 namespace boost {
 namespace context {
+namespace detail {
 
 typedef void*   fcontext_t;
 
@@ -35,11 +36,11 @@ fcontext_t BOOST_CONTEXT_CALLDECL make_fcontext( void * sp, std::size_t size, vo
 extern "C" BOOST_CONTEXT_DECL
 transfer_t BOOST_CONTEXT_CALLDECL ontop_fcontext( fcontext_t const to, void * vp, transfer_t (* fn)( transfer_t) );
 
-}}
+}}}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_CONTEXT_FCONTEXT_H
+#endif // BOOST_CONTEXT_DETAIL_FCONTEXT_H
 

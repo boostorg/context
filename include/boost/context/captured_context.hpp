@@ -23,18 +23,18 @@
 
 # include <boost/assert.hpp>
 # include <boost/config.hpp>
-# include <boost/context/fcontext.hpp>
 # include <boost/intrusive_ptr.hpp>
 
 # include <boost/context/detail/apply.hpp>
 # include <boost/context/detail/disable_overload.hpp>
 # include <boost/context/detail/exception.hpp>
 # include <boost/context/detail/exchange.hpp>
+# include <boost/context/detail/fcontext.hpp>
 # include <boost/context/fixedsize_stack.hpp>
 # include <boost/context/flags.hpp>
 # include <boost/context/preallocated.hpp>
-# include <boost/context/stack_context.hpp>
 # include <boost/context/segmented_stack.hpp>
+# include <boost/context/stack_context.hpp>
 
 # ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -211,20 +211,20 @@ private:
     friend class detail::record;
 
     template< typename Ctx, typename Fn, typename Tpl >
-    friend transfer_t detail::context_ontop( transfer_t);
+    friend detail::transfer_t detail::context_ontop( detail::transfer_t);
 
-    fcontext_t  fctx_{ nullptr };
+    detail::fcontext_t  fctx_{ nullptr };
 
-    captured_context( fcontext_t fctx) noexcept :
+    captured_context( detail::fcontext_t fctx) noexcept :
         fctx_( fctx) {
     }
 
     template< typename Fn, typename ... Args >
-    transfer_t resume_ontop_( void * data, Fn && fn, Args && ... args) {
+    detail::transfer_t resume_ontop_( void * data, Fn && fn, Args && ... args) {
         typedef std::tuple< typename std::decay< Args >::type ... > tpl_t;
         tpl_t tpl{ std::forward< Args >( args) ... };
         std::tuple< void *, Fn, tpl_t > p = std::forward_as_tuple( data, fn, tpl);
-        return ontop_fcontext(
+        return detail::ontop_fcontext(
                 detail::exchange( fctx_, nullptr),
                 & p,
                 detail::context_ontop< captured_context, Fn, tpl_t >);
@@ -293,7 +293,7 @@ public:
 
     ~captured_context() {
         if ( nullptr != fctx_) {
-            ontop_fcontext( detail::exchange( fctx_, nullptr), nullptr, detail::context_unwind);
+            detail::ontop_fcontext( detail::exchange( fctx_, nullptr), nullptr, detail::context_unwind);
         }
     }
 
@@ -315,14 +315,14 @@ public:
 
     std::tuple< captured_context, void * > operator()( void * data = nullptr) {
         BOOST_ASSERT( nullptr != fctx_);
-        transfer_t t = jump_fcontext( detail::exchange( fctx_, nullptr), data);
+        detail::transfer_t t = detail::jump_fcontext( detail::exchange( fctx_, nullptr), data);
         return std::make_tuple( captured_context( t.fctx), t.data);
     }
 
     template< typename Fn, typename ... Args >
     std::tuple< captured_context, void * > operator()( exec_ontop_arg_t, Fn && fn, Args && ... args) {
         BOOST_ASSERT( nullptr != fctx_);
-        transfer_t t = resume_ontop_( nullptr,
+        detail::transfer_t t = resume_ontop_( nullptr,
                                       std::forward< Fn >( fn),
                                       std::forward< Args >( args) ... );
         return std::make_tuple( captured_context( t.fctx), t.data);
@@ -331,7 +331,7 @@ public:
     template< typename Fn, typename ... Args >
     std::tuple< captured_context, void * > operator()( void * data, exec_ontop_arg_t, Fn && fn, Args && ... args) {
         BOOST_ASSERT( nullptr != fctx_);
-        transfer_t t = resume_ontop_( data,
+        detail::transfer_t t = resume_ontop_( data,
                                       std::forward< Fn >( fn),
                                       std::forward< Args >( args) ... );
         return std::make_tuple( captured_context( t.fctx), t.data);

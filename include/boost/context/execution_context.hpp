@@ -24,16 +24,16 @@
 
 # include <boost/assert.hpp>
 # include <boost/config.hpp>
-# include <boost/context/fcontext.hpp>
 # include <boost/intrusive_ptr.hpp>
 
 # include <boost/context/detail/apply.hpp>
 # include <boost/context/detail/disable_overload.hpp>
+# include <boost/context/detail/fcontext.hpp>
 # include <boost/context/fixedsize_stack.hpp>
 # include <boost/context/flags.hpp>
 # include <boost/context/preallocated.hpp>
-# include <boost/context/stack_context.hpp>
 # include <boost/context/segmented_stack.hpp>
+# include <boost/context/stack_context.hpp>
 
 # ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -217,7 +217,7 @@ private:
     // entered if the execution context
     // is resumed for the first time
     template< typename AR >
-    static void entry_func( transfer_t t) noexcept {
+    static void entry_func( detail::transfer_t t) noexcept {
         detail::data_t * dp = reinterpret_cast< detail::data_t * >( t.data);
         AR * ar = static_cast< AR * >( dp->data);
         BOOST_ASSERT( nullptr != ar);
@@ -255,7 +255,7 @@ private:
         const std::size_t size = sctx.size - ( static_cast< char * >( sctx.sp) - static_cast< char * >( sp) );
 #endif
         // create fast-context
-        const fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
+        const detail::fcontext_t fctx = detail::make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
         // get current activation record
         auto curr = execution_context::current().ptr_;
@@ -288,7 +288,7 @@ private:
         const std::size_t size = palloc.size - ( static_cast< char * >( palloc.sp) - static_cast< char * >( sp) );
 #endif
         // create fast-context
-        const fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
+        const detail::fcontext_t fctx = detail::make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
         // get current activation record
         auto curr = execution_context::current().ptr_;

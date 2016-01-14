@@ -7,11 +7,10 @@
 #ifndef BOOST_CONTEXT_DETAIL_EXCHANGE_H
 #define BOOST_CONTEXT_DETAIL_EXCHANGE_H
 
+#include <algorithm>
 #include <utility>
 
 #include <boost/config.hpp>
-
-#include <boost/context/fcontext.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_PREFIX
