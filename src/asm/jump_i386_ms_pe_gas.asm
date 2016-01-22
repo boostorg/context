@@ -100,3 +100,6 @@ _jump_fcontext:
 
     /* jump to context */
     ret
+
+.section .drectve
+.ascii " -export:\"jump_fcontext\""

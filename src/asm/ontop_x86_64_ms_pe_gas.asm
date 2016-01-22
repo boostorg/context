@@ -137,3 +137,6 @@ ontop_fcontext:
     /* indirect jump to context */
     jmp  *%r9
 .seh_endproc
+
+.section .drectve
+.ascii " -export:\"ontop_fcontext\""

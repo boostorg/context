@@ -135,3 +135,6 @@ jump_fcontext:
     /* indirect jump to context */
     jmp  *%r10
 .seh_endproc
+
+.section .drectve
+.ascii " -export:\"jump_fcontext\""

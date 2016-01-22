@@ -134,3 +134,6 @@ finish:
     hlt
 
 .def	__exit;	.scl	2;	.type	32;	.endef  /* standard C library function */
+
+.section .drectve
+.ascii " -export:\"make_fcontext\""
