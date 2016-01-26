@@ -24,15 +24,16 @@
 
 # include <boost/assert.hpp>
 # include <boost/config.hpp>
-# include <boost/context/fcontext.hpp>
 # include <boost/intrusive_ptr.hpp>
 
 # include <boost/context/detail/apply.hpp>
 # include <boost/context/detail/disable_overload.hpp>
+# include <boost/context/detail/fcontext.hpp>
 # include <boost/context/fixedsize_stack.hpp>
+# include <boost/context/flags.hpp>
 # include <boost/context/preallocated.hpp>
-# include <boost/context/stack_context.hpp>
 # include <boost/context/segmented_stack.hpp>
+# include <boost/context/stack_context.hpp>
 
 # ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -51,6 +52,16 @@ void __splitstack_setcontext( void * [BOOST_CONTEXT_SEGMENTS]);
 namespace boost {
 namespace context {
 namespace detail {
+
+template< typename Fn, typename Tpl >
+transfer_t ec_context_ontop( transfer_t);
+
+struct activation_record;
+
+struct data_t {
+    activation_record   *   from;
+    void                *   data;
+};
 
 struct activation_record {
     typedef boost::intrusive_ptr< activation_record >    ptr_t;
@@ -90,8 +101,39 @@ struct activation_record {
         __splitstack_getcontext( from->sctx.segments_ctx);
         __splitstack_setcontext( sctx.segments_ctx);
 # endif
+        data_t d = { from, vp };
         // context switch from parent context to `this`-context
-        return jump_fcontext( & from->fctx, fctx, vp);
+        transfer_t t = jump_fcontext( fctx, & d);
+        data_t * dp = reinterpret_cast< data_t * >( t.data);
+        dp->from->fctx = t.fctx;
+        // parent context resumed
+        return dp->data;
+    }
+
+    template< typename Fn, typename ... Args >
+    void * resume_ontop( void *  data, Fn && fn, Args && ... args) {
+        // store current activation record in local variable
+        activation_record * from = current_rec.get();
+        // store `this` in static, thread local pointer
+        // `this` will become the active (running) context
+        // returned by execution_context::current()
+        current_rec = this;
+# if defined(BOOST_USE_SEGMENTED_STACKS)
+        // adjust segmented stack properties
+        __splitstack_getcontext( from->sctx.segments_ctx);
+        __splitstack_setcontext( sctx.segments_ctx);
+# endif
+        typedef std::tuple< typename std::decay< Args >::type ... > tpl_t;
+        tpl_t tpl{ std::forward< Args >( args) ... };
+        std::tuple< void *, Fn, tpl_t > p = std::forward_as_tuple( data, fn, tpl);
+        data_t d = { from, & p };
+        // context switch from parent context to `this`-context
+        // execute Fn( Tpl) on top of `this`
+        transfer_t t = ontop_fcontext( fctx, & d, ec_context_ontop< Fn, tpl_t >);
+        data_t * dp = reinterpret_cast< data_t * >( t.data);
+        dp->from->fctx = t.fctx;
+        // parent context resumed
+        return dp->data;
     }
 
     virtual void deallocate() noexcept {
@@ -113,6 +155,19 @@ struct activation_record_initializer {
     activation_record_initializer() noexcept;
     ~activation_record_initializer();
 };
+
+template< typename Fn, typename Tpl >
+transfer_t ec_context_ontop( transfer_t t) {
+    data_t * dp = reinterpret_cast< data_t * >( t.data);
+    dp->from->fctx = t.fctx;
+    auto tpl = reinterpret_cast< std::tuple< void *, Fn, Tpl > * >( dp->data);
+    BOOST_ASSERT( nullptr != tpl);
+    auto data = std::get< 0 >( * tpl);
+    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 1 >( * tpl) );
+    auto args = std::forward< Tpl >( std::get< 2 >( * tpl) );
+    dp->data = apply( fn, std::tuple_cat( args, std::tie( data) ) );
+    return { t.fctx, dp };
+}
 
 template< typename StackAlloc, typename Fn, typename ... Args >
 class capture_record : public activation_record {
@@ -162,9 +217,11 @@ private:
     // entered if the execution context
     // is resumed for the first time
     template< typename AR >
-    static void entry_func( void * vp) noexcept {
-        AR * ar = static_cast< AR * >( vp);
+    static void entry_func( detail::transfer_t t) noexcept {
+        detail::data_t * dp = reinterpret_cast< detail::data_t * >( t.data);
+        AR * ar = static_cast< AR * >( dp->data);
         BOOST_ASSERT( nullptr != ar);
+        dp->from->fctx = t.fctx;
         // start execution of toplevel context-function
         ar->run();
     }
@@ -198,12 +255,12 @@ private:
         const std::size_t size = sctx.size - ( static_cast< char * >( sctx.sp) - static_cast< char * >( sp) );
 #endif
         // create fast-context
-        const fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
+        const detail::fcontext_t fctx = detail::make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
         // get current activation record
         auto curr = execution_context::current().ptr_;
         // placment new for control structure on fast-context stack
-        return new ( sp) capture_t{
+        return ::new ( sp) capture_t{
                 sctx, salloc, fctx, curr.get(), std::forward< Fn >( fn), std::forward< Args >( args) ... };
     }
 
@@ -231,12 +288,12 @@ private:
         const std::size_t size = palloc.size - ( static_cast< char * >( palloc.sp) - static_cast< char * >( sp) );
 #endif
         // create fast-context
-        const fcontext_t fctx = make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
+        const detail::fcontext_t fctx = detail::make_fcontext( sp, size, & execution_context::entry_func< capture_t >);
         BOOST_ASSERT( nullptr != fctx);
         // get current activation record
         auto curr = execution_context::current().ptr_;
         // placment new for control structure on fast-context stack
-        return new ( sp) capture_t{
+        return ::new ( sp) capture_t{
                 palloc.sctx, salloc, fctx, curr.get(), std::forward< Fn >( fn), std::forward< Args >( args) ... };
     }
 
@@ -369,6 +426,20 @@ public:
 
     void * operator()( void * vp = nullptr) {
         return ptr_->resume( vp);
+    }
+
+    template< typename Fn, typename ... Args >
+    void * operator()( exec_ontop_arg_t, Fn && fn, Args && ... args) {
+        return ptr_->resume_ontop( nullptr,
+                                   std::forward< Fn >( fn),
+                                   std::forward< Args >( args) ... );
+    }
+
+    template< typename Fn, typename ... Args >
+    void * operator()( void * data, exec_ontop_arg_t, Fn && fn, Args && ... args) {
+        return ptr_->resume_ontop( data,
+                                   std::forward< Fn >( fn),
+                                   std::forward< Args >( args) ... );
     }
 
     explicit operator bool() const noexcept {

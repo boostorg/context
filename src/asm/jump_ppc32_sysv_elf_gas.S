@@ -26,7 +26,14 @@
  *  -------------------------------------------------  *
  *  |  64 |  68 |  72 |  76 |  80 |  84 |  88 |  92 |  *
  *  -------------------------------------------------  *
- *  | R29 | R30 | R31 |  CR |  LR |  PC |           |  *
+ *  | R29 | R30 | R31 |hiddn|  CR |  LR |  PC | FCTX|  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  24 |  25 |  26 |  27 |  28 |  29 |  30 |  31 |  *
+ *  -------------------------------------------------  *
+ *  |  96 | 100 | 104 | 108 | 112 | 116 | 120 | 124 |  *
+ *  -------------------------------------------------  *
+ *  | DATA|     |     |     |                       |  * 
  *  -------------------------------------------------  *
  *                                                     *
  *******************************************************/
@@ -37,7 +44,7 @@
 .type jump_fcontext,@function
 jump_fcontext:
     # reserve space on stack
-    subi  %r1, %r1, 88
+    subi  %r1, %r1, 92
 
     stw  %r13, 0(%r1)  # save R13
     stw  %r14, 4(%r1)  # save R14
@@ -58,18 +65,19 @@ jump_fcontext:
     stw  %r29, 64(%r1)  # save R29
     stw  %r30, 68(%r1)  # save R30
     stw  %r31, 72(%r1)  # save R31
+    stw  %r3,  76(%r1)  # save hidden
 
     # save CR
     mfcr  %r0
-    stw  %r0, 76(%r1)
+    stw   %r0, 80(%r1)
     # save LR
     mflr  %r0
-    stw  %r0, 80(%r1)
+    stw   %r0, 84(%r1)
     # save LR as PC
-    stw  %r0, 84(%r1)
+    stw   %r0, 88(%r1)
 
-    # store RSP (pointing to context-data) in R3
-    stw  %r1, 0(%r3)
+    # store RSP (pointing to context-data) in R6
+    mr  %r6, %r1
 
     # restore RSP (pointing to context-data) from R4
     mr  %r1, %r4
@@ -93,25 +101,25 @@ jump_fcontext:
     lwz  %r29, 64(%r1)  # restore R29
     lwz  %r30, 68(%r1)  # restore R30
     lwz  %r31, 72(%r1)  # restore R31
+    lwz  %r3,  76(%r1)  # restore hidden
 
     # restore CR
-    lwz  %r0, 76(%r1)
+    lwz   %r0, 80(%r1)
     mtcr  %r0
     # restore LR
-    lwz  %r0, 80(%r1)
+    lwz   %r0, 84(%r1)
     mtlr  %r0
-
     # load PC
-    lwz  %r0, 84(%r1)
+    lwz   %r0, 88(%r1)
     # restore CTR
-    mtctr  %r0
+    mtctr %r0
 
     # adjust stack
-    addi  %r1, %r1, 88
+    addi  %r1, %r1, 92
 
-    # use third arg as return value after jump
-    # use third arg as first arg in context function
-    mr  %r3, %r5
+    # return transfer_t 
+    stw  %r6, 0(%r3)
+    stw  %r5, 4(%r3)
 
     # jump to context
     bctr

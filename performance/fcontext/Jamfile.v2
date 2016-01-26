@@ -61,7 +61,7 @@ alias sources
 
 explicit sources ;
 
-exe performance_fcontext
+exe performance
    : sources
-     performance_fcontext.cpp
+     performance.cpp
    ;

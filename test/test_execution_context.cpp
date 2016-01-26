@@ -70,6 +70,19 @@ void fn5( void * vp) {
     ( * mctx)();
 }
 
+void fn7( void * vp) {
+    ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
+    try {
+        value1 = 3;
+        void * data = ( * mctx)( vp);
+        value1 = 7;
+        ( * mctx)( data);
+    } catch ( std::runtime_error const& e) {
+        value2 = e.what();
+    }
+    ( * mctx)();
+}
+
 struct X {
     int foo( int i, void * vp) {
         value1 = i;
@@ -142,6 +155,44 @@ void test_prealloc() {
     BOOST_CHECK_EQUAL( 7, value1);
 }
 
+void test_ontop() {
+    value1 = 0;
+    value2 = "";
+    ctx::execution_context ectx( fn7);
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    ectx( & ctx);
+    BOOST_CHECK_EQUAL( 3, value1);
+    BOOST_CHECK( value2.empty() );
+    std::string str("abc");
+    int i = 3;
+    void * data = ectx( & i, ctx::exec_ontop_arg,
+            [str](void * data){
+                value2 = str;
+                return data;
+            });
+    BOOST_CHECK_EQUAL( 7, value1);
+    BOOST_CHECK_EQUAL( str, value2);
+    BOOST_CHECK_EQUAL( data, & i);
+    BOOST_CHECK_EQUAL( i, *( int*) data);
+}
+
+void test_ontop_exception() {
+    value1 = 0;
+    value2 = "";
+    ctx::execution_context ectx( fn7);
+    boost::context::execution_context ctx( boost::context::execution_context::current() );
+    ectx( & ctx);
+    BOOST_CHECK_EQUAL( 3, value1);
+    const char * what = "hello world";
+    ectx( ctx::exec_ontop_arg,
+          [what](void * data){
+            throw std::runtime_error( what);
+            return data;
+          });
+    BOOST_CHECK_EQUAL( 3, value1);
+    BOOST_CHECK_EQUAL( std::string( what), value2);
+}
+
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
@@ -154,6 +205,8 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_fp) );
     test->add( BOOST_TEST_CASE( & test_stacked) );
     test->add( BOOST_TEST_CASE( & test_prealloc) );
+    test->add( BOOST_TEST_CASE( & test_ontop) );
+    test->add( BOOST_TEST_CASE( & test_ontop_exception) );
 
     return test;
 }

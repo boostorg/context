@@ -14,7 +14,7 @@
 ;  ----------------------------------------------------------------------------------
 ;  |     8   |    9    |    10    |    11   |    12   |    13   |    14   |    15   |
 ;  ----------------------------------------------------------------------------------
-;  |   0xc20 |  0x24   |   0x28   |   0x2c  |   0x30  |   0x34  |   0x38  |   0x3c  |
+;  |   0x20  |  0x24   |   0x28   |   0x2c  |   0x30  |   0x34  |   0x38  |   0x3c  |
 ;  ----------------------------------------------------------------------------------
 ;  |        R12        |         R13        |        R14        |        R15        |
 ;  ----------------------------------------------------------------------------------
@@ -30,13 +30,29 @@
 ;  ----------------------------------------------------------------------------------
 ;  |   0x60  |   0x64  |   0x68   |   0x6c  |   0x70  |   0x74  |   0x78  |   0x7c  |
 ;  ----------------------------------------------------------------------------------
-;  |        RIP        |        EXIT        |                                       |
+;  |        hidden     |         RIP        |       EXIT        |   parameter area  |
+;  ----------------------------------------------------------------------------------
+;  ----------------------------------------------------------------------------------
+;  |    32   |   32    |    33    |   34    |    35   |    36   |    37   |    38   |
+;  ----------------------------------------------------------------------------------
+;  |   0x80  |   0x84  |   0x88   |   0x8c  |   0x90  |   0x94  |   0x98  |   0x9c  |
+;  ----------------------------------------------------------------------------------
+;  |                       parameter area                       |        FCTX       |
+;  ----------------------------------------------------------------------------------
+;  ----------------------------------------------------------------------------------
+;  |    39   |   40    |    41    |   42    |    43   |    44   |    45   |    46   |
+;  ----------------------------------------------------------------------------------
+;  |   0xa0  |   0xa4  |   0xa8   |   0xac  |   0xb0  |   0xb4  |   0xb8  |   0xbc  |
+;  ----------------------------------------------------------------------------------
+;  |       DATA        |                    |                   |                   |
 ;  ----------------------------------------------------------------------------------
 
 .code
 
 jump_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     .endprolog
+
+    push  rcx  ; save hidden address of transport_t
 
     push  rbp  ; save RBP
     push  rbx  ; save RBX
@@ -62,8 +78,8 @@ jump_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     mov  rax, [r10+018h]
     push  rax
 
-    ; store RSP (pointing to context-data) in RCX
-    mov  [rcx], rsp
+    ; preserve RSP (pointing to context-data) in R9
+    mov  r9, rsp
 
     ; restore RSP (pointing to context-data) from RDX
     mov  rsp, rdx
@@ -92,13 +108,19 @@ jump_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     pop  rbx  ; restore RBX
     pop  rbp  ; restore RBP
 
+    pop  rax  ; restore hidden address of transport_t
+
     ; restore return-address
     pop  r10
 
-    ; use third arg as return-value after jump
-    mov  rax, r8
-    ; use third arg as first arg in context function
-    mov  rcx, r8
+    ; transport_t returned in RAX
+    ; return parent fcontext_t
+    mov  [rax], r9
+    ; return data
+    mov  [rax+08h], r8
+
+    ; transport_t as 1.arg of context-function
+    mov  rcx,  rax
 
     ; indirect jump to context
     jmp  r10

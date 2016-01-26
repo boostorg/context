@@ -12,14 +12,14 @@
  *  -------------------------------------------------  *
  *  | 0x0 | 0x4 | 0x8 | 0xc | 0x10| 0x14| 0x18| 0x1c|  *
  *  -------------------------------------------------  *
- *  | sjlj|  v1 |  v2 |  v3 |  v4 |  v5 |  v6 |  v7 |  *
+ *  | sjlj|hiddn|  v1 |  v2 |  v3 |  v4 |  v5 |  v6 |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  8  |  9  |  10 |  11 |  12 |  13 |  14 |  15 |  *
  *  -------------------------------------------------  *
  *  | 0x20| 0x24| 0x28| 0x2c| 0x30| 0x34| 0x38| 0x3c|  *
  *  -------------------------------------------------  *
- *  |  v8 |  lr |  pc |                             |  *
+ *  |  v7 |  v8 |  lr |  pc | FCTX| DATA|           |  *
  *  -------------------------------------------------  *
  *                                                     *
  *******************************************************/
@@ -30,8 +30,8 @@
 _jump_fcontext:
     @ save LR as PC
     push {lr}
-    @ save V1-V8,LR
-    push {v1-v8,lr}
+    @ save hidden,V1-V8,LR
+    push {a1,v1-v8,lr}
 
     @ locate TLS to save/restore SjLj handler
     mrc  p15, 0, v2, c13, c0, #3
@@ -43,7 +43,7 @@ _jump_fcontext:
     push  {v1}
 
     @ store RSP (pointing to context-data) in A1
-    str  sp, [a1]
+    mov  a1, sp
 
     @ restore RSP (pointing to context-data) from A2
     mov  sp, a2
@@ -53,9 +53,15 @@ _jump_fcontext:
     @ store SjLj handler in TLS
     str  v1, [v2, #8]
 
-    @ use third arg as return value after jump
-    @ and as first arg in context function
-    mov  a1, a3
-    
-    @ restore v1-V8,LR,PC
-    pop {v1-v8,lr,pc}
+    @ restore hidden,V1-V8,LR
+    pop {a4,v1-v8,lr}
+
+    @ return transfer_t from jump
+    str  a1, [a4, #0]
+    str  a3, [a4, #4]
+    @ pass transfer_t as first arg in context function
+    @ A1 == FCTX, A2 == DATA
+    mov  a2, a3
+
+    @ restore PC
+    pop {pc}

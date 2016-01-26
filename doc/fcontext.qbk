@@ -187,11 +187,11 @@ downwards or upwards).]]
 [[Member:] [Tracks the memory for the context's stack.]]
 ]
 
-[heading `void * jump_fcontext(fcontext_t* ofc,fcontext_t nfc,void * p)
+[heading `void * jump_fcontext(fcontext_t* ofc,fcontext_t nfc,void * p)`]
 [variablelist
 [[Effects:] [Stores the current context data (stack pointer, instruction
 pointer, and CPU registers) to `*ofc` and restores the context data from `nfc`,
-which implies jumping to `nfc`'s execution context. The void * argument, `p`,
+which implies jumping to execution context `nfc`. The void * argument, `p`,
 is passed to the current context to be returned by the most recent call to
 `jump_fcontext()` in the same thread.]]
 [[Returns:] [The third pointer argument passed to the most recent call to

@@ -6,7 +6,7 @@ jump_fcontext:
   .long	.jump_fcontext
 .jump_fcontext:
     # reserve space on stack
-    subi 1, 1, 88
+    subi 1, 1, 92
 
     stw  13, 0(1)  # save R13
     stw  14, 4(1)  # save R14
@@ -27,18 +27,19 @@ jump_fcontext:
     stw  29, 64(1)  # save R29
     stw  30, 68(1)  # save R30
     stw  31, 72(1)  # save R31
+    stw  3,  76(1)  # save hidden
 
     # save CR
     mfcr 0
-    stw 0, 76(1)
+    stw 0, 80(1)
     # save LR
     mflr 0
-    stw 0, 80(1)
-    # save LR as PC
     stw 0, 84(1)
+    # save LR as PC
+    stw 0, 88(1)
 
-    # store RSP (pointing to context-data) in R3
-    stw 1, 0(3)
+    # store RSP (pointing to context-data) in R6
+    mr  6, 1
 
     # restore RSP (pointing to context-data) from R4
     mr 1, 4
@@ -62,25 +63,26 @@ jump_fcontext:
     lwz  29, 64(1)  # restore R29
     lwz  30, 68(1)  # restore R30
     lwz  31, 72(1)  # restore R31
+    lwz  3,  76(1)  # restore hidden
 
     # restore CR
-    lwz 0, 76(1)
+    lwz 0, 80(1)
     mtcr 0
     # restore LR
-    lwz 0, 80(1)
+    lwz 0, 84(1)
     mtlr 0
 
     # load PC
-    lwz 0, 84(1)
+    lwz 0, 88(1)
     # restore CTR
     mtctr 0
 
     # adjust stack
-    addi 1, 1, 88
+    addi 1, 1, 92
 
-    # use third arg as return value after jump
-    # use third arg as first arg in context function
-    mr 3, 5
+    # return transfer_t 
+    stw  6, 0(3)
+    stw  5, 4(3)
 
     # jump to context
     bctr

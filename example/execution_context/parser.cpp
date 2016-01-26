@@ -92,41 +92,42 @@ int main() {
         std::istringstream is("1+1");
         bool done=false;
         std::exception_ptr except;
+
         // create handle to main execution context
-        auto main_ctx( boost::context::execution_context::current() );
+        auto sink(boost::context::execution_context::current());
         // execute parser in new execution context
-        boost::context::execution_context parser_ctx(
-                [&main_ctx,&is,&done,&except](void*){
+        boost::context::execution_context source(
+                [&sink,&is,&done,&except](void*){
                 // create parser with callback function
-                Parser p( is,
-                          [&main_ctx](char ch){
+                Parser p(is,
+                         [&sink](char ch){
                                 // resume main execution context
-                                main_ctx( & ch);
+                                sink(&ch);
                         });
                     try {
                         // start recursive parsing
                         p.run();
-                    } catch ( ... ) {
+                    } catch (...) {
                         // store other exceptions in exception-pointer
                         except = std::current_exception();
                     }
                     // set termination flag
                     done=true;
                     // resume main execution context
-                    main_ctx();
+                    sink();
                 });
 
         // user-code pulls parsed data from parser
         // invert control flow
-        void * vp = parser_ctx();
-        if ( except) {
-            std::rethrow_exception( except);
+        void* vp = source();
+        if (except) {
+            std::rethrow_exception(except);
         }
         while( ! done) {
-            printf("Parsed: %c\n",* static_cast< char* >( vp) );
-            vp = parser_ctx();
-            if ( except) {
-                std::rethrow_exception( except);
+            printf("Parsed: %c\n",* static_cast<char*>(vp));
+            vp = source();
+            if (except) {
+                std::rethrow_exception(except);
             }
         }
         std::cout << "main: done" << std::endl;

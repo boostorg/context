@@ -1,6 +1,6 @@
 # Boost.Context Library Examples Jamfile
 
-#          Copyright Oliver Kowalke 2009.
+#          Copyright Oliver Kowalke 2014.
 # Distributed under the Boost Software License, Version 1.0.
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
@@ -15,47 +15,33 @@ import os ;
 import toolset ;
 import architecture ;
 
-project boost/context/example
+project boost/context/example/execution_context
     : requirements
       <library>/boost/context//boost_context
+      <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
+      <toolset>clang,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>clang,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <link>static
       <threading>multi
     ;
-
-rule configure ( properties * )
-{
-    local result ;
-    if ( ! ( <toolset>gcc in $(properties) &&
-           <address-model>64 in $(properties) &&
-           <architecture>x86 in $(properties) ) )
-    {
-        result = <build>no ;
-    }
-
-    return $(result) ;
-}
 
 exe jump
     : jump.cpp
     ;
 
-exe exit
-    : exit.cpp
+exe parser
+    : parser.cpp
     ;
 
-exe transfer
-    : transfer.cpp
+exe fibonacci
+    : fibonacci.cpp
     ;
 
-exe exception
-    : exception.cpp
+exe parameter
+    : parameter.cpp
     ;
 
-exe stacked
-    : stacked.cpp
-    ;
-
-exe echosse
-    : echosse.cpp
-    : <conditional>@configure
+exe ontop
+    : ontop.cpp
     ;

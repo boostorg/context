@@ -5,14 +5,77 @@
           http://www.boost.org/LICENSE_1_0.txt
 ]
 
+[#econtext]
 [section:econtext Class execution_context]
 
-[important __econtext__ requires C++11!]
+Class __econtext__ encapsulates context switching and manages the associated
+context' stack (allocation/deallocation).
 
-Class __econtext__ encapsulates __fcontext__ and related functions (
-__jump_fcontext__ and __make_fcontext__) as well as stack management.
-__econtext__ permits access to the current, active context via
-`execution_context::current()`.
+__econtext__ allocates the context stack (using its [link stack
+__stack_allocator__] argument) and creates a control structure on top of it.
+This structure is responsible for managing context' stack. Instances of
+__econtext__, associated with a specific context, share the ownership of the
+control structure. If the last reference goes out of scope, the control
+structure is destroyed and the stack gets deallocated via the
+__stack_allocator__.
+
+__econtext__ is  copy-constructible, move-constructible, copy-assignable and
+move-assignable.
+
+__econtext__ maintains a static (thread-local) pointer, accessed by
+__ec_current__,  pointing to the active context. On each context switch the
+pointer is updated.
+The usage of this global pointer makes the context switch a little bit slower
+(due access of thread local storage) but has some advantages. It allows to
+access the control structure of the current active context from arbitrary code
+paths required in order to support segmented stacks, which require to call
+certain maintenance functions (like __splitstack_getcontext() etc.) before each
+context switch (each context switch exchanges the stack).
+Additionally, because the control structure is directly accessible in the
+destructor of __econtext__ (member variable), the deallocation of context' stack
+is faster compared to [link ccontext __ccontext__].
+
+__econtext__ expects a function/functor with signature `void(void* vp)` (`vp`
+is the data passed at the first invocation of
+[operator_link execution_context operator_call operator()]).
+
+
+[#ec_fibonacci]
+[heading usage of __econtext__]
+
+        int n=35;
+        boost::context::execution_context sink(boost::context::execution_context::current());
+        boost::context::execution_context source(
+            [n,&sink](void*)mutable{
+                int a=0;
+                int b=1;
+                while(n-->0){
+                    sink(&a);
+                    auto next=a+b;
+                    a=b;
+                    b=next;
+                }
+            });
+        for(int i=0;i<10;++i){
+            std::cout<<*(int*)source()<<" ";
+        }
+
+        output:
+            0 1 1 2 3 5 8 13 21 34
+
+This simple example demonstrates the basic usage of __econtext__. The context
+`sink`, returned by __ec_current__, represents the ['main]-context (function
+['main()] running) and is one of the captured parameters in the lambda
+expression. The lambda that calculates the Fibonacci numbers is executed inside
+the context represented by `source`. Calculated Fibonacci numbers are
+transferred between the two context' via expression ['sink(&a)] (and returned by
+['source()]).
+
+The locale variables `a`, `b` and ` next` remain their values during each
+context switch (['yield(a)]). This is possible because `ctx` owns a stack
+(exchanged by context switch).
+
+[heading inverting the control flow]
 
         /*
          * grammar:
@@ -24,54 +87,47 @@ __econtext__ permits access to the current, active context via
         class Parser{
             // implementation omitted; see examples directory
         };
+ 
+        std::istringstream is("1+1");
+        bool done=false;
+        std::exception_ptr except;
 
-        int main() {
-            std::istringstream is("1+1");
-            bool done=false;
-            std::exception_ptr except;
+        // create handle to main execution context
+        auto main_ctx(boost::context::execution_context::current());
+        // execute parser in new execution context
+        boost::context::execution_context source(
+                [&sink,&is,&done,&except](void*){
+                // create parser with callback function
+                Parser p(is,
+                         [&sink](char ch){
+                                // resume main execution context
+                                sink(&ch);
+                        });
+                    try {
+                        // start recursive parsing
+                        p.run();
+                    } catch (...) {
+                        // store other exceptions in exception-pointer
+                        except = std::current_exception();
+                    }
+                    // set termination flag
+                    done=true;
+                    // resume main execution context
+                    sink();
+                });
 
-            // create handle to main execution context
-            auto main_ctx( boost::context::execution_context::current() );
-
-            // execute parser in new execution context
-            boost::context::execution_context parser_ctx(
-                    std::allocator_arg,
-                    boost::context::fixedsize_stack(4096),
-                    [&main_ctx,&is,&done,&except](void*){
-                    // create parser with callback function
-                    Parser p( is,
-                              [&main_ctx,&c](char ch){
-                                    // resume main execution context
-                                    main_ctx( & ch);
-                            });
-                        try {
-                            // start recursive parsing
-                            p.run();
-                        } catch ( ... ) {
-                            // store other exceptions in exception-pointer
-                            except = std::current_exception();
-                        }
-                        // set termination flag
-                        done=true;
-                        // resume main execution context
-                        main_ctx();
-                    });
-
-            // user-code pulls parsed data from parser
-            // invert control flow
-            void * vp = parser_ctx();
-            if ( except) {
-                std::rethrow_exception( except);
+        // user-code pulls parsed data from parser
+        // invert control flow
+        void* vp = source();
+        if (except) {
+            std::rethrow_exception(except);
+        }
+        while( ! done) {
+            printf("Parsed: %c\n",* static_cast<char*>(vp));
+            vp = source();
+            if (except) {
+                std::rethrow_exception(except);
             }
-            while( ! done) {
-                printf("Parsed: %c\n",* static_cast< char* >( vp) );
-                parser_ctx();
-                if ( except) {
-                    std::rethrow_exception( except);
-                }
-            }
-
-            std::cout << "main: done" << std::endl;
         }
 
         output:
@@ -80,21 +136,22 @@ __econtext__ permits access to the current, active context via
             Parsed: 1
 
 
-In this example a recursive descent parser uses a callback to emit a newly passed
-symbol. Using __econtext__ the control flow can be inverted, e.g. the user-code
-pulls parsed symbols from the parser - instead to get pushed from the parser
-(via callback).
+In this example a recursive descent parser uses a callback to emit a newly
+passed symbol. Using __econtext__ the control flow can be inverted, e.g. the
+user-code pulls parsed symbols from the parser - instead to get pushed from the
+parser (via callback).
 
 The data (character) is transferred between the two __econtext__.
 
-If the code executed by __econtext__ emits an exception, the application is terminated.
-['std::exception_ptr] can be used to transfer exceptions between different execution
-contexts.
+If the code executed by __econtext__ emits an exception, the application is
+terminated. ['std::exception_ptr] can be used to transfer exceptions between
+different execution contexts.
 
 Sometimes it is necessary to unwind the stack of an unfinished context to
 destroy local stack variables so they can release allocated resources (RAII
 pattern). The user is responsible for this task.
 
+[#ec_prealloc]
 [heading allocating control structures on top of stack]
 Allocating control structures on top of the stack requires to allocated the
 __stack_context__ and create the control structure with placement new before
@@ -129,7 +186,7 @@ of the stack.]
 
 [heading exception handling]
 If the function executed inside a __econtext__ emits ans exception, the
-application is terminated by calling ['std::terminate(). ['std::exception_ptr]
+application is terminated by calling ['std::terminate()]. ['std::exception_ptr]
 can be used to transfer exceptions between different execution contexts.
 
 [heading parameter passing]
@@ -169,11 +226,11 @@ __ec_op__, in one context, is returned by __ec_op__ in the other context.
             }
         };
 
-        int main() {
-            X x;
-            std::cout << x( 7) << std::endl;
-            std::cout << "done" << std::endl;
-        }
+        X x;
+        std::cout << x( 7) << std::endl;
+
+        output:
+            7
 
 
 [heading Class `execution_context`]
@@ -200,18 +257,24 @@ __ec_op__, in one context, is returned by __ec_op__ in the other context.
             explicit operator bool() const noexcept;
             bool operator!() const noexcept;
 
-            void * operator()( void * vp = nullptr) noexcept;
+            void * operator()( void * vp = nullptr);
+
+            template< typename Fn, typename ... Args >
+            void * operator()( exec_ontop_arg_t, Fn && fn, Args && ... args);
+
+            template< typename Fn, typename ... Args >
+            void * operator()( void * vp, exec_ontop_arg_t, Fn && fn, Args && ... args);
 
             bool operator==( execution_context const& other) const noexcept;
 
             bool operator!=( execution_context const& other) const noexcept;
-            
+
             bool operator<( execution_context const& other) const noexcept;
-            
+
             bool operator>( execution_context const& other) const noexcept;
-            
+
             bool operator<=( execution_context const& other) const noexcept;
-            
+
             bool operator>=( execution_context const& other) const noexcept;
 
             template< typename charT, class traitsT >
@@ -219,87 +282,131 @@ __ec_op__, in one context, is returned by __ec_op__ in the other context.
             operator<<( std::basic_ostream< charT, traitsT > & os, execution_context const& other);
         };
 
-[heading `static execution_context current()`]
+[static_member_heading execution_context..current]
+
+    static execution_context current() noexcept;
+
 [variablelist
 [[Returns:] [Returns an instance of excution_context pointing to the active
 execution context.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `template< typname Fn, typename ... Args > execution_context( Fn && fn, Args && ... args)`]
+[constructor_heading execution_context..constructor]
+
+    template< typename Fn, typename ... Args >
+    execution_context( Fn && fn, Args && ... args);
+
+    template< typename StackAlloc, typename Fn, typename ... Args >
+    execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args);
+
+    template< typename StackAlloc, typename Fn, typename ... Args >
+    execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args);
+
 [variablelist
 [[Effects:] [Creates a new execution context and prepares the context to execute
-`fn`. `fixedsize_stack` is used as default stack allocator (stack size == fixedsize_stack::traits::default_size().]]
+`fn`. `fixedsize_stack` is used as default stack allocator
+(stack size == fixedsize_stack::traits::default_size()).
+The constructor with argument type `preallocated`, is used to create a user
+defined data [link ec_prealloc (for instance additional control structures)] on
+top of the stack.]]
 ]
 
-[heading `template< typename StackAlloc, typname Fn, typename ... Args > execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args)`]
-[variablelist
-[[Effects:] [Creates a new execution context and prepares the context to execute
-`fn`.]]
-]
+[copy_constructor_heading execution_context..copy constructor]
 
-[heading `template< typename StackAlloc, typname Fn, typename ... Args > execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args)`]
-[variablelist
-[[Effects:] [Creates a new execution context and prepares the context to execute
-`fn`. Used to store control structures on top of the stack.]]
-]
+            execution_context( execution_context const& other) noexcept;
 
-[heading `execution_context( execution_context const& other)`]
 [variablelist
-[[Effects:] [Copies `other`, e.g. underlying capture record is shared
-with `*this`.]]
+[[Effects:] [Copies `other`, e.g. underlying control structure is shared with
+`*this`.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `execution_context( execution_context && other)`]
+[move_constructor_heading execution_context..move constructor]
+
+            execution_context( execution_context && other) noexcept;
+
 [variablelist
-[[Effects:] [Moves underlying capture record to `*this`.]]
+[[Effects:] [Moves underlying control structure to `*this`.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `execution_context & operator=( execution_context const& other)`]
+[copy_assignment_heading execution_context..copy assignment]
+
+    execution_context & operator=( execution_context const& other) noexcept;
+
 [variablelist
-[[Effects:] [Copies the state of `other` to `*this`, state (capture record) is shared.]]
+[[Effects:] [Copies the state of `other` to `*this`, control structure is
+shared.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `execution_context & operator=( execution_context && other)`]
+[move_assignment_heading execution_context..move assignment]
+
+    execution_context & operator=( execution_context && other) noexcept;
+
 [variablelist
-[[Effects:] [Moves the state of `other` to `*this` using move semantics.]]
+[[Effects:] [Moves the control structure of `other` to `*this` using move
+semantics.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `explicit operator bool() const noexcept`]
+[operator_heading execution_context..operator_bool..operator bool]
+
+    explicit operator bool() const noexcept;
+
 [variablelist
-[[Returns:] [`true` if `*this` points to a capture record.]]
+[[Returns:] [`true` if `*this` points to a control structure.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `bool operator!() const noexcept`]
+[operator_heading execution_context..operator_not..operator!]
+
+    bool operator!() const noexcept;
+
 [variablelist
-[[Returns:] [`true` if `*this` does not point to a capture record.]]
+[[Returns:] [`true` if `*this` does not point to a control structure.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `void * operator()( void * vp) noexcept`]
+[operator_heading execution_context..operator_call..operator()]
+
+    void * operator()( void * vp = nullptr) noexcept;
+
 [variablelist
 [[Effects:] [Stores internally the current context data (stack pointer,
-instruction pointer, and CPU registers) to the current active context and
+instruction pointer, and CPU registers) of the current active context and
 restores the context data from `*this`, which implies jumping to `*this`'s
-execution context.
+context.
 The void pointer argument, `vp`, is passed to the current context to be returned
 by the most recent call to `execution_context::operator()` in the same thread.
-[[Note:] [The behaviour is undefined if `operator()()` is called while `execution_context::current()`
-returns `*this` (e.g. resuming an already running context). If the top-level context
-function returns, `std::exit()` is called.]]
+`fn` is executed with arguments `args` on top of the stack of `this`.]]
+[[Note:] [The behaviour is undefined if `operator()()` is called while
+__ec_current__ returns `*this` (e.g. resuming an already running context). If
+the top-level context function returns, `std::exit()` is called.]]
 [[Returns:] [The void pointer argument passed to the most recent call to
-`execution_context::operator()`, if any.]]
-[[Throws:] [Nothing.]]
+__ec_op__, if any.]]
 ]
 
-[heading `operator==`]
+[operator_heading execution_context..operator_call_ontop..operator(exec_ontop_arg_t)]
 
-        bool operator==( execution_context const& other) const noexcept;
+    template< typename Fn, typename ... Args >
+    void * operator()( exec_ontop_arg_t, Fn && fn, Args && ... args);
+
+    template< typename Fn, typename ... Args >
+    void * operator()( void * data, exec_ontop_arg_t, Fn && fn, Args && ... args);
+
+[variablelist
+[[Effects:] [Same as __ec_op__. Additionally, function `fn` is executed with
+arguments `args` in the context of `*this` (e.g. the stack frame of `fn` is
+allocated on stack of `*this`).]]
+[[Returns:] [The void pointer argument passed to the most recent call to
+__ec_op__, if any.]]
+]
+
+[operator_heading execution_context..operator_equal..operator==]
+
+    bool operator==( execution_context const& other) const noexcept;
 
 [variablelist
 [[Returns:] [`true` if `*this` and `other` represent the same execution context,
@@ -307,78 +414,62 @@ function returns, `std::exit()` is called.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `operator!=`]
+[operator_heading execution_context..operator_notequal..operator!=]
 
-        bool operator!=( execution_context const& other) const noexcept;
+    bool operator!=( execution_context const& other) const noexcept;
 
 [variablelist
 [[Returns:] [[`! (other == * this)]]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `operator<`]
+[operator_heading execution_context..operator_less..operator<]
 
-        bool operator<( execution_context const& other) const noexcept;
+    bool operator<( execution_context const& other) const noexcept;
 
 [variablelist
 [[Returns:] [`true` if `*this != other` is true and the
-implementation-defined total order of `execution_context` values places `*this` before
-`other`, false otherwise.]]
+implementation-defined total order of `execution_context` values places `*this`
+before `other`, false otherwise.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `operator>`]
+[operator_heading execution_context..operator_greater..operator>]
 
-        bool operator>( execution_context const& other) const noexcept;
+    bool operator>( execution_context const& other) const noexcept;
 
 [variablelist
 [[Returns:] [`other < * this`]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `operator<=`]
+[operator_heading execution_context..operator_lesseq..operator<=]
 
-        bool operator<=( execution_context const& other) const noexcept;
+    bool operator<=( execution_context const& other) const noexcept;
 
 [variablelist
 [[Returns:] [`! (other < * this)`]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `operator>=`]
+[operator_heading execution_context..operator_greatereq..operator>=]
 
-        bool operator>=( execution_context const& other) const noexcept;
+    bool operator>=( execution_context const& other) const noexcept;
 
 [variablelist
 [[Returns:] [`! (* this < other)`]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `operator<<`]
+[hding execution_context..Non-member function [`operator<<()]]
 
-        template< typename charT, class traitsT >
-        std::basic_ostream< charT, traitsT > &
-        operator<<( std::basic_ostream< charT, traitsT > & os, execution_context const& other);
+    template< typename charT, class traitsT >
+    std::basic_ostream< charT, traitsT > &
+    operator<<( std::basic_ostream< charT, traitsT > & os, execution_context const& other);
 
 [variablelist
 [[Efects:] [Writes the representation of `other` to stream `os`.]]
 [[Returns:] [`os`]]
-]
-
-
-[heading Struct `preallocated`]
-
-        struct preallocated {
-            void        *   sp;
-            std::size_t     size;
-            stack_context   sctx;
-
-            preallocated( void * sp, std:size_t size, stack_allocator sctx) noexcept;
-        };
-
-[heading `preallocated( void * sp, std:size_t size, stack_allocator sctx)`]
-[variablelist
-[[Effects:] [Creates an object of preallocated.]]
 ]
 
 
