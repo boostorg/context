@@ -18,13 +18,13 @@ namespace ctx = boost::context;
 class X{
 private:
     std::exception_ptr excptr_;
-    ctx::captured_context ctx_;
+    ctx::execution_context ctx_;
 
 public:
     X():
         excptr_(),
         ctx_(
-             [=](ctx::captured_context ctx, void * vp){
+             [=](ctx::execution_context ctx, void * vp){
                 try {
                     for (;;) {
                         int i = * static_cast< int * >( vp);

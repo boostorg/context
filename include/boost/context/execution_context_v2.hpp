@@ -4,41 +4,39 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CONTEXT_CAPTURED_CONTEXT_H
-#define BOOST_CONTEXT_CAPTURED_CONTEXT_H
+#ifndef BOOST_CONTEXT_EXECUTION_CONTEXT_H
+#define BOOST_CONTEXT_EXECUTION_CONTEXT_H
 
 #include <boost/context/detail/config.hpp>
 
-#if ! defined(BOOST_CONTEXT_NO_CXX11)
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <functional>
+#include <memory>
+#include <ostream>
+#include <tuple>
+#include <utility>
 
-# include <algorithm>
-# include <cstddef>
-# include <cstdint>
-# include <cstdlib>
-# include <functional>
-# include <memory>
-# include <ostream>
-# include <tuple>
-# include <utility>
+#include <boost/assert.hpp>
+#include <boost/config.hpp>
+#include <boost/intrusive_ptr.hpp>
 
-# include <boost/assert.hpp>
-# include <boost/config.hpp>
-# include <boost/intrusive_ptr.hpp>
+#include <boost/context/detail/apply.hpp>
+#include <boost/context/detail/disable_overload.hpp>
+#include <boost/context/detail/exception.hpp>
+#include <boost/context/detail/exchange.hpp>
+#include <boost/context/detail/fcontext.hpp>
+#include <boost/context/fixedsize_stack.hpp>
+#include <boost/context/flags.hpp>
+#include <boost/context/preallocated.hpp>
+#include <boost/context/segmented_stack.hpp>
+#include <boost/context/stack_context.hpp>
 
-# include <boost/context/detail/apply.hpp>
-# include <boost/context/detail/disable_overload.hpp>
-# include <boost/context/detail/exception.hpp>
-# include <boost/context/detail/exchange.hpp>
-# include <boost/context/detail/fcontext.hpp>
-# include <boost/context/fixedsize_stack.hpp>
-# include <boost/context/flags.hpp>
-# include <boost/context/preallocated.hpp>
-# include <boost/context/segmented_stack.hpp>
-# include <boost/context/stack_context.hpp>
-
-# ifdef BOOST_HAS_ABI_HEADERS
-#  include BOOST_ABI_PREFIX
-# endif
+#ifdef BOOST_HAS_ABI_HEADERS
+# include BOOST_ABI_PREFIX
+#endif
 
 namespace boost {
 namespace context {
@@ -205,7 +203,7 @@ fcontext_t context_create( preallocated palloc, StackAlloc salloc, Fn && fn, Arg
 
 }
 
-class BOOST_CONTEXT_DECL captured_context {
+class BOOST_CONTEXT_DECL execution_context {
 private:
     template< typename Ctx, typename StackAlloc, typename Fn, typename ... Args >
     friend class detail::record;
@@ -215,7 +213,7 @@ private:
 
     detail::fcontext_t  fctx_{ nullptr };
 
-    captured_context( detail::fcontext_t fctx) noexcept :
+    execution_context( detail::fcontext_t fctx) noexcept :
         fctx_( fctx) {
     }
 
@@ -227,32 +225,32 @@ private:
         return detail::ontop_fcontext(
                 detail::exchange( fctx_, nullptr),
                 & p,
-                detail::context_ontop< captured_context, Fn, tpl_t >);
+                detail::context_ontop< execution_context, Fn, tpl_t >);
     }
 
 public:
-    constexpr captured_context() noexcept = default;
+    constexpr execution_context() noexcept = default;
 
-# if defined(BOOST_USE_SEGMENTED_STACKS)
+#if defined(BOOST_USE_SEGMENTED_STACKS)
     // segmented-stack requires to preserve the segments of the `current` context
     // which is not possible (no global pointer to current context)
     template< typename Fn, typename ... Args >
-    captured_context( std::allocator_arg_t, segmented_stack, Fn &&, Args && ...) = delete;
+    execution_context( std::allocator_arg_t, segmented_stack, Fn &&, Args && ...) = delete;
 
     template< typename Fn, typename ... Args >
-    captured_context( std::allocator_arg_t, preallocated, segmented_stack, Fn &&, Args && ...) = delete;
-# else
+    execution_context( std::allocator_arg_t, preallocated, segmented_stack, Fn &&, Args && ...) = delete;
+#else
     template< typename Fn,
               typename ... Args,
-              typename = detail::disable_overload< captured_context, Fn >
+              typename = detail::disable_overload< execution_context, Fn >
     >
-    captured_context( Fn && fn, Args && ... args) :
+    execution_context( Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        fctx_( detail::context_create< captured_context >(
+        fctx_( detail::context_create< execution_context >(
                     fixedsize_stack(),
                     std::forward< Fn >( fn),
                     std::forward< Args >( args) ... ) ) {
@@ -262,13 +260,13 @@ public:
               typename Fn,
               typename ... Args
     >
-    captured_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args) :
+    execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        fctx_( detail::context_create< captured_context >(
+        fctx_( detail::context_create< execution_context >(
                     salloc,
                     std::forward< Fn >( fn),
                     std::forward< Args >( args) ... ) ) {
@@ -278,63 +276,63 @@ public:
               typename Fn,
               typename ... Args
     >
-    captured_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
+    execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        fctx_( detail::context_create< captured_context >(
+        fctx_( detail::context_create< execution_context >(
                     palloc, salloc,
                     std::forward< Fn >( fn),
                     std::forward< Args >( args) ... ) ) {
     }
-# endif
+#endif
 
-    ~captured_context() {
+    ~execution_context() {
         if ( nullptr != fctx_) {
             detail::ontop_fcontext( detail::exchange( fctx_, nullptr), nullptr, detail::context_unwind);
         }
     }
 
-    captured_context( captured_context && other) noexcept :
+    execution_context( execution_context && other) noexcept :
         fctx_( other.fctx_) {
         other.fctx_ = nullptr;
     }
 
-    captured_context & operator=( captured_context && other) noexcept {
+    execution_context & operator=( execution_context && other) noexcept {
         if ( this != & other) {
-            captured_context tmp = std::move( other);
+            execution_context tmp = std::move( other);
             swap( tmp);
         }
         return * this;
     }
 
-    captured_context( captured_context const& other) noexcept = delete;
-    captured_context & operator=( captured_context const& other) noexcept = delete;
+    execution_context( execution_context const& other) noexcept = delete;
+    execution_context & operator=( execution_context const& other) noexcept = delete;
 
-    std::tuple< captured_context, void * > operator()( void * data = nullptr) {
+    std::tuple< execution_context, void * > operator()( void * data = nullptr) {
         BOOST_ASSERT( nullptr != fctx_);
         detail::transfer_t t = detail::jump_fcontext( detail::exchange( fctx_, nullptr), data);
-        return std::make_tuple( captured_context( t.fctx), t.data);
+        return std::make_tuple( execution_context( t.fctx), t.data);
     }
 
     template< typename Fn, typename ... Args >
-    std::tuple< captured_context, void * > operator()( exec_ontop_arg_t, Fn && fn, Args && ... args) {
+    std::tuple< execution_context, void * > operator()( exec_ontop_arg_t, Fn && fn, Args && ... args) {
         BOOST_ASSERT( nullptr != fctx_);
         detail::transfer_t t = resume_ontop_( nullptr,
                                       std::forward< Fn >( fn),
                                       std::forward< Args >( args) ... );
-        return std::make_tuple( captured_context( t.fctx), t.data);
+        return std::make_tuple( execution_context( t.fctx), t.data);
     }
 
     template< typename Fn, typename ... Args >
-    std::tuple< captured_context, void * > operator()( void * data, exec_ontop_arg_t, Fn && fn, Args && ... args) {
+    std::tuple< execution_context, void * > operator()( void * data, exec_ontop_arg_t, Fn && fn, Args && ... args) {
         BOOST_ASSERT( nullptr != fctx_);
         detail::transfer_t t = resume_ontop_( data,
                                       std::forward< Fn >( fn),
                                       std::forward< Args >( args) ... );
-        return std::make_tuple( captured_context( t.fctx), t.data);
+        return std::make_tuple( execution_context( t.fctx), t.data);
     }
 
     explicit operator bool() const noexcept {
@@ -345,33 +343,33 @@ public:
         return nullptr == fctx_;
     }
 
-    bool operator==( captured_context const& other) const noexcept {
+    bool operator==( execution_context const& other) const noexcept {
         return fctx_ == other.fctx_;
     }
 
-    bool operator!=( captured_context const& other) const noexcept {
+    bool operator!=( execution_context const& other) const noexcept {
         return fctx_ != other.fctx_;
     }
 
-    bool operator<( captured_context const& other) const noexcept {
+    bool operator<( execution_context const& other) const noexcept {
         return fctx_ < other.fctx_;
     }
 
-    bool operator>( captured_context const& other) const noexcept {
+    bool operator>( execution_context const& other) const noexcept {
         return other.fctx_ < fctx_;
     }
 
-    bool operator<=( captured_context const& other) const noexcept {
+    bool operator<=( execution_context const& other) const noexcept {
         return ! ( * this > other);
     }
 
-    bool operator>=( captured_context const& other) const noexcept {
+    bool operator>=( execution_context const& other) const noexcept {
         return ! ( * this < other);
     }
 
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
-    operator<<( std::basic_ostream< charT, traitsT > & os, captured_context const& other) {
+    operator<<( std::basic_ostream< charT, traitsT > & os, execution_context const& other) {
         if ( nullptr != other.fctx_) {
             return os << other.fctx_;
         } else {
@@ -379,22 +377,20 @@ public:
         }
     }
 
-    void swap( captured_context & other) noexcept {
+    void swap( execution_context & other) noexcept {
         std::swap( fctx_, other.fctx_);
     }
 };
 
 inline
-void swap( captured_context & l, captured_context & r) noexcept {
+void swap( execution_context & l, execution_context & r) noexcept {
     l.swap( r);
 }
 
 }}
 
-# ifdef BOOST_HAS_ABI_HEADERS
+#ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX
-# endif
+#endif
 
-#endif // BOOST_CONTEXT_NO_CPP11
-
-#endif // BOOST_CONTEXT_CAPTURED_CONTEXT_H
+#endif // BOOST_CONTEXT_EXECUTION_CONTEXT_H

@@ -16,7 +16,6 @@
 #include "../bind_processor.hpp"
 #include "../clock.hpp"
 #include "../cycle.hpp"
-#include "../../example/simple_stack_allocator.hpp"
 
 boost::uint64_t jobs = 1000;
 

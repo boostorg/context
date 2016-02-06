@@ -16,15 +16,10 @@
 #include "../bind_processor.hpp"
 #include "../clock.hpp"
 #include "../cycle.hpp"
-#include "../../example/simple_stack_allocator.hpp"
-
-typedef boost::context::simple_stack_allocator<
-            8 * 1024 * 1024, 64 * 1024, 8 * 1024
-        >                                       stack_allocator;
 
 boost::uint64_t jobs = 1000;
 
-static boost::context::captured_context foo( boost::context::captured_context ctx, void * ignored) {
+static boost::context::execution_context foo( boost::context::execution_context ctx, void * ignored) {
     while ( true) {
         std::tie( ctx, ignored) = ctx();
     }
@@ -33,8 +28,7 @@ static boost::context::captured_context foo( boost::context::captured_context ct
 duration_type measure_time() {
     void * ignored;
     // cache warum-up
-    boost::context::fixedsize_stack alloc;
-    boost::context::captured_context ctx( std::allocator_arg, alloc, foo);
+    boost::context::execution_context ctx( foo);
     std::tie( ctx, ignored) = ctx();
 
     time_point_type start( clock_type::now() );
@@ -53,13 +47,13 @@ duration_type measure_time_() {
     void * ignored;
     // cache warum-up
     boost::context::fixedsize_stack alloc;
-    boost::context::captured_context ctx( std::allocator_arg, alloc, foo);
+    boost::context::execution_context ctx( std::allocator_arg, alloc, foo);
     std::tie( ctx, ignored) = ctx();
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
         std::tie( ctx, ignored) = ctx( boost::context::exec_ontop_arg,
-                                       [](boost::context::captured_context ctx, void * data){
+                                       [](boost::context::execution_context ctx, void * data){
                                         return std::make_tuple( std::move( ctx), data);
                                        });
     }
@@ -76,7 +70,7 @@ cycle_type measure_cycles() {
     void * ignored;
     // cache warum-up
     boost::context::fixedsize_stack alloc;
-    boost::context::captured_context ctx( std::allocator_arg, alloc, foo);
+    boost::context::execution_context ctx( std::allocator_arg, alloc, foo);
     std::tie( ctx, ignored) = ctx();
 
     cycle_type start( cycles() );
@@ -95,13 +89,13 @@ cycle_type measure_cycles_() {
     void * ignored;
     // cache warum-up
     boost::context::fixedsize_stack alloc;
-    boost::context::captured_context ctx( std::allocator_arg, alloc, foo);
+    boost::context::execution_context ctx( std::allocator_arg, alloc, foo);
     std::tie( ctx, ignored) = ctx();
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
         std::tie( ctx, ignored) = ctx( boost::context::exec_ontop_arg,
-                                       [](boost::context::captured_context ctx, void * data){
+                                       [](boost::context::execution_context ctx, void * data){
                                         return std::make_tuple( std::move( ctx), data);
                                        });
     }
@@ -140,14 +134,14 @@ int main( int argc, char * argv[])
         }
 
         boost::uint64_t res = measure_time().count();
-        std::cout << "captured_context: average of " << res << " nano seconds" << std::endl;
+        std::cout << "execution_context: average of " << res << " nano seconds" << std::endl;
         res = measure_time_().count();
-        std::cout << "captured_context: average of (ontop) " << res << " nano seconds" << std::endl;
+        std::cout << "execution_context: average of (ontop) " << res << " nano seconds" << std::endl;
 #ifdef BOOST_CONTEXT_CYCLE
         res = measure_cycles();
-        std::cout << "captured_context: average of " << res << " cpu cycles" << std::endl;
+        std::cout << "execution_context: average of " << res << " cpu cycles" << std::endl;
         res = measure_cycles_();
-        std::cout << "captured_context: average of (ontop) " << res << " cpu cycles" << std::endl;
+        std::cout << "execution_context: average of (ontop) " << res << " cpu cycles" << std::endl;
 #endif
 
         return EXIT_SUCCESS;

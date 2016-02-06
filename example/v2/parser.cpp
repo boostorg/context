@@ -96,8 +96,8 @@ int main() {
         std::exception_ptr except;
 
         // execute parser in new execution context
-        boost::context::captured_context source(
-                [&is,&done,&except](ctx::captured_context sink,void*){
+        boost::context::execution_context source(
+                [&is,&done,&except](ctx::execution_context sink,void*){
                 // create parser with callback function
                 Parser p( is,
                           [&sink](char ch){

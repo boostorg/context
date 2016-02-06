@@ -21,13 +21,12 @@
 
 namespace ctx = boost::context;
 
-#if ! defined(BOOST_USE_EXECUTION_CONTEXT)
 int value1 = 0;
 std::string value2;
 double value3 = 0.;
 
 struct X {
-    ctx::captured_context foo( int i, ctx::captured_context ctx, void * ignored) {
+    ctx::execution_context foo( int i, ctx::execution_context ctx, void * ignored) {
         value1 = i;
         return ctx;
     }
@@ -44,20 +43,20 @@ struct Y {
 };
 
 struct my_exception : public std::runtime_error {
-    ctx::captured_context   ctx;
+    ctx::execution_context   ctx;
 
-    my_exception( char const* what, ctx::captured_context && ctx_) :
+    my_exception( char const* what, ctx::execution_context && ctx_) :
         std::runtime_error( what),
-        ctx( std::forward< ctx::captured_context >( ctx_) ) {
+        ctx( std::forward< ctx::execution_context >( ctx_) ) {
     }
 };
 
-ctx::captured_context fn1( int i, ctx::captured_context ctx, void * ignored) {
+ctx::execution_context fn1( int i, ctx::execution_context ctx, void * ignored) {
     value1 = i;
     return ctx;
 }
 
-ctx::captured_context fn2( const char * what, ctx::captured_context ctx, void * ignored) {
+ctx::execution_context fn2( const char * what, ctx::execution_context ctx, void * ignored) {
     try {
         throw std::runtime_error( what);
     } catch ( std::runtime_error const& e) {
@@ -66,25 +65,25 @@ ctx::captured_context fn2( const char * what, ctx::captured_context ctx, void * 
     return ctx;
 }
 
-ctx::captured_context fn3( double d, ctx::captured_context ctx, void * ignored) {
+ctx::execution_context fn3( double d, ctx::execution_context ctx, void * ignored) {
     d += 3.45;
     value3 = d;
     return ctx;
 }
 
-ctx::captured_context fn5( ctx::captured_context ctx, void * ignored) {
+ctx::execution_context fn5( ctx::execution_context ctx, void * ignored) {
     value1 = 3;
     return ctx;
 }
 
-ctx::captured_context fn4( ctx::captured_context ctx, void * ignored) {
-    ctx::captured_context ctx1( fn5);
+ctx::execution_context fn4( ctx::execution_context ctx, void * ignored) {
+    ctx::execution_context ctx1( fn5);
     ctx1();
     value3 = 3.14;
     return ctx;
 }
 
-ctx::captured_context fn6( ctx::captured_context ctx, void * ignored) {
+ctx::execution_context fn6( ctx::execution_context ctx, void * ignored) {
     try {
         value1 = 3;
         std::tie( ctx, ignored) = ctx();
@@ -97,7 +96,7 @@ ctx::captured_context fn6( ctx::captured_context ctx, void * ignored) {
     return ctx;
 }
 
-ctx::captured_context fn7( ctx::captured_context ctx, void * ignored) {
+ctx::execution_context fn7( ctx::execution_context ctx, void * ignored) {
     Y y;
     std::tie( ctx, ignored) = ctx();
     return ctx;
@@ -105,10 +104,10 @@ ctx::captured_context fn7( ctx::captured_context ctx, void * ignored) {
 
 void test_move() {
     value1 = 0;
-    ctx::captured_context ctx;
+    ctx::execution_context ctx;
     BOOST_CHECK( ! ctx);
-    ctx::captured_context ctx1( fn1, 1);
-    ctx::captured_context ctx2( fn1, 3);
+    ctx::execution_context ctx1( fn1, 1);
+    ctx::execution_context ctx2( fn1, 3);
     BOOST_CHECK( ctx1);
     BOOST_CHECK( ctx2);
     ctx1 = std::move( ctx2);
@@ -122,21 +121,21 @@ void test_move() {
 void test_memfn() {
     value1 = 0;
     X x;
-    ctx::captured_context ctx( & X::foo, x, 7);
+    ctx::execution_context ctx( & X::foo, x, 7);
     ctx();
     BOOST_CHECK_EQUAL( 7, value1);
 }
 
 void test_exception() {
     const char * what = "hello world";
-    ctx::captured_context ctx( fn2, what);
+    ctx::execution_context ctx( fn2, what);
     ctx();
     BOOST_CHECK_EQUAL( std::string( what), value2);
 }
 
 void test_fp() {
     double d = 7.13;
-    ctx::captured_context ctx( fn3, d);
+    ctx::execution_context ctx( fn3, d);
     ctx();
     BOOST_CHECK_EQUAL( 10.58, value3);
 }
@@ -144,7 +143,7 @@ void test_fp() {
 void test_stacked() {
     value1 = 0;
     value3 = 0.;
-    ctx::captured_context ctx( fn4);
+    ctx::execution_context ctx( fn4);
     ctx();
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK_EQUAL( 3.14, value3);
@@ -156,7 +155,7 @@ void test_prealloc() {
     ctx::stack_context sctx( alloc.allocate() );
     void * sp = static_cast< char * >( sctx.sp) - 10;
     std::size_t size = sctx.size - 10;
-    ctx::captured_context ctx( std::allocator_arg, ctx::preallocated( sp, size, sctx), alloc, fn1, 7);
+    ctx::execution_context ctx( std::allocator_arg, ctx::preallocated( sp, size, sctx), alloc, fn1, 7);
     ctx();
     BOOST_CHECK_EQUAL( 7, value1);
 }
@@ -165,14 +164,14 @@ void test_ontop() {
     value1 = 0;
     value2 = "";
     void * ignored;
-    ctx::captured_context ctx( fn6);
+    ctx::execution_context ctx( fn6);
     std::tie( ctx, ignored) = ctx();
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK( value2.empty() );
     std::string str("abc");
     int i = 3;
     std::tie( ctx, ignored) = ctx( & i, ctx::exec_ontop_arg,
-                                   [str](ctx::captured_context ctx, void * data){
+                                   [str](ctx::execution_context ctx, void * data){
                                         value2 = str;
                                         return std::make_tuple( std::move( ctx), data);
                                     } );
@@ -186,12 +185,12 @@ void test_ontop_exception() {
     value1 = 0;
     value2 = "";
     void * ignored;
-    ctx::captured_context ctx( fn6);
+    ctx::execution_context ctx( fn6);
     std::tie( ctx, ignored) = ctx();
     BOOST_CHECK_EQUAL( 3, value1);
     const char * what = "hello world";
     ctx( ctx::exec_ontop_arg,
-         [what](ctx::captured_context ctx, void * data){
+         [what](ctx::execution_context ctx, void * data){
             throw my_exception( what, std::move( ctx) );
             return std::make_tuple( std::move( ctx), data);
          });
@@ -203,23 +202,19 @@ void test_termination() {
     value1 = 0;
     {
         void * ignored;
-        ctx::captured_context ctx( fn7);
+        ctx::execution_context ctx( fn7);
         BOOST_CHECK_EQUAL( 0, value1);
         std::tie( ctx, ignored) = ctx();
         BOOST_CHECK_EQUAL( 3, value1);
     }
     BOOST_CHECK_EQUAL( 7, value1);
 }
-#else
-void test_dummy() {
-}
-#endif
 
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
-        BOOST_TEST_SUITE("Boost.Context: captured_context test suite");
-#if ! defined(BOOST_USE_EXECUTION_CONTEXT)
+        BOOST_TEST_SUITE("Boost.Context: execution_context v2 test suite");
+
     test->add( BOOST_TEST_CASE( & test_move) );
     test->add( BOOST_TEST_CASE( & test_memfn) );
     test->add( BOOST_TEST_CASE( & test_exception) );
@@ -230,9 +225,6 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_ontop) );
     test->add( BOOST_TEST_CASE( & test_ontop_exception) );
     test->add( BOOST_TEST_CASE( & test_termination) );
-#else
-    test->add( BOOST_TEST_CASE( & test_dummy) );
-#endif
 
     return test;
 }
