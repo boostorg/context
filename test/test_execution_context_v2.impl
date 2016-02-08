@@ -150,7 +150,9 @@ ctx::execution_context< int > fn8( ctx::execution_context< int > ctx, int i) {
 }
 
 ctx::execution_context< int > fn9( ctx::execution_context< int > ctx, int i) {
+    value1 = i;
     std::tie( ctx, i) = ctx( i);
+    value1 = i;
     return ctx;
 }
 
@@ -196,6 +198,8 @@ void test_move() {
     BOOST_CHECK_EQUAL( 0, value1);
     ctx1();
     BOOST_CHECK_EQUAL( 3, value1);
+    BOOST_CHECK( ! ctx1);
+    BOOST_CHECK( ! ctx2);
 }
 
 void test_memfn() {
@@ -209,24 +213,30 @@ void test_memfn() {
 void test_exception() {
     const char * what = "hello world";
     ctx::execution_context< void > ctx( fn2, what);
+    BOOST_CHECK( ctx);
     ctx();
     BOOST_CHECK_EQUAL( std::string( what), value2);
+    BOOST_CHECK( ! ctx);
 }
 
 void test_fp() {
     double d = 7.13;
     ctx::execution_context< void > ctx( fn3, d);
+    BOOST_CHECK( ctx);
     ctx();
     BOOST_CHECK_EQUAL( 10.58, value3);
+    BOOST_CHECK( ! ctx);
 }
 
 void test_stacked() {
     value1 = 0;
     value3 = 0.;
     ctx::execution_context< void > ctx( fn4);
+    BOOST_CHECK( ctx);
     ctx();
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK_EQUAL( 3.14, value3);
+    BOOST_CHECK( ! ctx);
 }
 
 void test_prealloc() {
@@ -236,8 +246,10 @@ void test_prealloc() {
     void * sp = static_cast< char * >( sctx.sp) - 10;
     std::size_t size = sctx.size - 10;
     ctx::execution_context< void > ctx( std::allocator_arg, ctx::preallocated( sp, size, sctx), alloc, fn1, 7);
+    BOOST_CHECK( ctx);
     ctx();
     BOOST_CHECK_EQUAL( 7, value1);
+    BOOST_CHECK( ! ctx);
 }
 
 void test_ontop() {
@@ -274,14 +286,39 @@ void test_ontop_exception() {
 }
 
 void test_termination() {
-    value1 = 0;
     {
+        value1 = 0;
         ctx::execution_context< void > ctx( fn7);
         BOOST_CHECK_EQUAL( 0, value1);
         ctx = ctx();
         BOOST_CHECK_EQUAL( 3, value1);
     }
     BOOST_CHECK_EQUAL( 7, value1);
+    {
+        value1 = 0;
+        BOOST_CHECK_EQUAL( 0, value1);
+        ctx::execution_context< void > ctx( fn5);
+        BOOST_CHECK( ctx);
+        ctx();
+        BOOST_CHECK_EQUAL( 3, value1);
+        BOOST_CHECK( ! ctx);
+    }
+    {
+        value1 = 0;
+        BOOST_CHECK_EQUAL( 0, value1);
+        int i = 3, j = 0;
+        ctx::execution_context< int > ctx( fn9);
+        BOOST_CHECK( ctx);
+        std::tie( ctx, j) = ctx( i);
+        BOOST_CHECK_EQUAL( i, value1);
+        BOOST_CHECK( ctx);
+        BOOST_CHECK_EQUAL( i, j);
+        i = 7;
+        std::tie( ctx, j) = ctx( i);
+        BOOST_CHECK_EQUAL( i, value1);
+        BOOST_CHECK( ! ctx);
+        BOOST_CHECK_EQUAL( i, j);
+    }
 }
 
 void test_one_arg() {
@@ -297,7 +334,6 @@ void test_one_arg() {
         std::tie( ctx, j) = ctx( i);
         BOOST_CHECK_EQUAL( i, j);
     }
-#if 0
     {
         int i = 3, j = 0;
         int & k = j;
@@ -307,7 +343,6 @@ void test_one_arg() {
         std::tie( ctx, k) = ctx( i);
         BOOST_CHECK( & i != & k);
     }
-#endif
     {
         moveable m1( 7), m2;
         BOOST_CHECK( 7 == m1.value);

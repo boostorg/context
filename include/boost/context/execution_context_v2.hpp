@@ -128,13 +128,12 @@ public:
     transfer_t run( transfer_t t) {
         Ctx from{ t.fctx };
         typename Ctx::args_tpl_t args = std::move( * static_cast< typename Ctx::args_tpl_t * >( t.data) );
-        // invoke context-function
-        Ctx cc = apply(
-                std::move( fn_),
-                std::tuple_cat(
+        auto tpl = std::tuple_cat(
                     params_,
                     std::forward_as_tuple( std::move( from) ),
-                    std::move( args) ) );
+                    std::move( args) );
+        // invoke context-function
+        Ctx cc = apply( std::move( fn_), std::move( tpl) );
         return { exchange( cc.fctx_, nullptr), nullptr };
     }
 };
@@ -205,7 +204,8 @@ fcontext_t context_create( preallocated palloc, StackAlloc salloc, Fn && fn, Par
 template< typename ... Args >
 class execution_context {
 private:
-    typedef std::tuple< typename std::decay< Args >::type ... >     args_tpl_t;
+    typedef std::tuple< Args ... >     args_tpl_t;
+    //typedef std::tuple< typename std::decay< Args >::type ... >     args_tpl_t;
     typedef std::tuple< execution_context, typename std::decay< Args >::type ... >               ret_tpl_t;
 
     template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
@@ -305,9 +305,8 @@ public:
 
     ret_tpl_t operator()( Args ... args) {
         BOOST_ASSERT( nullptr != fctx_);
-        args_tpl_t tpl( std::forward< Args >( args) ... );
-        detail::transfer_t t = detail::jump_fcontext( detail::exchange( fctx_, nullptr), & tpl);
-        args_tpl_t data; // Note: value-initialization, all elements must be default constructible
+        args_tpl_t data( std::forward< Args >( args) ... );
+        detail::transfer_t t = detail::jump_fcontext( detail::exchange( fctx_, nullptr), & data);
         if ( nullptr != t.data) {
             data = std::move( * static_cast< args_tpl_t * >( t.data) );
         }
@@ -317,13 +316,12 @@ public:
     template< typename Fn >
     ret_tpl_t operator()( exec_ontop_arg_t, Fn && fn, Args ... args) {
         BOOST_ASSERT( nullptr != fctx_);
-        args_tpl_t tpl{ std::forward< Args >( args) ... };
-        std::tuple< Fn, args_tpl_t > p = std::forward_as_tuple( fn, tpl);
+        args_tpl_t data{ std::forward< Args >( args) ... };
+        auto p = std::forward_as_tuple( fn, data);
         detail::transfer_t t = detail::ontop_fcontext(
                 detail::exchange( fctx_, nullptr),
                 & p,
                 detail::context_ontop< execution_context, Fn, args_tpl_t >);
-        args_tpl_t data; // Note: value-initialization, all elements must be default constructible
         if ( nullptr != t.data) {
             data = * static_cast< args_tpl_t * >( t.data);
         }
