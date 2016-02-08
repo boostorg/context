@@ -26,20 +26,28 @@ project boost/context/example/execution_context
       <threading>multi
     ;
 
-exe jump
-    : jump.cpp
+exe jump_void
+    : jump_void.cpp
     ;
 
-exe parser
-    : parser.cpp
+exe jump
+    : jump.cpp
     ;
 
 exe fibonacci
     : fibonacci.cpp
     ;
 
+exe parser
+    : parser.cpp
+    ;
+
 exe parameter
     : parameter.cpp
+    ;
+
+exe ontop_void
+    : ontop_void.cpp
     ;
 
 exe ontop

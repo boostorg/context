@@ -10,28 +10,31 @@
 #include <memory>
 #include <string>
 
+#include <boost/variant.hpp>
 #include <boost/context/all.hpp>
 #include <boost/lexical_cast.hpp>
+
+typedef boost::variant<int,std::string> variant_t;
 
 namespace ctx = boost::context;
 
 class X{
 private:
     std::exception_ptr excptr_;
-    ctx::execution_context ctx_;
+    ctx::execution_context<variant_t> ctx_;
 
 public:
     X():
         excptr_(),
         ctx_(
-             [=](ctx::execution_context ctx, void * vp){
+             [=](ctx::execution_context<variant_t> ctx, variant_t data){
                 try {
                     for (;;) {
-                        int i = * static_cast< int * >( vp);
-                        std::string str = boost::lexical_cast<std::string>(i);
-                        auto result = ctx( & str);
+                        int i = boost::get<int>(data);
+                        data = boost::lexical_cast<std::string>(i);
+                        auto result = ctx( data);
                         ctx = std::move( std::get<0>( result) );
-                        vp = std::get<1>( result);
+                        data = std::get<1>( result);
                     }
                 } catch ( ctx::detail::forced_unwind const&) {
                     throw;
@@ -43,13 +46,14 @@ public:
     {}
 
     std::string operator()(int i){
-        auto result = ctx_( & i);
+        variant_t data = i;
+        auto result = ctx_( data);
         ctx_ = std::move( std::get<0>( result) );
-        void * ret = std::get<1>( result);
+        data = std::get<1>( result);
         if(excptr_){
             std::rethrow_exception(excptr_);
         }
-        return * static_cast< std::string * >( ret);
+        return boost::get<std::string>(data);
     }
 };
 

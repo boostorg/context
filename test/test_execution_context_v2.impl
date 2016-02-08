@@ -13,11 +13,15 @@
 
 #include <boost/array.hpp>
 #include <boost/assert.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/utility.hpp>
+#include <boost/variant.hpp>
 
 #include <boost/context/all.hpp>
 #include <boost/context/detail/config.hpp>
+
+typedef boost::variant<int,std::string> variant_t;
 
 namespace ctx = boost::context;
 
@@ -26,7 +30,7 @@ std::string value2;
 double value3 = 0.;
 
 struct X {
-    ctx::execution_context foo( int i, ctx::execution_context ctx, void * ignored) {
+    ctx::execution_context< void > foo( int i, ctx::execution_context< void > ctx) {
         value1 = i;
         return ctx;
     }
@@ -42,21 +46,60 @@ struct Y {
     }
 };
 
-struct my_exception : public std::runtime_error {
-    ctx::execution_context   ctx;
+class moveable {
+public:
+    bool    state;
+    int     value;
 
-    my_exception( char const* what, ctx::execution_context && ctx_) :
-        std::runtime_error( what),
-        ctx( std::forward< ctx::execution_context >( ctx_) ) {
+    moveable() :
+        state( false),
+        value( -1) {
+    }
+
+    moveable( int v) :
+        state( true),
+        value( v) {
+    }
+
+    moveable( moveable && other) :
+        state( other.state),
+        value( other.value) {
+        other.state = false;
+        other.value = -1;
+    }
+
+    moveable & operator=( moveable && other) {
+        if ( this == & other) return * this;
+        state = other.state;
+        value = other.value;
+        other.state = false;
+        other.value = -1;
+        return * this;
+    }
+
+    moveable( moveable const& other) = delete;
+    moveable & operator=( moveable const& other) = delete;
+
+    void operator()() {
+        value1 = value;
     }
 };
 
-ctx::execution_context fn1( int i, ctx::execution_context ctx, void * ignored) {
+struct my_exception : public std::runtime_error {
+    ctx::execution_context< void >   ctx;
+
+    my_exception( char const* what, ctx::execution_context< void > && ctx_) :
+        std::runtime_error( what),
+        ctx( std::forward< ctx::execution_context< void > >( ctx_) ) {
+    }
+};
+
+ctx::execution_context< void > fn1( int i, ctx::execution_context< void > ctx) {
     value1 = i;
     return ctx;
 }
 
-ctx::execution_context fn2( const char * what, ctx::execution_context ctx, void * ignored) {
+ctx::execution_context< void > fn2( const char * what, ctx::execution_context< void > ctx) {
     try {
         throw std::runtime_error( what);
     } catch ( std::runtime_error const& e) {
@@ -65,30 +108,30 @@ ctx::execution_context fn2( const char * what, ctx::execution_context ctx, void 
     return ctx;
 }
 
-ctx::execution_context fn3( double d, ctx::execution_context ctx, void * ignored) {
+ctx::execution_context< void > fn3( double d, ctx::execution_context< void > ctx) {
     d += 3.45;
     value3 = d;
     return ctx;
 }
 
-ctx::execution_context fn5( ctx::execution_context ctx, void * ignored) {
+ctx::execution_context< void > fn5( ctx::execution_context< void > ctx) {
     value1 = 3;
     return ctx;
 }
 
-ctx::execution_context fn4( ctx::execution_context ctx, void * ignored) {
-    ctx::execution_context ctx1( fn5);
+ctx::execution_context< void > fn4( ctx::execution_context< void > ctx) {
+    ctx::execution_context< void > ctx1( fn5);
     ctx1();
     value3 = 3.14;
     return ctx;
 }
 
-ctx::execution_context fn6( ctx::execution_context ctx, void * ignored) {
+ctx::execution_context< void > fn6( ctx::execution_context< void > ctx) {
     try {
         value1 = 3;
-        std::tie( ctx, ignored) = ctx();
+        ctx = ctx();
         value1 = 7;
-        std::tie( ctx, ignored) = ctx( ignored);
+        ctx = ctx();
     } catch ( my_exception & e) {
         value2 = e.what();
         ctx = std::move( e.ctx);
@@ -96,18 +139,55 @@ ctx::execution_context fn6( ctx::execution_context ctx, void * ignored) {
     return ctx;
 }
 
-ctx::execution_context fn7( ctx::execution_context ctx, void * ignored) {
+ctx::execution_context< void > fn7( ctx::execution_context< void > ctx) {
     Y y;
-    std::tie( ctx, ignored) = ctx();
+    return ctx();
+}
+
+ctx::execution_context< int > fn8( ctx::execution_context< int > ctx, int i) {
+    value1 = i;
     return ctx;
 }
 
+ctx::execution_context< int > fn9( ctx::execution_context< int > ctx, int i) {
+    std::tie( ctx, i) = ctx( i);
+    return ctx;
+}
+
+ctx::execution_context< int & > fn10( ctx::execution_context< int & > ctx, int & i) {
+    std::tie( ctx, i) = ctx( i);
+    return ctx;
+}
+
+ctx::execution_context< moveable > fn11( ctx::execution_context< moveable > ctx, moveable m) {
+    std::tie( ctx, m) = ctx( std::move( m) );
+    return ctx;
+}
+
+ctx::execution_context< int, std::string > fn12( ctx::execution_context< int, std::string > ctx, int i, std::string str) {
+    std::tie( ctx, i, str) = ctx( i, str);
+    return ctx;
+}
+
+ctx::execution_context< int, moveable > fn13( ctx::execution_context< int, moveable > ctx, int i, moveable m) {
+    std::tie( ctx, i, m) = ctx( i, std::move( m) );
+    return ctx;
+}
+
+ctx::execution_context< variant_t > fn14( ctx::execution_context< variant_t > ctx, variant_t data) {
+    int i = boost::get< int >( data);
+    data = boost::lexical_cast< std::string >( i);
+    std::tie( ctx, data) = ctx( data);
+    return ctx;
+}
+
+
 void test_move() {
     value1 = 0;
-    ctx::execution_context ctx;
+    ctx::execution_context< void > ctx;
     BOOST_CHECK( ! ctx);
-    ctx::execution_context ctx1( fn1, 1);
-    ctx::execution_context ctx2( fn1, 3);
+    ctx::execution_context< void > ctx1( fn1, 1);
+    ctx::execution_context< void > ctx2( fn1, 3);
     BOOST_CHECK( ctx1);
     BOOST_CHECK( ctx2);
     ctx1 = std::move( ctx2);
@@ -121,21 +201,21 @@ void test_move() {
 void test_memfn() {
     value1 = 0;
     X x;
-    ctx::execution_context ctx( & X::foo, x, 7);
+    ctx::execution_context< void > ctx( & X::foo, x, 7);
     ctx();
     BOOST_CHECK_EQUAL( 7, value1);
 }
 
 void test_exception() {
     const char * what = "hello world";
-    ctx::execution_context ctx( fn2, what);
+    ctx::execution_context< void > ctx( fn2, what);
     ctx();
     BOOST_CHECK_EQUAL( std::string( what), value2);
 }
 
 void test_fp() {
     double d = 7.13;
-    ctx::execution_context ctx( fn3, d);
+    ctx::execution_context< void > ctx( fn3, d);
     ctx();
     BOOST_CHECK_EQUAL( 10.58, value3);
 }
@@ -143,7 +223,7 @@ void test_fp() {
 void test_stacked() {
     value1 = 0;
     value3 = 0.;
-    ctx::execution_context ctx( fn4);
+    ctx::execution_context< void > ctx( fn4);
     ctx();
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK_EQUAL( 3.14, value3);
@@ -155,7 +235,7 @@ void test_prealloc() {
     ctx::stack_context sctx( alloc.allocate() );
     void * sp = static_cast< char * >( sctx.sp) - 10;
     std::size_t size = sctx.size - 10;
-    ctx::execution_context ctx( std::allocator_arg, ctx::preallocated( sp, size, sctx), alloc, fn1, 7);
+    ctx::execution_context< void > ctx( std::allocator_arg, ctx::preallocated( sp, size, sctx), alloc, fn1, 7);
     ctx();
     BOOST_CHECK_EQUAL( 7, value1);
 }
@@ -163,36 +243,31 @@ void test_prealloc() {
 void test_ontop() {
     value1 = 0;
     value2 = "";
-    void * ignored;
-    ctx::execution_context ctx( fn6);
-    std::tie( ctx, ignored) = ctx();
+    ctx::execution_context< void > ctx( fn6);
+    ctx = ctx();
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK( value2.empty() );
     std::string str("abc");
-    int i = 3;
-    std::tie( ctx, ignored) = ctx( & i, ctx::exec_ontop_arg,
-                                   [str](ctx::execution_context ctx, void * data){
-                                        value2 = str;
-                                        return std::make_tuple( std::move( ctx), data);
-                                    } );
+    ctx = ctx( ctx::exec_ontop_arg,
+               [str](ctx::execution_context< void > ctx){
+                    value2 = str;
+                    return ctx;
+                } );
     BOOST_CHECK_EQUAL( 7, value1);
     BOOST_CHECK_EQUAL( str, value2);
-    BOOST_CHECK_EQUAL( ignored, & i);
-    BOOST_CHECK_EQUAL( i, *( int*) ignored);
 }
 
 void test_ontop_exception() {
     value1 = 0;
     value2 = "";
-    void * ignored;
-    ctx::execution_context ctx( fn6);
-    std::tie( ctx, ignored) = ctx();
+    ctx::execution_context< void > ctx( fn6);
+    ctx = ctx();
     BOOST_CHECK_EQUAL( 3, value1);
     const char * what = "hello world";
     ctx( ctx::exec_ontop_arg,
-         [what](ctx::execution_context ctx, void * data){
+         [what](ctx::execution_context< void > ctx){
             throw my_exception( what, std::move( ctx) );
-            return std::make_tuple( std::move( ctx), data);
+            return ctx;
          });
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK_EQUAL( std::string( what), value2);
@@ -201,13 +276,88 @@ void test_ontop_exception() {
 void test_termination() {
     value1 = 0;
     {
-        void * ignored;
-        ctx::execution_context ctx( fn7);
+        ctx::execution_context< void > ctx( fn7);
         BOOST_CHECK_EQUAL( 0, value1);
-        std::tie( ctx, ignored) = ctx();
+        ctx = ctx();
         BOOST_CHECK_EQUAL( 3, value1);
     }
     BOOST_CHECK_EQUAL( 7, value1);
+}
+
+void test_one_arg() {
+    {
+        value1 = 0;
+        ctx::execution_context< int > ctx( fn8);
+        ctx( 7);
+        BOOST_CHECK_EQUAL( 7, value1);
+    }
+    {
+        int i = 3, j = 0;
+        ctx::execution_context< int > ctx( fn9);
+        std::tie( ctx, j) = ctx( i);
+        BOOST_CHECK_EQUAL( i, j);
+    }
+#if 0
+    {
+        int i = 3, j = 0;
+        int & k = j;
+        BOOST_CHECK( & i != & k);
+        BOOST_CHECK( & j == & k);
+        ctx::execution_context< int & > ctx( fn10);
+        std::tie( ctx, k) = ctx( i);
+        BOOST_CHECK( & i != & k);
+    }
+#endif
+    {
+        moveable m1( 7), m2;
+        BOOST_CHECK( 7 == m1.value);
+        BOOST_CHECK( m1.state);
+        BOOST_CHECK( -1 == m2.value);
+        BOOST_CHECK( ! m2.state);
+        ctx::execution_context< moveable > ctx( fn11);
+        std::tie( ctx, m2) = ctx( std::move( m1) );
+        BOOST_CHECK( -1 == m1.value);
+        BOOST_CHECK( ! m1.state);
+        BOOST_CHECK( 7 == m2.value);
+        BOOST_CHECK( m2.state);
+    }
+}
+
+void test_two_args() {
+    {
+        int i1 = 3, i2 = 0;
+        std::string str1("abc"), str2;
+        ctx::execution_context< int, std::string > ctx( fn12);
+        std::tie( ctx, i2, str2) = ctx( i1, str1);
+        BOOST_CHECK_EQUAL( i1, i2);
+        BOOST_CHECK_EQUAL( str1, str2);
+    }
+    {
+        int i1 = 3, i2 = 0;
+        moveable m1( 7), m2;
+        BOOST_CHECK( 7 == m1.value);
+        BOOST_CHECK( m1.state);
+        BOOST_CHECK( -1 == m2.value);
+        BOOST_CHECK( ! m2.state);
+        ctx::execution_context< int, moveable > ctx( fn13);
+        std::tie( ctx, i2, m2) = ctx( i1, std::move( m1) );
+        BOOST_CHECK_EQUAL( i1, i2);
+        BOOST_CHECK( -1 == m1.value);
+        BOOST_CHECK( ! m1.state);
+        BOOST_CHECK( 7 == m2.value);
+        BOOST_CHECK( m2.state);
+    }
+}
+
+void test_variant() {
+    {
+        int i = 7;
+        variant_t data1 = i, data2;
+        ctx::execution_context< variant_t > ctx( fn14);
+        std::tie( ctx, data2) = ctx( data1);
+        std::string str = boost::get< std::string >( data2);
+        BOOST_CHECK_EQUAL( std::string("7"), str);
+    }
 }
 
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
@@ -225,6 +375,9 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_ontop) );
     test->add( BOOST_TEST_CASE( & test_ontop_exception) );
     test->add( BOOST_TEST_CASE( & test_termination) );
+    test->add( BOOST_TEST_CASE( & test_one_arg) );
+    test->add( BOOST_TEST_CASE( & test_two_args) );
+    test->add( BOOST_TEST_CASE( & test_variant) );
 
     return test;
 }

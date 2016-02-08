@@ -11,27 +11,20 @@
 
 namespace ctx = boost::context;
 
-ctx::execution_context f1( ctx::execution_context ctxm, void * data) {
-    std::cout << "f1: entered first time" << std::endl;
-    std::tie( ctxm, data) = ctxm();
-    std::cout << "f1: entered second time" << std::endl;
-    ctx::execution_context ctx2 = std::move( * static_cast< ctx::execution_context * >( data) );
-    ctx2( & ctxm);
-    return ctxm;
-}
-
-ctx::execution_context f2( ctx::execution_context ctx1, void * data) {
-    std::cout << "f2: entered first time" << std::endl;
-    ctx::execution_context ctxm = std::move( * static_cast< ctx::execution_context * >( data) );
+ctx::execution_context< int > f1( ctx::execution_context< int > ctxm, int data) {
+    std::cout << "f1: entered first time: " << data << std::endl;
+    std::tie( ctxm, data) = ctxm( data + 2);
+    std::cout << "f1: entered second time: " << data << std::endl;
     return ctxm;
 }
 
 int main() {
-    ctx::execution_context ctx1( f1);
-    void * ignored;
-    std::tie( ctx1, ignored) = ctx1();
-    ctx::execution_context ctx2( f2);
-    std::tie( ctx1, ignored) = ctx1( & ctx2);
+    int data = 1;
+    ctx::execution_context< int > ctx1( f1);
+    std::tie( ctx1, data) = ctx1( data + 2);
+    std::cout << "f1: returned first time: " << data << std::endl;
+    std::tie( ctx1, data) = ctx1( data + 2);
+    std::cout << "f1: returned second time: " << data << std::endl;
 
     std::cout << "main: done" << std::endl;
 
