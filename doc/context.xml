@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/09 16:05:47 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/09 16:25:31 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -176,14 +176,14 @@
       <emphasis>execution_context</emphasis> expects a function/functor with signature
       <code><phrase role="identifier">execution_context</phrase><phrase role="special">(</phrase><phrase
       role="identifier">execution_context</phrase> <phrase role="identifier">ctx</phrase><phrase
-      role="special">,</phrase> <phrase role="keyword">void</phrase><phrase role="special">*</phrase>
-      <phrase role="identifier">vp</phrase><phrase role="special">)</phrase></code>.
+      role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase>
+      <phrase role="identifier">args</phrase><phrase role="special">)</phrase></code>.
       The parameter <code><phrase role="identifier">ctx</phrase></code> represents
       the context from which this context was resumed (e.g. that has called <emphasis>execution_context::operator()</emphasis>
       on <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>)
-      and <code><phrase role="identifier">vp</phrase></code> is the data passed to
-      <emphasis>execution_context::operator()</emphasis>. The return value is the
-      execution_context that has to be resumed, while this context terminates.
+      and <code><phrase role="identifier">args</phrase></code> are the data passed
+      to <emphasis>execution_context::operator()</emphasis>. The return value is
+      the execution_context that has to be resumed, while this context terminates.
     </para>
     <para>
       Benefits of <link linkend="ecv2"><emphasis>execution_context</emphasis> (v2)</link>
@@ -380,10 +380,10 @@
       passing</link>
     </bridgehead>
     <para>
-      The void pointer argument passed to <emphasis>execution_context::operator()</emphasis>,
-      in one context, is passed as the last argument of the <emphasis>context-function</emphasis>
+      The arguments passed to <emphasis>execution_context::operator()</emphasis>,
+      in one context, is passed as the last arguments of the <emphasis>context-function</emphasis>
       if the context is started for the first time. In all following invocations
-      of <emphasis>execution_context::operator()</emphasis> the void pointer passed
+      of <emphasis>execution_context::operator()</emphasis> the arguments passed
       to <emphasis>execution_context::operator()</emphasis>, in one context, is returned
       by <emphasis>execution_context::operator()</emphasis> in the other context.
     </para>
@@ -469,7 +469,7 @@
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">execution_context</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
 
     <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&gt;</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">execution_context</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">execution_context</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
 
     <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">==(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 

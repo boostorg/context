@@ -45,9 +45,9 @@ stack via the __stack_allocator__. The stack walking makes the destruction of
 __econtext__ very slow and should be prevented if possible.
 
 __econtext__ expects a function/functor with signature
-`execution_context(execution_context ctx, void* vp)`. The parameter `ctx`
+`execution_context(execution_context ctx, Args ... args)`. The parameter `ctx`
 represents the context from which this context was resumed (e.g. that has called
-__ec_op__ on `*this`) and `vp` is the data passed to __ec_op__. The return value
+__ec_op__ on `*this`) and `args` are the data passed to __ec_op__. The return value
 is the execution_context that has to be resumed, while this context terminates.
 
 
@@ -212,11 +212,10 @@ application is terminated by calling ['std::terminate()]. ['std::exception_ptr]
 can be used to transfer exceptions between different execution contexts.
 
 [heading parameter passing]
-The void pointer argument passed to __ec_op__, in one context, is passed as
-the last argument of the __context_fn__ if the context is started for the
-first time.
-In all following invocations of __ec_op__ the void pointer passed to
-__ec_op__, in one context, is returned by __ec_op__ in the other context.
+The arguments passed to __ec_op__, in one context, is passed as the last
+arguments of the __context_fn__ if the context is started for the first time.
+In all following invocations of __ec_op__ the arguments passed to __ec_op__, in
+one context, is returned by __ec_op__ in the other context.
 
         class X{
         private:
@@ -298,7 +297,7 @@ __ec_op__, in one context, is returned by __ec_op__ in the other context.
             std::tuple< execution_context, Args ... > operator()( Args ... args);
 
             template< typename Fn >
-            std::tuple< execution_context, void * > operator()( exec_ontop_arg_t, Fn && fn, Args ... args);
+            std::tuple< execution_context, Args ... > operator()( exec_ontop_arg_t, Fn && fn, Args ... args);
 
             bool operator==( execution_context const& other) const noexcept;
 

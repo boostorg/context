@@ -91,14 +91,14 @@
     </p>
 <p>
       <span class="emphasis"><em>execution_context</em></span> expects a function/functor with signature
-      <code class="computeroutput"><span class="identifier">execution_context</span><span class="special">(</span><span class="identifier">execution_context</span> <span class="identifier">ctx</span><span class="special">,</span> <span class="keyword">void</span><span class="special">*</span>
-      <span class="identifier">vp</span><span class="special">)</span></code>.
+      <code class="computeroutput"><span class="identifier">execution_context</span><span class="special">(</span><span class="identifier">execution_context</span> <span class="identifier">ctx</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">...</span>
+      <span class="identifier">args</span><span class="special">)</span></code>.
       The parameter <code class="computeroutput"><span class="identifier">ctx</span></code> represents
       the context from which this context was resumed (e.g. that has called <span class="emphasis"><em>execution_context::operator()</em></span>
       on <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>)
-      and <code class="computeroutput"><span class="identifier">vp</span></code> is the data passed to
-      <span class="emphasis"><em>execution_context::operator()</em></span>. The return value is the
-      execution_context that has to be resumed, while this context terminates.
+      and <code class="computeroutput"><span class="identifier">args</span></code> are the data passed
+      to <span class="emphasis"><em>execution_context::operator()</em></span>. The return value is
+      the execution_context that has to be resumed, while this context terminates.
     </p>
 <p>
       Benefits of <a class="link" href="ecv2.html#ecv2"><span class="emphasis"><em>execution_context</em></span> (v2)</a>
@@ -300,10 +300,10 @@
       passing</a>
     </h4>
 <p>
-      The void pointer argument passed to <span class="emphasis"><em>execution_context::operator()</em></span>,
-      in one context, is passed as the last argument of the <span class="emphasis"><em>context-function</em></span>
+      The arguments passed to <span class="emphasis"><em>execution_context::operator()</em></span>,
+      in one context, is passed as the last arguments of the <span class="emphasis"><em>context-function</em></span>
       if the context is started for the first time. In all following invocations
-      of <span class="emphasis"><em>execution_context::operator()</em></span> the void pointer passed
+      of <span class="emphasis"><em>execution_context::operator()</em></span> the arguments passed
       to <span class="emphasis"><em>execution_context::operator()</em></span>, in one context, is returned
       by <span class="emphasis"><em>execution_context::operator()</em></span> in the other context.
     </p>
@@ -389,7 +389,7 @@
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span> <span class="identifier">execution_context</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="special">&gt;</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span>
 
     <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span> <span class="special">&gt;</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span> <span class="identifier">execution_context</span><span class="special">,</span> <span class="keyword">void</span> <span class="special">*</span> <span class="special">&gt;</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">exec_ontop_arg_t</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span> <span class="identifier">execution_context</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="special">&gt;</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">exec_ontop_arg_t</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span>
 
     <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">==(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
 
