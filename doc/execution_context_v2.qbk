@@ -35,7 +35,7 @@ etc. is involved.
 [important Segmented stacks are not supported by __econtext__ (v2).]
 
 On return the context-function of the current context has to specify an
-__econtext__ to which the execution cotnrol is transferred after termination
+__econtext__ to which the execution control is transferred after termination
 of the current context.
 
 If an instance with valid state goes out of scope and the context-function has
@@ -51,15 +51,19 @@ __ec_op__ on `*this`) and `vp` is the data passed to __ec_op__. The return value
 is the execution_context that has to be resumed, while this context terminates.
 
 
+Benefits of __ecv2__ over __ecv1__ are: faster context switch, type-safety of
+passed/returned arguments.
+
+
 [heading usage of __econtext__]
 
         int n=35;
-        ctx::execution_context source(
-            [n](ctx::execution_context sink,void*)mutable{
+        ctx::execution_context<int> source(
+            [n](ctx::execution_context<int> sink, int) mutable {
                 int a=0;
                 int b=1;
                 while(n-->0){
-                    auto result=sink(&a);
+                    auto result=sink(a);
                     sink=std::move(std::get<0>(result));
                     auto next=a+b;
                     a=b;
@@ -68,9 +72,9 @@ is the execution_context that has to be resumed, while this context terminates.
                 return sink;
             });
         for(int i=0;i<10;++i){
-            auto result=source();
+            auto result=source(i);
             source=std::move(std::get<0>(result));
-            std::cout<<*(int*)std::get<1>(result)<<" ";
+            std::cout<<std::get<1>(result)<<" ";
         }
 
         output:
@@ -84,7 +88,7 @@ be assigned the new state of the __econtext__ returned by __ec_op__.
 
 The lambda that calculates the Fibonacci numbers is executed inside
 the context represented by `source`. Calculated Fibonacci numbers are
-transferred between the two context' via expression ['sink(&a)] (and returned by
+transferred between the two context' via expression ['sink(a)] (and returned by
 ['source()]).
 
 The locale variables `a`, `b` and ` next` remain their values during each
@@ -110,13 +114,13 @@ the stack is exchanged by each context switch.
         std::exception_ptr except;
 
         // execute parser in new execution context
-        boost::context::execution_context source(
-                [&is,&done,&except](ctx::execution_context sink,void*){
+        boost::context::execution_context<char> source(
+                [&is,&done,&except](ctx::execution_context<char> sink,char){
                 // create parser with callback function
                 Parser p( is,
                           [&sink](char ch){
                                 // resume main execution context
-                                auto result = sink(&ch);
+                                auto result = sink(ch);
                                 sink = std::move(std::get<0>(result));
                         });
                     try {
@@ -134,15 +138,15 @@ the stack is exchanged by each context switch.
 
         // user-code pulls parsed data from parser
         // invert control flow
-        auto result = source();
+        auto result = source('\0');
         source = std::move(std::get<0>(result));
-        void * vp = std::get<1>(result);
+        char c = std::get<1>(result);
         if ( except) {
             std::rethrow_exception(except);
         }
         while( ! done) {
-            printf("Parsed: %c\n",* static_cast<char*>(vp));
-            std::tie(source,vp) = source();
+            printf("Parsed: %c\n",c);
+            std::tie(source,c) = source('\0');
             if (except) {
                 std::rethrow_exception(except);
             }
@@ -214,40 +218,42 @@ first time.
 In all following invocations of __ec_op__ the void pointer passed to
 __ec_op__, in one context, is returned by __ec_op__ in the other context.
 
-        class X {
+        class X{
         private:
             std::exception_ptr excptr_;
-            boost::context::execution_context ctx_;
+            boost::context::execution_context<boost::variant<int,std::string>> ctx_;
 
         public:
-            X() :
+            X():
                 excptr_(),
-                ctx_([=](ctx::execution_context ctx, void* vp)mutable{
-                            try {
-                                for (;;) {
-                                    int i = * static_cast<int*>(vp);
-                                    std::string str = boost::lexical_cast<std::string>(i);
-                                    auto result = ctx(& str);
-                                    ctx = std::move(std::get<0>(result) );
-                                    vp = std::get<1>(result);
-                                }
-                            } catch (ctx::detail::forced_unwind const&) {
-                                throw;
-                            } catch (...) {
-                                excptr_=std::current_exception();
+                ctx_(
+                     [=](boost::context::execution_context<boost::variant<int,std::string>> ctx, boost::variant<int,std::string> data){
+                        try {
+                            for (;;) {
+                                int i = boost::get<int>(data);
+                                data = boost::lexical_cast<std::string>(i);
+                                auto result = ctx( data);
+                                ctx = std::move( std::get<0>( result) );
+                                data = std::get<1>( result);
                             }
-                            return ctx;
+                        } catch ( boost::context::detail::forced_unwind const&) {
+                            throw;
+                        } catch (...) {
+                            excptr_=std::current_exception();
+                        }
+                        return ctx;
                      })
             {}
 
-            std::string operator()(int i) {
-                auto result = ctx_(&i);
-                ctx_ = std::move(std::get<0>(result));
-                void * ret = std::get<1>(result);
+            std::string operator()(int i){
+                boost::variant<int,std::string> data = i;
+                auto result = ctx_( data);
+                ctx_ = std::move( std::get<0>( result) );
+                data = std::get<1>( result);
                 if(excptr_){
                     std::rethrow_exception(excptr_);
                 }
-                return * static_cast<std::string*>(ret);
+                return boost::get<std::string>(data);
             }
         };
 
@@ -260,23 +266,24 @@ __ec_op__, in one context, is returned by __ec_op__ in the other context.
 
 [heading Class `execution_context`]
 
+        template< typename ... Args >
         class execution_context {
         public:
-            template< typename Fn, typename ... Args >
-            execution_context( Fn && fn, Args && ... args);
+            template< typename Fn, typename ... Params >
+            execution_context( Fn && fn, Params && ... params);
 
-            template< typename StackAlloc, typename Fn, typename ... Args >
-            execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args);
+            template< typename StackAlloc, typename Fn, typename ... Params >
+            execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Params && ... params);
 
-            template< typename StackAlloc, typename Fn, typename ... Args >
-            execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args);
+            template< typename StackAlloc, typename Fn, typename ... Params >
+            execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Params && ... params);
     
 
-            template< typename Fn, typename ... Args >
-            execution_context( std::allocator_arg_t, segemented_stack, Fn && fn, Args && ... args) = delete;
+            template< typename Fn, typename ... Params >
+            execution_context( std::allocator_arg_t, segemented_stack, Fn && fn, Params && ... params) = delete;
 
-            template< typename Fn, typename ... Args >
-            execution_context( std::allocator_arg_t, preallocated palloc, segmented, Fn && fn, Args && ... args)= delete;
+            template< typename Fn, typename ... Params >
+            execution_context( std::allocator_arg_t, preallocated palloc, segmented, Fn && fn, Params && ... params)= delete;
             ~execution_context();
 
             execution_context( execution_context && other) noexcept;
@@ -288,13 +295,10 @@ __ec_op__, in one context, is returned by __ec_op__ in the other context.
             explicit operator bool() const noexcept;
             bool operator!() const noexcept;
 
-            std::tuple< execution_context, void * > operator()( void * data = nullptr);
+            std::tuple< execution_context, Args ... > operator()( Args ... args);
 
-            template< typename Fn, typename ... Args >
-            std::tuple< execution_context, void * > operator()( exec_ontop_arg_t, Fn && fn, Args && ... args);
-
-            template< typename Fn, typename ... Args >
-            std::tuple< execution_context, void * > operator()( void * data, exec_ontop_arg_t, Fn && fn, Args && ... args);
+            template< typename Fn >
+            std::tuple< execution_context, void * > operator()( exec_ontop_arg_t, Fn && fn, Args ... args);
 
             bool operator==( execution_context const& other) const noexcept;
 
@@ -315,14 +319,14 @@ __ec_op__, in one context, is returned by __ec_op__ in the other context.
 
 [constructor_heading ecv2..constructor]
 
-    template< typename Fn, typename ... Args >
-    execution_context( Fn && fn, Args && ... args);
+    template< typename Fn, typename ... Params >
+    execution_context( Fn && fn, Params && ... params);
     
-    template< typename StackAlloc, typename Fn, typename ... Args >
-    execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Args && ... args);
+    template< typename StackAlloc, typename Fn, typename ... Params >
+    execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Params && ... params);
     
-    template< typename StackAlloc, typename Fn, typename ... Args >
-    execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Args && ... args);
+    template< typename StackAlloc, typename Fn, typename ... Params >
+    execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Params && ... params);
 
 [variablelist
 [[Effects:] [Creates a new execution context and prepares the context to execute
@@ -371,39 +375,41 @@ top of the stack.]]
 
 [operator_heading ecv2..operator_call..operator()]
 
-            std::tuple< execution_context, void * > operator()( void * data = nullptr);
+    std::tuple< execution_context< Args ... >, Args ... > operator()( Args ... args); // member of generic execution_context template
+    execution_context< void > operator()(); // member of execution_context< void >
 
 [variablelist
 [[Effects:] [Stores internally the current context data (stack pointer,
 instruction pointer, and CPU registers) of the current active context and
 restores the context data from `*this`, which implies jumping to `*this`'s
 context.
-The void pointer argument, `vp`, is passed to the current context to be returned
-by the most recent call to `execution_context::operator()` in the same thread.
-`fn` is executed with arguments `args` on top of the stack of `this`.]]
-[[Note:] [The behaviour is undefined if `operator()()` is called while `execution_context::current()`
-returns `*this` (e.g. resuming an already running context). If the top-level context
-function returns, `std::exit()` is called.]]
-[[Returns:] [The tuple of void pointer argument passed to the most recent call to
+The arguments, `... args`, are passed to the current context to be returned
+by the most recent call to `execution_context::operator()` in the same thread.]]
+[[Returns:] [The tuple of execution_context and returned arguments passed to the most recent call to
 `execution_context::operator()`, if any and a execution_context representing the context
-that has been suspended .]]
+that has been suspended.]]
+[[Note:] [The returned execution_context indicates if the suspended context has terminated
+(return from context-function) via `bool operator()`. If the
+returned execution_context has terminated no data are transferred in the returned tuple.]]
 ]
 
 [operator_heading ecv2..operator_call_ontop..operator()]
 
-            template< typename Fn, typename ... Args >
-            std::tuple< execution_context, void * > operator()( exec_ontop_arg_t, Fn && fn, Args && ... args);
-
-            template< typename Fn, typename ... Args >
-            std::tuple< execution_context, void * > operator()( void * data, exec_ontop_arg_t, Fn && fn, Args && ... args);
+            template< typename Fn >
+            std::tuple< execution_context< Args ... >, Args ... > operator()( exec_ontop_arg_t, Fn && fn, Args ... args); // member of generic execution_context
+            template< typename Fn >
+            execution_context< void > operator()( exec_ontop_arg_t, Fn && fn); // member of execution_context< void >
 
 [variablelist
-[[Effects:] [Same as __ec_op__. Additionally, function `fn` is executed with
-arguments `args` in the context of `*this` (e.g. the stack frame of `fn` is
-allocated on stack of `*this`).]]
-[[Returns:] [The tuple of void pointer argument passed to the most recent call to
+[[Effects:] [Same as __ec_op__. Additionally, function `fn` is executed
+in the context of `*this` (e.g. the stack frame of `fn` is allocated on
+stack of `*this`).]]
+[[Returns:] [The tuple of execution_context and returned arguments passed to the most recent call to
 `execution_context::operator()`, if any and a execution_context representing the context
 that has been suspended .]]
+[[Note:] [The returned execution_context indicates if the suspended context has terminated
+(return from context-function) via `bool operator()`. If the
+returned execution_context has terminated no data are transferred in the returned tuple.]]
 ]
 
 [operator_heading ecv2..operator_equal..operator==]
