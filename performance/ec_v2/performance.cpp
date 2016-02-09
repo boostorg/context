@@ -19,21 +19,20 @@
 
 boost::uint64_t jobs = 1000;
 
-static boost::context::execution_context foo( boost::context::execution_context ctx, void * ignored) {
+static boost::context::execution_context< void > foo( boost::context::execution_context< void > ctx) {
     while ( true) {
-        std::tie( ctx, ignored) = ctx();
+        ctx = ctx();
     }
 }
 
 duration_type measure_time() {
-    void * ignored;
     // cache warum-up
-    boost::context::execution_context ctx( foo);
-    std::tie( ctx, ignored) = ctx();
+    boost::context::execution_context< void > ctx( foo);
+    ctx = ctx();
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        std::tie( ctx, ignored) = ctx();
+        ctx = ctx();
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -44,18 +43,17 @@ duration_type measure_time() {
 }
 
 duration_type measure_time_() {
-    void * ignored;
     // cache warum-up
     boost::context::fixedsize_stack alloc;
-    boost::context::execution_context ctx( std::allocator_arg, alloc, foo);
-    std::tie( ctx, ignored) = ctx();
+    boost::context::execution_context< void > ctx( std::allocator_arg, alloc, foo);
+    ctx = ctx();
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        std::tie( ctx, ignored) = ctx( boost::context::exec_ontop_arg,
-                                       [](boost::context::execution_context ctx, void * data){
-                                        return std::make_tuple( std::move( ctx), data);
-                                       });
+        ctx = ctx( boost::context::exec_ontop_arg,
+                   [](boost::context::execution_context< void > ctx){
+                        return std::move( ctx);
+                   });
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -67,15 +65,14 @@ duration_type measure_time_() {
 
 #ifdef BOOST_CONTEXT_CYCLE
 cycle_type measure_cycles() {
-    void * ignored;
     // cache warum-up
     boost::context::fixedsize_stack alloc;
-    boost::context::execution_context ctx( std::allocator_arg, alloc, foo);
-    std::tie( ctx, ignored) = ctx();
+    boost::context::execution_context< void > ctx( std::allocator_arg, alloc, foo);
+    ctx = ctx();
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        std::tie( ctx, ignored) = ctx();
+        ctx = ctx();
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
@@ -86,18 +83,17 @@ cycle_type measure_cycles() {
 }
 
 cycle_type measure_cycles_() {
-    void * ignored;
     // cache warum-up
     boost::context::fixedsize_stack alloc;
-    boost::context::execution_context ctx( std::allocator_arg, alloc, foo);
-    std::tie( ctx, ignored) = ctx();
+    boost::context::execution_context< void > ctx( std::allocator_arg, alloc, foo);
+    ctx = ctx();
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        std::tie( ctx, ignored) = ctx( boost::context::exec_ontop_arg,
-                                       [](boost::context::execution_context ctx, void * data){
-                                        return std::make_tuple( std::move( ctx), data);
-                                       });
+        ctx = ctx( boost::context::exec_ontop_arg,
+                   [](boost::context::execution_context< void > ctx){
+                        return std::move( ctx);
+                   });
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
@@ -108,10 +104,8 @@ cycle_type measure_cycles_() {
 }
 #endif
 
-int main( int argc, char * argv[])
-{
-    try
-    {
+int main( int argc, char * argv[]) {
+    try {
         bind_to_processor( 0);
 
         boost::program_options::options_description desc("allowed options");
@@ -145,10 +139,10 @@ int main( int argc, char * argv[])
 #endif
 
         return EXIT_SUCCESS;
+    } catch ( std::exception const& e) {
+        std::cerr << "exception: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "unhandled exception" << std::endl;
     }
-    catch ( std::exception const& e)
-    { std::cerr << "exception: " << e.what() << std::endl; }
-    catch (...)
-    { std::cerr << "unhandled exception" << std::endl; }
     return EXIT_FAILURE;
 }
