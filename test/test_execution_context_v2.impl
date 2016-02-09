@@ -41,6 +41,9 @@ struct Y {
         value1 = 3;
     }
 
+    Y( Y const&) = delete;
+    Y & operator=( Y const&) = delete;
+
     ~Y() {
         value1 = 7;
     }
@@ -180,6 +183,11 @@ ctx::execution_context< variant_t > fn14( ctx::execution_context< variant_t > ct
     int i = boost::get< int >( data);
     data = boost::lexical_cast< std::string >( i);
     std::tie( ctx, data) = ctx( data);
+    return ctx;
+}
+
+ctx::execution_context< Y * > fn15( ctx::execution_context< Y * > ctx, Y * py) {
+    ctx( py);
     return ctx;
 }
 
@@ -342,6 +350,13 @@ void test_one_arg() {
         ctx::execution_context< int & > ctx( fn10);
         std::tie( ctx, k) = ctx( i);
         BOOST_CHECK( & i != & k);
+    }
+    {
+        Y y;
+        Y * py = nullptr;
+        ctx::execution_context< Y * > ctx( fn15);
+        std::tie( ctx, py) = ctx( & y);
+        BOOST_CHECK( py == & y);
     }
     {
         moveable m1( 7), m2;
