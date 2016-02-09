@@ -262,6 +262,14 @@ one context, is returned by __ec_op__ in the other context.
         output:
         7
 
+Multiple arguments can be exchanged between multiple instances of __ecv2__ too.
+
+        boost::context::execution_context<int,std::string> foo(boost::context::execution_context<int,std::string> ctx,int i,std::string str) {
+            std::tuple<boost::context::execution_context<int,std::string>,int,std::string>=ctx( i, str);
+            ...
+                return ctx;
+        }
+
 
 [heading Class `execution_context`]
 
@@ -276,7 +284,6 @@ one context, is returned by __ec_op__ in the other context.
 
             template< typename StackAlloc, typename Fn, typename ... Params >
             execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Params && ... params);
-    
 
             template< typename Fn, typename ... Params >
             execution_context( std::allocator_arg_t, segemented_stack, Fn && fn, Params && ... params) = delete;
