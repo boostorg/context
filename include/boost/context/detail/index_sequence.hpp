@@ -51,6 +51,9 @@ template<>
 struct make_index_sequence< 1 > : public index_sequence< 0 > {
 };
 
+template< typename ... T >
+using index_sequence_for = make_index_sequence< sizeof ... (T) >;
+
 }}}
 
 #ifdef BOOST_HAS_ABI_HEADERS
