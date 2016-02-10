@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/10 21:02:27 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/10 21:12:03 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -723,7 +723,11 @@
       </varlistentry>
     </variablelist>
     <para>
-      [move_destructor_heading ecv2..destructor destructor]
+      <bridgehead renderas="sect4" id="ecv2_destructor destructor_bridgehead">
+  <phrase id="ecv2_destructor destructor"/>
+  <link linkend="ecv2_destructor
+      destructor">Destructor</link>
+</bridgehead>
     </para>
 <programlisting><phrase role="special">~</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">();</phrase>
 </programlisting>
@@ -735,7 +739,7 @@
           <para>
             Destructs the associated stack if <code><phrase role="special">*</phrase><phrase
             role="keyword">this</phrase></code> is a valid context, e.g. <emphasis>execution_context::operator
-            bool()</emphasis> returns <code><phrase role="identifier">ture</phrase></code>.
+            bool()</emphasis> returns <code><phrase role="keyword">true</phrase></code>.
           </para>
         </listitem>
       </varlistentry>

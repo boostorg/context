@@ -75,6 +75,10 @@
 [hding [class_name]_[constructor_name]..Constructor]
 ]
 
+[template destructor_heading[class_name destructor_name]
+[hding [class_name]_[destructor_name]..Destructor]
+]
+
 [template copy_constructor_heading[class_name copy_constructor_name]
 [hding [class_name]_[copy_constructor_name]..Copy constructor]
 ]

@@ -494,13 +494,13 @@ The constructor with argument type `preallocated`, is used to create a user
 defined data [link ecv2_prealloc (for instance additional control structures)] on
 top of the stack.]]
 ]
-[move_destructor_heading ecv2..destructor destructor]
+[destructor_heading ecv2..destructor destructor]
 
     ~execution_context();
 
 [variablelist
 [[Effects:] [Destructs the associated stack if `*this` is a valid context,
-e.g. ['execution_context::operator bool()] returns `ture`.]]
+e.g. ['execution_context::operator bool()] returns `true`.]]
 [[Throws:] [Nothing.]]
 ]
 
