@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/10 20:01:07 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/10 20:47:12 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -559,6 +559,67 @@
     <phrase role="identifier">f2</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase><phrase role="special">:</phrase> <phrase role="number">5</phrase>
     <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase> <phrase role="identifier">third</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="special">-</phrase><phrase role="number">1</phrase>
 </programlisting>
+    <para>
+      The expression <code><phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase
+      role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">exec_ontop_arg</phrase><phrase
+      role="special">,</phrase><phrase role="identifier">f2</phrase><phrase role="special">,</phrase><phrase
+      role="identifier">data</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase
+      role="special">)</phrase></code> executes <code><phrase role="identifier">f2</phrase><phrase
+      role="special">()</phrase></code> on top of context <code><phrase role="identifier">ctx</phrase></code>,
+      e.g. an additional stack frame is allocated on top of the context stack (in
+      front of <code><phrase role="identifier">f1</phrase><phrase role="special">()</phrase></code>).
+      <code><phrase role="identifier">f1</phrase><phrase role="special">()</phrase></code>
+      returns argument <code><phrase role="special">-</phrase><phrase role="number">1</phrase></code>
+      that will returned by the second invocation of <code><phrase role="identifier">ctx</phrase><phrase
+      role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase
+      role="number">1</phrase><phrase role="special">)</phrase></code> in <code><phrase
+      role="identifier">f1</phrase><phrase role="special">()</phrase></code>.
+    </para>
+    <para>
+      Another option is to execute a function on top of the context, that throws
+      an exception.
+    </para>
+<programlisting><phrase role="keyword">struct</phrase> <phrase role="identifier">interrupt</phrase> <phrase role="special">{</phrase>
+    <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">void</phrase> <phrase role="special">&gt;</phrase>   <phrase role="identifier">ctx</phrase><phrase role="special">;</phrase>
+
+    <phrase role="identifier">interrupt</phrase><phrase role="special">(</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">void</phrase> <phrase role="special">&gt;</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">ctx_</phrase><phrase role="special">)</phrase> <phrase role="special">:</phrase>
+        <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">forward</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">void</phrase> <phrase role="special">&gt;</phrase> <phrase role="special">&gt;(</phrase> <phrase role="identifier">ctx_</phrase><phrase role="special">)</phrase> <phrase role="special">)</phrase> <phrase role="special">{</phrase>
+    <phrase role="special">}</phrase>
+<phrase role="special">};</phrase>
+
+<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">f1</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+    <phrase role="keyword">try</phrase> <phrase role="special">{</phrase>
+        <phrase role="keyword">for</phrase> <phrase role="special">(;;)</phrase> <phrase role="special">{</phrase>
+            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1()&quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+            <phrase role="identifier">ctx</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">();</phrase>
+        <phrase role="special">}</phrase>
+    <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(</phrase><phrase role="identifier">interrupt</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">e</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+        <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1(): interrupted&quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+        <phrase role="identifier">ctx</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase> <phrase role="identifier">e</phrase><phrase role="special">.</phrase><phrase role="identifier">ctx</phrase><phrase role="special">);</phrase>
+    <phrase role="special">}</phrase>
+    <phrase role="keyword">return</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">;</phrase>
+<phrase role="special">}</phrase>
+
+<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+    <phrase role="keyword">throw</phrase> <phrase role="identifier">interrupt</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">));</phrase>
+    <phrase role="keyword">return</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">;</phrase>
+<phrase role="special">}</phrase>
+
+<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">void</phrase> <phrase role="special">&gt;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">f1</phrase><phrase role="special">);</phrase>
+<phrase role="identifier">ctx</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">();</phrase>
+<phrase role="identifier">ctx</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">();</phrase>
+<phrase role="identifier">ctx</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">exec_ontop_arg</phrase><phrase role="special">,</phrase><phrase role="identifier">f2</phrase><phrase role="special">);</phrase>
+
+<phrase role="identifier">output</phrase><phrase role="special">:</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">()</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">()</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">():</phrase> <phrase role="identifier">interrupted</phrase>
+</programlisting>
+    <para>
+      In this example <code><phrase role="identifier">f2</phrase><phrase role="special">()</phrase></code>
+      is used to interrupt the <code><phrase role="keyword">for</phrase></code>-loop
+      in <code><phrase role="identifier">f1</phrase><phrase role="special">()</phrase></code>.
+    </para>
     <bridgehead renderas="sect3" id="context.ecv2.h6">
       <phrase id="context.ecv2.class__code__phrase_role__identifier__execution_context__phrase___code_"/><link
       linkend="context.ecv2.class__code__phrase_role__identifier__execution_context__phrase___code_">Class
@@ -584,6 +645,7 @@
 
     <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Params</phrase> <phrase role="special">&gt;</phrase>
     <phrase role="identifier">execution_context</phrase><phrase role="special">(</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">allocator_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">preallocated</phrase> <phrase role="identifier">palloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">segmented</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Params</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">params</phrase><phrase role="special">)=</phrase> <phrase role="keyword">delete</phrase><phrase role="special">;</phrase>
+
     <phrase role="special">~</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">();</phrase>
 
     <phrase role="identifier">execution_context</phrase><phrase role="special">(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>

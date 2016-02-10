@@ -469,6 +469,59 @@
     <span class="identifier">f2</span><span class="special">:</span> <span class="identifier">entered</span><span class="special">:</span> <span class="number">5</span>
     <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">entered</span> <span class="identifier">third</span> <span class="identifier">time</span><span class="special">:</span> <span class="special">-</span><span class="number">1</span>
 </pre>
+<p>
+      The expression <code class="computeroutput"><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">exec_ontop_arg</span><span class="special">,</span><span class="identifier">f2</span><span class="special">,</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">)</span></code> executes <code class="computeroutput"><span class="identifier">f2</span><span class="special">()</span></code> on top of context <code class="computeroutput"><span class="identifier">ctx</span></code>,
+      e.g. an additional stack frame is allocated on top of the context stack (in
+      front of <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>).
+      <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>
+      returns argument <code class="computeroutput"><span class="special">-</span><span class="number">1</span></code>
+      that will returned by the second invocation of <code class="computeroutput"><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">)</span></code> in <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>.
+    </p>
+<p>
+      Another option is to execute a function on top of the context, that throws
+      an exception.
+    </p>
+<pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">interrupt</span> <span class="special">{</span>
+    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span>   <span class="identifier">ctx</span><span class="special">;</span>
+
+    <span class="identifier">interrupt</span><span class="special">(</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="special">&amp;&amp;</span> <span class="identifier">ctx_</span><span class="special">)</span> <span class="special">:</span>
+        <span class="identifier">ctx</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">forward</span><span class="special">&lt;</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="special">&gt;(</span> <span class="identifier">ctx_</span><span class="special">)</span> <span class="special">)</span> <span class="special">{</span>
+    <span class="special">}</span>
+<span class="special">};</span>
+
+<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="identifier">f1</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span>
+    <span class="keyword">try</span> <span class="special">{</span>
+        <span class="keyword">for</span> <span class="special">(;;)</span> <span class="special">{</span>
+            <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1()"</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
+            <span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">();</span>
+        <span class="special">}</span>
+    <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(</span><span class="identifier">interrupt</span> <span class="special">&amp;</span> <span class="identifier">e</span><span class="special">)</span> <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1(): interrupted"</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
+        <span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span> <span class="identifier">e</span><span class="special">.</span><span class="identifier">ctx</span><span class="special">);</span>
+    <span class="special">}</span>
+    <span class="keyword">return</span> <span class="identifier">ctx</span><span class="special">;</span>
+<span class="special">}</span>
+
+<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="identifier">f2</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span>
+    <span class="keyword">throw</span> <span class="identifier">interrupt</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">));</span>
+    <span class="keyword">return</span> <span class="identifier">ctx</span><span class="special">;</span>
+<span class="special">}</span>
+
+<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="identifier">ctx</span><span class="special">(</span><span class="identifier">f1</span><span class="special">);</span>
+<span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">();</span>
+<span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">();</span>
+<span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">exec_ontop_arg</span><span class="special">,</span><span class="identifier">f2</span><span class="special">);</span>
+
+<span class="identifier">output</span><span class="special">:</span>
+    <span class="identifier">f1</span><span class="special">()</span>
+    <span class="identifier">f1</span><span class="special">()</span>
+    <span class="identifier">f1</span><span class="special">():</span> <span class="identifier">interrupted</span>
+</pre>
+<p>
+      In this example <code class="computeroutput"><span class="identifier">f2</span><span class="special">()</span></code>
+      is used to interrupt the <code class="computeroutput"><span class="keyword">for</span></code>-loop
+      in <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>.
+    </p>
 <h4>
 <a name="context.ecv2.h6"></a>
       <span><a name="context.ecv2.class__code__phrase_role__identifier__execution_context__phrase___code_"></a></span><a class="link" href="ecv2.html#context.ecv2.class__code__phrase_role__identifier__execution_context__phrase___code_">Class
@@ -494,6 +547,7 @@
 
     <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Params</span> <span class="special">&gt;</span>
     <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg_t</span><span class="special">,</span> <span class="identifier">preallocated</span> <span class="identifier">palloc</span><span class="special">,</span> <span class="identifier">segmented</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Params</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">params</span><span class="special">)=</span> <span class="keyword">delete</span><span class="special">;</span>
+
     <span class="special">~</span><span class="identifier">execution_context</span><span class="special">();</span>
 
     <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">execution_context</span> <span class="special">&amp;&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">noexcept</span><span class="special">;</span>

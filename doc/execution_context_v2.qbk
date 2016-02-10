@@ -364,12 +364,58 @@ arguments.
         f2: entered: 5
         f1: entered third time: -1
 
+The expression `ctx(ctx::exec_ontop_arg,f2,data+1)` executes `f2()` on top of
+context `ctx`, e.g. an additional stack frame is allocated on top of the context
+stack (in front of `f1()`). `f1()` returns argument `-1` that will returned by
+the second invocation of `ctx(data+1)` in `f1()`.
+
+Another option is to execute a function on top of the context, that throws an
+exception.
+
+    struct interrupt {
+        boost::context::execution_context< void >   ctx;
+
+        interrupt( boost::context::execution_context< void > && ctx_) :
+            ctx( std::forward< boost::context::execution_context< void > >( ctx_) ) {
+        }
+    };
+
+    boost::context::execution_context<void> f1(boost::context::execution_context<void> ctx) {
+        try {
+            for (;;) {
+                std::cout << "f1()" << std::endl;
+                ctx = ctx();
+            }
+        } catch (interrupt & e) {
+            std::cout << "f1(): interrupted" << std::endl;
+            ctx = std::move( e.ctx);
+        }
+        return ctx;
+    }
+
+    boost::context::execution_context<void> f2(boost::context::execution_context<void> ctx) {
+        throw interrupt(std::move(ctx));
+        return ctx;
+    }
+
+    boost::context::execution_context< void > ctx(f1);
+    ctx = ctx();
+    ctx = ctx();
+    ctx = ctx(boost::context::exec_ontop_arg,f2);
+
+    output:
+        f1()
+        f1()
+        f1(): interrupted
+
+In this example `f2()` is used to interrupt the `for`-loop in `f1()`.
+
 
 [heading Class `execution_context`]
 
     struct exec_ontop_arg_t {};
     const exec_ontop_arg_t exec_ontop_arg{};
-    
+
     template< typename ... Args >
     class execution_context {
     public:
@@ -387,6 +433,7 @@ arguments.
     
         template< typename Fn, typename ... Params >
         execution_context( std::allocator_arg_t, preallocated palloc, segmented, Fn && fn, Params && ... params)= delete;
+
         ~execution_context();
     
         execution_context( execution_context && other) noexcept;
