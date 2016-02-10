@@ -53,3 +53,7 @@ exe ontop_void
 exe ontop
     : ontop.cpp
     ;
+
+exe throw
+    : throw.cpp
+    ;
