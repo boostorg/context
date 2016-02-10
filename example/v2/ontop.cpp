@@ -21,9 +21,9 @@ ctx::execution_context< int > f1( ctx::execution_context< int > ctx, int data) {
     return ctx;
 }
 
-ctx::execution_context< int > f2( ctx::execution_context< int > ctx, int data) {
+std::tuple< ctx::execution_context< int >, int > f2( ctx::execution_context< int > ctx, int data) {
     std::cout << "f2: entered: " << data << std::endl;
-    return ctx;
+    return std::make_tuple( std::move( ctx), -1);
 }
 
 int main() {
@@ -34,7 +34,7 @@ int main() {
     std::tie( ctx, data) = ctx( data);
     std::cout << "f1: returned second time: " << data << std::endl;
     std::tie( ctx, data) = ctx( ctx::exec_ontop_arg, f2, data + 2);
-    std::cout << "f1: returned third time: " << data << std::endl;
+    std::cout << "f1: returned third time" << std::endl;
 
     std::cout << "main: done" << std::endl;
 

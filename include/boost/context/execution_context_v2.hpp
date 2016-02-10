@@ -28,6 +28,7 @@
 #include <boost/context/detail/exception.hpp>
 #include <boost/context/detail/exchange.hpp>
 #include <boost/context/detail/fcontext.hpp>
+#include <boost/context/detail/tuple.hpp>
 #include <boost/context/fixedsize_stack.hpp>
 #include <boost/context/flags.hpp>
 #include <boost/context/preallocated.hpp>
@@ -76,20 +77,25 @@ void context_entry( transfer_t t_) noexcept {
     BOOST_ASSERT_MSG( false, "context already terminated");
 }
 
-template< typename Ctx, typename Fn, typename ArgsTpl >
+template< typename Ctx, typename Fn, typename ... Args >
 transfer_t context_ontop( transfer_t t) {
-    auto tpl = static_cast< std::tuple< Fn, ArgsTpl > * >( t.data);
+    auto tpl = static_cast< std::tuple< Fn, std::tuple< Args ... > > * >( t.data);
     BOOST_ASSERT( nullptr != tpl);
     typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * tpl) );
-    auto args = std::get< 1 >( * tpl);
+    auto args = std::move( std::get< 1 >( * tpl) );
     Ctx ctx{ t.fctx };
     // execute function
-    ctx = apply(
+    auto result = apply(
             fn,
             std::tuple_cat(
                 std::forward_as_tuple( std::move( ctx) ),
-                args) );
-    return { exchange( ctx.fctx_, nullptr), nullptr };
+                std::move( args) ) );
+    ctx = std::move( std::get< 0 >( result) );
+    // apply returned data
+    std::tuple< Ctx > ignored;
+    detail::tail( args) = std::move( result);
+    std::get< 1 >( * tpl) = std::move( args);
+    return { exchange( ctx.fctx_, nullptr), & std::get< 1 >( * tpl) };
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
@@ -205,13 +211,12 @@ template< typename ... Args >
 class execution_context {
 private:
     typedef std::tuple< Args ... >     args_tpl_t;
-    //typedef std::tuple< typename std::decay< Args >::type ... >     args_tpl_t;
     typedef std::tuple< execution_context, typename std::decay< Args >::type ... >               ret_tpl_t;
 
     template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
     friend class detail::record;
 
-    template< typename Ctx, typename Fn, typename ArgsTpl >
+    template< typename Ctx, typename Fn, typename ... ArgsT >
     friend detail::transfer_t detail::context_ontop( detail::transfer_t);
 
     detail::fcontext_t  fctx_{ nullptr };
@@ -317,15 +322,15 @@ public:
     ret_tpl_t operator()( exec_ontop_arg_t, Fn && fn, Args ... args) {
         BOOST_ASSERT( nullptr != fctx_);
         args_tpl_t data{ std::forward< Args >( args) ... };
-        auto p = std::forward_as_tuple( fn, data);
+        auto p = std::make_tuple( fn, std::move( data) );
         detail::transfer_t t = detail::ontop_fcontext(
                 detail::exchange( fctx_, nullptr),
                 & p,
-                detail::context_ontop< execution_context, Fn, args_tpl_t >);
+                detail::context_ontop< execution_context, Fn, Args ... >);
         if ( nullptr != t.data) {
-            data = * static_cast< args_tpl_t * >( t.data);
+            data = std::move( * static_cast< args_tpl_t * >( t.data) );
         }
-        return std::tuple_cat( std::forward_as_tuple( execution_context( t.fctx) ), data);
+        return std::tuple_cat( std::forward_as_tuple( execution_context( t.fctx) ), std::move( data) );
     }
 
     explicit operator bool() const noexcept {
