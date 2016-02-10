@@ -51,7 +51,6 @@ __ec_op__ on `*this`) and `args` are the data passed to __ec_op__. The return
 value is the execution_context that has to be resumed, while this context
 terminates.
 
-
 Benefits of __ecv2__ over __ecv1__ are: faster context switch, type-safety of
 passed/returned arguments.
 
@@ -161,7 +160,6 @@ the stack is exchanged by each context switch.
             Parsed: +
             Parsed: 1
 
-
 In this example a recursive descent parser uses a callback to emit a newly
 passed symbol. Using __econtext__ the control flow can be inverted, e.g. the
 user-code pulls parsed symbols from the parser - instead to get pushed from the
@@ -176,6 +174,7 @@ different execution contexts.
 Sometimes it is necessary to unwind the stack of an unfinished context to
 destroy local stack variables so they can release allocated resources (RAII
 pattern). The user is responsible for this task.
+
 
 [#ecv2_prealloc]
 [heading allocating control structures on top of stack]
@@ -210,10 +209,12 @@ of the stack.]
             ...
         };
 
+
 [heading exception handling]
 If the function executed inside a __econtext__ emits ans exception, the
 application is terminated by calling ['std::terminate()]. ['std::exception_ptr]
 can be used to transfer exceptions between different execution contexts.
+
 
 [heading parameter passing]
 With `execution_context<void>` no data will be transferred, only the context
@@ -221,6 +222,7 @@ switch is executed.
 
     boost::context::execution_context<void> ctx1([](boost::context::execution_context<void> ctx2){
                 std::printf("inside ctx1\n");
+                ctx2();
                 return ctx2;
             });
     ctx1();
@@ -230,16 +232,16 @@ switch is executed.
 
 `ctx1()` resumes `ctx1`, e.g. the lambda passed at the constructor of `ctx1` is
 entered. Argument `ctx2` represents the context that has been suspended with the
-invocation of `ctx1()`. The lambda returns `ctx2` that let terminate context
-`ctx1`, while the context represented by `ctx2` is resumed, hence the control of
-execution returns from `ctx1()`.
+invocation of `ctx1()`. When the lambda returns `ctx2`, context `ctx1` will be
+terminated while the context represented by `ctx2` is resumed, hence the control
+of execution returns from `ctx1()`.
 
 The arguments passed to __ec_op__, in one context, is passed as the last
 arguments of the __context_fn__ if the context is started for the first time.
 In all following invocations of __ec_op__ the arguments passed to __ec_op__, in
 one context, is returned by __ec_op__ in the other context.
 
-    std::tuple<boost::context::execution_context<int>,int> ctx1([](boost::context::execution_context<int> ctx2, int j){
+    boost::context::execution_context<int> ctx1([](boost::context::execution_context<int> ctx2, int j){
                 std::printf("inside ctx1, j == %d\n", j);
                 std::tie(ctx2, j) = ctx2(j+1);
                 return ctx2;
@@ -260,7 +262,7 @@ value of `j+1`.
 If more than one argument has to be transferred, the signature of the
 context-function is simply extended.
 
-    std::tuple<boost::context::execution_context<int,int>,int,int> ctx1([](boost::context::execution_context<int,int> ctx2, int i, int j){
+    boost::context::execution_context<int,int> ctx1([](boost::context::execution_context<int,int> ctx2, int i, int j){
                 std::printf("inside ctx1, i == %d j == %d\n", i, j);
                 std::tie(ctx2, i, j) = ctx2(i+j,i-j);
                 return ctx2;
@@ -327,6 +329,40 @@ pointer are appropriate.
 
 [#ecv2_ontop]
 [heading Executing function on top of a context]
+Sometimes it is useful to execute a new function on top of a resumed context.
+For this purpose __ec_op__ with first argument `exec_ontop_arg` has to be used.
+The function passed as argument must return a tuple of execution_context and
+arguments.
+
+    boost::context::execution_context<int> f1(boost::context::execution_context<int> ctx,int data) {
+        std::cout << "f1: entered first time: " << data  << std::endl;
+        std::tie(ctx,data) = ctx(data+1);
+        std::cout << "f1: entered second time: " << data  << std::endl;
+        std::tie(ctx,data) = ctx(data+1);
+        std::cout << "f1: entered third time: " << data << std::endl;
+        return ctx;
+    }
+
+    std::tuple<boost::context::execution_context<int>,int> f2(boost::context::execution_context<int> ctx,int data) {
+        std::cout << "f2: entered: " << data << std::endl;
+        return std::make_tuple(std::move(ctx),-1);
+    }
+
+    int data = 0;
+    ctx::execution_context< int > ctx(f1);
+    std::tie(ctx,data) = ctx(data+1);
+    std::cout << "f1: returned first time: " << data << std::endl;
+    std::tie(ctx,data) = ctx(data+1);
+    std::cout << "f1: returned second time: " << data << std::endl;
+    std::tie(ctx,data) = ctx(ctx::exec_ontop_arg,f2,data+1);
+
+    output:
+        f1: entered first time: 1
+        f1: returned first time: 2
+        f1: entered second time: 3
+        f1: returned second time: 4
+        f2: entered: 5
+        f1: entered third time: -1
 
 
 [heading Class `execution_context`]
@@ -456,9 +492,7 @@ by the most recent call to `execution_context::operator()` in the same thread.]]
 most recent call to `execution_context::operator()`, if any and a
 execution_context representing the context that has been suspended.]]
 [[Note:] [Function `fn` needs to return a tuple of execution_context and
-arguments ([link ev2_ontop see description]).]]
-terminated (return from context-function) via `bool operator()`. If the returned
-execution_context has terminated no data are transferred in the returned tuple.]]
+arguments ([link ecv2_ontop see description]).]]
 [[Note:] [The returned execution_context indicates if the suspended context has
 terminated (return from context-function) via `bool operator()`. If the returned
 execution_context has terminated no data are transferred in the returned tuple.]]

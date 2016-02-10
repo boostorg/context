@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/09 16:25:31 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/10 20:01:07 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -233,6 +233,10 @@
       represented by <code><phrase role="identifier">source</phrase></code>. Calculated
       Fibonacci numbers are transferred between the two context' via expression
       <emphasis>sink(a)</emphasis> (and returned by <emphasis>source()</emphasis>).
+      Note that this example represents a <emphasis>generator</emphasis> thus the
+      value transferred into the lambda via <emphasis>source()</emphasis> is not
+      used. Using <emphasis>boost::optional&lt;&gt;</emphasis> as transferred type,
+      might be appropriate to express this fact.
     </para>
     <para>
       The locale variables <code><phrase role="identifier">a</phrase></code>, <code><phrase
@@ -380,12 +384,89 @@
       passing</link>
     </bridgehead>
     <para>
+      With <code><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase
+      role="keyword">void</phrase><phrase role="special">&gt;</phrase></code> no
+      data will be transferred, only the context switch is executed.
+    </para>
+<programlisting><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">([](</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">){</phrase>
+            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;inside ctx1\n&quot;</phrase><phrase role="special">);</phrase>
+            <phrase role="identifier">ctx2</phrase><phrase role="special">();</phrase>
+            <phrase role="keyword">return</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">;</phrase>
+        <phrase role="special">});</phrase>
+<phrase role="identifier">ctx1</phrase><phrase role="special">();</phrase>
+
+<phrase role="identifier">output</phrase><phrase role="special">:</phrase>
+    <phrase role="identifier">inside</phrase> <phrase role="identifier">ctx1</phrase>
+</programlisting>
+    <para>
+      <code><phrase role="identifier">ctx1</phrase><phrase role="special">()</phrase></code>
+      resumes <code><phrase role="identifier">ctx1</phrase></code>, e.g. the lambda
+      passed at the constructor of <code><phrase role="identifier">ctx1</phrase></code>
+      is entered. Argument <code><phrase role="identifier">ctx2</phrase></code> represents
+      the context that has been suspended with the invocation of <code><phrase role="identifier">ctx1</phrase><phrase
+      role="special">()</phrase></code>. When the lambda returns <code><phrase role="identifier">ctx2</phrase></code>,
+      context <code><phrase role="identifier">ctx1</phrase></code> will be terminated
+      while the context represented by <code><phrase role="identifier">ctx2</phrase></code>
+      is resumed, hence the control of execution returns from <code><phrase role="identifier">ctx1</phrase><phrase
+      role="special">()</phrase></code>.
+    </para>
+    <para>
       The arguments passed to <emphasis>execution_context::operator()</emphasis>,
       in one context, is passed as the last arguments of the <emphasis>context-function</emphasis>
       if the context is started for the first time. In all following invocations
       of <emphasis>execution_context::operator()</emphasis> the arguments passed
       to <emphasis>execution_context::operator()</emphasis>, in one context, is returned
       by <emphasis>execution_context::operator()</emphasis> in the other context.
+    </para>
+<programlisting><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">([](</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">,</phrase> <phrase role="keyword">int</phrase> <phrase role="identifier">j</phrase><phrase role="special">){</phrase>
+            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;inside ctx1, j == %d\n&quot;</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">);</phrase>
+            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx2</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">(</phrase><phrase role="identifier">j</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
+            <phrase role="keyword">return</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">;</phrase>
+        <phrase role="special">});</phrase>
+<phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase> <phrase role="special">=</phrase> <phrase role="number">1</phrase><phrase role="special">;</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx1</phrase><phrase role="special">,</phrase> <phrase role="identifier">i</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">);</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;i == %d\n&quot;</phrase><phrase role="special">,</phrase> <phrase role="identifier">i</phrase><phrase role="special">);</phrase>
+
+<phrase role="identifier">output</phrase><phrase role="special">:</phrase>
+    <phrase role="identifier">inside</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase> <phrase role="special">==</phrase> <phrase role="number">1</phrase>
+    <phrase role="identifier">i</phrase> <phrase role="special">==</phrase> <phrase role="number">2</phrase>
+</programlisting>
+    <para>
+      <code><phrase role="identifier">ctx1</phrase><phrase role="special">(</phrase><phrase
+      role="identifier">i</phrase><phrase role="special">)</phrase></code> enters
+      the lambda in context <code><phrase role="identifier">ctx1</phrase></code>
+      with argument <code><phrase role="identifier">j</phrase><phrase role="special">=</phrase><phrase
+      role="number">1</phrase></code>. The expression <code><phrase role="identifier">ctx2</phrase><phrase
+      role="special">(</phrase><phrase role="identifier">j</phrase><phrase role="special">+</phrase><phrase
+      role="number">1</phrase><phrase role="special">)</phrase></code> resumes the
+      context represented by <code><phrase role="identifier">ctx2</phrase></code>
+      and transfers back an integer of <code><phrase role="identifier">j</phrase><phrase
+      role="special">+</phrase><phrase role="number">1</phrase></code>. On return
+      of <code><phrase role="identifier">ctx1</phrase><phrase role="special">(</phrase><phrase
+      role="identifier">i</phrase><phrase role="special">)</phrase></code>, the variable
+      <code><phrase role="identifier">i</phrase></code> contains the value of <code><phrase
+      role="identifier">j</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase></code>.
+    </para>
+    <para>
+      If more than one argument has to be transferred, the signature of the context-function
+      is simply extended.
+    </para>
+<programlisting><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">,</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">([](</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">,</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">,</phrase> <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">,</phrase> <phrase role="keyword">int</phrase> <phrase role="identifier">j</phrase><phrase role="special">){</phrase>
+            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;inside ctx1, i == %d j == %d\n&quot;</phrase><phrase role="special">,</phrase> <phrase role="identifier">i</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">);</phrase>
+            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx2</phrase><phrase role="special">,</phrase> <phrase role="identifier">i</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">+</phrase><phrase role="identifier">j</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">-</phrase><phrase role="identifier">j</phrase><phrase role="special">);</phrase>
+            <phrase role="keyword">return</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">;</phrase>
+        <phrase role="special">});</phrase>
+<phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase> <phrase role="special">=</phrase> <phrase role="number">2</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase> <phrase role="special">=</phrase> <phrase role="number">1</phrase><phrase role="special">;</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx1</phrase><phrase role="special">,</phrase> <phrase role="identifier">i</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">,</phrase><phrase role="identifier">j</phrase><phrase role="special">);</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;i == %d j == %d\n&quot;</phrase><phrase role="special">,</phrase> <phrase role="identifier">i</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">);</phrase>
+
+<phrase role="identifier">output</phrase><phrase role="special">:</phrase>
+    <phrase role="identifier">inside</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">,</phrase> <phrase role="identifier">i</phrase> <phrase role="special">==</phrase> <phrase role="number">2</phrase> <phrase role="identifier">j</phrase> <phrase role="special">==</phrase> <phrase role="number">1</phrase>
+    <phrase role="identifier">i</phrase> <phrase role="special">==</phrase> <phrase role="number">3</phrase> <phrase role="identifier">j</phrase> <phrase role="special">==</phrase> <phrase role="number">1</phrase>
+</programlisting>
+    <para>
+      For use-cases, that require to transfer data of different type in each direction,
+      <emphasis>boost::variant&lt;&gt;</emphasis> could be used.
     </para>
 <programlisting><phrase role="keyword">class</phrase> <phrase role="identifier">X</phrase><phrase role="special">{</phrase>
 <phrase role="keyword">private</phrase><phrase role="special">:</phrase>
@@ -432,12 +513,61 @@
 <phrase role="identifier">output</phrase><phrase role="special">:</phrase>
 <phrase role="number">7</phrase>
 </programlisting>
+    <para>
+      In the case of unidirectional transfer of data, <emphasis>boost::optional&lt;&gt;</emphasis>
+      or a pointer are appropriate.
+    </para>
+    <anchor id="ecv2_ontop"/>
     <bridgehead renderas="sect3" id="context.ecv2.h5">
+      <phrase id="context.ecv2.executing_function_on_top_of_a_context"/><link linkend="context.ecv2.executing_function_on_top_of_a_context">Executing
+      function on top of a context</link>
+    </bridgehead>
+    <para>
+      Sometimes it is useful to execute a new function on top of a resumed context.
+      For this purpose <emphasis>execution_context::operator()</emphasis> with first
+      argument <code><phrase role="identifier">exec_ontop_arg</phrase></code> has
+      to be used. The function passed as argument must return a tuple of execution_context
+      and arguments.
+    </para>
+<programlisting><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">f1</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">,</phrase><phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered first time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase>  <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">,</phrase><phrase role="identifier">data</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered second time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase>  <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">,</phrase><phrase role="identifier">data</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered third time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+    <phrase role="keyword">return</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">;</phrase>
+<phrase role="special">}</phrase>
+
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;,</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">,</phrase><phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f2: entered: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+    <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">make_tuple</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">),-</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
+<phrase role="special">}</phrase>
+
+<phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase> <phrase role="special">=</phrase> <phrase role="number">0</phrase><phrase role="special">;</phrase>
+<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">int</phrase> <phrase role="special">&gt;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">f1</phrase><phrase role="special">);</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">,</phrase><phrase role="identifier">data</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned first time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">,</phrase><phrase role="identifier">data</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned second time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">,</phrase><phrase role="identifier">data</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">exec_ontop_arg</phrase><phrase role="special">,</phrase><phrase role="identifier">f2</phrase><phrase role="special">,</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
+
+<phrase role="identifier">output</phrase><phrase role="special">:</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase> <phrase role="identifier">first</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">1</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">returned</phrase> <phrase role="identifier">first</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">2</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase> <phrase role="identifier">second</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">3</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">returned</phrase> <phrase role="identifier">second</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">4</phrase>
+    <phrase role="identifier">f2</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase><phrase role="special">:</phrase> <phrase role="number">5</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase> <phrase role="identifier">third</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="special">-</phrase><phrase role="number">1</phrase>
+</programlisting>
+    <bridgehead renderas="sect3" id="context.ecv2.h6">
       <phrase id="context.ecv2.class__code__phrase_role__identifier__execution_context__phrase___code_"/><link
       linkend="context.ecv2.class__code__phrase_role__identifier__execution_context__phrase___code_">Class
       <code><phrase role="identifier">execution_context</phrase></code></link>
     </bridgehead>
-<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
+<programlisting><phrase role="keyword">struct</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase> <phrase role="special">{};</phrase>
+<phrase role="keyword">const</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase> <phrase role="identifier">exec_ontop_arg</phrase><phrase role="special">{};</phrase>
+
+<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
 <phrase role="keyword">class</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="special">{</phrase>
 <phrase role="keyword">public</phrase><phrase role="special">:</phrase>
     <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Params</phrase> <phrase role="special">&gt;</phrase>
@@ -448,7 +578,6 @@
 
     <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Params</phrase> <phrase role="special">&gt;</phrase>
     <phrase role="identifier">execution_context</phrase><phrase role="special">(</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">allocator_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">preallocated</phrase> <phrase role="identifier">palloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">StackAlloc</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Params</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">params</phrase><phrase role="special">);</phrase>
-
 
     <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Params</phrase> <phrase role="special">&gt;</phrase>
     <phrase role="identifier">execution_context</phrase><phrase role="special">(</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">allocator_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">segemented_stack</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Params</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">params</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="keyword">delete</phrase><phrase role="special">;</phrase>
@@ -681,11 +810,31 @@
         <term>Note:</term>
         <listitem>
           <para>
+            Function <code><phrase role="identifier">fn</phrase></code> needs to
+            return a tuple of execution_context and arguments (<link linkend="ecv2_ontop">see
+            description</link>).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Note:</term>
+        <listitem>
+          <para>
             The returned execution_context indicates if the suspended context has
             terminated (return from context-function) via <code><phrase role="keyword">bool</phrase>
             <phrase role="keyword">operator</phrase><phrase role="special">()</phrase></code>.
             If the returned execution_context has terminated no data are transferred
             in the returned tuple.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Note:</term>
+        <listitem>
+          <para>
+            The context calling this function must not be destroyed before the arguments,
+            that will be returned from <code><phrase role="identifier">fn</phrase></code>,
+            are preserved at least in the stack frame of the resumed context.
           </para>
         </listitem>
       </varlistentry>
@@ -733,11 +882,12 @@
         <term>Note:</term>
         <listitem>
           <para>
-            The returned execution_context indicates if the suspended context has
-            terminated (return from context-function) via <code><phrase role="keyword">bool</phrase>
-            <phrase role="keyword">operator</phrase><phrase role="special">()</phrase></code>.
-            If the returned execution_context has terminated no data are transferred
-            in the returned tuple.
+            The tuple of execution_context and returned arguments from <code><phrase
+            role="identifier">fn</phrase></code> are passed as arguments to the context-function
+            of resumed context (if the context is entered the first time) or those
+            arguments are returned from <code><phrase role="identifier">execution_context</phrase><phrase
+            role="special">::</phrase><phrase role="keyword">operator</phrase><phrase
+            role="special">()</phrase></code> within the resumed context.
           </para>
         </listitem>
       </varlistentry>
@@ -960,7 +1110,7 @@
     (version 1)</link></title>
     <note>
       <para>
-        This class is enabled if property <emphasis>segmented-stacks=on</emphasis>
+        This class is only enabled if property <emphasis>segmented-stacks=on</emphasis>
         (enables segmented stacks) or compiler flag <emphasis>BOOST_EXECUTION_CONTEXT=1</emphasis>
         is specified at b2-commandline.
       </para>
