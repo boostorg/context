@@ -161,145 +161,6 @@
     </p>
 <h4>
 <a name="context.ecv2.h1"></a>
-      <span><a name="context.ecv2.inverting_the_control_flow"></a></span><a class="link" href="ecv2.html#context.ecv2.inverting_the_control_flow">inverting
-      the control flow</a>
-    </h4>
-<pre class="programlisting"><span class="comment">/*
- * grammar:
- *   P ---&gt; E '\0'
- *   E ---&gt; T {('+'|'-') T}
- *   T ---&gt; S {('*'|'/') S}
- *   S ---&gt; digit | '(' E ')'
- */</span>
-<span class="keyword">class</span> <span class="identifier">Parser</span><span class="special">{</span>
-    <span class="comment">// implementation omitted; see examples directory</span>
-<span class="special">};</span>
-
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">istringstream</span> <span class="identifier">is</span><span class="special">(</span><span class="string">"1+1"</span><span class="special">);</span>
-<span class="keyword">bool</span> <span class="identifier">done</span><span class="special">=</span><span class="keyword">false</span><span class="special">;</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span> <span class="identifier">except</span><span class="special">;</span>
-
-<span class="comment">// execute parser in new execution context</span>
-<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">&gt;</span> <span class="identifier">source</span><span class="special">(</span>
-        <span class="special">[&amp;</span><span class="identifier">is</span><span class="special">,&amp;</span><span class="identifier">done</span><span class="special">,&amp;</span><span class="identifier">except</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">&gt;</span> <span class="identifier">sink</span><span class="special">,</span><span class="keyword">char</span><span class="special">){</span>
-        <span class="comment">// create parser with callback function</span>
-        <span class="identifier">Parser</span> <span class="identifier">p</span><span class="special">(</span> <span class="identifier">is</span><span class="special">,</span>
-                  <span class="special">[&amp;</span><span class="identifier">sink</span><span class="special">](</span><span class="keyword">char</span> <span class="identifier">ch</span><span class="special">){</span>
-                        <span class="comment">// resume main execution context</span>
-                        <span class="keyword">auto</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">sink</span><span class="special">(</span><span class="identifier">ch</span><span class="special">);</span>
-                        <span class="identifier">sink</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;(</span><span class="identifier">result</span><span class="special">));</span>
-                <span class="special">});</span>
-            <span class="keyword">try</span> <span class="special">{</span>
-                <span class="comment">// start recursive parsing</span>
-                <span class="identifier">p</span><span class="special">.</span><span class="identifier">run</span><span class="special">();</span>
-            <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(...)</span> <span class="special">{</span>
-                <span class="comment">// store other exceptions in exception-pointer</span>
-                <span class="identifier">except</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">current_exception</span><span class="special">();</span>
-            <span class="special">}</span>
-            <span class="comment">// set termination flag</span>
-            <span class="identifier">done</span><span class="special">=</span><span class="keyword">true</span><span class="special">;</span>
-            <span class="comment">// resume main execution context</span>
-            <span class="keyword">return</span> <span class="identifier">sink</span><span class="special">;</span>
-        <span class="special">});</span>
-
-<span class="comment">// user-code pulls parsed data from parser</span>
-<span class="comment">// invert control flow</span>
-<span class="keyword">auto</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">source</span><span class="special">(</span><span class="char">'\0'</span><span class="special">);</span>
-<span class="identifier">source</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;(</span><span class="identifier">result</span><span class="special">));</span>
-<span class="keyword">char</span> <span class="identifier">c</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">1</span><span class="special">&gt;(</span><span class="identifier">result</span><span class="special">);</span>
-<span class="keyword">if</span> <span class="special">(</span> <span class="identifier">except</span><span class="special">)</span> <span class="special">{</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">rethrow_exception</span><span class="special">(</span><span class="identifier">except</span><span class="special">);</span>
-<span class="special">}</span>
-<span class="keyword">while</span><span class="special">(</span> <span class="special">!</span> <span class="identifier">done</span><span class="special">)</span> <span class="special">{</span>
-    <span class="identifier">printf</span><span class="special">(</span><span class="string">"Parsed: %c\n"</span><span class="special">,</span><span class="identifier">c</span><span class="special">);</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">source</span><span class="special">,</span><span class="identifier">c</span><span class="special">)</span> <span class="special">=</span> <span class="identifier">source</span><span class="special">(</span><span class="char">'\0'</span><span class="special">);</span>
-    <span class="keyword">if</span> <span class="special">(</span><span class="identifier">except</span><span class="special">)</span> <span class="special">{</span>
-        <span class="identifier">std</span><span class="special">::</span><span class="identifier">rethrow_exception</span><span class="special">(</span><span class="identifier">except</span><span class="special">);</span>
-    <span class="special">}</span>
-<span class="special">}</span>
-
-<span class="identifier">output</span><span class="special">:</span>
-    <span class="identifier">Parsed</span><span class="special">:</span> <span class="number">1</span>
-    <span class="identifier">Parsed</span><span class="special">:</span> <span class="special">+</span>
-    <span class="identifier">Parsed</span><span class="special">:</span> <span class="number">1</span>
-</pre>
-<p>
-      In this example a recursive descent parser uses a callback to emit a newly
-      passed symbol. Using <span class="emphasis"><em>execution_context</em></span> the control flow
-      can be inverted, e.g. the user-code pulls parsed symbols from the parser -
-      instead to get pushed from the parser (via callback).
-    </p>
-<p>
-      The data (character) is transferred between the two <span class="emphasis"><em>execution_context</em></span>.
-    </p>
-<p>
-      If the code executed by <span class="emphasis"><em>execution_context</em></span> emits an exception,
-      the application is terminated. <span class="emphasis"><em>std::exception_ptr</em></span> can
-      be used to transfer exceptions between different execution contexts.
-    </p>
-<p>
-      Sometimes it is necessary to unwind the stack of an unfinished context to destroy
-      local stack variables so they can release allocated resources (RAII pattern).
-      The user is responsible for this task.
-    </p>
-<a name="ecv2_prealloc"></a><h4>
-<a name="context.ecv2.h2"></a>
-      <span><a name="context.ecv2.allocating_control_structures_on_top_of_stack"></a></span><a class="link" href="ecv2.html#context.ecv2.allocating_control_structures_on_top_of_stack">allocating
-      control structures on top of stack</a>
-    </h4>
-<p>
-      Allocating control structures on top of the stack requires to allocated the
-      <span class="emphasis"><em>stack_context</em></span> and create the control structure with placement
-      new before <span class="emphasis"><em>execution_context</em></span> is created.
-    </p>
-<div class="note"><table border="0" summary="Note">
-<tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
-<th align="left">Note</th>
-</tr>
-<tr><td align="left" valign="top"><p>
-        The user is responsible for destructing the control structure at the top
-        of the stack.
-      </p></td></tr>
-</table></div>
-<pre class="programlisting"><span class="comment">// stack-allocator used for (de-)allocating stack</span>
-<span class="identifier">fixedsize_stack</span> <span class="identifier">salloc</span><span class="special">(</span> <span class="number">4048</span><span class="special">);</span>
-<span class="comment">// allocate stack space</span>
-<span class="identifier">stack_context</span> <span class="identifier">sctx</span><span class="special">(</span> <span class="identifier">salloc</span><span class="special">.</span><span class="identifier">allocate</span><span class="special">()</span> <span class="special">);</span>
-<span class="comment">// reserve space for control structure on top of the stack</span>
-<span class="keyword">void</span> <span class="special">*</span> <span class="identifier">sp</span> <span class="special">=</span> <span class="keyword">static_cast</span><span class="special">&lt;</span> <span class="keyword">char</span> <span class="special">*</span> <span class="special">&gt;(</span> <span class="identifier">sctx</span><span class="special">.</span><span class="identifier">sp</span><span class="special">)</span> <span class="special">-</span> <span class="keyword">sizeof</span><span class="special">(</span> <span class="identifier">my_control_structure</span><span class="special">);</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span> <span class="special">=</span> <span class="identifier">sctx</span><span class="special">.</span><span class="identifier">size</span> <span class="special">-</span> <span class="keyword">sizeof</span><span class="special">(</span> <span class="identifier">my_control_structure</span><span class="special">);</span>
-<span class="comment">// placement new creates control structure on reserved space</span>
-<span class="identifier">my_control_structure</span> <span class="special">*</span> <span class="identifier">cs</span> <span class="special">=</span> <span class="keyword">new</span> <span class="special">(</span> <span class="identifier">sp</span><span class="special">)</span> <span class="identifier">my_control_structure</span><span class="special">(</span> <span class="identifier">sp</span><span class="special">,</span> <span class="identifier">size</span><span class="special">,</span> <span class="identifier">sctx</span><span class="special">,</span> <span class="identifier">salloc</span><span class="special">);</span>
-<span class="special">...</span>
-<span class="comment">// destructing the control structure</span>
-<span class="identifier">cs</span><span class="special">-&gt;~</span><span class="identifier">my_control_structure</span><span class="special">();</span>
-<span class="special">...</span>
-<span class="keyword">struct</span> <span class="identifier">my_control_structure</span>  <span class="special">{</span>
-    <span class="comment">// captured context</span>
-    <span class="identifier">execution_context</span> <span class="identifier">cctx</span><span class="special">;</span>
-
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAllocator</span> <span class="special">&gt;</span>
-    <span class="identifier">my_control_structure</span><span class="special">(</span> <span class="keyword">void</span> <span class="special">*</span> <span class="identifier">sp</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span><span class="special">,</span> <span class="identifier">stack_context</span> <span class="identifier">sctx</span><span class="special">,</span> <span class="identifier">StackAllocator</span> <span class="identifier">salloc</span><span class="special">)</span> <span class="special">:</span>
-        <span class="comment">// create captured context</span>
-        <span class="identifier">cctx</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg</span><span class="special">,</span> <span class="identifier">preallocated</span><span class="special">(</span> <span class="identifier">sp</span><span class="special">,</span> <span class="identifier">size</span><span class="special">,</span> <span class="identifier">sctx</span><span class="special">),</span> <span class="identifier">salloc</span><span class="special">,</span> <span class="identifier">entry_func</span><span class="special">)</span> <span class="special">{</span>
-    <span class="special">}</span>
-    <span class="special">...</span>
-<span class="special">};</span>
-</pre>
-<h4>
-<a name="context.ecv2.h3"></a>
-      <span><a name="context.ecv2.exception_handling"></a></span><a class="link" href="ecv2.html#context.ecv2.exception_handling">exception
-      handling</a>
-    </h4>
-<p>
-      If the function executed inside a <span class="emphasis"><em>execution_context</em></span> emits
-      ans exception, the application is terminated by calling <span class="emphasis"><em>std::terminate()</em></span>.
-      <span class="emphasis"><em>std::exception_ptr</em></span> can be used to transfer exceptions
-      between different execution contexts.
-    </p>
-<h4>
-<a name="context.ecv2.h4"></a>
       <span><a name="context.ecv2.parameter_passing"></a></span><a class="link" href="ecv2.html#context.ecv2.parameter_passing">parameter
       passing</a>
     </h4>
@@ -427,8 +288,19 @@
       In the case of unidirectional transfer of data, <span class="emphasis"><em>boost::optional&lt;&gt;</em></span>
       or a pointer are appropriate.
     </p>
+<h4>
+<a name="context.ecv2.h2"></a>
+      <span><a name="context.ecv2.exception_handling"></a></span><a class="link" href="ecv2.html#context.ecv2.exception_handling">exception
+      handling</a>
+    </h4>
+<p>
+      If the function executed inside a <span class="emphasis"><em>execution_context</em></span> emits
+      ans exception, the application is terminated by calling <span class="emphasis"><em>std::terminate()</em></span>.
+      <span class="emphasis"><em>std::exception_ptr</em></span> can be used to transfer exceptions
+      between different execution contexts.
+    </p>
 <a name="ecv2_ontop"></a><h4>
-<a name="context.ecv2.h5"></a>
+<a name="context.ecv2.h3"></a>
       <span><a name="context.ecv2.executing_function_on_top_of_a_context"></a></span><a class="link" href="ecv2.html#context.ecv2.executing_function_on_top_of_a_context">Executing
       function on top of a context</a>
     </h4>
@@ -523,7 +395,148 @@
       in <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>.
     </p>
 <h4>
+<a name="context.ecv2.h4"></a>
+      <span><a name="context.ecv2.stack_destruction"></a></span><a class="link" href="ecv2.html#context.ecv2.stack_destruction">Stack
+      destruction</a>
+    </h4>
+<p>
+      On construction of <span class="emphasis"><em>execution_context</em></span> a stack is allocated.
+      If the <span class="emphasis"><em>context-function</em></span> returns the stack will be destructed.
+      if the <span class="emphasis"><em>context-function</em></span> has not yet returned and the destructor
+      of an valid <span class="emphasis"><em>execution_context</em></span> instance (e.g. <span class="emphasis"><em>execution_context::operator
+      bool()</em></span> returns <code class="computeroutput"><span class="keyword">true</span></code>)
+      is called, the stack will be destructed too.
+    </p>
+<a name="ecv2_prealloc"></a><h4>
+<a name="context.ecv2.h5"></a>
+      <span><a name="context.ecv2.allocating_control_structures_on_top_of_stack"></a></span><a class="link" href="ecv2.html#context.ecv2.allocating_control_structures_on_top_of_stack">allocating
+      control structures on top of stack</a>
+    </h4>
+<p>
+      Allocating control structures on top of the stack requires to allocated the
+      <span class="emphasis"><em>stack_context</em></span> and create the control structure with placement
+      new before <span class="emphasis"><em>execution_context</em></span> is created.
+    </p>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+        The user is responsible for destructing the control structure at the top
+        of the stack.
+      </p></td></tr>
+</table></div>
+<pre class="programlisting"><span class="comment">// stack-allocator used for (de-)allocating stack</span>
+<span class="identifier">fixedsize_stack</span> <span class="identifier">salloc</span><span class="special">(</span> <span class="number">4048</span><span class="special">);</span>
+<span class="comment">// allocate stack space</span>
+<span class="identifier">stack_context</span> <span class="identifier">sctx</span><span class="special">(</span> <span class="identifier">salloc</span><span class="special">.</span><span class="identifier">allocate</span><span class="special">()</span> <span class="special">);</span>
+<span class="comment">// reserve space for control structure on top of the stack</span>
+<span class="keyword">void</span> <span class="special">*</span> <span class="identifier">sp</span> <span class="special">=</span> <span class="keyword">static_cast</span><span class="special">&lt;</span> <span class="keyword">char</span> <span class="special">*</span> <span class="special">&gt;(</span> <span class="identifier">sctx</span><span class="special">.</span><span class="identifier">sp</span><span class="special">)</span> <span class="special">-</span> <span class="keyword">sizeof</span><span class="special">(</span> <span class="identifier">my_control_structure</span><span class="special">);</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span> <span class="special">=</span> <span class="identifier">sctx</span><span class="special">.</span><span class="identifier">size</span> <span class="special">-</span> <span class="keyword">sizeof</span><span class="special">(</span> <span class="identifier">my_control_structure</span><span class="special">);</span>
+<span class="comment">// placement new creates control structure on reserved space</span>
+<span class="identifier">my_control_structure</span> <span class="special">*</span> <span class="identifier">cs</span> <span class="special">=</span> <span class="keyword">new</span> <span class="special">(</span> <span class="identifier">sp</span><span class="special">)</span> <span class="identifier">my_control_structure</span><span class="special">(</span> <span class="identifier">sp</span><span class="special">,</span> <span class="identifier">size</span><span class="special">,</span> <span class="identifier">sctx</span><span class="special">,</span> <span class="identifier">salloc</span><span class="special">);</span>
+<span class="special">...</span>
+<span class="comment">// destructing the control structure</span>
+<span class="identifier">cs</span><span class="special">-&gt;~</span><span class="identifier">my_control_structure</span><span class="special">();</span>
+<span class="special">...</span>
+<span class="keyword">struct</span> <span class="identifier">my_control_structure</span>  <span class="special">{</span>
+    <span class="comment">// captured context</span>
+    <span class="identifier">execution_context</span> <span class="identifier">cctx</span><span class="special">;</span>
+
+    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAllocator</span> <span class="special">&gt;</span>
+    <span class="identifier">my_control_structure</span><span class="special">(</span> <span class="keyword">void</span> <span class="special">*</span> <span class="identifier">sp</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span><span class="special">,</span> <span class="identifier">stack_context</span> <span class="identifier">sctx</span><span class="special">,</span> <span class="identifier">StackAllocator</span> <span class="identifier">salloc</span><span class="special">)</span> <span class="special">:</span>
+        <span class="comment">// create captured context</span>
+        <span class="identifier">cctx</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg</span><span class="special">,</span> <span class="identifier">preallocated</span><span class="special">(</span> <span class="identifier">sp</span><span class="special">,</span> <span class="identifier">size</span><span class="special">,</span> <span class="identifier">sctx</span><span class="special">),</span> <span class="identifier">salloc</span><span class="special">,</span> <span class="identifier">entry_func</span><span class="special">)</span> <span class="special">{</span>
+    <span class="special">}</span>
+    <span class="special">...</span>
+<span class="special">};</span>
+</pre>
+<h4>
 <a name="context.ecv2.h6"></a>
+      <span><a name="context.ecv2.inverting_the_control_flow"></a></span><a class="link" href="ecv2.html#context.ecv2.inverting_the_control_flow">inverting
+      the control flow</a>
+    </h4>
+<pre class="programlisting"><span class="comment">/*
+ * grammar:
+ *   P ---&gt; E '\0'
+ *   E ---&gt; T {('+'|'-') T}
+ *   T ---&gt; S {('*'|'/') S}
+ *   S ---&gt; digit | '(' E ')'
+ */</span>
+<span class="keyword">class</span> <span class="identifier">Parser</span><span class="special">{</span>
+    <span class="comment">// implementation omitted; see examples directory</span>
+<span class="special">};</span>
+
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">istringstream</span> <span class="identifier">is</span><span class="special">(</span><span class="string">"1+1"</span><span class="special">);</span>
+<span class="keyword">bool</span> <span class="identifier">done</span><span class="special">=</span><span class="keyword">false</span><span class="special">;</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span> <span class="identifier">except</span><span class="special">;</span>
+
+<span class="comment">// execute parser in new execution context</span>
+<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">&gt;</span> <span class="identifier">source</span><span class="special">(</span>
+        <span class="special">[&amp;</span><span class="identifier">is</span><span class="special">,&amp;</span><span class="identifier">done</span><span class="special">,&amp;</span><span class="identifier">except</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">&gt;</span> <span class="identifier">sink</span><span class="special">,</span><span class="keyword">char</span><span class="special">){</span>
+        <span class="comment">// create parser with callback function</span>
+        <span class="identifier">Parser</span> <span class="identifier">p</span><span class="special">(</span> <span class="identifier">is</span><span class="special">,</span>
+                  <span class="special">[&amp;</span><span class="identifier">sink</span><span class="special">](</span><span class="keyword">char</span> <span class="identifier">ch</span><span class="special">){</span>
+                        <span class="comment">// resume main execution context</span>
+                        <span class="keyword">auto</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">sink</span><span class="special">(</span><span class="identifier">ch</span><span class="special">);</span>
+                        <span class="identifier">sink</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;(</span><span class="identifier">result</span><span class="special">));</span>
+                <span class="special">});</span>
+            <span class="keyword">try</span> <span class="special">{</span>
+                <span class="comment">// start recursive parsing</span>
+                <span class="identifier">p</span><span class="special">.</span><span class="identifier">run</span><span class="special">();</span>
+            <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(...)</span> <span class="special">{</span>
+                <span class="comment">// store other exceptions in exception-pointer</span>
+                <span class="identifier">except</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">current_exception</span><span class="special">();</span>
+            <span class="special">}</span>
+            <span class="comment">// set termination flag</span>
+            <span class="identifier">done</span><span class="special">=</span><span class="keyword">true</span><span class="special">;</span>
+            <span class="comment">// resume main execution context</span>
+            <span class="keyword">return</span> <span class="identifier">sink</span><span class="special">;</span>
+        <span class="special">});</span>
+
+<span class="comment">// user-code pulls parsed data from parser</span>
+<span class="comment">// invert control flow</span>
+<span class="keyword">auto</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">source</span><span class="special">(</span><span class="char">'\0'</span><span class="special">);</span>
+<span class="identifier">source</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;(</span><span class="identifier">result</span><span class="special">));</span>
+<span class="keyword">char</span> <span class="identifier">c</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">1</span><span class="special">&gt;(</span><span class="identifier">result</span><span class="special">);</span>
+<span class="keyword">if</span> <span class="special">(</span> <span class="identifier">except</span><span class="special">)</span> <span class="special">{</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">rethrow_exception</span><span class="special">(</span><span class="identifier">except</span><span class="special">);</span>
+<span class="special">}</span>
+<span class="keyword">while</span><span class="special">(</span> <span class="special">!</span> <span class="identifier">done</span><span class="special">)</span> <span class="special">{</span>
+    <span class="identifier">printf</span><span class="special">(</span><span class="string">"Parsed: %c\n"</span><span class="special">,</span><span class="identifier">c</span><span class="special">);</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">source</span><span class="special">,</span><span class="identifier">c</span><span class="special">)</span> <span class="special">=</span> <span class="identifier">source</span><span class="special">(</span><span class="char">'\0'</span><span class="special">);</span>
+    <span class="keyword">if</span> <span class="special">(</span><span class="identifier">except</span><span class="special">)</span> <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">rethrow_exception</span><span class="special">(</span><span class="identifier">except</span><span class="special">);</span>
+    <span class="special">}</span>
+<span class="special">}</span>
+
+<span class="identifier">output</span><span class="special">:</span>
+    <span class="identifier">Parsed</span><span class="special">:</span> <span class="number">1</span>
+    <span class="identifier">Parsed</span><span class="special">:</span> <span class="special">+</span>
+    <span class="identifier">Parsed</span><span class="special">:</span> <span class="number">1</span>
+</pre>
+<p>
+      In this example a recursive descent parser uses a callback to emit a newly
+      passed symbol. Using <span class="emphasis"><em>execution_context</em></span> the control flow
+      can be inverted, e.g. the user-code pulls parsed symbols from the parser -
+      instead to get pushed from the parser (via callback).
+    </p>
+<p>
+      The data (character) is transferred between the two <span class="emphasis"><em>execution_context</em></span>.
+    </p>
+<p>
+      If the code executed by <span class="emphasis"><em>execution_context</em></span> emits an exception,
+      the application is terminated. <span class="emphasis"><em>std::exception_ptr</em></span> can
+      be used to transfer exceptions between different execution contexts.
+    </p>
+<p>
+      Sometimes it is necessary to unwind the stack of an unfinished context to destroy
+      local stack variables so they can release allocated resources (RAII pattern).
+      The user is responsible for this task.
+    </p>
+<h4>
+<a name="context.ecv2.h7"></a>
       <span><a name="context.ecv2.class__code__phrase_role__identifier__execution_context__phrase___code_"></a></span><a class="link" href="ecv2.html#context.ecv2.class__code__phrase_role__identifier__execution_context__phrase___code_">Class
       <code class="computeroutput"><span class="identifier">execution_context</span></code></a>
     </h4>
@@ -610,6 +623,25 @@
             The constructor with argument type <code class="computeroutput"><span class="identifier">preallocated</span></code>,
             is used to create a user defined data <a class="link" href="ecv2.html#ecv2_prealloc">(for
             instance additional control structures)</a> on top of the stack.
+          </p></dd>
+</dl>
+</div>
+<p>
+      [move_destructor_heading ecv2..destructor destructor]
+    </p>
+<pre class="programlisting"><span class="special">~</span><span class="identifier">execution_context</span><span class="special">();</span>
+</pre>
+<div class="variablelist">
+<p class="title"><b></b></p>
+<dl>
+<dt><span class="term">Effects:</span></dt>
+<dd><p>
+            Destructs the associated stack if <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code> is a valid context, e.g. <span class="emphasis"><em>execution_context::operator
+            bool()</em></span> returns <code class="computeroutput"><span class="identifier">ture</span></code>.
+          </p></dd>
+<dt><span class="term">Throws:</span></dt>
+<dd><p>
+            Nothing.
           </p></dd>
 </dl>
 </div>

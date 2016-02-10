@@ -99,123 +99,6 @@ context switch (['yield(a)]). This is possible due `ctx` has its own stack and
 the stack is exchanged by each context switch.
 
 
-[heading inverting the control flow]
-
-        /*
-         * grammar:
-         *   P ---> E '\0'
-         *   E ---> T {('+'|'-') T}
-         *   T ---> S {('*'|'/') S}
-         *   S ---> digit | '(' E ')'
-         */
-        class Parser{
-            // implementation omitted; see examples directory
-        };
-
-        std::istringstream is("1+1");
-        bool done=false;
-        std::exception_ptr except;
-
-        // execute parser in new execution context
-        boost::context::execution_context<char> source(
-                [&is,&done,&except](ctx::execution_context<char> sink,char){
-                // create parser with callback function
-                Parser p( is,
-                          [&sink](char ch){
-                                // resume main execution context
-                                auto result = sink(ch);
-                                sink = std::move(std::get<0>(result));
-                        });
-                    try {
-                        // start recursive parsing
-                        p.run();
-                    } catch (...) {
-                        // store other exceptions in exception-pointer
-                        except = std::current_exception();
-                    }
-                    // set termination flag
-                    done=true;
-                    // resume main execution context
-                    return sink;
-                });
-
-        // user-code pulls parsed data from parser
-        // invert control flow
-        auto result = source('\0');
-        source = std::move(std::get<0>(result));
-        char c = std::get<1>(result);
-        if ( except) {
-            std::rethrow_exception(except);
-        }
-        while( ! done) {
-            printf("Parsed: %c\n",c);
-            std::tie(source,c) = source('\0');
-            if (except) {
-                std::rethrow_exception(except);
-            }
-        }
-
-        output:
-            Parsed: 1
-            Parsed: +
-            Parsed: 1
-
-In this example a recursive descent parser uses a callback to emit a newly
-passed symbol. Using __econtext__ the control flow can be inverted, e.g. the
-user-code pulls parsed symbols from the parser - instead to get pushed from the
-parser (via callback).
-
-The data (character) is transferred between the two __econtext__.
-
-If the code executed by __econtext__ emits an exception, the application is
-terminated. ['std::exception_ptr] can be used to transfer exceptions between
-different execution contexts.
-
-Sometimes it is necessary to unwind the stack of an unfinished context to
-destroy local stack variables so they can release allocated resources (RAII
-pattern). The user is responsible for this task.
-
-
-[#ecv2_prealloc]
-[heading allocating control structures on top of stack]
-Allocating control structures on top of the stack requires to allocated the
-__stack_context__ and create the control structure with placement new before
-__econtext__ is created.
-[note The user is responsible for destructing the control structure at the top
-of the stack.]
-
-        // stack-allocator used for (de-)allocating stack
-        fixedsize_stack salloc( 4048);
-        // allocate stack space
-        stack_context sctx( salloc.allocate() );
-        // reserve space for control structure on top of the stack
-        void * sp = static_cast< char * >( sctx.sp) - sizeof( my_control_structure);
-        std::size_t size = sctx.size - sizeof( my_control_structure);
-        // placement new creates control structure on reserved space
-        my_control_structure * cs = new ( sp) my_control_structure( sp, size, sctx, salloc);
-        ...
-        // destructing the control structure
-        cs->~my_control_structure();
-        ...
-        struct my_control_structure  {
-            // captured context
-            execution_context cctx;
-
-            template< typename StackAllocator >
-            my_control_structure( void * sp, std::size_t size, stack_context sctx, StackAllocator salloc) :
-                // create captured context
-                cctx( std::allocator_arg, preallocated( sp, size, sctx), salloc, entry_func) {
-            }
-            ...
-        };
-
-
-[heading exception handling]
-If the function executed inside a __econtext__ emits ans exception, the
-application is terminated by calling ['std::terminate()]. ['std::exception_ptr]
-can be used to transfer exceptions between different execution contexts.
-
-
 [heading parameter passing]
 With `execution_context<void>` no data will be transferred, only the context
 switch is executed.
@@ -327,6 +210,12 @@ In the case of unidirectional transfer of data, ['boost::optional<>] or a
 pointer are appropriate.
 
 
+[heading exception handling]
+If the function executed inside a __econtext__ emits ans exception, the
+application is terminated by calling ['std::terminate()]. ['std::exception_ptr]
+can be used to transfer exceptions between different execution contexts.
+
+
 [#ecv2_ontop]
 [heading Executing function on top of a context]
 Sometimes it is useful to execute a new function on top of a resumed context.
@@ -411,6 +300,125 @@ exception.
 In this example `f2()` is used to interrupt the `for`-loop in `f1()`.
 
 
+[heading Stack destruction]
+On construction of __econtext__ a stack is allocated.
+If the __context_fn__ returns the stack will be destructed.
+if the __context_fn__ has not yet returned and the destructor of an valid
+__econtext__ instance (e.g. ['execution_context::operator bool()] returns
+`true`) is called, the stack will be destructed too.
+
+
+[#ecv2_prealloc]
+[heading allocating control structures on top of stack]
+Allocating control structures on top of the stack requires to allocated the
+__stack_context__ and create the control structure with placement new before
+__econtext__ is created.
+[note The user is responsible for destructing the control structure at the top
+of the stack.]
+
+        // stack-allocator used for (de-)allocating stack
+        fixedsize_stack salloc( 4048);
+        // allocate stack space
+        stack_context sctx( salloc.allocate() );
+        // reserve space for control structure on top of the stack
+        void * sp = static_cast< char * >( sctx.sp) - sizeof( my_control_structure);
+        std::size_t size = sctx.size - sizeof( my_control_structure);
+        // placement new creates control structure on reserved space
+        my_control_structure * cs = new ( sp) my_control_structure( sp, size, sctx, salloc);
+        ...
+        // destructing the control structure
+        cs->~my_control_structure();
+        ...
+        struct my_control_structure  {
+            // captured context
+            execution_context cctx;
+
+            template< typename StackAllocator >
+            my_control_structure( void * sp, std::size_t size, stack_context sctx, StackAllocator salloc) :
+                // create captured context
+                cctx( std::allocator_arg, preallocated( sp, size, sctx), salloc, entry_func) {
+            }
+            ...
+        };
+
+
+[heading inverting the control flow]
+
+        /*
+         * grammar:
+         *   P ---> E '\0'
+         *   E ---> T {('+'|'-') T}
+         *   T ---> S {('*'|'/') S}
+         *   S ---> digit | '(' E ')'
+         */
+        class Parser{
+            // implementation omitted; see examples directory
+        };
+
+        std::istringstream is("1+1");
+        bool done=false;
+        std::exception_ptr except;
+
+        // execute parser in new execution context
+        boost::context::execution_context<char> source(
+                [&is,&done,&except](ctx::execution_context<char> sink,char){
+                // create parser with callback function
+                Parser p( is,
+                          [&sink](char ch){
+                                // resume main execution context
+                                auto result = sink(ch);
+                                sink = std::move(std::get<0>(result));
+                        });
+                    try {
+                        // start recursive parsing
+                        p.run();
+                    } catch (...) {
+                        // store other exceptions in exception-pointer
+                        except = std::current_exception();
+                    }
+                    // set termination flag
+                    done=true;
+                    // resume main execution context
+                    return sink;
+                });
+
+        // user-code pulls parsed data from parser
+        // invert control flow
+        auto result = source('\0');
+        source = std::move(std::get<0>(result));
+        char c = std::get<1>(result);
+        if ( except) {
+            std::rethrow_exception(except);
+        }
+        while( ! done) {
+            printf("Parsed: %c\n",c);
+            std::tie(source,c) = source('\0');
+            if (except) {
+                std::rethrow_exception(except);
+            }
+        }
+
+        output:
+            Parsed: 1
+            Parsed: +
+            Parsed: 1
+
+In this example a recursive descent parser uses a callback to emit a newly
+passed symbol. Using __econtext__ the control flow can be inverted, e.g. the
+user-code pulls parsed symbols from the parser - instead to get pushed from the
+parser (via callback).
+
+The data (character) is transferred between the two __econtext__.
+
+If the code executed by __econtext__ emits an exception, the application is
+terminated. ['std::exception_ptr] can be used to transfer exceptions between
+different execution contexts.
+
+Sometimes it is necessary to unwind the stack of an unfinished context to
+destroy local stack variables so they can release allocated resources (RAII
+pattern). The user is responsible for this task.
+
+
 [heading Class `execution_context`]
 
     struct exec_ontop_arg_t {};
@@ -485,6 +493,15 @@ In this example `f2()` is used to interrupt the `for`-loop in `f1()`.
 The constructor with argument type `preallocated`, is used to create a user
 defined data [link ecv2_prealloc (for instance additional control structures)] on
 top of the stack.]]
+]
+[move_destructor_heading ecv2..destructor destructor]
+
+    ~execution_context();
+
+[variablelist
+[[Effects:] [Destructs the associated stack if `*this` is a valid context,
+e.g. ['execution_context::operator bool()] returns `ture`.]]
+[[Throws:] [Nothing.]]
 ]
 
 [move_constructor_heading ecv2..move constructor]
