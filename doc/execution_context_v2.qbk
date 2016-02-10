@@ -47,8 +47,9 @@ __econtext__ very slow and should be prevented if possible.
 __econtext__ expects a function/functor with signature
 `execution_context(execution_context ctx, Args ... args)`. The parameter `ctx`
 represents the context from which this context was resumed (e.g. that has called
-__ec_op__ on `*this`) and `args` are the data passed to __ec_op__. The return value
-is the execution_context that has to be resumed, while this context terminates.
+__ec_op__ on `*this`) and `args` are the data passed to __ec_op__. The return
+value is the execution_context that has to be resumed, while this context
+terminates.
 
 
 Benefits of __ecv2__ over __ecv1__ are: faster context switch, type-safety of
@@ -89,7 +90,10 @@ be assigned the new state of the __econtext__ returned by __ec_op__.
 The lambda that calculates the Fibonacci numbers is executed inside
 the context represented by `source`. Calculated Fibonacci numbers are
 transferred between the two context' via expression ['sink(a)] (and returned by
-['source()]).
+['source()]). Note that this example represents a ['generator] thus the value
+transferred into the lambda via ['source()] is not used. Using
+['boost::optional<>] as transferred type, might be appropriate to express this
+fact.
 
 The locale variables `a`, `b` and ` next` remain their values during each
 context switch (['yield(a)]). This is possible due `ctx` has its own stack and
@@ -212,10 +216,65 @@ application is terminated by calling ['std::terminate()]. ['std::exception_ptr]
 can be used to transfer exceptions between different execution contexts.
 
 [heading parameter passing]
+With `execution_context<void>` no data will be transferred, only the context
+switch is executed.
+
+    boost::context::execution_context<void> ctx1([](boost::context::execution_context<void> ctx2){
+                std::printf("inside ctx1\n");
+                return ctx2;
+            });
+    ctx1();
+
+    output:
+        inside ctx1
+
+`ctx1()` resumes `ctx1`, e.g. the lambda passed at the constructor of `ctx1` is
+entered. Argument `ctx2` represents the context that has been suspended with the
+invocation of `ctx1()`. The lambda returns `ctx2` that let terminate context
+`ctx1`, while the context represented by `ctx2` is resumed, hence the control of
+execution returns from `ctx1()`.
+
 The arguments passed to __ec_op__, in one context, is passed as the last
 arguments of the __context_fn__ if the context is started for the first time.
 In all following invocations of __ec_op__ the arguments passed to __ec_op__, in
 one context, is returned by __ec_op__ in the other context.
+
+    std::tuple<boost::context::execution_context<int>,int> ctx1([](boost::context::execution_context<int> ctx2, int j){
+                std::printf("inside ctx1, j == %d\n", j);
+                std::tie(ctx2, j) = ctx2(j+1);
+                return ctx2;
+            });
+    int i = 1;
+    std::tie(ctx1, i) = ctx1(i);
+    std::printf("i == %d\n", i);
+
+    output:
+        inside ctx1, j == 1
+        i == 2
+
+`ctx1(i)` enters the lambda in context `ctx1` with argument `j=1`. The
+expression `ctx2(j+1)` resumes the context represented by `ctx2` and transfers
+back an integer of `j+1`. On return of `ctx1(i)`, the variable `i` contains the
+value of `j+1`.
+
+If more than one argument has to be transferred, the signature of the
+context-function is simply extended.
+
+    std::tuple<boost::context::execution_context<int,int>,int,int> ctx1([](boost::context::execution_context<int,int> ctx2, int i, int j){
+                std::printf("inside ctx1, i == %d j == %d\n", i, j);
+                std::tie(ctx2, i, j) = ctx2(i+j,i-j);
+                return ctx2;
+            });
+    int i = 2, j = 1;
+    std::tie(ctx1, i, j) = ctx1(i,j);
+    std::printf("i == %d j == %d\n", i, j);
+
+    output:
+        inside ctx1, i == 2 j == 1
+        i == 3 j == 1
+
+For use-cases, that require to transfer data of different type in each
+direction, ['boost::variant<>] could be used.
 
         class X{
         private:
@@ -262,66 +321,68 @@ one context, is returned by __ec_op__ in the other context.
         output:
         7
 
-Multiple arguments can be exchanged between multiple instances of __ecv2__ too.
+In the case of unidirectional transfer of data, ['boost::optional<>] or a
+pointer are appropriate.
 
-        boost::context::execution_context<int,std::string> foo(boost::context::execution_context<int,std::string> ctx,int i,std::string str) {
-            std::tuple<boost::context::execution_context<int,std::string>,int,std::string>=ctx( i, str);
-            ...
-                return ctx;
-        }
+
+[#ecv2_ontop]
+[heading Executing function on top of a context]
 
 
 [heading Class `execution_context`]
 
-        template< typename ... Args >
-        class execution_context {
-        public:
-            template< typename Fn, typename ... Params >
-            execution_context( Fn && fn, Params && ... params);
-
-            template< typename StackAlloc, typename Fn, typename ... Params >
-            execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Params && ... params);
-
-            template< typename StackAlloc, typename Fn, typename ... Params >
-            execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Params && ... params);
-
-            template< typename Fn, typename ... Params >
-            execution_context( std::allocator_arg_t, segemented_stack, Fn && fn, Params && ... params) = delete;
-
-            template< typename Fn, typename ... Params >
-            execution_context( std::allocator_arg_t, preallocated palloc, segmented, Fn && fn, Params && ... params)= delete;
-            ~execution_context();
-
-            execution_context( execution_context && other) noexcept;
-            execution_context & operator=( execution_context && other) noexcept;
-
-            execution_context( execution_context const& other) noexcept = delete;
-            execution_context & operator=( execution_context const& other) noexcept = delete;
-
-            explicit operator bool() const noexcept;
-            bool operator!() const noexcept;
-
-            std::tuple< execution_context, Args ... > operator()( Args ... args);
-
-            template< typename Fn >
-            std::tuple< execution_context, Args ... > operator()( exec_ontop_arg_t, Fn && fn, Args ... args);
-
-            bool operator==( execution_context const& other) const noexcept;
-
-            bool operator!=( execution_context const& other) const noexcept;
-
-            bool operator<( execution_context const& other) const noexcept;
-
-            bool operator>( execution_context const& other) const noexcept;
-
-            bool operator<=( execution_context const& other) const noexcept;
-
-            bool operator>=( execution_context const& other) const noexcept;
-
-            template< typename charT, class traitsT >
-            friend std::basic_ostream< charT, traitsT > &
-            operator<<( std::basic_ostream< charT, traitsT > & os, execution_context const& other);
-        };
+    struct exec_ontop_arg_t {};
+    const exec_ontop_arg_t exec_ontop_arg{};
+    
+    template< typename ... Args >
+    class execution_context {
+    public:
+        template< typename Fn, typename ... Params >
+        execution_context( Fn && fn, Params && ... params);
+    
+        template< typename StackAlloc, typename Fn, typename ... Params >
+        execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Params && ... params);
+    
+        template< typename StackAlloc, typename Fn, typename ... Params >
+        execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Params && ... params);
+    
+        template< typename Fn, typename ... Params >
+        execution_context( std::allocator_arg_t, segemented_stack, Fn && fn, Params && ... params) = delete;
+    
+        template< typename Fn, typename ... Params >
+        execution_context( std::allocator_arg_t, preallocated palloc, segmented, Fn && fn, Params && ... params)= delete;
+        ~execution_context();
+    
+        execution_context( execution_context && other) noexcept;
+        execution_context & operator=( execution_context && other) noexcept;
+    
+        execution_context( execution_context const& other) noexcept = delete;
+        execution_context & operator=( execution_context const& other) noexcept = delete;
+    
+        explicit operator bool() const noexcept;
+        bool operator!() const noexcept;
+    
+        std::tuple< execution_context, Args ... > operator()( Args ... args);
+    
+        template< typename Fn >
+        std::tuple< execution_context, Args ... > operator()( exec_ontop_arg_t, Fn && fn, Args ... args);
+    
+        bool operator==( execution_context const& other) const noexcept;
+    
+        bool operator!=( execution_context const& other) const noexcept;
+    
+        bool operator<( execution_context const& other) const noexcept;
+    
+        bool operator>( execution_context const& other) const noexcept;
+    
+        bool operator<=( execution_context const& other) const noexcept;
+    
+        bool operator>=( execution_context const& other) const noexcept;
+    
+        template< typename charT, class traitsT >
+        friend std::basic_ostream< charT, traitsT > &
+        operator<<( std::basic_ostream< charT, traitsT > & os, execution_context const& other);
+    };
 
 [constructor_heading ecv2..constructor]
 
@@ -391,12 +452,19 @@ restores the context data from `*this`, which implies jumping to `*this`'s
 context.
 The arguments, `... args`, are passed to the current context to be returned
 by the most recent call to `execution_context::operator()` in the same thread.]]
-[[Returns:] [The tuple of execution_context and returned arguments passed to the most recent call to
-`execution_context::operator()`, if any and a execution_context representing the context
-that has been suspended.]]
-[[Note:] [The returned execution_context indicates if the suspended context has terminated
-(return from context-function) via `bool operator()`. If the
-returned execution_context has terminated no data are transferred in the returned tuple.]]
+[[Returns:] [The tuple of execution_context and returned arguments passed to the
+most recent call to `execution_context::operator()`, if any and a
+execution_context representing the context that has been suspended.]]
+[[Note:] [Function `fn` needs to return a tuple of execution_context and
+arguments ([link ev2_ontop see description]).]]
+terminated (return from context-function) via `bool operator()`. If the returned
+execution_context has terminated no data are transferred in the returned tuple.]]
+[[Note:] [The returned execution_context indicates if the suspended context has
+terminated (return from context-function) via `bool operator()`. If the returned
+execution_context has terminated no data are transferred in the returned tuple.]]
+[[Note:] [The context calling this function must not be destroyed before the
+arguments, that will be returned from `fn`, are preserved at least in the stack
+frame of the resumed context.]]
 ]
 
 [operator_heading ecv2..operator_call_ontop..operator()]
@@ -410,12 +478,13 @@ returned execution_context has terminated no data are transferred in the returne
 [[Effects:] [Same as __ec_op__. Additionally, function `fn` is executed
 in the context of `*this` (e.g. the stack frame of `fn` is allocated on
 stack of `*this`).]]
-[[Returns:] [The tuple of execution_context and returned arguments passed to the most recent call to
-`execution_context::operator()`, if any and a execution_context representing the context
-that has been suspended .]]
-[[Note:] [The returned execution_context indicates if the suspended context has terminated
-(return from context-function) via `bool operator()`. If the
-returned execution_context has terminated no data are transferred in the returned tuple.]]
+[[Returns:] [The tuple of execution_context and returned arguments passed to the
+most recent call to `execution_context::operator()`, if any and a
+execution_context representing the context that has been suspended .]]
+[[Note:] [The tuple of execution_context and returned arguments from `fn` are
+passed as arguments to the context-function of resumed context (if the context
+is entered the first time) or those arguments are returned from
+`execution_context::operator()` within the resumed context.]]
 ]
 
 [operator_heading ecv2..operator_equal..operator==]
@@ -443,8 +512,8 @@ returned execution_context has terminated no data are transferred in the returne
 
 [variablelist
 [[Returns:] [`true` if `*this != other` is true and the
-implementation-defined total order of `execution_context` values places `*this` before
-`other`, false otherwise.]]
+implementation-defined total order of `execution_context` values places `*this`
+before `other`, false otherwise.]]
 [[Throws:] [Nothing.]]
 ]
 
