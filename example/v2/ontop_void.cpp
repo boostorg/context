@@ -12,28 +12,27 @@
 
 namespace ctx = boost::context;
 
-ctx::captured_context f1( ctx::captured_context ctx, void * ignored) {
-    std::cout << "f1: entered first time" << std::endl;
-    std::tie( ctx, ignored) = ctx();
+ctx::execution_context< void > f1( ctx::execution_context< void > ctx) {
+    std::cout << "f1: entered first time"  << std::endl;
+    ctx = ctx();
     std::cout << "f1: entered second time" << std::endl;
-    std::tie( ctx, ignored) = ctx();
+    ctx = ctx();
     std::cout << "f1: entered third time" << std::endl;
     return ctx;
 }
 
-std::tuple< ctx::captured_context, void * > f2( ctx::captured_context ctx, void * data) {
+ctx::execution_context< void > f2( ctx::execution_context< void > ctx) {
     std::cout << "f2: entered" << std::endl;
-    return std::make_tuple( std::move( ctx), data);
+    return ctx;
 }
 
 int main() {
-    void * ignored;
-    ctx::captured_context ctx( f1);
-    std::tie( ctx, ignored) = ctx();
+    ctx::execution_context< void > ctx( f1);
+    ctx = ctx();
     std::cout << "f1: returned first time" << std::endl;
-    std::tie( ctx, ignored) = ctx();
+    ctx = ctx();
     std::cout << "f1: returned second time" << std::endl;
-    std::tie( ctx, ignored) = ctx( ctx::exec_ontop_arg, f2);
+    ctx = ctx( ctx::exec_ontop_arg, f2);
     std::cout << "f1: returned third time" << std::endl;
 
     std::cout << "main: done" << std::endl;

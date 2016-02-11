@@ -31,7 +31,7 @@
       provides a sort of cooperative multitasking on a single thread. By providing
       an abstraction of the current execution state in the current thread, including
       the stack (with local variables) and stack pointer, all registers and CPU flags,
-      and the instruction pointer, a <span class="emphasis"><em>execution_context</em></span> or <span class="emphasis"><em>captured_context</em></span>
+      and the instruction pointer, a <span class="emphasis"><em>execution_context</em></span> or __ccontext__
       instance represents a specific point in the application's execution path. This
       is useful for building higher-level abstractions, like <span class="emphasis"><em>coroutines</em></span>,
       <span class="emphasis"><em>cooperative threads (userland threads)</em></span> or an equivalent
@@ -39,14 +39,14 @@
       keyword <span class="emphasis"><em>yield</em></span></a> in C++.
     </p>
 <p>
-      <span class="emphasis"><em>execution_context</em></span> and <span class="emphasis"><em>captured_context</em></span>
-      provide the means to suspend the current execution path and to transfer execution
-      control, thereby permitting another context to run on the current thread. This
-      state full transfer mechanism enables a context to suspend execution from within
-      nested functions and, later, to resume from where it was suspended. While the
-      execution path represented by a <span class="emphasis"><em>execution_context</em></span> or
-      <span class="emphasis"><em>captured_context</em></span> only runs on a single thread, it can
-      be migrated to another thread at any given time.
+      <span class="emphasis"><em>execution_context</em></span> and __ccontext__ provide the means to
+      suspend the current execution path and to transfer execution control, thereby
+      permitting another context to run on the current thread. This state full transfer
+      mechanism enables a context to suspend execution from within nested functions
+      and, later, to resume from where it was suspended. While the execution path
+      represented by a <span class="emphasis"><em>execution_context</em></span> or __ccontext__ only
+      runs on a single thread, it can be migrated to another thread at any given
+      time.
     </p>
 <p>
       A context switch between threads requires system calls (involving the OS kernel),

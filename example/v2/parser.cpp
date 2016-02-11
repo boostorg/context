@@ -96,13 +96,13 @@ int main() {
         std::exception_ptr except;
 
         // execute parser in new execution context
-        boost::context::captured_context source(
-                [&is,&done,&except](ctx::captured_context sink,void*){
+        boost::context::execution_context<char> source(
+                [&is,&done,&except](ctx::execution_context<char> sink,char){
                 // create parser with callback function
                 Parser p( is,
                           [&sink](char ch){
                                 // resume main execution context
-                                auto result = sink(&ch);
+                                auto result = sink(ch);
                                 sink = std::move(std::get<0>(result));
                         });
                     try {
@@ -120,15 +120,15 @@ int main() {
 
         // user-code pulls parsed data from parser
         // invert control flow
-        auto result = source();
+        auto result = source('\0');
         source = std::move(std::get<0>(result));
-        void * vp = std::get<1>(result);
+        char c = std::get<1>(result);
         if ( except) {
             std::rethrow_exception(except);
         }
         while( ! done) {
-            printf("Parsed: %c\n",* static_cast<char*>(vp));
-            std::tie(source,vp) = source();
+            printf("Parsed: %c\n",c);
+            std::tie(source,c) = source('\0');
             if (except) {
                 std::rethrow_exception(except);
             }

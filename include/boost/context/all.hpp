@@ -4,7 +4,6 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/context/captured_context.hpp>
 #include <boost/context/execution_context.hpp>
 #include <boost/context/fixedsize_stack.hpp>
 #include <boost/context/protected_fixedsize_stack.hpp>

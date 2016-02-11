@@ -4,16 +4,16 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-# include "boost/context/execution_context.hpp"
+#include "boost/context/execution_context.hpp"
+
+#include <boost/config.hpp>
+
+#ifdef BOOST_HAS_ABI_HEADERS
+# include BOOST_ABI_PREFIX
+#endif
 
 #if ! defined(BOOST_CONTEXT_NO_CXX11)
-
-# include <boost/config.hpp>
-
-# ifdef BOOST_HAS_ABI_HEADERS
-#  include BOOST_ABI_PREFIX
-# endif
-
+# if (defined(BOOST_EXECUTION_CONTEXT) && (BOOST_EXECUTION_CONTEXT == 1))
 namespace boost {
 namespace context {
 namespace detail {
@@ -49,9 +49,9 @@ execution_context::current() noexcept {
 }
 
 }}
+# endif
+#endif
 
 # ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
 # endif
-
-#endif

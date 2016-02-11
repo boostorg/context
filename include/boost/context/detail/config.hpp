@@ -96,8 +96,12 @@
 # define BOOST_CONTEXT_NO_CXX11
 #endif
 
-#if defined(BOOST_USE_SEGMENTED_STACKS) && ! defined(BOOST_USE_EXECUTION_CONTEXT)
-# error "segmented-stack can't be used together with captured_context"
+#if ! defined(BOOST_EXECUTION_CONTEXT)
+# if defined(BOOST_USE_SEGMENTED_STACKS)
+#  define BOOST_EXECUTION_CONTEXT 1
+# else
+#  define BOOST_EXECUTION_CONTEXT 2
+# endif
 #endif
 
 #endif // BOOST_CONTEXT_DETAIL_CONFIG_H

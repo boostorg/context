@@ -1,8 +1,8 @@
 index.html
 context/overview.html
 context/requirements.html
-context/econtext.html
-context/ccontext.html
+context/ecv2.html
+context/ecv1.html
 context/stack.html
 context/stack/protected_fixedsize.html
 context/stack/fixedsize.html
