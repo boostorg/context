@@ -260,7 +260,7 @@ __ec_op__, in one context, is returned by __ec_op__ in the other context.
             void * operator()( void * vp = nullptr);
 
             template< typename Fn >
-            void * operator()( exec_ontop_arg_t, Fn && fn, void * vp);
+            void * operator()( exec_ontop_arg_t, Fn && fn, void * vp = nullptr);
 
             bool operator==( execution_context const& other) const noexcept;
 
@@ -388,7 +388,7 @@ __ec_op__, if any.]]
 [operator_heading ecv1..operator_call_ontop..operator(exec_ontop_arg_t)]
 
     template< typename Fn >
-    void * operator()( exec_ontop_arg_t, Fn && fn, void * vp);
+    void * operator()( exec_ontop_arg_t, Fn && fn, void * vp = nullptr);
 
 [variablelist
 [[Effects:] [Same as __ec_op__. Additionally, function `fn` is executed with

@@ -421,7 +421,7 @@ public:
     }
 
     template< typename Fn >
-    void * operator()( exec_ontop_arg_t, Fn && fn, void * vp) {
+    void * operator()( exec_ontop_arg_t, Fn && fn, void * vp = nullptr) {
         return ptr_->resume_ontop( vp,
                                    std::forward< Fn >( fn) );
     }

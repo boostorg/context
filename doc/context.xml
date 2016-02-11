@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/11 16:40:25 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/11 18:11:10 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -1519,7 +1519,7 @@
     <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="keyword">nullptr</phrase><phrase role="special">);</phrase>
 
     <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&gt;</phrase>
-    <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase><phrase role="special">);</phrase>
+    <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="keyword">nullptr</phrase><phrase role="special">);</phrase>
 
     <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">==(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 
@@ -1836,7 +1836,7 @@
 </bridgehead>
     </para>
 <programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase><phrase role="special">);</phrase>
+<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="keyword">nullptr</phrase><phrase role="special">);</phrase>
 </programlisting>
     <variablelist>
       <title></title>
