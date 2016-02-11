@@ -48,7 +48,7 @@ namespace boost {
 namespace context {
 namespace detail {
 
-template< typename Fn, typename Tpl >
+template< typename Fn >
 transfer_t context_ontop( transfer_t);
 
 struct activation_record;
@@ -105,8 +105,8 @@ struct activation_record {
         return dp->data;
     }
 
-    template< typename Fn, typename ... Args >
-    void * resume_ontop( void *  data, Fn && fn, Args && ... args) {
+    template< typename Fn >
+    void * resume_ontop( void *  data, Fn && fn) {
         // store current activation record in local variable
         activation_record * from = current_rec.get();
         // store `this` in static, thread local pointer
@@ -118,13 +118,11 @@ struct activation_record {
         __splitstack_getcontext( from->sctx.segments_ctx);
         __splitstack_setcontext( sctx.segments_ctx);
 #endif
-        typedef std::tuple< typename std::decay< Args >::type ... > tpl_t;
-        tpl_t tpl{ std::forward< Args >( args) ... };
-        std::tuple< void *, Fn, tpl_t > p = std::forward_as_tuple( data, fn, tpl);
+        std::tuple< void *, Fn > p = std::forward_as_tuple( data, fn);
         data_t d = { from, & p };
         // context switch from parent context to `this`-context
         // execute Fn( Tpl) on top of `this`
-        transfer_t t = ontop_fcontext( fctx, & d, context_ontop< Fn, tpl_t >);
+        transfer_t t = ontop_fcontext( fctx, & d, context_ontop< Fn >);
         data_t * dp = reinterpret_cast< data_t * >( t.data);
         dp->from->fctx = t.fctx;
         // parent context resumed
@@ -151,16 +149,15 @@ struct activation_record_initializer {
     ~activation_record_initializer();
 };
 
-template< typename Fn, typename Tpl >
+template< typename Fn >
 transfer_t context_ontop( transfer_t t) {
     data_t * dp = reinterpret_cast< data_t * >( t.data);
     dp->from->fctx = t.fctx;
-    auto tpl = reinterpret_cast< std::tuple< void *, Fn, Tpl > * >( dp->data);
+    auto tpl = reinterpret_cast< std::tuple< void *, Fn > * >( dp->data);
     BOOST_ASSERT( nullptr != tpl);
     auto data = std::get< 0 >( * tpl);
     typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 1 >( * tpl) );
-    auto args = std::forward< Tpl >( std::get< 2 >( * tpl) );
-    dp->data = apply( fn, std::tuple_cat( args, std::tie( data) ) );
+    dp->data = apply( fn, std::tie( data) );
     return { t.fctx, dp };
 }
 
@@ -423,18 +420,10 @@ public:
         return ptr_->resume( vp);
     }
 
-    template< typename Fn, typename ... Args >
-    void * operator()( exec_ontop_arg_t, Fn && fn, Args && ... args) {
-        return ptr_->resume_ontop( nullptr,
-                                   std::forward< Fn >( fn),
-                                   std::forward< Args >( args) ... );
-    }
-
-    template< typename Fn, typename ... Args >
-    void * operator()( void * data, exec_ontop_arg_t, Fn && fn, Args && ... args) {
-        return ptr_->resume_ontop( data,
-                                   std::forward< Fn >( fn),
-                                   std::forward< Args >( args) ... );
+    template< typename Fn >
+    void * operator()( exec_ontop_arg_t, Fn && fn, void * vp) {
+        return ptr_->resume_ontop( vp,
+                                   std::forward< Fn >( fn) );
     }
 
     explicit operator bool() const noexcept {

@@ -165,11 +165,12 @@ void test_ontop() {
     BOOST_CHECK( value2.empty() );
     std::string str("abc");
     int i = 3;
-    void * data = ectx( & i, ctx::exec_ontop_arg,
+    void * data = ectx( ctx::exec_ontop_arg,
             [str](void * data){
                 value2 = str;
                 return data;
-            });
+            },
+            & i);
     BOOST_CHECK_EQUAL( 7, value1);
     BOOST_CHECK_EQUAL( str, value2);
     BOOST_CHECK_EQUAL( data, & i);
@@ -188,7 +189,8 @@ void test_ontop_exception() {
           [what](void * data){
             throw std::runtime_error( what);
             return data;
-          });
+          },
+          nullptr);
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK_EQUAL( std::string( what), value2);
 }
