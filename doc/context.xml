@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/10 21:12:03 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/11 16:40:25 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -167,23 +167,23 @@
     <para>
       If an instance with valid state goes out of scope and the context-function
       has not yet returned, the stack is traversed in order to access the control
-      structure (address stored at the first stack frame) and to deallocate context'
-      stack via the <emphasis>StackAllocator</emphasis>. The stack walking makes
-      the destruction of <emphasis>execution_context</emphasis> very slow and should
-      be prevented if possible.
+      structure (address stored at the first stack frame) and context' stack is deallocated
+      via the <emphasis>StackAllocator</emphasis>. The stack walking makes the destruction
+      of <emphasis>execution_context</emphasis> slow and should be prevented if possible.
     </para>
     <para>
-      <emphasis>execution_context</emphasis> expects a function/functor with signature
-      <code><phrase role="identifier">execution_context</phrase><phrase role="special">(</phrase><phrase
-      role="identifier">execution_context</phrase> <phrase role="identifier">ctx</phrase><phrase
-      role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase>
-      <phrase role="identifier">args</phrase><phrase role="special">)</phrase></code>.
-      The parameter <code><phrase role="identifier">ctx</phrase></code> represents
-      the context from which this context was resumed (e.g. that has called <emphasis>execution_context::operator()</emphasis>
+      <emphasis>execution_context</emphasis> expects a <emphasis>context-function</emphasis>
+      with signature <code><phrase role="identifier">execution_context</phrase><phrase
+      role="special">(</phrase><phrase role="identifier">execution_context</phrase>
+      <phrase role="identifier">ctx</phrase><phrase role="special">,</phrase> <phrase
+      role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase
+      role="identifier">args</phrase><phrase role="special">)</phrase></code>. The
+      parameter <code><phrase role="identifier">ctx</phrase></code> represents the
+      context from which this context was resumed (e.g. that has called <emphasis>execution_context::operator()</emphasis>
       on <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>)
       and <code><phrase role="identifier">args</phrase></code> are the data passed
-      to <emphasis>execution_context::operator()</emphasis>. The return value is
-      the execution_context that has to be resumed, while this context terminates.
+      to <emphasis>execution_context::operator()</emphasis>. The return value represents
+      the execution_context that has to be resumed, after termiantion of this context.
     </para>
     <para>
       Benefits of <link linkend="ecv2"><emphasis>execution_context</emphasis> (v2)</link>
@@ -219,14 +219,15 @@
     <phrase role="number">0</phrase> <phrase role="number">1</phrase> <phrase role="number">1</phrase> <phrase role="number">2</phrase> <phrase role="number">3</phrase> <phrase role="number">5</phrase> <phrase role="number">8</phrase> <phrase role="number">13</phrase> <phrase role="number">21</phrase> <phrase role="number">34</phrase>
 </programlisting>
     <para>
-      This simple example demonstrates the basic usage of <emphasis>execution_context</emphasis>.
-      The context <code><phrase role="identifier">sink</phrase></code> represents
-      the <emphasis>main</emphasis>-context (function <emphasis>main()</emphasis>
+      This simple example demonstrates the basic usage of <emphasis>execution_context</emphasis>
+      as a generator. The context <code><phrase role="identifier">sink</phrase></code>
+      represents the <emphasis>main</emphasis>-context (function <emphasis>main()</emphasis>
       running). <code><phrase role="identifier">sink</phrase></code> is generated
       by the framework (first element of lambda's parameter list). Because the state
       is invalidated (== changed) by each call of <emphasis>execution_context::operator()</emphasis>,
-      <code><phrase role="identifier">sink</phrase></code> has to be assigned the
-      new state of the <emphasis>execution_context</emphasis> returned by <emphasis>execution_context::operator()</emphasis>.
+      the new state of the <emphasis>execution_context</emphasis>, returned by <emphasis>execution_context::operator()</emphasis>,
+      needs to be assigned to <code><phrase role="identifier">sink</phrase></code>
+      after each call.
     </para>
     <para>
       The lambda that calculates the Fibonacci numbers is executed inside the context
@@ -236,14 +237,14 @@
       Note that this example represents a <emphasis>generator</emphasis> thus the
       value transferred into the lambda via <emphasis>source()</emphasis> is not
       used. Using <emphasis>boost::optional&lt;&gt;</emphasis> as transferred type,
-      might be appropriate to express this fact.
+      might also appropriate to express this fact.
     </para>
     <para>
       The locale variables <code><phrase role="identifier">a</phrase></code>, <code><phrase
       role="identifier">b</phrase></code> and <code> <phrase role="identifier">next</phrase></code>
       remain their values during each context switch (<emphasis>yield(a)</emphasis>).
-      This is possible due <code><phrase role="identifier">ctx</phrase></code> has
-      its own stack and the stack is exchanged by each context switch.
+      This is possible due <code><phrase role="identifier">source</phrase></code>
+      has its own stack and the stack is exchanged by each context switch.
     </para>
     <bridgehead renderas="sect3" id="context.ecv2.h1">
       <phrase id="context.ecv2.parameter_passing"/><link linkend="context.ecv2.parameter_passing">parameter
@@ -256,8 +257,7 @@
     </para>
 <programlisting><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">([](</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">){</phrase>
             <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;inside ctx1\n&quot;</phrase><phrase role="special">);</phrase>
-            <phrase role="identifier">ctx2</phrase><phrase role="special">();</phrase>
-            <phrase role="keyword">return</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">;</phrase>
+            <phrase role="keyword">return</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">();</phrase>
         <phrase role="special">});</phrase>
 <phrase role="identifier">ctx1</phrase><phrase role="special">();</phrase>
 
@@ -286,8 +286,7 @@
     </para>
 <programlisting><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">([](</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">,</phrase> <phrase role="keyword">int</phrase> <phrase role="identifier">j</phrase><phrase role="special">){</phrase>
             <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;inside ctx1, j == %d\n&quot;</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">);</phrase>
-            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx2</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">(</phrase><phrase role="identifier">j</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
-            <phrase role="keyword">return</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">;</phrase>
+            <phrase role="keyword">return</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">(</phrase><phrase role="identifier">j</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
         <phrase role="special">});</phrase>
 <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase> <phrase role="special">=</phrase> <phrase role="number">1</phrase><phrase role="special">;</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx1</phrase><phrase role="special">,</phrase> <phrase role="identifier">i</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">);</phrase>
@@ -319,8 +318,7 @@
     </para>
 <programlisting><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">,</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">([](</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">,</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">,</phrase> <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">,</phrase> <phrase role="keyword">int</phrase> <phrase role="identifier">j</phrase><phrase role="special">){</phrase>
             <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;inside ctx1, i == %d j == %d\n&quot;</phrase><phrase role="special">,</phrase> <phrase role="identifier">i</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">);</phrase>
-            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx2</phrase><phrase role="special">,</phrase> <phrase role="identifier">i</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">+</phrase><phrase role="identifier">j</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">-</phrase><phrase role="identifier">j</phrase><phrase role="special">);</phrase>
-            <phrase role="keyword">return</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">;</phrase>
+            <phrase role="keyword">return</phrase> <phrase role="identifier">ctx2</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">+</phrase><phrase role="identifier">j</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">-</phrase><phrase role="identifier">j</phrase><phrase role="special">);</phrase>
         <phrase role="special">});</phrase>
 <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase> <phrase role="special">=</phrase> <phrase role="number">2</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase> <phrase role="special">=</phrase> <phrase role="number">1</phrase><phrase role="special">;</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx1</phrase><phrase role="special">,</phrase> <phrase role="identifier">i</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">)</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx1</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">,</phrase><phrase role="identifier">j</phrase><phrase role="special">);</phrase>
@@ -444,7 +442,7 @@
       role="special">()</phrase></code> on top of context <code><phrase role="identifier">ctx</phrase></code>,
       e.g. an additional stack frame is allocated on top of the context stack (in
       front of <code><phrase role="identifier">f1</phrase><phrase role="special">()</phrase></code>).
-      <code><phrase role="identifier">f1</phrase><phrase role="special">()</phrase></code>
+      <code><phrase role="identifier">f2</phrase><phrase role="special">()</phrase></code>
       returns argument <code><phrase role="special">-</phrase><phrase role="number">1</phrase></code>
       that will returned by the second invocation of <code><phrase role="identifier">ctx</phrase><phrase
       role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase
@@ -452,8 +450,8 @@
       role="identifier">f1</phrase><phrase role="special">()</phrase></code>.
     </para>
     <para>
-      Another option is to execute a function on top of the context, that throws
-      an exception.
+      Another option is to execute a function on top of the context that throws an
+      exception.
     </para>
 <programlisting><phrase role="keyword">struct</phrase> <phrase role="identifier">interrupt</phrase> <phrase role="special">{</phrase>
     <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">void</phrase> <phrase role="special">&gt;</phrase>   <phrase role="identifier">ctx</phrase><phrase role="special">;</phrase>
@@ -503,7 +501,7 @@
     <para>
       On construction of <emphasis>execution_context</emphasis> a stack is allocated.
       If the <emphasis>context-function</emphasis> returns the stack will be destructed.
-      if the <emphasis>context-function</emphasis> has not yet returned and the destructor
+      If the <emphasis>context-function</emphasis> has not yet returned and the destructor
       of an valid <emphasis>execution_context</emphasis> instance (e.g. <emphasis>execution_context::operator
       bool()</emphasis> returns <code><phrase role="keyword">true</phrase></code>)
       is called, the stack will be destructed too.
@@ -877,6 +875,7 @@
 </bridgehead>
     </para>
 <programlisting><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase role="special">&gt;,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase> <phrase role="comment">// member of generic execution_context template</phrase>
+
 <phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">void</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()();</phrase> <phrase role="comment">// member of execution_context&lt; void &gt;</phrase>
 </programlisting>
     <variablelist>
@@ -914,31 +913,11 @@
         <term>Note:</term>
         <listitem>
           <para>
-            Function <code><phrase role="identifier">fn</phrase></code> needs to
-            return a tuple of execution_context and arguments (<link linkend="ecv2_ontop">see
-            description</link>).
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>Note:</term>
-        <listitem>
-          <para>
             The returned execution_context indicates if the suspended context has
             terminated (return from context-function) via <code><phrase role="keyword">bool</phrase>
             <phrase role="keyword">operator</phrase><phrase role="special">()</phrase></code>.
             If the returned execution_context has terminated no data are transferred
             in the returned tuple.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>Note:</term>
-        <listitem>
-          <para>
-            The context calling this function must not be destroyed before the arguments,
-            that will be returned from <code><phrase role="identifier">fn</phrase></code>,
-            are preserved at least in the stack frame of the resumed context.
           </para>
         </listitem>
       </varlistentry>
@@ -952,6 +931,7 @@
     </para>
 <programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&gt;</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase role="special">&gt;,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase> <phrase role="comment">// member of generic execution_context</phrase>
+
 <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&gt;</phrase>
 <phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">void</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">);</phrase> <phrase role="comment">// member of execution_context&lt; void &gt;</phrase>
 </programlisting>
@@ -992,6 +972,38 @@
             arguments are returned from <code><phrase role="identifier">execution_context</phrase><phrase
             role="special">::</phrase><phrase role="keyword">operator</phrase><phrase
             role="special">()</phrase></code> within the resumed context.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Note:</term>
+        <listitem>
+          <para>
+            Function <code><phrase role="identifier">fn</phrase></code> needs to
+            return a tuple of execution_context and arguments (<link linkend="ecv2_ontop">see
+            description</link>).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Note:</term>
+        <listitem>
+          <para>
+            The context calling this function must not be destroyed before the arguments,
+            that will be returned from <code><phrase role="identifier">fn</phrase></code>,
+            are preserved at least in the stack frame of the resumed context.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Note:</term>
+        <listitem>
+          <para>
+            The returned execution_context indicates if the suspended context has
+            terminated (return from context-function) via <code><phrase role="keyword">bool</phrase>
+            <phrase role="keyword">operator</phrase><phrase role="special">()</phrase></code>.
+            If the returned execution_context has terminated no data are transferred
+            in the returned tuple.
           </para>
         </listitem>
       </varlistentry>
@@ -1506,11 +1518,8 @@
 
     <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase> <phrase role="special">=</phrase> <phrase role="keyword">nullptr</phrase><phrase role="special">);</phrase>
 
-    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
-    <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
-
-    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
-    <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase><phrase role="special">,</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
+    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&gt;</phrase>
+    <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase><phrase role="special">);</phrase>
 
     <phrase role="keyword">bool</phrase> <phrase role="keyword">operator</phrase><phrase role="special">==(</phrase> <phrase role="identifier">execution_context</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 
@@ -1826,11 +1835,8 @@
       function <code>operator(exec_ontop_arg_t)</code>()</link>
 </bridgehead>
     </para>
-<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
-
-<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="special">...</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">data</phrase><phrase role="special">,</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">Args</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="special">...</phrase> <phrase role="identifier">args</phrase><phrase role="special">);</phrase>
+<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&gt;</phrase>
+<phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="keyword">operator</phrase><phrase role="special">()(</phrase> <phrase role="identifier">exec_ontop_arg_t</phrase><phrase role="special">,</phrase> <phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="keyword">void</phrase> <phrase role="special">*</phrase> <phrase role="identifier">vp</phrase><phrase role="special">);</phrase>
 </programlisting>
     <variablelist>
       <title></title>
@@ -1840,7 +1846,7 @@
           <para>
             Same as <emphasis>execution_context::operator()</emphasis>. Additionally,
             function <code><phrase role="identifier">fn</phrase></code> is executed
-            with arguments <code><phrase role="identifier">args</phrase></code> in
+            with arguments <code><phrase role="identifier">vp</phrase></code> in
             the context of <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
             (e.g. the stack frame of <code><phrase role="identifier">fn</phrase></code>
             is allocated on stack of <code><phrase role="special">*</phrase><phrase

@@ -84,21 +84,20 @@
 <p>
       If an instance with valid state goes out of scope and the context-function
       has not yet returned, the stack is traversed in order to access the control
-      structure (address stored at the first stack frame) and to deallocate context'
-      stack via the <span class="emphasis"><em>StackAllocator</em></span>. The stack walking makes
-      the destruction of <span class="emphasis"><em>execution_context</em></span> very slow and should
-      be prevented if possible.
+      structure (address stored at the first stack frame) and context' stack is deallocated
+      via the <span class="emphasis"><em>StackAllocator</em></span>. The stack walking makes the destruction
+      of <span class="emphasis"><em>execution_context</em></span> slow and should be prevented if possible.
     </p>
 <p>
-      <span class="emphasis"><em>execution_context</em></span> expects a function/functor with signature
-      <code class="computeroutput"><span class="identifier">execution_context</span><span class="special">(</span><span class="identifier">execution_context</span> <span class="identifier">ctx</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">...</span>
-      <span class="identifier">args</span><span class="special">)</span></code>.
-      The parameter <code class="computeroutput"><span class="identifier">ctx</span></code> represents
-      the context from which this context was resumed (e.g. that has called <span class="emphasis"><em>execution_context::operator()</em></span>
+      <span class="emphasis"><em>execution_context</em></span> expects a <span class="emphasis"><em>context-function</em></span>
+      with signature <code class="computeroutput"><span class="identifier">execution_context</span><span class="special">(</span><span class="identifier">execution_context</span>
+      <span class="identifier">ctx</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">)</span></code>. The
+      parameter <code class="computeroutput"><span class="identifier">ctx</span></code> represents the
+      context from which this context was resumed (e.g. that has called <span class="emphasis"><em>execution_context::operator()</em></span>
       on <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>)
       and <code class="computeroutput"><span class="identifier">args</span></code> are the data passed
-      to <span class="emphasis"><em>execution_context::operator()</em></span>. The return value is
-      the execution_context that has to be resumed, while this context terminates.
+      to <span class="emphasis"><em>execution_context::operator()</em></span>. The return value represents
+      the execution_context that has to be resumed, after termiantion of this context.
     </p>
 <p>
       Benefits of <a class="link" href="ecv2.html#ecv2"><span class="emphasis"><em>execution_context</em></span> (v2)</a>
@@ -134,14 +133,15 @@
     <span class="number">0</span> <span class="number">1</span> <span class="number">1</span> <span class="number">2</span> <span class="number">3</span> <span class="number">5</span> <span class="number">8</span> <span class="number">13</span> <span class="number">21</span> <span class="number">34</span>
 </pre>
 <p>
-      This simple example demonstrates the basic usage of <span class="emphasis"><em>execution_context</em></span>.
-      The context <code class="computeroutput"><span class="identifier">sink</span></code> represents
-      the <span class="emphasis"><em>main</em></span>-context (function <span class="emphasis"><em>main()</em></span>
+      This simple example demonstrates the basic usage of <span class="emphasis"><em>execution_context</em></span>
+      as a generator. The context <code class="computeroutput"><span class="identifier">sink</span></code>
+      represents the <span class="emphasis"><em>main</em></span>-context (function <span class="emphasis"><em>main()</em></span>
       running). <code class="computeroutput"><span class="identifier">sink</span></code> is generated
       by the framework (first element of lambda's parameter list). Because the state
       is invalidated (== changed) by each call of <span class="emphasis"><em>execution_context::operator()</em></span>,
-      <code class="computeroutput"><span class="identifier">sink</span></code> has to be assigned the
-      new state of the <span class="emphasis"><em>execution_context</em></span> returned by <span class="emphasis"><em>execution_context::operator()</em></span>.
+      the new state of the <span class="emphasis"><em>execution_context</em></span>, returned by <span class="emphasis"><em>execution_context::operator()</em></span>,
+      needs to be assigned to <code class="computeroutput"><span class="identifier">sink</span></code>
+      after each call.
     </p>
 <p>
       The lambda that calculates the Fibonacci numbers is executed inside the context
@@ -151,13 +151,13 @@
       Note that this example represents a <span class="emphasis"><em>generator</em></span> thus the
       value transferred into the lambda via <span class="emphasis"><em>source()</em></span> is not
       used. Using <span class="emphasis"><em>boost::optional&lt;&gt;</em></span> as transferred type,
-      might be appropriate to express this fact.
+      might also appropriate to express this fact.
     </p>
 <p>
       The locale variables <code class="computeroutput"><span class="identifier">a</span></code>, <code class="computeroutput"><span class="identifier">b</span></code> and <code class="computeroutput"> <span class="identifier">next</span></code>
       remain their values during each context switch (<span class="emphasis"><em>yield(a)</em></span>).
-      This is possible due <code class="computeroutput"><span class="identifier">ctx</span></code> has
-      its own stack and the stack is exchanged by each context switch.
+      This is possible due <code class="computeroutput"><span class="identifier">source</span></code>
+      has its own stack and the stack is exchanged by each context switch.
     </p>
 <h4>
 <a name="context.ecv2.h1"></a>
@@ -170,8 +170,7 @@
     </p>
 <pre class="programlisting"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="identifier">ctx1</span><span class="special">([](</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="identifier">ctx2</span><span class="special">){</span>
             <span class="identifier">std</span><span class="special">::</span><span class="identifier">printf</span><span class="special">(</span><span class="string">"inside ctx1\n"</span><span class="special">);</span>
-            <span class="identifier">ctx2</span><span class="special">();</span>
-            <span class="keyword">return</span> <span class="identifier">ctx2</span><span class="special">;</span>
+            <span class="keyword">return</span> <span class="identifier">ctx2</span><span class="special">();</span>
         <span class="special">});</span>
 <span class="identifier">ctx1</span><span class="special">();</span>
 
@@ -198,8 +197,7 @@
     </p>
 <pre class="programlisting"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="identifier">ctx1</span><span class="special">([](</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="identifier">ctx2</span><span class="special">,</span> <span class="keyword">int</span> <span class="identifier">j</span><span class="special">){</span>
             <span class="identifier">std</span><span class="special">::</span><span class="identifier">printf</span><span class="special">(</span><span class="string">"inside ctx1, j == %d\n"</span><span class="special">,</span> <span class="identifier">j</span><span class="special">);</span>
-            <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">ctx2</span><span class="special">,</span> <span class="identifier">j</span><span class="special">)</span> <span class="special">=</span> <span class="identifier">ctx2</span><span class="special">(</span><span class="identifier">j</span><span class="special">+</span><span class="number">1</span><span class="special">);</span>
-            <span class="keyword">return</span> <span class="identifier">ctx2</span><span class="special">;</span>
+            <span class="keyword">return</span> <span class="identifier">ctx2</span><span class="special">(</span><span class="identifier">j</span><span class="special">+</span><span class="number">1</span><span class="special">);</span>
         <span class="special">});</span>
 <span class="keyword">int</span> <span class="identifier">i</span> <span class="special">=</span> <span class="number">1</span><span class="special">;</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">ctx1</span><span class="special">,</span> <span class="identifier">i</span><span class="special">)</span> <span class="special">=</span> <span class="identifier">ctx1</span><span class="special">(</span><span class="identifier">i</span><span class="special">);</span>
@@ -224,8 +222,7 @@
     </p>
 <pre class="programlisting"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">,</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="identifier">ctx1</span><span class="special">([](</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">,</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="identifier">ctx2</span><span class="special">,</span> <span class="keyword">int</span> <span class="identifier">i</span><span class="special">,</span> <span class="keyword">int</span> <span class="identifier">j</span><span class="special">){</span>
             <span class="identifier">std</span><span class="special">::</span><span class="identifier">printf</span><span class="special">(</span><span class="string">"inside ctx1, i == %d j == %d\n"</span><span class="special">,</span> <span class="identifier">i</span><span class="special">,</span> <span class="identifier">j</span><span class="special">);</span>
-            <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">ctx2</span><span class="special">,</span> <span class="identifier">i</span><span class="special">,</span> <span class="identifier">j</span><span class="special">)</span> <span class="special">=</span> <span class="identifier">ctx2</span><span class="special">(</span><span class="identifier">i</span><span class="special">+</span><span class="identifier">j</span><span class="special">,</span><span class="identifier">i</span><span class="special">-</span><span class="identifier">j</span><span class="special">);</span>
-            <span class="keyword">return</span> <span class="identifier">ctx2</span><span class="special">;</span>
+            <span class="keyword">return</span> <span class="identifier">ctx2</span><span class="special">(</span><span class="identifier">i</span><span class="special">+</span><span class="identifier">j</span><span class="special">,</span><span class="identifier">i</span><span class="special">-</span><span class="identifier">j</span><span class="special">);</span>
         <span class="special">});</span>
 <span class="keyword">int</span> <span class="identifier">i</span> <span class="special">=</span> <span class="number">2</span><span class="special">,</span> <span class="identifier">j</span> <span class="special">=</span> <span class="number">1</span><span class="special">;</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">ctx1</span><span class="special">,</span> <span class="identifier">i</span><span class="special">,</span> <span class="identifier">j</span><span class="special">)</span> <span class="special">=</span> <span class="identifier">ctx1</span><span class="special">(</span><span class="identifier">i</span><span class="special">,</span><span class="identifier">j</span><span class="special">);</span>
@@ -345,13 +342,13 @@
       The expression <code class="computeroutput"><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">exec_ontop_arg</span><span class="special">,</span><span class="identifier">f2</span><span class="special">,</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">)</span></code> executes <code class="computeroutput"><span class="identifier">f2</span><span class="special">()</span></code> on top of context <code class="computeroutput"><span class="identifier">ctx</span></code>,
       e.g. an additional stack frame is allocated on top of the context stack (in
       front of <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>).
-      <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>
+      <code class="computeroutput"><span class="identifier">f2</span><span class="special">()</span></code>
       returns argument <code class="computeroutput"><span class="special">-</span><span class="number">1</span></code>
       that will returned by the second invocation of <code class="computeroutput"><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">)</span></code> in <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>.
     </p>
 <p>
-      Another option is to execute a function on top of the context, that throws
-      an exception.
+      Another option is to execute a function on top of the context that throws an
+      exception.
     </p>
 <pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">interrupt</span> <span class="special">{</span>
     <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span>   <span class="identifier">ctx</span><span class="special">;</span>
@@ -402,7 +399,7 @@
 <p>
       On construction of <span class="emphasis"><em>execution_context</em></span> a stack is allocated.
       If the <span class="emphasis"><em>context-function</em></span> returns the stack will be destructed.
-      if the <span class="emphasis"><em>context-function</em></span> has not yet returned and the destructor
+      If the <span class="emphasis"><em>context-function</em></span> has not yet returned and the destructor
       of an valid <span class="emphasis"><em>execution_context</em></span> instance (e.g. <span class="emphasis"><em>execution_context::operator
       bool()</em></span> returns <code class="computeroutput"><span class="keyword">true</span></code>)
       is called, the stack will be destructed too.
@@ -764,6 +761,7 @@
 <p>
     </p>
 <pre class="programlisting"><span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span> <span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="special">&gt;,</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="special">&gt;</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span> <span class="comment">// member of generic execution_context template</span>
+
 <span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="keyword">operator</span><span class="special">()();</span> <span class="comment">// member of execution_context&lt; void &gt;</span>
 </pre>
 <div class="variablelist">
@@ -785,23 +783,11 @@
           </p></dd>
 <dt><span class="term">Note:</span></dt>
 <dd><p>
-            Function <code class="computeroutput"><span class="identifier">fn</span></code> needs to
-            return a tuple of execution_context and arguments (<a class="link" href="ecv2.html#ecv2_ontop">see
-            description</a>).
-          </p></dd>
-<dt><span class="term">Note:</span></dt>
-<dd><p>
             The returned execution_context indicates if the suspended context has
             terminated (return from context-function) via <code class="computeroutput"><span class="keyword">bool</span>
             <span class="keyword">operator</span><span class="special">()</span></code>.
             If the returned execution_context has terminated no data are transferred
             in the returned tuple.
-          </p></dd>
-<dt><span class="term">Note:</span></dt>
-<dd><p>
-            The context calling this function must not be destroyed before the arguments,
-            that will be returned from <code class="computeroutput"><span class="identifier">fn</span></code>,
-            are preserved at least in the stack frame of the resumed context.
           </p></dd>
 </dl>
 </div>
@@ -817,6 +803,7 @@
     </p>
 <pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span> <span class="special">&gt;</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span> <span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="special">&gt;,</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="special">&gt;</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">exec_ontop_arg_t</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span> <span class="comment">// member of generic execution_context</span>
+
 <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span> <span class="special">&gt;</span>
 <span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">exec_ontop_arg_t</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">);</span> <span class="comment">// member of execution_context&lt; void &gt;</span>
 </pre>
@@ -842,6 +829,26 @@
             The tuple of execution_context and returned arguments from <code class="computeroutput"><span class="identifier">fn</span></code> are passed as arguments to the context-function
             of resumed context (if the context is entered the first time) or those
             arguments are returned from <code class="computeroutput"><span class="identifier">execution_context</span><span class="special">::</span><span class="keyword">operator</span><span class="special">()</span></code> within the resumed context.
+          </p></dd>
+<dt><span class="term">Note:</span></dt>
+<dd><p>
+            Function <code class="computeroutput"><span class="identifier">fn</span></code> needs to
+            return a tuple of execution_context and arguments (<a class="link" href="ecv2.html#ecv2_ontop">see
+            description</a>).
+          </p></dd>
+<dt><span class="term">Note:</span></dt>
+<dd><p>
+            The context calling this function must not be destroyed before the arguments,
+            that will be returned from <code class="computeroutput"><span class="identifier">fn</span></code>,
+            are preserved at least in the stack frame of the resumed context.
+          </p></dd>
+<dt><span class="term">Note:</span></dt>
+<dd><p>
+            The returned execution_context indicates if the suspended context has
+            terminated (return from context-function) via <code class="computeroutput"><span class="keyword">bool</span>
+            <span class="keyword">operator</span><span class="special">()</span></code>.
+            If the returned execution_context has terminated no data are transferred
+            in the returned tuple.
           </p></dd>
 </dl>
 </div>

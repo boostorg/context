@@ -328,11 +328,8 @@
 
     <span class="keyword">void</span> <span class="special">*</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="keyword">void</span> <span class="special">*</span> <span class="identifier">vp</span> <span class="special">=</span> <span class="keyword">nullptr</span><span class="special">);</span>
 
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Args</span> <span class="special">&gt;</span>
-    <span class="keyword">void</span> <span class="special">*</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">exec_ontop_arg_t</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span>
-
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Args</span> <span class="special">&gt;</span>
-    <span class="keyword">void</span> <span class="special">*</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="keyword">void</span> <span class="special">*</span> <span class="identifier">vp</span><span class="special">,</span> <span class="identifier">exec_ontop_arg_t</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span>
+    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span> <span class="special">&gt;</span>
+    <span class="keyword">void</span> <span class="special">*</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">exec_ontop_arg_t</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="keyword">void</span> <span class="special">*</span> <span class="identifier">vp</span><span class="special">);</span>
 
     <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">==(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
 
@@ -613,11 +610,8 @@
 </h5>
 <p>
     </p>
-<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Args</span> <span class="special">&gt;</span>
-<span class="keyword">void</span> <span class="special">*</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">exec_ontop_arg_t</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span>
-
-<span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Args</span> <span class="special">&gt;</span>
-<span class="keyword">void</span> <span class="special">*</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="keyword">void</span> <span class="special">*</span> <span class="identifier">data</span><span class="special">,</span> <span class="identifier">exec_ontop_arg_t</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span>
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span> <span class="special">&gt;</span>
+<span class="keyword">void</span> <span class="special">*</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">exec_ontop_arg_t</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="keyword">void</span> <span class="special">*</span> <span class="identifier">vp</span><span class="special">);</span>
 </pre>
 <div class="variablelist">
 <p class="title"><b></b></p>
@@ -626,7 +620,7 @@
 <dd><p>
             Same as <span class="emphasis"><em>execution_context::operator()</em></span>. Additionally,
             function <code class="computeroutput"><span class="identifier">fn</span></code> is executed
-            with arguments <code class="computeroutput"><span class="identifier">args</span></code> in
+            with arguments <code class="computeroutput"><span class="identifier">vp</span></code> in
             the context of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>
             (e.g. the stack frame of <code class="computeroutput"><span class="identifier">fn</span></code>
             is allocated on stack of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>).

@@ -259,11 +259,8 @@ __ec_op__, in one context, is returned by __ec_op__ in the other context.
 
             void * operator()( void * vp = nullptr);
 
-            template< typename Fn, typename ... Args >
-            void * operator()( exec_ontop_arg_t, Fn && fn, Args && ... args);
-
-            template< typename Fn, typename ... Args >
-            void * operator()( void * vp, exec_ontop_arg_t, Fn && fn, Args && ... args);
+            template< typename Fn >
+            void * operator()( exec_ontop_arg_t, Fn && fn, void * vp);
 
             bool operator==( execution_context const& other) const noexcept;
 
@@ -390,15 +387,12 @@ __ec_op__, if any.]]
 
 [operator_heading ecv1..operator_call_ontop..operator(exec_ontop_arg_t)]
 
-    template< typename Fn, typename ... Args >
-    void * operator()( exec_ontop_arg_t, Fn && fn, Args && ... args);
-
-    template< typename Fn, typename ... Args >
-    void * operator()( void * data, exec_ontop_arg_t, Fn && fn, Args && ... args);
+    template< typename Fn >
+    void * operator()( exec_ontop_arg_t, Fn && fn, void * vp);
 
 [variablelist
 [[Effects:] [Same as __ec_op__. Additionally, function `fn` is executed with
-arguments `args` in the context of `*this` (e.g. the stack frame of `fn` is
+arguments `vp` in the context of `*this` (e.g. the stack frame of `fn` is
 allocated on stack of `*this`).]]
 [[Returns:] [The void pointer argument passed to the most recent call to
 __ec_op__, if any.]]
