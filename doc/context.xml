@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/11 18:11:10 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/12 18:30:00 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -30,22 +30,20 @@
       provides a sort of cooperative multitasking on a single thread. By providing
       an abstraction of the current execution state in the current thread, including
       the stack (with local variables) and stack pointer, all registers and CPU flags,
-      and the instruction pointer, a <emphasis>execution_context</emphasis> or __ccontext__
-      instance represents a specific point in the application's execution path. This
-      is useful for building higher-level abstractions, like <emphasis>coroutines</emphasis>,
-      <emphasis>cooperative threads (userland threads)</emphasis> or an equivalent
-      to <ulink url="http://msdn.microsoft.com/en-us/library/9k7k7cf0%28v=vs.80%29.aspx">C#
+      and the instruction pointer, a <emphasis>execution_context</emphasis> represents
+      a specific point in the application's execution path. This is useful for building
+      higher-level abstractions, like <emphasis>coroutines</emphasis>, <emphasis>cooperative
+      threads (userland threads)</emphasis> or an equivalent to <ulink url="http://msdn.microsoft.com/en-us/library/9k7k7cf0%28v=vs.80%29.aspx">C#
       keyword <emphasis>yield</emphasis></ulink> in C++.
     </para>
     <para>
-      <emphasis>execution_context</emphasis> and __ccontext__ provide the means to
-      suspend the current execution path and to transfer execution control, thereby
-      permitting another context to run on the current thread. This state full transfer
-      mechanism enables a context to suspend execution from within nested functions
-      and, later, to resume from where it was suspended. While the execution path
-      represented by a <emphasis>execution_context</emphasis> or __ccontext__ only
-      runs on a single thread, it can be migrated to another thread at any given
-      time.
+      <emphasis>execution_context</emphasis> provides the means to suspend the current
+      execution path and to transfer execution control, thereby permitting another
+      context to run on the current thread. This state full transfer mechanism enables
+      a context to suspend execution from within nested functions and, later, to
+      resume from where it was suspended. While the execution path represented by
+      a <emphasis>execution_context</emphasis> only runs on a single thread, it can
+      be migrated to another thread at any given time.
     </para>
     <para>
       A context switch between threads requires system calls (involving the OS kernel),
@@ -2846,12 +2844,12 @@
             </entry>
             <entry>
               <para>
-                execution_context
+                execution_context (v1)
               </para>
             </entry>
             <entry>
               <para>
-                captured_context
+                execution_context (v2)
               </para>
             </entry>
           </row>
