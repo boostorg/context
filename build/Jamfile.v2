@@ -24,7 +24,6 @@ feature.compose <context-switch>ec : <define>BOOST_USE_EXECUTION_CONTEXT ;
 
 project boost/context
     : requirements
-      <library>/boost/thread//boost_thread
       <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <toolset>gcc,<segmented-stacks>on:<linkflags>"-static-libgcc"
@@ -829,13 +828,24 @@ alias asm_context_sources
 
 explicit asm_context_sources ;
 
+local cxx11_mutex = [ check-target-builds
+      ../../config/checks//cxx11_hdr_mutex "C++11 mutex"
+    :
+    : <library>/boost/thread//boost_thread
+  ] ;
+
 alias stack_traits_sources
     : windows/stack_traits.cpp
     : <target-os>windows
+    :
+    : $(cxx11_mutex)
     ;
 
 alias stack_traits_sources
     : posix/stack_traits.cpp
+    :
+    :
+    : $(cxx11_mutex)
     ;
 
 explicit stack_traits_sources ;
