@@ -92,7 +92,6 @@ transfer_t context_ontop( transfer_t t) {
                 std::move( args) ) );
     ctx = std::move( std::get< 0 >( result) );
     // apply returned data
-    std::tuple< Ctx > ignored;
     detail::tail( args) = std::move( result);
     std::get< 1 >( * tpl) = std::move( args);
     return { exchange( ctx.fctx_, nullptr), & std::get< 1 >( * tpl) };
