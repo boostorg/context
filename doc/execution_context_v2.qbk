@@ -176,10 +176,7 @@ direction, ['boost::variant<>] could be used.
                                 auto result = ctx( data);
                                 ctx = std::move( std::get<0>( result) );
                                 data = std::get<1>( result);
-                            }
-                        } catch ( boost::context::detail::forced_unwind const&) {
-                            throw;
-                        } catch (...) {
+                        } catch (std::bad_cast const&) {
                             excptr_=std::current_exception();
                         }
                         return ctx;
