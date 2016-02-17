@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/15 18:39:42 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/17 15:52:38 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -386,6 +386,12 @@
       <emphasis>std::exception_ptr</emphasis> can be used to transfer exceptions
       between different execution contexts.
     </para>
+    <important>
+      <para>
+        Do not jump from inside a catch block and then re-throw the exception in
+        another execution context.
+      </para>
+    </important>
     <anchor id="ecv2_ontop"/>
     <bridgehead renderas="sect3" id="context.ecv2.h3">
       <phrase id="context.ecv2.executing_function_on_top_of_a_context"/><link linkend="context.ecv2.executing_function_on_top_of_a_context">Executing
@@ -1436,6 +1442,12 @@
       <emphasis>std::exception_ptr</emphasis> can be used to transfer exceptions
       between different execution contexts.
     </para>
+    <important>
+      <para>
+        Do not jump from inside a catch block and then re-throw the exception in
+        another execution context.
+      </para>
+    </important>
     <bridgehead renderas="sect3" id="context.ecv1.h4">
       <phrase id="context.ecv1.parameter_passing"/><link linkend="context.ecv1.parameter_passing">parameter
       passing</link>
