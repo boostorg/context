@@ -16,9 +16,7 @@
 
 #include <boost/context/detail/config.hpp>
 #include <boost/context/detail/invoke.hpp>
-#if defined(BOOST_CONTEXT_NO_CXX14_INTEGER_SEQUENCE)
 #include <boost/context/detail/index_sequence.hpp>
-#endif
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_PREFIX
@@ -27,13 +25,6 @@
 namespace boost {
 namespace context {
 namespace detail {
-
-#if ! defined(BOOST_CONTEXT_NO_CXX14_INTEGER_SEQUENCE)
-template< std::size_t ... I >
-using index_sequence = std::index_sequence< I ... >;
-template< std::size_t I >
-using make_index_sequence = std::make_index_sequence< I >;
-#endif
 
 template< typename Fn, typename Tpl, std::size_t ... I >
 auto
