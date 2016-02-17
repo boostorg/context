@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/12 18:30:00 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/15 18:39:42 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -347,10 +347,7 @@
                         <phrase role="keyword">auto</phrase> <phrase role="identifier">result</phrase> <phrase role="special">=</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase> <phrase role="identifier">data</phrase><phrase role="special">);</phrase>
                         <phrase role="identifier">ctx</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">0</phrase><phrase role="special">&gt;(</phrase> <phrase role="identifier">result</phrase><phrase role="special">)</phrase> <phrase role="special">);</phrase>
                         <phrase role="identifier">data</phrase> <phrase role="special">=</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">get</phrase><phrase role="special">&lt;</phrase><phrase role="number">1</phrase><phrase role="special">&gt;(</phrase> <phrase role="identifier">result</phrase><phrase role="special">);</phrase>
-                    <phrase role="special">}</phrase>
-                <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">detail</phrase><phrase role="special">::</phrase><phrase role="identifier">forced_unwind</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;)</phrase> <phrase role="special">{</phrase>
-                    <phrase role="keyword">throw</phrase><phrase role="special">;</phrase>
-                <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(...)</phrase> <phrase role="special">{</phrase>
+                <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">bad_cast</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;)</phrase> <phrase role="special">{</phrase>
                     <phrase role="identifier">excptr_</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">current_exception</phrase><phrase role="special">();</phrase>
                 <phrase role="special">}</phrase>
                 <phrase role="keyword">return</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">;</phrase>
@@ -1466,7 +1463,7 @@
                         <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase> <phrase role="special">=</phrase> <phrase role="special">*</phrase> <phrase role="keyword">static_cast</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">int</phrase> <phrase role="special">*</phrase> <phrase role="special">&gt;(</phrase> <phrase role="identifier">vp</phrase><phrase role="special">);</phrase>
                         <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="identifier">str</phrase> <phrase role="special">=</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">lexical_cast</phrase><phrase role="special">&lt;</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">i</phrase><phrase role="special">);</phrase>
                         <phrase role="identifier">caller_</phrase><phrase role="special">(</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">str</phrase><phrase role="special">);</phrase>
-                    <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(...)</phrase> <phrase role="special">{</phrase>
+                    <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">bad_cast</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;)</phrase> <phrase role="special">{</phrase>
                         <phrase role="identifier">excptr_</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">current_exception</phrase><phrase role="special">();</phrase>
                     <phrase role="special">}</phrase>
                  <phrase role="special">})</phrase>

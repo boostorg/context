@@ -28,7 +28,7 @@ public:
                         int i = * static_cast< int * >( vp);
                         std::string str = boost::lexical_cast<std::string>(i);
                         caller_( & str);
-                    } catch (...) {
+                    } catch ( std::bad_cast const&) {
                         excptr_=std::current_exception();
                     }
                  })

@@ -36,9 +36,7 @@ public:
                         ctx = std::move( std::get<0>( result) );
                         data = std::get<1>( result);
                     }
-                } catch ( ctx::detail::forced_unwind const&) {
-                    throw;
-                } catch (...) {
+                } catch ( std::bad_cast const&) {
                     excptr_=std::current_exception();
                 }
                 return ctx;
