@@ -210,6 +210,8 @@ If the function executed inside a __econtext__ emits ans exception, the
 application is terminated by calling ['std::terminate()]. ['std::exception_ptr]
 can be used to transfer exceptions between different execution contexts.
 
+[important Do not jump from inside a catch block and then re-throw the exception
+in another execution context.]
 
 [#ecv2_ontop]
 [heading Executing function on top of a context]

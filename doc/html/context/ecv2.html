@@ -293,6 +293,16 @@
       <span class="emphasis"><em>std::exception_ptr</em></span> can be used to transfer exceptions
       between different execution contexts.
     </p>
+<div class="important"><table border="0" summary="Important">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Important]" src="../../../../../doc/src/images/important.png"></td>
+<th align="left">Important</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+        Do not jump from inside a catch block and then re-throw the exception in
+        another execution context.
+      </p></td></tr>
+</table></div>
 <a name="ecv2_ontop"></a><h4>
 <a name="context.ecv2.h3"></a>
       <span><a name="context.ecv2.executing_function_on_top_of_a_context"></a></span><a class="link" href="ecv2.html#context.ecv2.executing_function_on_top_of_a_context">Executing
