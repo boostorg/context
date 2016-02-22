@@ -57,3 +57,7 @@ exe ontop
 exe throw
     : throw.cpp
     ;
+
+exe echosse
+    : echosse.cpp
+    ;
