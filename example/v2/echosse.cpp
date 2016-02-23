@@ -30,6 +30,7 @@ boost::context::execution_context< int > echo( boost::context::execution_context
         std::cout << " ";
         std::tie( ctx, i) = ctx( 0);
     }
+    return ctx;
 }
 
 int main( int argc, char * argv[]) {
