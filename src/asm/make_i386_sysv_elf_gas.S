@@ -33,8 +33,7 @@ make_fcontext:
     andl  $-16, %eax
 
     /* reserve space for context-data on context-stack */
-    /* on context-function entry: (ESP -0x4) % 8 == 0 */
-    leal  -0x24(%eax), %eax
+    leal  -0x28(%eax), %eax
 
     /* third arg of make_fcontext() == address of context-function */
     /* stored in EBX */
