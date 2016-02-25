@@ -43,7 +43,7 @@ _make_fcontext:
     /* size for fc_mxcsr .. EIP + return-address for context-function */
     /* on context-function entry: (ESP -0x4) % 8 == 0 */
     /* additional space is required for SEH */
-    leal  -0x40(%eax), %eax
+    leal  -0x48(%eax), %eax
 
     /* first arg of make_fcontext() == top of context-stack */
     movl  0x04(%esp), %ecx

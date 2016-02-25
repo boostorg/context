@@ -40,7 +40,7 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT
     ; reserve space for context-data on context-stack
     ; on context-function entry: (ESP -0x4) % 8 == 0
     ; additional space is required for SEH
-    lea  eax, [eax-040h]
+    lea  eax, [eax-048h]
 
     ; first arg of make_fcontext() == top of context-stack
     mov  ecx, [esp+04h]
