@@ -31,7 +31,7 @@
 .ent jump_fcontext
 jump_fcontext:
     # reserve space on stack
-    addiu $sp, $sp, -108
+    addiu $sp, $sp, -112
 
     sw  $s0, ($sp)  # save S0
     sw  $s1, 4($sp)  # save S1
@@ -68,7 +68,7 @@ jump_fcontext:
     lw  $t9, 44($sp)
 
     # adjust stack
-    addiu $sp, $sp, 108
+    addiu $sp, $sp, 112
     
     # return transfer_t from jump
     sw  $a0, ($t0)  # fctx of transfer_t

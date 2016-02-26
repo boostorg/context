@@ -45,7 +45,7 @@ make_fcontext:
 
     # reserve space for context-data on context-stack
     # including 48 byte of shadow space (sp % 16 == 0)
-    addiu $v0, $v0, -108
+    addiu $v0, $v0, -112
 
     # third arg of make_fcontext() == address of context-function
     sw  $a2, 44($v0)
