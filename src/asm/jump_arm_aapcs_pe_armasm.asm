@@ -40,13 +40,13 @@ jump_fcontext PROC
 
     ; save current stack base
     ldr  a5, [v1, #0x04]
-    str  a5, [sp, #0x8]
+    push {a5}
     ; save current stack limit
     ldr  a5, [v1, #0x08]
-    str  a5, [sp, #0x4]
+    push {a5}
     ; save current deallocation stack
     ldr  a5, [v1, #0xe0c]
-    str  a5, [sp, #0x0]
+    push {a5}
 
     ; store RSP (pointing to context-data) in A1
     mov  a1, sp
@@ -54,15 +54,15 @@ jump_fcontext PROC
     ; restore RSP (pointing to context-data) from A2
     mov  sp, a2
 
-    ; restore stack base
-    ldr  a5, [sp, #0x8]
-    str  a5, [v1, #0x04]
-    ; restore stack limit
-    ldr  a5, [sp, #0x4]
-    str  a5, [v1, #0x08]
     ; restore deallocation stack
-    ldr  a5, [sp, #0x0]
+    pop  {a5}
     str  a5, [v1, #0xe0c]
+    ; restore stack limit
+    pop  {a5}
+    str  a5, [v1, #0x08]
+    ; restore stack base
+    pop  {a5}
+    str  a5, [v1, #0x04]
 
     ; restore hidden,V1-V8,LR
     pop {a4,v1-v8,lr}

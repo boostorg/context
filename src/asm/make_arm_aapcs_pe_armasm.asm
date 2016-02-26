@@ -39,7 +39,7 @@ make_fcontext PROC
     bic  a1, a1, #0x0f
 
     ; reserve space for context-data on context-stack
-    sub  a1, a1, #0x40
+    sub  a1, a1, #0x48
 
     ; save top address of context_stack as 'base'
     str  a4, [a1, #0x8]
