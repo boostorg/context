@@ -69,8 +69,7 @@ virtual addresses are used.]
         #include <boost/context/protected_fixedsize.hpp>
 
         template< typename traitsT >
-        struct basic_protected_fixedsize
-        {
+        struct basic_protected_fixedsize {
             typedef traitT  traits_type;
 
             basic_protected_fixesize(std::size_t size = traits_type::default_size());
@@ -113,8 +112,7 @@ end of each stack. The memory is managed internally by
         #include <boost/context/fixedsize_stack.hpp>
 
         template< typename traitsT >
-        struct basic_fixedsize_stack
-        {
+        struct basic_fixedsize_stack {
             typedef traitT  traits_type;
 
             basic_fixesize_stack(std::size_t stack_size = traits_type::default_size(), std::size_t next_size = 32, std::size_t max_size = 0);
@@ -170,15 +168,13 @@ stack which grows on demand.
 [note Segmented stacks are currently only supported by [*gcc] from version
 [*4.7] [*clang] from version [*3.4] onwards. In order to use a
 __segmented_stack__ __boost_context__ must be built with
-[*toolset=gcc segmented-stacks=on] at b2/bjam command-line. Applications
-must be compiled with compiler-flags
-[*-fsplit-stack -DBOOST_USE_SEGMENTED_STACKS].]
+property `segmented-stacks`, e.g. [*toolset=gcc segmented-stacks=on] at b2/bjam
+command line.]
 
         #include <boost/context/segmented_stack.hpp>
 
         template< typename traitsT >
-        struct basic_segmented_stack
-        {
+        struct basic_segmented_stack {
             typedef traitT  traits_type;
 
             basic_segmented_stack(std::size_t size = traits_type::default_size());
@@ -221,8 +217,7 @@ allocate stacks.
 
         #include <boost/context/stack_traits.hpp>
 
-        struct stack_traits
-        {
+        struct stack_traits {
             static bool is_unbounded() noexcept;
 
             static std::size_t page_size() noexcept;
@@ -282,8 +277,7 @@ the stack pointer and the size of the stack.
 In case of a __segmented__, __stack_context__ contains some extra control
 structures.
 
-        struct stack_context
-        {
+        struct stack_context {
             void    *   sp;
             std::size_t size;
 

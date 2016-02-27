@@ -36,9 +36,9 @@ class basic_fixedsize_stack {
 private:
     class storage {
     private:
-        std::atomic< std::size_t >  use_count_;
-        std::size_t                 stack_size_;
-        boost::pool<>               storage_;
+        std::atomic< std::size_t >                                  use_count_;
+        std::size_t                                                 stack_size_;
+        boost::pool< boost::default_user_allocator_malloc_free >    storage_;
 
     public:
         storage( std::size_t stack_size, std::size_t next_size, std::size_t max_size) :
