@@ -40,13 +40,13 @@ ontop_fcontext PROC
 
     ; save current stack base
     ldr  a1, [v1, #0x04]
-    str  a1, [sp, #0x8]
+    push {a1}
     ; save current stack limit
     ldr  a1, [v1, #0x08]
-    str  a1, [sp, #0x4]
+    push {a1}
     ; save current deallocation stack
     ldr  a1, [v1, #0xe0c]
-    str  a1, [sp, #0x0]
+    push {a1}
 
     ; store RSP (pointing to context-data) in A1
     mov  a1, sp
@@ -55,13 +55,13 @@ ontop_fcontext PROC
     mov  sp, a2
 
     ; restore stack base
-    ldr  a1, [sp, #0x8]
+    pop  {a1}
     str  a1, [v1, #0x04]
     ; restore stack limit
-    ldr  a1, [sp, #0x4]
+    pop  {a1}
     str  a1, [v1, #0x08]
     ; restore deallocation stack
-    ldr  a1, [sp, #0x0]
+    pop  {a1}
     str  a1, [v1, #0xe0c]
 
     ; store parent context in A2

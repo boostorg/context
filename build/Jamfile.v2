@@ -823,6 +823,49 @@ alias asm_context_sources
      <binary-format>pe
      <toolset>msvc
    ;
+# X86_64/SYSV/X32
+alias asm_context_sources
+   : [ make asm/make_x86_64_sysv_elf_gas.o : asm/make_x86_64_sysv_elf_gas.S : @gas64 ]
+     [ make asm/jump_x86_64_sysv_elf_gas.o : asm/jump_x86_64_sysv_elf_gas.S : @gas64 ]
+     [ make asm/ontop_x86_64_sysv_elf_gas.o : asm/ontop_x86_64_sysv_elf_gas.S : @gas64 ]
+   : <abi>x32
+     <address-model>64
+     <architecture>x86
+     <binary-format>elf
+   ;
+
+alias asm_context_sources
+   : asm/make_x86_64_sysv_elf_gas.S
+     asm/jump_x86_64_sysv_elf_gas.S
+     asm/ontop_x86_64_sysv_elf_gas.S
+   : <abi>x32
+     <address-model>64
+     <architecture>x86
+     <binary-format>elf
+     <toolset>clang
+   ;
+
+alias asm_context_sources
+   : asm/make_x86_64_sysv_elf_gas.S
+     asm/jump_x86_64_sysv_elf_gas.S
+     asm/ontop_x86_64_sysv_elf_gas.S
+   : <abi>x32
+     <address-model>64
+     <architecture>x86
+     <binary-format>elf
+     <toolset>gcc
+   ;
+
+alias asm_context_sources
+   : asm/make_x86_64_sysv_elf_gas.S
+     asm/jump_x86_64_sysv_elf_gas.S
+     asm/ontop_x86_64_sysv_elf_gas.S
+   : <abi>x32
+     <address-model>64
+     <architecture>x86
+     <binary-format>elf
+     <toolset>intel
+   ;
 
 #X86 universal
 alias asm_context_sources
