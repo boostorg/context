@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/27 15:43:55 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/02/27 19:20:49 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -2237,8 +2237,7 @@
 <programlisting><phrase role="preprocessor">#include</phrase> <phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">/</phrase><phrase role="identifier">context</phrase><phrase role="special">/</phrase><phrase role="identifier">protected_fixedsize</phrase><phrase role="special">.</phrase><phrase role="identifier">hpp</phrase><phrase role="special">&gt;</phrase>
 
 <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">traitsT</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">struct</phrase> <phrase role="identifier">basic_protected_fixedsize</phrase>
-<phrase role="special">{</phrase>
+<phrase role="keyword">struct</phrase> <phrase role="identifier">basic_protected_fixedsize</phrase> <phrase role="special">{</phrase>
     <phrase role="keyword">typedef</phrase> <phrase role="identifier">traitT</phrase>  <phrase role="identifier">traits_type</phrase><phrase role="special">;</phrase>
 
     <phrase role="identifier">basic_protected_fixesize</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase> <phrase role="special">=</phrase> <phrase role="identifier">traits_type</phrase><phrase role="special">::</phrase><phrase role="identifier">default_size</phrase><phrase role="special">());</phrase>
@@ -2347,8 +2346,7 @@
 <programlisting><phrase role="preprocessor">#include</phrase> <phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">/</phrase><phrase role="identifier">context</phrase><phrase role="special">/</phrase><phrase role="identifier">fixedsize_stack</phrase><phrase role="special">.</phrase><phrase role="identifier">hpp</phrase><phrase role="special">&gt;</phrase>
 
 <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">traitsT</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">struct</phrase> <phrase role="identifier">basic_fixedsize_stack</phrase>
-<phrase role="special">{</phrase>
+<phrase role="keyword">struct</phrase> <phrase role="identifier">basic_fixedsize_stack</phrase> <phrase role="special">{</phrase>
     <phrase role="keyword">typedef</phrase> <phrase role="identifier">traitT</phrase>  <phrase role="identifier">traits_type</phrase><phrase role="special">;</phrase>
 
     <phrase role="identifier">basic_fixesize_stack</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">stack_size</phrase> <phrase role="special">=</phrase> <phrase role="identifier">traits_type</phrase><phrase role="special">::</phrase><phrase role="identifier">default_size</phrase><phrase role="special">(),</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">next_size</phrase> <phrase role="special">=</phrase> <phrase role="number">32</phrase><phrase role="special">,</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">max_size</phrase> <phrase role="special">=</phrase> <phrase role="number">0</phrase><phrase role="special">);</phrase>
@@ -2508,16 +2506,16 @@
           from version <emphasis role="bold">4.7</emphasis> <emphasis role="bold">clang</emphasis>
           from version <emphasis role="bold">3.4</emphasis> onwards. In order to
           use a __segmented_stack__ <emphasis role="bold">Boost.Context</emphasis>
-          must be built with <emphasis role="bold">toolset=gcc segmented-stacks=on</emphasis>
-          at b2/bjam command-line. Applications must be compiled with compiler-flags
-          <emphasis role="bold">-fsplit-stack -DBOOST_USE_SEGMENTED_STACKS</emphasis>.
+          must be built with property <code><phrase role="identifier">segmented</phrase><phrase
+          role="special">-</phrase><phrase role="identifier">stacks</phrase></code>,
+          e.g. <emphasis role="bold">toolset=gcc segmented-stacks=on</emphasis> at
+          b2/bjam command line.
         </para>
       </note>
 <programlisting><phrase role="preprocessor">#include</phrase> <phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">/</phrase><phrase role="identifier">context</phrase><phrase role="special">/</phrase><phrase role="identifier">segmented_stack</phrase><phrase role="special">.</phrase><phrase role="identifier">hpp</phrase><phrase role="special">&gt;</phrase>
 
 <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">traitsT</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">struct</phrase> <phrase role="identifier">basic_segmented_stack</phrase>
-<phrase role="special">{</phrase>
+<phrase role="keyword">struct</phrase> <phrase role="identifier">basic_segmented_stack</phrase> <phrase role="special">{</phrase>
     <phrase role="keyword">typedef</phrase> <phrase role="identifier">traitT</phrase>  <phrase role="identifier">traits_type</phrase><phrase role="special">;</phrase>
 
     <phrase role="identifier">basic_segmented_stack</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase> <phrase role="special">=</phrase> <phrase role="identifier">traits_type</phrase><phrase role="special">::</phrase><phrase role="identifier">default_size</phrase><phrase role="special">());</phrase>
@@ -2627,8 +2625,7 @@
       </para>
 <programlisting><phrase role="preprocessor">#include</phrase> <phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">/</phrase><phrase role="identifier">context</phrase><phrase role="special">/</phrase><phrase role="identifier">stack_traits</phrase><phrase role="special">.</phrase><phrase role="identifier">hpp</phrase><phrase role="special">&gt;</phrase>
 
-<phrase role="keyword">struct</phrase> <phrase role="identifier">stack_traits</phrase>
-<phrase role="special">{</phrase>
+<phrase role="keyword">struct</phrase> <phrase role="identifier">stack_traits</phrase> <phrase role="special">{</phrase>
     <phrase role="keyword">static</phrase> <phrase role="keyword">bool</phrase> <phrase role="identifier">is_unbounded</phrase><phrase role="special">()</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 
     <phrase role="keyword">static</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">page_size</phrase><phrase role="special">()</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
@@ -2792,8 +2789,7 @@
         a <emphasis>segmented_stack</emphasis>, <emphasis>stack_context</emphasis>
         contains some extra control structures.
       </para>
-<programlisting><phrase role="keyword">struct</phrase> <phrase role="identifier">stack_context</phrase>
-<phrase role="special">{</phrase>
+<programlisting><phrase role="keyword">struct</phrase> <phrase role="identifier">stack_context</phrase> <phrase role="special">{</phrase>
     <phrase role="keyword">void</phrase>    <phrase role="special">*</phrase>   <phrase role="identifier">sp</phrase><phrase role="special">;</phrase>
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">size</phrase><phrase role="special">;</phrase>
 
