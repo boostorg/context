@@ -115,7 +115,7 @@ end of each stack. The memory is managed internally by
         struct basic_pooled_fixedsize_stack {
             typedef traitT  traits_type;
 
-            basic_fixesize_stack(std::size_t stack_size = traits_type::default_size(), std::size_t next_size = 32, std::size_t max_size = 0);
+            basic_pooled_fixedsize_stack(std::size_t stack_size = traits_type::default_size(), std::size_t next_size = 32, std::size_t max_size = 0);
 
             stack_context allocate();
 
@@ -124,7 +124,7 @@ end of each stack. The memory is managed internally by
 
         typedef basic_pooled_fixedsize_stack< stack_traits > pooled_fixedsize_stack;
 
-[heading `basic_fixesize_stack(std::size_t stack_size, std::size_t next_size, std::size_t max_size)`]
+[heading `basic_pooled_fixedsize_stack(std::size_t stack_size, std::size_t next_size, std::size_t max_size)`]
 [variablelist
 [[Preconditions:] [`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= stack_size)`
 and `0 < nest_size`.]]
