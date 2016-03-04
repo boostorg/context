@@ -128,6 +128,7 @@
 [def __fcontext__ ['fcontext_t]]
 [def __ucontext__ ['ucontext_t]]
 [def __fixedsize__ ['fixedsize_stack]]
+[def __pooled_fixedsize__ ['pooled_fixedsize_stack]]
 [def __protected_fixedsize__ ['protected_fixedsize_stack]]
 [def __segmented__ ['segmented_stack]]
 [def __stack_context__ ['stack_context]]
