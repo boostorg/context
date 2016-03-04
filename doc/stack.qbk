@@ -105,7 +105,7 @@ the highest/lowest address of the stack.]]
 
 __boost_context__ provides the class __pooled_fixedsize__ which models
 the __stack_allocator_concept__.
-In contrast to __pooled_fixedsize__ it does not append a guard page at the
+In contrast to __protected_fixedsize__ it does not append a guard page at the
 end of each stack. The memory is managed internally by
 [@http://www.boost.org/doc/libs/release/libs/pool/doc/html/boost/pool.html `boost::pool<>`].
 

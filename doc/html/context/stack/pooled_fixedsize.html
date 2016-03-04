@@ -29,7 +29,7 @@
 <p>
         <span class="bold"><strong>Boost.Context</strong></span> provides the class <span class="emphasis"><em>pooled_fixedsize_stack</em></span>
         which models the <span class="emphasis"><em>stack-allocator concept</em></span>. In contrast
-        to <span class="emphasis"><em>pooled_fixedsize_stack</em></span> it does not append a guard
+        to <span class="emphasis"><em>protected_fixedsize_stack</em></span> it does not append a guard
         page at the end of each stack. The memory is managed internally by <a href="http://www.boost.org/doc/libs/release/libs/pool/doc/html/boost/pool.html" target="_top"><code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">pool</span><span class="special">&lt;&gt;</span></code></a>.
       </p>
 <pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">context</span><span class="special">/</span><span class="identifier">pooled_fixedsize_stack</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
