@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/03/04 17:01:19 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/03/04 17:27:33 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -2337,7 +2337,7 @@
       <para>
         <emphasis role="bold">Boost.Context</emphasis> provides the class <emphasis>pooled_fixedsize_stack</emphasis>
         which models the <emphasis>stack-allocator concept</emphasis>. In contrast
-        to <emphasis>pooled_fixedsize_stack</emphasis> it does not append a guard
+        to <emphasis>protected_fixedsize_stack</emphasis> it does not append a guard
         page at the end of each stack. The memory is managed internally by <ulink
         url="http://www.boost.org/doc/libs/release/libs/pool/doc/html/boost/pool.html"><code><phrase
         role="identifier">boost</phrase><phrase role="special">::</phrase><phrase
