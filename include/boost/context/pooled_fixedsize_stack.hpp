@@ -105,9 +105,6 @@ public:
 };
 
 typedef basic_pooled_fixedsize_stack< stack_traits >  pooled_fixedsize_stack;
-# if ! defined(BOOST_USE_SEGMENTED_STACKS)
-typedef pooled_fixedsize_stack default_stack;
-# endif
 
 }}
 
