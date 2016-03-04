@@ -6,6 +6,7 @@
 
 #include <boost/context/execution_context.hpp>
 #include <boost/context/fixedsize_stack.hpp>
+#include <boost/context/pooled_fixedsize_stack.hpp>
 #include <boost/context/protected_fixedsize_stack.hpp>
 #include <boost/context/segmented_stack.hpp>
 #include <boost/context/stack_context.hpp>
