@@ -50,7 +50,7 @@ void stacksize_limit_( rlimit * limit) BOOST_NOEXCEPT_OR_NOTHROW {
 std::size_t pagesize() BOOST_NOEXCEPT_OR_NOTHROW {
     static std::size_t size = 0;
 #if defined(BOOST_NO_CXX11_HDR_MUTEX)
-    static boost::once_flag flag;
+    static boost::once_flag flag = BOOST_ONCE_INIT;
     boost::call_once( flag, pagesize_, & size);
 #else
     static std::once_flag flag;
@@ -62,7 +62,7 @@ std::size_t pagesize() BOOST_NOEXCEPT_OR_NOTHROW {
 rlimit stacksize_limit() BOOST_NOEXCEPT_OR_NOTHROW {
     static rlimit limit;
 #if defined(BOOST_NO_CXX11_HDR_MUTEX)
-    static boost::once_flag flag;
+    static boost::once_flag flag = BOOST_ONCE_INIT;
     boost::call_once( flag, stacksize_limit_, & limit);
 #else
     static std::once_flag flag;
