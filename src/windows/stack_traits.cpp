@@ -55,7 +55,7 @@ void system_info_( SYSTEM_INFO * si) BOOST_NOEXCEPT_OR_NOTHROW {
 SYSTEM_INFO system_info() BOOST_NOEXCEPT_OR_NOTHROW {
     static SYSTEM_INFO si;
 #if defined(BOOST_NO_CXX11_HDR_MUTEX)
-    static boost::once_flag flag;
+    static boost::once_flag flag = BOOST_ONCE_INIT;
     boost::call_once( flag, static_cast< void(*)( SYSTEM_INFO *) >( system_info_), & si);
 #else
     static std::once_flag flag;
