@@ -27,7 +27,7 @@ public:
     X():
         excptr_(),
         ctx_(
-             [=](ctx::execution_context<variant_t> ctx, variant_t data){
+             [this](ctx::execution_context<variant_t> ctx, variant_t data){
                 try {
                     for (;;) {
                         int i = boost::get<int>(data);

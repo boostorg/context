@@ -895,8 +895,10 @@ alias asm_context_sources
 
 explicit asm_context_sources ;
 
+obj cxx11_hdr_mutex_check : ../build/cxx11_hdr_mutex.cpp ;
+explicit cxx11_hdr_mutex_check ;
 local cxx11_mutex = [ check-target-builds
-      ../../config/checks//cxx11_hdr_mutex "C++11 mutex"
+      cxx11_hdr_mutex_check "C++11 mutex"
     :
     : <library>/boost/thread//boost_thread
   ] ;
