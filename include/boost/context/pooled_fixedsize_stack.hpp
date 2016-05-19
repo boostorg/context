@@ -54,7 +54,7 @@ private:
             if ( ! vp) {
                 throw std::bad_alloc();
             }
-            std::memset( vp, 0, size_);
+            std::memset( vp, 0, stack_size_);
             stack_context sctx;
             sctx.size = stack_size_;
             sctx.sp = static_cast< char * >( vp) + sctx.size;
