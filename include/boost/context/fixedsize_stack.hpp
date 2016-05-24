@@ -9,7 +9,6 @@
 
 #include <cstddef>
 #include <cstdlib>
-#include <cstring>
 #include <new>
 
 #include <boost/assert.hpp>
@@ -49,9 +48,6 @@ public:
         if ( ! vp) {
             throw std::bad_alloc();
         }
-#ifdef BOOST_WINDOWS
-        std::memset( vp, 0, size_);
-#endif
         stack_context sctx;
         sctx.size = size_;
         sctx.sp = static_cast< char * >( vp) + sctx.size;

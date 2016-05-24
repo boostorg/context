@@ -10,7 +10,6 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdlib>
-#include <cstring>
 #include <new>
 
 #include <boost/assert.hpp>
@@ -54,9 +53,6 @@ private:
             if ( ! vp) {
                 throw std::bad_alloc();
             }
-#ifdef BOOST_WINDOWS
-            std::memset( vp, 0, stack_size_);
-#endif
             stack_context sctx;
             sctx.size = stack_size_;
             sctx.sp = static_cast< char * >( vp) + sctx.size;

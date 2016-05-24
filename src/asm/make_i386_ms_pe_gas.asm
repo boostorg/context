@@ -59,6 +59,9 @@ _make_fcontext:
     movl  %ecx, 0x8(%eax)
     /* save bottom address of context-stack as 'dealloction stack' */
     movl  %ecx, 0x4(%eax)
+	/* set fiber-storage to zero */
+	xorl  %ecx, %ecx
+    movl  %ecx, (%eax)
 
     /* third arg of make_fcontext() == address of context-function */
     /* stored in EBX */
