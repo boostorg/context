@@ -45,8 +45,9 @@ public:
 
     stack_context allocate() {
         void * vp = std::malloc( size_);
-        if ( ! vp) throw std::bad_alloc();
-
+        if ( ! vp) {
+            throw std::bad_alloc();
+        }
         stack_context sctx;
         sctx.size = size_;
         sctx.sp = static_cast< char * >( vp) + sctx.size;

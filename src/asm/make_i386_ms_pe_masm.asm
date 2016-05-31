@@ -56,6 +56,9 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT
     mov  [eax+08h], ecx
     ; save bottom address of context-stack as 'dealloction stack'
     mov  [eax+04h], ecx
+	; set fiber-storage to zero
+	xor  ecx, ecx
+    mov  [eax], ecx
 
     ; third arg of make_fcontext() == address of context-function
     ; stored in EBX

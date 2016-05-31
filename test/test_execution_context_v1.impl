@@ -195,6 +195,47 @@ void test_ontop_exception() {
     BOOST_CHECK_EQUAL( std::string( what), value2);
 }
 
+#ifdef BOOST_WINDOWS
+void test_windows_nulled_stack {
+    {
+        ctx::execution_context ectx(
+            std::allocator_arg, ctx::fixedsize_stack(),
+            [](void * vp) {
+                ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
+                char buffer[MAX_PATH];
+                GetModuleFileName( nullptr, buffer, MAX_PATH);
+                ( * mctx)();
+            });
+        boost::context::execution_context ctx( boost::context::execution_context::current() );
+        ectx( & ctx);
+    }
+    {
+        ctx::execution_context ectx(
+            std::allocator_arg, ctx::protected_fixedsize_stack(),
+            [](void * vp) {
+                ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
+                char buffer[MAX_PATH];
+                GetModuleFileName( nullptr, buffer, MAX_PATH);
+                ( * mctx)();
+            });
+        boost::context::execution_context ctx( boost::context::execution_context::current() );
+        ectx( & ctx);
+    }
+    {
+        ctx::execution_context ectx(
+            std::allocator_arg, ctx::pooled_fixedsize_stack(),
+            [](void * vp) {
+                ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
+                char buffer[MAX_PATH];
+                GetModuleFileName( nullptr, buffer, MAX_PATH);
+                ( * mctx)();
+            });
+        boost::context::execution_context ctx( boost::context::execution_context::current() );
+        ectx( & ctx);
+    }
+}
+#endif
+
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
@@ -209,6 +250,9 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_prealloc) );
     test->add( BOOST_TEST_CASE( & test_ontop) );
     test->add( BOOST_TEST_CASE( & test_ontop_exception) );
+#ifdef BOOST_WINDOWS
+    test->add( BOOST_TEST_CASE( & test_windows_nulled_stack) );
+#endif
 
     return test;
 }

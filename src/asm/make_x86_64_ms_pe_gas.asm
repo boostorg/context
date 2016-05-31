@@ -88,6 +88,9 @@ make_fcontext:
     movq  %rcx, 0x10(%rax)
     /* save address of context stack limit as 'dealloction stack' */
     movq  %rcx, 0x8(%rax)
+	/* set fiber-storage to zero */
+    xorq  %rcx, %rcx
+    movq  %rcx, (%rax)
 
     /* compute address of transport_t */
     leaq  0x98(%rax), %rcx

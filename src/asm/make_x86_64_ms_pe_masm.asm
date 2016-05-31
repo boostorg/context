@@ -82,6 +82,9 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     mov  [rax+010h], rcx
     ; save address of context stack limit as 'dealloction stack'
     mov  [rax+08h], rcx
+	; set fiber-storage to zero
+	xor  rcx, rcx
+    mov  [rax], rcx
 
     ; compute address of transport_t
     lea rcx, [rax+098h]
