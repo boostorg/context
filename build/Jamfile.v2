@@ -764,6 +764,17 @@ alias asm_context_sources
      <binary-format>mach-o
      <toolset>darwin
    ;
+   
+alias asm_context_sources
+   : asm/make_x86_64_sysv_macho_gas.S
+     asm/jump_x86_64_sysv_macho_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>x86
+     <binary-format>mach-o
+     <toolset>intel
+   ;
+
 # X86_64/MS/PE
 alias asm_context_sources
    : [ make asm/make_x86_64_ms_pe_masm.o : asm/make_x86_64_ms_pe_masm.asm : @masm64 ]
