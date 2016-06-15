@@ -31,3 +31,6 @@ boostbook context
         # Absolute path for images:
         <format>pdf:<xsl:param>img.src.path=$(here)/html/
     ;
+
+alias boostdoc : context
+    : : : <implicit-dependency>context ;
