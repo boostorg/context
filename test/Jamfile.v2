@@ -26,7 +26,8 @@ project boost/context/test
       <threading>multi
     ;
 
-run test_invoke.cpp :
+test-suite minimal :
+[ run test_invoke.cpp :
     : :
     [ requires cxx11_auto_declarations
                cxx11_constexpr
@@ -38,9 +39,9 @@ run test_invoke.cpp :
                cxx11_nullptr
                cxx11_rvalue_references
                cxx11_template_aliases
-               cxx11_variadic_templates ] ;
+               cxx11_variadic_templates ] ]
 
-run test_apply.cpp :
+[ run test_apply.cpp :
     : :
     [ requires cxx11_auto_declarations
                cxx11_constexpr
@@ -52,9 +53,9 @@ run test_apply.cpp :
                cxx11_nullptr
                cxx11_rvalue_references
                cxx11_template_aliases
-               cxx11_variadic_templates ] ;
+               cxx11_variadic_templates ] ]
 
-run test_execution_context.cpp :
+[ run test_execution_context.cpp :
     : :
     [ requires cxx11_auto_declarations
                cxx11_constexpr
@@ -66,4 +67,12 @@ run test_execution_context.cpp :
                cxx11_nullptr
                cxx11_rvalue_references
                cxx11_template_aliases
-               cxx11_variadic_templates ] ;
+               cxx11_variadic_templates ] ] ;
+
+test-suite full :
+    minimal ;
+
+test-suite extra ;
+
+explicit minimal ;
+explicit extra ;
