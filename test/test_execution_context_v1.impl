@@ -25,6 +25,17 @@ int value1 = 0;
 std::string value2;
 double value3 = 0.;
 
+#ifdef BOOST_WINDOWS
+void seh( bool & catched) {
+    __try {
+        int i = 1;
+        i /= 0;
+    } __except( EXCEPTION_EXECUTE_HANDLER) {
+        catched = true;
+    }
+}
+#endif
+
 void fn1( void * vp) {
     value1 = 3;
     ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
@@ -118,11 +129,26 @@ void test_memfn() {
 }
 
 void test_exception() {
-    const char * what = "hello world";
-    ctx::execution_context ectx( fn3, what);
-    boost::context::execution_context ctx( boost::context::execution_context::current() );
-    ectx( & ctx);
-    BOOST_CHECK_EQUAL( std::string( what), value2);
+    {
+        const char * what = "hello world";
+        ctx::execution_context ectx( fn3, what);
+        boost::context::execution_context ctx( boost::context::execution_context::current() );
+        ectx( & ctx);
+        BOOST_CHECK_EQUAL( std::string( what), value2);
+    }
+#ifdef BOOST_WINDOWS
+    {
+        bool catched = false;
+        ctx::execution_context ectx([&catched]( void * vp){
+            ctx::execution_context * mctx = static_cast< ctx::execution_context * >( vp);
+            seh( catched);
+            ( * mctx)();
+	});
+        boost::context::execution_context ctx( boost::context::execution_context::current() );
+        ectx( & ctx);
+        BOOST_CHECK( catched);
+    }
+#endif
 }
 
 void test_fp() {

@@ -97,6 +97,17 @@ struct my_exception : public std::runtime_error {
     }
 };
 
+#ifdef BOOST_WINDOWS
+void seh( bool & catched) {
+    __try {
+        int i = 1;
+        i /= 0;
+    } __except( EXCEPTION_EXECUTE_HANDLER) {
+        catched = true;
+    }
+}
+#endif
+
 ctx::execution_context< void > fn1( int i, ctx::execution_context< void > ctx) {
     value1 = i;
     return ctx;
@@ -226,12 +237,26 @@ void test_memfn() {
 }
 
 void test_exception() {
-    const char * what = "hello world";
-    ctx::execution_context< void > ctx( fn2, what);
-    BOOST_CHECK( ctx);
-    ctx();
-    BOOST_CHECK_EQUAL( std::string( what), value2);
-    BOOST_CHECK( ! ctx);
+    {
+        const char * what = "hello world";
+        ctx::execution_context< void > ctx( fn2, what);
+        BOOST_CHECK( ctx);
+        ctx();
+        BOOST_CHECK_EQUAL( std::string( what), value2);
+        BOOST_CHECK( ! ctx);
+    }
+#ifdef BOOST_WINDOWS
+    {
+        bool catched = false;
+        ctx::execution_context< void > ctx([&catched](ctx::execution_context< void > ctx){
+            seh( catched);
+            return ctx;
+	});
+        BOOST_CHECK( ctx);
+        ctx();
+        BOOST_CHECK( catched);
+    }
+#endif
 }
 
 void test_fp() {
