@@ -486,7 +486,7 @@ void test_variant() {
 }
 
 #ifdef BOOST_WINDOWS
-void test_test_bug12215() {
+void test_bug12215() {
         ctx::execution_context< void > ctx(
             [](ctx::execution_context< void > ctx) {
                 char buffer[MAX_PATH];
