@@ -483,37 +483,15 @@ void test_variant() {
 }
 
 #ifdef BOOST_WINDOWS
-void test_windows_nulled_stack() {
-    {
+void test_test_bug12215() {
         ctx::execution_context< void > ctx(
-            std::allocator_arg, ctx::fixedsize_stack(),
             [](ctx::execution_context< void > ctx) {
                 char buffer[MAX_PATH];
                 GetModuleFileName( nullptr, buffer, MAX_PATH);
                 return ctx;
             });
         ctx();
-    }
-    {
-        ctx::execution_context< void > ctx(
-            std::allocator_arg, ctx::protected_fixedsize_stack(),
-            [](ctx::execution_context< void > ctx) {
-                char buffer[MAX_PATH];
-                GetModuleFileName( nullptr, buffer, MAX_PATH);
-                return ctx;
-            });
-        ctx();
-    }
-    {
-        ctx::execution_context< void > ctx(
-            std::allocator_arg, ctx::pooled_fixedsize_stack(),
-            [](ctx::execution_context< void > ctx) {
-                char buffer[MAX_PATH];
-                GetModuleFileName( nullptr, buffer, MAX_PATH);
-                return ctx;
-            });
-        ctx();
-    }
+
 }
 #endif
 
@@ -536,7 +514,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_two_args) );
     test->add( BOOST_TEST_CASE( & test_variant) );
 #ifdef BOOST_WINDOWS
-    test->add( BOOST_TEST_CASE( & test_windows_nulled_stack) );
+    test->add( BOOST_TEST_CASE( & test_bug12215) );
 #endif
 
     return test;
