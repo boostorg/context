@@ -9,6 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
 
 #include <boost/array.hpp>
@@ -96,6 +97,17 @@ struct my_exception : public std::runtime_error {
         ctx( std::forward< ctx::execution_context< void > >( ctx_) ) {
     }
 };
+
+#ifdef BOOST_WINDOWS
+void seh( bool & catched) {
+    __try {
+        int i = 1;
+        i /= 0;
+    } __except( EXCEPTION_EXECUTE_HANDLER) {
+        catched = true;
+    }
+}
+#endif
 
 ctx::execution_context< void > fn1( int i, ctx::execution_context< void > ctx) {
     value1 = i;
@@ -226,12 +238,28 @@ void test_memfn() {
 }
 
 void test_exception() {
-    const char * what = "hello world";
-    ctx::execution_context< void > ctx( fn2, what);
-    BOOST_CHECK( ctx);
-    ctx();
-    BOOST_CHECK_EQUAL( std::string( what), value2);
-    BOOST_CHECK( ! ctx);
+    {
+        const char * what = "hello world";
+        ctx::execution_context< void > ctx( fn2, what);
+        BOOST_CHECK( ctx);
+        ctx();
+        BOOST_CHECK_EQUAL( std::string( what), value2);
+        BOOST_CHECK( ! ctx);
+    }
+#ifdef BOOST_WINDOWS
+    {
+        bool catched = false;
+	std::thread([&catched](){
+            ctx::execution_context< void > ctx([&catched](ctx::execution_context< void > ctx){
+                seh( catched);
+                return ctx;
+	    });
+            BOOST_CHECK( ctx);
+            ctx();
+        }).join();
+        BOOST_CHECK( catched);
+    }
+#endif
 }
 
 void test_fp() {
@@ -458,37 +486,15 @@ void test_variant() {
 }
 
 #ifdef BOOST_WINDOWS
-void test_windows_nulled_stack() {
-    {
+void test_bug12215() {
         ctx::execution_context< void > ctx(
-            std::allocator_arg, ctx::fixedsize_stack(),
             [](ctx::execution_context< void > ctx) {
                 char buffer[MAX_PATH];
                 GetModuleFileName( nullptr, buffer, MAX_PATH);
                 return ctx;
             });
         ctx();
-    }
-    {
-        ctx::execution_context< void > ctx(
-            std::allocator_arg, ctx::protected_fixedsize_stack(),
-            [](ctx::execution_context< void > ctx) {
-                char buffer[MAX_PATH];
-                GetModuleFileName( nullptr, buffer, MAX_PATH);
-                return ctx;
-            });
-        ctx();
-    }
-    {
-        ctx::execution_context< void > ctx(
-            std::allocator_arg, ctx::pooled_fixedsize_stack(),
-            [](ctx::execution_context< void > ctx) {
-                char buffer[MAX_PATH];
-                GetModuleFileName( nullptr, buffer, MAX_PATH);
-                return ctx;
-            });
-        ctx();
-    }
+
 }
 #endif
 
@@ -511,7 +517,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_two_args) );
     test->add( BOOST_TEST_CASE( & test_variant) );
 #ifdef BOOST_WINDOWS
-    test->add( BOOST_TEST_CASE( & test_windows_nulled_stack) );
+    test->add( BOOST_TEST_CASE( & test_bug12215) );
 #endif
 
     return test;
