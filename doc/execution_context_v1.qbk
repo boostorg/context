@@ -147,6 +147,7 @@ If the code executed by __econtext__ emits an exception, the application is
 terminated. ['std::exception_ptr] can be used to transfer exceptions between
 different execution contexts.
 
+[heading stack unwinding]
 Sometimes it is necessary to unwind the stack of an unfinished context to
 destroy local stack variables so they can release allocated resources (RAII
 pattern). The user is responsible for this task.

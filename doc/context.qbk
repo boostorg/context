@@ -126,6 +126,7 @@
 [def __ecv1__ [link ecv1 ['execution_context] (v1)]]
 [def __ecv2__ [link ecv2 ['execution_context] (v2)]]
 [def __fcontext__ ['fcontext_t]]
+[def __forced_unwind__ ['detail::forced_unwind]]
 [def __ucontext__ ['ucontext_t]]
 [def __fixedsize__ ['fixedsize_stack]]
 [def __pooled_fixedsize__ ['pooled_fixedsize_stack]]

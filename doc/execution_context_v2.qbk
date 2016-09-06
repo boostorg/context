@@ -297,12 +297,17 @@ exception.
 In this example `f2()` is used to interrupt the `for`-loop in `f1()`.
 
 
-[heading Stack destruction]
+[heading stack unwinding]
 On construction of __econtext__ a stack is allocated.
 If the __context_fn__ returns the stack will be destructed.
 If the __context_fn__ has not yet returned and the destructor of an valid
 __econtext__ instance (e.g. ['execution_context::operator bool()] returns
 `true`) is called, the stack will be destructed too.
+
+[important Code executed by __context_fn__ must not prevent the propagation of the
+__forced_unwind__ exception.  Absorbing that exception will cause stack
+unwinding to fail.  Thus, any code that catches all exceptions must re-throw any
+pending __forced_unwind__ exception.]
 
 
 [#ecv2_prealloc]
