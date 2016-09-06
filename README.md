@@ -18,3 +18,4 @@ A context switch between threads requires system calls (involving the OS kernel)
 thousand CPU cycles on x86 CPUs. By contrast, transferring control among them requires only fewer than 
 hundred CPU cycles because it does not involve system calls as it is done within a single thread.
 
+boost.fiber requires C++11!
