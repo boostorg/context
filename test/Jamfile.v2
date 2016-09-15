@@ -39,6 +39,7 @@ test-suite minimal :
                cxx11_nullptr
                cxx11_rvalue_references
                cxx11_template_aliases
+               cxx11_thread_local
                cxx11_variadic_templates ] ]
 
 [ run test_apply.cpp :
@@ -53,6 +54,7 @@ test-suite minimal :
                cxx11_nullptr
                cxx11_rvalue_references
                cxx11_template_aliases
+               cxx11_thread_local
                cxx11_variadic_templates ] ]
 
 [ run test_execution_context.cpp :
@@ -67,6 +69,7 @@ test-suite minimal :
                cxx11_nullptr
                cxx11_rvalue_references
                cxx11_template_aliases
+               cxx11_thread_local
                cxx11_variadic_templates ] ] ;
 
 test-suite full :
