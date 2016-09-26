@@ -246,7 +246,7 @@ void test_exception() {
         BOOST_CHECK_EQUAL( std::string( what), value2);
         BOOST_CHECK( ! ctx);
     }
-#ifdef BOOST_WINDOWS
+#ifdef BOOST_MSVC
     {
         bool catched = false;
 	std::thread([&catched](){
