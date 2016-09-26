@@ -98,7 +98,7 @@ struct my_exception : public std::runtime_error {
     }
 };
 
-#ifdef BOOST_WINDOWS
+#ifdef BOOST_MSVC
 void seh( bool & catched) {
     __try {
         int i = 1;
