@@ -126,7 +126,8 @@ one context, is returned by __ec_op__ in the other context.
 
     boost::context::execution_context<int> ctx1([](boost::context::execution_context<int> ctx2, int j){
                 std::printf("inside ctx1, j == %d\n", j);
-                return ctx2(j+1);
+                std::tie(ctx2, j) = ctx2(j+1);
+                return ctx2;
             });
     int i = 1;
     std::tie(ctx1, i) = ctx1(i);
@@ -146,7 +147,8 @@ context-function is simply extended.
 
     boost::context::execution_context<int,int> ctx1([](boost::context::execution_context<int,int> ctx2, int i, int j){
                 std::printf("inside ctx1, i == %d j == %d\n", i, j);
-                return ctx2(i+j,i-j);
+                std::tie(ctx2, i, j) = ctx2(i+j,i-j);
+                return ctx2;
             });
     int i = 2, j = 1;
     std::tie(ctx1, i, j) = ctx1(i,j);
