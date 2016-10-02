@@ -29,9 +29,9 @@ namespace detail {
 template< typename Fn, typename Tpl, std::size_t ... I >
 auto
 apply_impl( Fn && fn, Tpl && tpl, index_sequence< I ... >) 
-    -> decltype( invoke( std::forward< Fn >( fn), std::get< I >( std::forward< Tpl >( tpl) ) ... ) )
+    -> decltype( boost::context::detail::invoke( std::forward< Fn >( fn), std::get< I >( std::forward< Tpl >( tpl) ) ... ) )
 {
-    return invoke( std::forward< Fn >( fn), std::get< I >( std::forward< Tpl >( tpl) ) ... );
+    return boost::context::detail::invoke( std::forward< Fn >( fn), std::get< I >( std::forward< Tpl >( tpl) ) ... );
 }
 
 template< typename Fn, typename Tpl >
