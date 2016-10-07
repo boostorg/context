@@ -31,9 +31,9 @@ std::string value2;
 double value3 = 0.;
 
 struct X {
-    ctx::execution_context< void > foo( int i, ctx::execution_context< void > ctx) {
+    ctx::execution_context< void > foo( int i, ctx::execution_context< void > && ctx) {
         value1 = i;
-        return ctx;
+        return std::move( ctx);
     }
 };
 
@@ -109,39 +109,39 @@ void seh( bool & catched) {
 }
 #endif
 
-ctx::execution_context< void > fn1( int i, ctx::execution_context< void > ctx) {
+ctx::execution_context< void > fn1( int i, ctx::execution_context< void > && ctx) {
     value1 = i;
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< void > fn2( const char * what, ctx::execution_context< void > ctx) {
+ctx::execution_context< void > fn2( const char * what, ctx::execution_context< void > && ctx) {
     try {
         throw std::runtime_error( what);
     } catch ( std::runtime_error const& e) {
         value2 = e.what();
     }
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< void > fn3( double d, ctx::execution_context< void > ctx) {
+ctx::execution_context< void > fn3( double d, ctx::execution_context< void > && ctx) {
     d += 3.45;
     value3 = d;
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< void > fn5( ctx::execution_context< void > ctx) {
+ctx::execution_context< void > fn5( ctx::execution_context< void > && ctx) {
     value1 = 3;
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< void > fn4( ctx::execution_context< void > ctx) {
-    ctx::execution_context< void > ctx1( fn5);
+ctx::execution_context< void > fn4( ctx::execution_context< void > && ctx) {
+    ctx::execution_context< void > && ctx1( fn5);
     ctx1();
     value3 = 3.14;
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< void > fn6( ctx::execution_context< void > ctx) {
+ctx::execution_context< void > fn6( ctx::execution_context< void > && ctx) {
     try {
         value1 = 3;
         ctx = ctx();
@@ -151,63 +151,63 @@ ctx::execution_context< void > fn6( ctx::execution_context< void > ctx) {
         value2 = e.what();
         ctx = std::move( e.ctx);
     }
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< void > fn7( ctx::execution_context< void > ctx) {
+ctx::execution_context< void > fn7( ctx::execution_context< void > && ctx) {
     Y y;
     return ctx();
 }
 
-ctx::execution_context< int > fn8( ctx::execution_context< int > ctx, int i) {
+ctx::execution_context< int > fn8( ctx::execution_context< int > && ctx, int i) {
     value1 = i;
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< int > fn9( ctx::execution_context< int > ctx, int i) {
+ctx::execution_context< int > fn9( ctx::execution_context< int > && ctx, int i) {
     value1 = i;
     std::tie( ctx, i) = ctx( i);
     value1 = i;
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< int & > fn10( ctx::execution_context< int & > ctx, int & i) {
+ctx::execution_context< int & > fn10( ctx::execution_context< int & > && ctx, int & i) {
     std::tie( ctx, i) = ctx( i);
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< moveable > fn11( ctx::execution_context< moveable > ctx, moveable m) {
+ctx::execution_context< moveable > fn11( ctx::execution_context< moveable > && ctx, moveable m) {
     std::tie( ctx, m) = ctx( std::move( m) );
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< int, std::string > fn12( ctx::execution_context< int, std::string > ctx, int i, std::string str) {
+ctx::execution_context< int, std::string > fn12( ctx::execution_context< int, std::string > && ctx, int i, std::string str) {
     std::tie( ctx, i, str) = ctx( i, str);
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< int, moveable > fn13( ctx::execution_context< int, moveable > ctx, int i, moveable m) {
+ctx::execution_context< int, moveable > fn13( ctx::execution_context< int, moveable > && ctx, int i, moveable m) {
     std::tie( ctx, i, m) = ctx( i, std::move( m) );
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< variant_t > fn14( ctx::execution_context< variant_t > ctx, variant_t data) {
+ctx::execution_context< variant_t > fn14( ctx::execution_context< variant_t > && ctx, variant_t data) {
     int i = boost::get< int >( data);
     data = boost::lexical_cast< std::string >( i);
     std::tie( ctx, data) = ctx( data);
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< Y * > fn15( ctx::execution_context< Y * > ctx, Y * py) {
+ctx::execution_context< Y * > fn15( ctx::execution_context< Y * > && ctx, Y * py) {
     ctx( py);
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< int > fn16( ctx::execution_context< int > ctx, int i) {
+ctx::execution_context< int > fn16( ctx::execution_context< int > && ctx, int i) {
     value1 = i;
     std::tie( ctx, i) = ctx( i);
     value1 = i;
-    return ctx;
+    return std::move( ctx);
 }
 
 
@@ -250,9 +250,9 @@ void test_exception() {
     {
         bool catched = false;
 	std::thread([&catched](){
-            ctx::execution_context< void > ctx([&catched](ctx::execution_context< void > ctx){
+            ctx::execution_context< void > ctx([&catched](ctx::execution_context< void > && ctx){
                 seh( catched);
-                return ctx;
+                return std::move( ctx);
 	    });
             BOOST_CHECK( ctx);
             ctx();
@@ -360,9 +360,9 @@ void test_ontop_exception() {
     BOOST_CHECK_EQUAL( 3, value1);
     const char * what = "hello world";
     ctx( ctx::exec_ontop_arg,
-         [what](ctx::execution_context< void > ctx){
+         [what](ctx::execution_context< void > && ctx){
             throw my_exception( what, std::move( ctx) );
-            return ctx;
+            return std::move( ctx);
          });
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK_EQUAL( std::string( what), value2);
@@ -488,10 +488,10 @@ void test_variant() {
 #ifdef BOOST_WINDOWS
 void test_bug12215() {
         ctx::execution_context< void > ctx(
-            [](ctx::execution_context< void > ctx) {
+            [](ctx::execution_context< void > && ctx) {
                 char buffer[MAX_PATH];
                 GetModuleFileName( nullptr, buffer, MAX_PATH);
-                return ctx;
+                return std::move( ctx);
             });
         ctx();
 

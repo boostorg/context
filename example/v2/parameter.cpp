@@ -27,7 +27,7 @@ public:
     X():
         excptr_(),
         ctx_(
-             [this](ctx::execution_context<variant_t> ctx, variant_t data){
+             [this](ctx::execution_context<variant_t> && ctx, variant_t data){
                 try {
                     for (;;) {
                         int i = boost::get<int>(data);
@@ -39,7 +39,7 @@ public:
                 } catch ( std::bad_cast const&) {
                     excptr_=std::current_exception();
                 }
-                return ctx;
+                return std::move( ctx);
              })
     {}
 

@@ -12,18 +12,18 @@
 
 namespace ctx = boost::context;
 
-ctx::execution_context< void > f1( ctx::execution_context< void > ctx) {
+ctx::execution_context< void > f1( ctx::execution_context< void > && ctx) {
     std::cout << "f1: entered first time"  << std::endl;
     ctx = ctx();
     std::cout << "f1: entered second time" << std::endl;
     ctx = ctx();
     std::cout << "f1: entered third time" << std::endl;
-    return ctx;
+    return std::move( ctx);
 }
 
-ctx::execution_context< void > f2( ctx::execution_context< void > ctx) {
+ctx::execution_context< void > f2( ctx::execution_context< void > && ctx) {
     std::cout << "f2: entered" << std::endl;
-    return ctx;
+    return std::move( ctx);
 }
 
 int main() {

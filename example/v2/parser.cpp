@@ -97,7 +97,7 @@ int main() {
 
         // execute parser in new execution context
         boost::context::execution_context<char> source(
-                [&is,&done,&except](ctx::execution_context<char> sink,char){
+                [&is,&done,&except](ctx::execution_context<char> && sink,char){
                 // create parser with callback function
                 Parser p( is,
                           [&sink](char ch){
@@ -115,7 +115,7 @@ int main() {
                     // set termination flag
                     done=true;
                     // resume main execution context
-                    return sink;
+                    return std::move( sink);
                 });
 
         // user-code pulls parsed data from parser

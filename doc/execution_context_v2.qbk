@@ -59,7 +59,7 @@ passed/returned arguments.
 
         int n=35;
         ctx::execution_context<int> source(
-            [n](ctx::execution_context<int> sink, int) mutable {
+            [n](ctx::execution_context<int> && sink, int) mutable {
                 int a=0;
                 int b=1;
                 while(n-->0){
@@ -69,7 +69,7 @@ passed/returned arguments.
                     a=b;
                     b=next;
                 }
-                return sink;
+                return std::move(sink);
             });
         for(int i=0;i<10;++i){
             auto result=source(i);
@@ -104,7 +104,7 @@ and the stack is exchanged by each context switch.
 With `execution_context<void>` no data will be transferred, only the context
 switch is executed.
 
-    boost::context::execution_context<void> ctx1([](boost::context::execution_context<void> ctx2){
+    boost::context::execution_context<void> ctx1([](boost::context::execution_context<void> && ctx2){
                 std::printf("inside ctx1\n");
                 return ctx2();
             });
@@ -124,10 +124,10 @@ arguments of the __context_fn__ if the context is started for the first time.
 In all following invocations of __ec_op__ the arguments passed to __ec_op__, in
 one context, is returned by __ec_op__ in the other context.
 
-    boost::context::execution_context<int> ctx1([](boost::context::execution_context<int> ctx2, int j){
+    boost::context::execution_context<int> ctx1([](boost::context::execution_context<int> && ctx2, int j){
                 std::printf("inside ctx1, j == %d\n", j);
                 std::tie(ctx2, j) = ctx2(j+1);
-                return ctx2;
+                return std::move(ctx2);
             });
     int i = 1;
     std::tie(ctx1, i) = ctx1(i);
@@ -145,10 +145,10 @@ value of `j+1`.
 If more than one argument has to be transferred, the signature of the
 context-function is simply extended.
 
-    boost::context::execution_context<int,int> ctx1([](boost::context::execution_context<int,int> ctx2, int i, int j){
+    boost::context::execution_context<int,int> ctx1([](boost::context::execution_context<int,int> && ctx2, int i, int j){
                 std::printf("inside ctx1, i == %d j == %d\n", i, j);
                 std::tie(ctx2, i, j) = ctx2(i+j,i-j);
-                return ctx2;
+                return std::move(ctx2);
             });
     int i = 2, j = 1;
     std::tie(ctx1, i, j) = ctx1(i,j);
@@ -170,7 +170,7 @@ direction, ['boost::variant<>] could be used.
             X():
                 excptr_(),
                 ctx_(
-                     [=](boost::context::execution_context<boost::variant<int,std::string>> ctx, boost::variant<int,std::string> data){
+                     [=](boost::context::execution_context<boost::variant<int,std::string>> && ctx, boost::variant<int,std::string> data){
                         try {
                             for (;;) {
                                 int i = boost::get<int>(data);
@@ -181,7 +181,7 @@ direction, ['boost::variant<>] could be used.
                         } catch (std::bad_cast const&) {
                             excptr_=std::current_exception();
                         }
-                        return ctx;
+                        return std::move( ctx);
                      })
             {}
 
@@ -222,16 +222,16 @@ For this purpose __ec_op__ with first argument `exec_ontop_arg` has to be used.
 The function passed as argument must return a tuple of execution_context and
 arguments.
 
-    boost::context::execution_context<int> f1(boost::context::execution_context<int> ctx,int data) {
+    boost::context::execution_context<int> f1(boost::context::execution_context<int> && ctx,int data) {
         std::cout << "f1: entered first time: " << data  << std::endl;
         std::tie(ctx,data) = ctx(data+1);
         std::cout << "f1: entered second time: " << data  << std::endl;
         std::tie(ctx,data) = ctx(data+1);
         std::cout << "f1: entered third time: " << data << std::endl;
-        return ctx;
+        return std::move(ctx);
     }
 
-    std::tuple<boost::context::execution_context<int>,int> f2(boost::context::execution_context<int> ctx,int data) {
+    std::tuple<boost::context::execution_context<int>,int> f2(boost::context::execution_context<int> && ctx,int data) {
         std::cout << "f2: entered: " << data << std::endl;
         return std::make_tuple(std::move(ctx),-1);
     }
@@ -268,7 +268,7 @@ exception.
         }
     };
 
-    boost::context::execution_context<void> f1(boost::context::execution_context<void> ctx) {
+    boost::context::execution_context<void> f1(boost::context::execution_context<void> && ctx) {
         try {
             for (;;) {
                 std::cout << "f1()" << std::endl;
@@ -278,12 +278,12 @@ exception.
             std::cout << "f1(): interrupted" << std::endl;
             ctx = std::move( e.ctx);
         }
-        return ctx;
+        return std::move(ctx);
     }
 
-    boost::context::execution_context<void> f2(boost::context::execution_context<void> ctx) {
+    boost::context::execution_context<void> f2(boost::context::execution_context<void> && ctx) {
         throw interrupt(std::move(ctx));
-        return ctx;
+        return std::move(ctx);
     }
 
     boost::context::execution_context< void > ctx(f1);
@@ -365,7 +365,7 @@ of the stack.]
 
         // execute parser in new execution context
         boost::context::execution_context<char> source(
-                [&is,&done,&except](ctx::execution_context<char> sink,char){
+                [&is,&done,&except](ctx::execution_context<char> && sink,char){
                 // create parser with callback function
                 Parser p( is,
                           [&sink](char ch){
@@ -383,7 +383,7 @@ of the stack.]
                     // set termination flag
                     done=true;
                     // resume main execution context
-                    return sink;
+                    return std::move(sink);
                 });
 
         // user-code pulls parsed data from parser

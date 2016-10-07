@@ -23,14 +23,14 @@ void echoSSE( int i) {
     std::cout << v32[3]; 
 }
 
-boost::context::execution_context< int > echo( boost::context::execution_context< int > ctx, int i) {
+boost::context::execution_context< int > echo( boost::context::execution_context< int > && ctx, int i) {
     for (;;) {
         std::cout << i;
         echoSSE( i);
         std::cout << " ";
         std::tie( ctx, i) = ctx( 0);
     }
-    return ctx;
+    return std::move( ctx);
 }
 
 int main( int argc, char * argv[]) {

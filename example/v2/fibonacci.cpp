@@ -15,7 +15,7 @@ namespace ctx = boost::context;
 int main() {
     int n=35;
     ctx::execution_context< int > source(
-        [n](ctx::execution_context< int > sink, int) mutable {
+        [n](ctx::execution_context< int > && sink, int) mutable {
             int a=0;
             int b=1;
             while(n-->0){
@@ -25,7 +25,7 @@ int main() {
                 a=b;
                 b=next;
             }
-            return sink;
+            return std::move( sink);
         });
     for(int i=0;i<10;++i){
         auto result=source(i);

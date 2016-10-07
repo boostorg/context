@@ -19,10 +19,11 @@
 
 boost::uint64_t jobs = 1000;
 
-static boost::context::execution_context< void > foo( boost::context::execution_context< void > ctx) {
+static boost::context::execution_context< void > foo( boost::context::execution_context< void > && ctx) {
     while ( true) {
         ctx = ctx();
     }
+    return std::move( ctx);
 }
 
 duration_type measure_time() {
