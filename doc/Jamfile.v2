@@ -32,5 +32,8 @@ boostbook context
         <format>pdf:<xsl:param>img.src.path=$(here)/html/
     ;
 
-alias boostdoc : context
-    : : : <implicit-dependency>context ;
+###############################################################################
+alias boostdoc ;
+explicit boostdoc ;
+alias boostrelease : context ;
+explicit boostrelease ;
