@@ -528,6 +528,6 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     return test;
 }
 
-if defined(BOOST_MSVC)
+#if defined(BOOST_MSVC)
 # pragma warning(pop)
 #endif
