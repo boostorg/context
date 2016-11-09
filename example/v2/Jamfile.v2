@@ -61,3 +61,8 @@ exe throw
 exe echosse
     : echosse.cpp
     ;
+
+#exe backtrace
+#    : backtrace.cpp
+#    : <linkflags>"-lunwind"
+#    ;

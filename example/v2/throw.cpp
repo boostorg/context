@@ -19,7 +19,7 @@ struct my_exception {
     }
 };
 
-boost::context::execution_context<void> f1(boost::context::execution_context<void> ctx) {
+boost::context::execution_context<void> f1(boost::context::execution_context<void> && ctx) {
     try {
         for (;;) {
             std::cout << "f1()" << std::endl;
@@ -29,12 +29,12 @@ boost::context::execution_context<void> f1(boost::context::execution_context<voi
         std::cout << "f1(): my_exception catched" << std::endl;
         ctx = std::move( e.ctx);
     }
-    return ctx;
+    return std::move( ctx);
 }
 
-boost::context::execution_context<void> f2(boost::context::execution_context<void> ctx) {
+boost::context::execution_context<void> f2(boost::context::execution_context<void> && ctx) {
     throw my_exception( std::move( ctx) );
-    return ctx;
+    return std::move( ctx);
 }
 
 int main() {

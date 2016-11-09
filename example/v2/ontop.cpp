@@ -12,16 +12,16 @@
 
 namespace ctx = boost::context;
 
-ctx::execution_context< int > f1( ctx::execution_context< int > ctx, int data) {
+ctx::execution_context< int > f1( ctx::execution_context< int > && ctx, int data) {
     std::cout << "f1: entered first time: " << data  << std::endl;
     std::tie( ctx, data) = ctx( data + 1);
     std::cout << "f1: entered second time: " << data  << std::endl;
     std::tie( ctx, data) = ctx( data + 1);
     std::cout << "f1: entered third time: " << data << std::endl;
-    return ctx;
+    return std::move( ctx);
 }
 
-std::tuple< ctx::execution_context< int >, int > f2( ctx::execution_context< int > ctx, int data) {
+std::tuple< ctx::execution_context< int >, int > f2( ctx::execution_context< int > && ctx, int data) {
     std::cout << "f2: entered: " << data << std::endl;
     return std::make_tuple( std::move( ctx), -1);
 }

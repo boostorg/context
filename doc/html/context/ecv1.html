@@ -189,13 +189,18 @@
       the application is terminated. <span class="emphasis"><em>std::exception_ptr</em></span> can
       be used to transfer exceptions between different execution contexts.
     </p>
+<h4>
+<a name="context.ecv1.h2"></a>
+      <span><a name="context.ecv1.stack_unwinding"></a></span><a class="link" href="ecv1.html#context.ecv1.stack_unwinding">stack
+      unwinding</a>
+    </h4>
 <p>
       Sometimes it is necessary to unwind the stack of an unfinished context to destroy
       local stack variables so they can release allocated resources (RAII pattern).
       The user is responsible for this task.
     </p>
 <a name="ecv1_prealloc"></a><h4>
-<a name="context.ecv1.h2"></a>
+<a name="context.ecv1.h3"></a>
       <span><a name="context.ecv1.allocating_control_structures_on_top_of_stack"></a></span><a class="link" href="ecv1.html#context.ecv1.allocating_control_structures_on_top_of_stack">allocating
       control structures on top of stack</a>
     </h4>
@@ -240,7 +245,7 @@
 <span class="special">};</span>
 </pre>
 <h4>
-<a name="context.ecv1.h3"></a>
+<a name="context.ecv1.h4"></a>
       <span><a name="context.ecv1.exception_handling"></a></span><a class="link" href="ecv1.html#context.ecv1.exception_handling">exception
       handling</a>
     </h4>
@@ -261,7 +266,7 @@
       </p></td></tr>
 </table></div>
 <h4>
-<a name="context.ecv1.h4"></a>
+<a name="context.ecv1.h5"></a>
       <span><a name="context.ecv1.parameter_passing"></a></span><a class="link" href="ecv1.html#context.ecv1.parameter_passing">parameter
       passing</a>
     </h4>
@@ -310,7 +315,7 @@
     <span class="number">7</span>
 </pre>
 <h4>
-<a name="context.ecv1.h5"></a>
+<a name="context.ecv1.h6"></a>
       <span><a name="context.ecv1.class__code__phrase_role__identifier__execution_context__phrase___code_"></a></span><a class="link" href="ecv1.html#context.ecv1.class__code__phrase_role__identifier__execution_context__phrase___code_">Class
       <code class="computeroutput"><span class="identifier">execution_context</span></code></a>
     </h4>
