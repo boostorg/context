@@ -17,11 +17,6 @@
 #include "../bind_processor.hpp"
 #include "../clock.hpp"
 #include "../cycle.hpp"
-#include "../../example/simple_stack_allocator.hpp"
-
-typedef boost::context::simple_stack_allocator<
-            8 * 1024 * 1024, 64 * 1024, 8 * 1024
-        >                                       stack_allocator;
 
 boost::uint64_t jobs = 1000;
 ucontext_t uc, ucm;
@@ -90,10 +85,9 @@ int main( int argc, char * argv[])
             return EXIT_SUCCESS;
         }
 
-        stack_allocator stack_alloc;
         ::getcontext( & uc);
-        uc.uc_stack.ss_sp = stack_alloc.allocate( stack_allocator::default_stacksize() );
-        uc.uc_stack.ss_size = stack_allocator::default_stacksize();
+        uc.uc_stack.ss_size = 8 * 1024;
+        uc.uc_stack.ss_sp = std::malloc( uc.uc_stack.ss_size);
         ::makecontext( & uc, fn, 7);
  
         boost::uint64_t res = measure_time().count();
