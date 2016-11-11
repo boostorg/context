@@ -140,7 +140,7 @@ ctx::execution_context< void > fn5( ctx::execution_context< void > && ctx) {
 }
 
 ctx::execution_context< void > fn4( ctx::execution_context< void > && ctx) {
-    ctx::execution_context< void > && ctx1( fn5);
+    ctx::execution_context< void > ctx1( fn5);
     ctx1();
     value3 = 3.14;
     return std::move( ctx);
