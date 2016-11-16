@@ -325,9 +325,9 @@
     <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">);</span>
 <span class="special">}</span>
 
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;,</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="identifier">f2</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="special">&amp;&amp;</span> <span class="identifier">ctx</span><span class="special">,</span><span class="keyword">int</span> <span class="identifier">data</span><span class="special">)</span> <span class="special">{</span>
+<span class="keyword">int</span> <span class="identifier">f2</span><span class="special">(</span><span class="keyword">int</span> <span class="identifier">data</span><span class="special">)</span> <span class="special">{</span>
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f2: entered: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-    <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">make_tuple</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">),-</span><span class="number">1</span><span class="special">);</span>
+    <span class="keyword">return</span> <span class="special">-</span><span class="number">1</span><span class="special">;</span>
 <span class="special">}</span>
 
 <span class="keyword">int</span> <span class="identifier">data</span><span class="special">=</span><span class="number">0</span><span class="special">;</span>
@@ -353,51 +353,6 @@
       <code class="computeroutput"><span class="identifier">f2</span><span class="special">()</span></code>
       returns argument <code class="computeroutput"><span class="special">-</span><span class="number">1</span></code>
       that will returned by the second invocation of <code class="computeroutput"><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">)</span></code> in <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>.
-    </p>
-<p>
-      Another option is to execute a function on top of the context that throws an
-      exception.
-    </p>
-<pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">interrupt</span> <span class="special">{</span>
-    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span>   <span class="identifier">ctx</span><span class="special">;</span>
-
-    <span class="identifier">interrupt</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="special">&amp;&amp;</span> <span class="identifier">ctx_</span><span class="special">)</span> <span class="special">:</span>
-        <span class="identifier">ctx</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">forward</span><span class="special">&lt;</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;&gt;(</span><span class="identifier">ctx_</span><span class="special">))</span> <span class="special">{</span>
-    <span class="special">}</span>
-<span class="special">};</span>
-
-<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="identifier">f1</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="special">&amp;&amp;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span>
-    <span class="keyword">try</span> <span class="special">{</span>
-        <span class="keyword">for</span> <span class="special">(;;)</span> <span class="special">{</span>
-            <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1()"</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-            <span class="identifier">ctx</span><span class="special">=</span><span class="identifier">ctx</span><span class="special">();</span>
-        <span class="special">}</span>
-    <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(</span><span class="identifier">interrupt</span> <span class="special">&amp;</span> <span class="identifier">e</span><span class="special">)</span> <span class="special">{</span>
-        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1(): interrupted"</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-        <span class="identifier">ctx</span><span class="special">=</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">e</span><span class="special">.</span><span class="identifier">ctx</span><span class="special">);</span>
-    <span class="special">}</span>
-    <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">);</span>
-<span class="special">}</span>
-
-<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="identifier">f2</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="special">&amp;&amp;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span>
-    <span class="keyword">throw</span> <span class="identifier">interrupt</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">));</span>
-    <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">);</span>
-<span class="special">}</span>
-
-<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="identifier">ctx</span><span class="special">(</span><span class="identifier">f1</span><span class="special">);</span>
-<span class="identifier">ctx</span><span class="special">=</span><span class="identifier">ctx</span><span class="special">();</span>
-<span class="identifier">ctx</span><span class="special">=</span><span class="identifier">ctx</span><span class="special">();</span>
-<span class="identifier">ctx</span><span class="special">=</span><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">exec_ontop_arg</span><span class="special">,</span><span class="identifier">f2</span><span class="special">);</span>
-
-<span class="identifier">output</span><span class="special">:</span>
-    <span class="identifier">f1</span><span class="special">()</span>
-    <span class="identifier">f1</span><span class="special">()</span>
-    <span class="identifier">f1</span><span class="special">():</span> <span class="identifier">interrupted</span>
-</pre>
-<p>
-      In this example <code class="computeroutput"><span class="identifier">f2</span><span class="special">()</span></code>
-      is used to interrupt the <code class="computeroutput"><span class="keyword">for</span></code>-loop
-      in <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>.
     </p>
 <h4>
 <a name="context.ecv2.h4"></a>
@@ -854,8 +809,7 @@
 <dt><span class="term">Note:</span></dt>
 <dd><p>
             Function <code class="computeroutput"><span class="identifier">fn</span></code> needs to
-            return a tuple of execution_context and arguments (<a class="link" href="ecv2.html#ecv2_ontop">see
-            description</a>).
+            return a tuple of arguments (<a class="link" href="ecv2.html#ecv2_ontop">see description</a>).
           </p></dd>
 <dt><span class="term">Note:</span></dt>
 <dd><p>

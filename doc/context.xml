@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/10/07 17:28:40 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2016/11/16 16:11:38 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -414,9 +414,9 @@
     <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">);</phrase>
 <phrase role="special">}</phrase>
 
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;,</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">,</phrase><phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+<phrase role="keyword">int</phrase> <phrase role="identifier">f2</phrase><phrase role="special">(</phrase><phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f2: entered: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-    <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">make_tuple</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">),-</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
+    <phrase role="keyword">return</phrase> <phrase role="special">-</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
 <phrase role="special">}</phrase>
 
 <phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
@@ -450,51 +450,6 @@
       role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase
       role="number">1</phrase><phrase role="special">)</phrase></code> in <code><phrase
       role="identifier">f1</phrase><phrase role="special">()</phrase></code>.
-    </para>
-    <para>
-      Another option is to execute a function on top of the context that throws an
-      exception.
-    </para>
-<programlisting><phrase role="keyword">struct</phrase> <phrase role="identifier">interrupt</phrase> <phrase role="special">{</phrase>
-    <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">void</phrase> <phrase role="special">&gt;</phrase>   <phrase role="identifier">ctx</phrase><phrase role="special">;</phrase>
-
-    <phrase role="identifier">interrupt</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">void</phrase> <phrase role="special">&gt;</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">ctx_</phrase><phrase role="special">)</phrase> <phrase role="special">:</phrase>
-        <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">forward</phrase><phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;&gt;(</phrase><phrase role="identifier">ctx_</phrase><phrase role="special">))</phrase> <phrase role="special">{</phrase>
-    <phrase role="special">}</phrase>
-<phrase role="special">};</phrase>
-
-<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">f1</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-    <phrase role="keyword">try</phrase> <phrase role="special">{</phrase>
-        <phrase role="keyword">for</phrase> <phrase role="special">(;;)</phrase> <phrase role="special">{</phrase>
-            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1()&quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-            <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">ctx</phrase><phrase role="special">();</phrase>
-        <phrase role="special">}</phrase>
-    <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(</phrase><phrase role="identifier">interrupt</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">e</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-        <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1(): interrupted&quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-        <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">e</phrase><phrase role="special">.</phrase><phrase role="identifier">ctx</phrase><phrase role="special">);</phrase>
-    <phrase role="special">}</phrase>
-    <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">);</phrase>
-<phrase role="special">}</phrase>
-
-<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">void</phrase><phrase role="special">&gt;</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-    <phrase role="keyword">throw</phrase> <phrase role="identifier">interrupt</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">));</phrase>
-    <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">);</phrase>
-<phrase role="special">}</phrase>
-
-<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">execution_context</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">void</phrase> <phrase role="special">&gt;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">f1</phrase><phrase role="special">);</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">ctx</phrase><phrase role="special">();</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">ctx</phrase><phrase role="special">();</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">ctx</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">exec_ontop_arg</phrase><phrase role="special">,</phrase><phrase role="identifier">f2</phrase><phrase role="special">);</phrase>
-
-<phrase role="identifier">output</phrase><phrase role="special">:</phrase>
-    <phrase role="identifier">f1</phrase><phrase role="special">()</phrase>
-    <phrase role="identifier">f1</phrase><phrase role="special">()</phrase>
-    <phrase role="identifier">f1</phrase><phrase role="special">():</phrase> <phrase role="identifier">interrupted</phrase>
-</programlisting>
-    <para>
-      In this example <code><phrase role="identifier">f2</phrase><phrase role="special">()</phrase></code>
-      is used to interrupt the <code><phrase role="keyword">for</phrase></code>-loop
-      in <code><phrase role="identifier">f1</phrase><phrase role="special">()</phrase></code>.
     </para>
     <bridgehead renderas="sect3" id="context.ecv2.h4">
       <phrase id="context.ecv2.stack_unwinding"/><link linkend="context.ecv2.stack_unwinding">stack
@@ -991,8 +946,7 @@
         <listitem>
           <para>
             Function <code><phrase role="identifier">fn</phrase></code> needs to
-            return a tuple of execution_context and arguments (<link linkend="ecv2_ontop">see
-            description</link>).
+            return a tuple of arguments (<link linkend="ecv2_ontop">see description</link>).
           </para>
         </listitem>
       </varlistentry>
@@ -3028,7 +2982,7 @@
               <para>
                 x86_64 <footnote id="context.performance.f0">
                 <para>
-                  Intel Core2 Q6700
+                  Intel Core i7-4770S 3.10GHz
                 </para>
                 </footnote>
               </para>
@@ -3040,12 +2994,12 @@
             </entry>
             <entry>
               <para>
-                51 ns / 141 cycles
+                30 ns / 80 cycles
               </para>
             </entry>
             <entry>
               <para>
-                7 ns / 18 cycles
+                8 ns / 25 cycles
               </para>
             </entry>
           </row>
