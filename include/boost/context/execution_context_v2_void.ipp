@@ -8,15 +8,17 @@ namespace detail {
 
 template< typename Ctx, typename Fn >
 transfer_t context_ontop_void( transfer_t t) {
-    auto tpl = static_cast< std::tuple< Fn > * >( t.data);
+    auto tpl = static_cast< std::tuple< Fn, std::exception_ptr > * >( t.data);
     BOOST_ASSERT( nullptr != tpl);
     typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * tpl) );
-    Ctx ctx{ t.fctx };
-    // execute function
-    ctx = apply(
-            fn,
-            std::forward_as_tuple( std::move( ctx) ) );
-    return { exchange( ctx.fctx_, nullptr), nullptr };
+    try {
+        // execute function
+        fn();
+    } catch (...) {
+        std::get< 1 >( * tpl) = std::current_exception();
+        return { t.fctx, & std::get< 1 >( * tpl ) };
+    }
+    return { exchange( t.fctx, nullptr), nullptr };
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
@@ -130,6 +132,8 @@ fcontext_t context_create_void( preallocated palloc, StackAlloc salloc, Fn && fn
 template<>
 class execution_context< void > {
 private:
+    friend class ontop_error;
+
     template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
     friend class detail::record_void;
 
@@ -228,17 +232,33 @@ public:
     execution_context operator()() {
         BOOST_ASSERT( nullptr != fctx_);
         detail::transfer_t t = detail::jump_fcontext( detail::exchange( fctx_, nullptr), nullptr);
+        if ( nullptr != t.data) {
+            std::exception_ptr * eptr = static_cast< std::exception_ptr * >( t.data);
+            try {
+                std::rethrow_exception( * eptr);
+            } catch (...) {
+                std::throw_with_nested( ontop_error{ t.fctx } );
+            }
+        }
         return execution_context( t.fctx);
     }
 
     template< typename Fn >
     execution_context operator()( exec_ontop_arg_t, Fn && fn) {
         BOOST_ASSERT( nullptr != fctx_);
-        std::tuple< Fn > p = std::forward_as_tuple( fn);
+        std::tuple< Fn, std::exception_ptr > p = std::forward_as_tuple( fn, std::exception_ptr{} );
         detail::transfer_t t = detail::ontop_fcontext(
                 detail::exchange( fctx_, nullptr),
                 & p,
                 detail::context_ontop_void< execution_context, Fn >);
+        if ( nullptr != t.data) {
+            std::exception_ptr * eptr = static_cast< std::exception_ptr * >( t.data);
+            try {
+                std::rethrow_exception( * eptr);
+            } catch (...) {
+                std::throw_with_nested( ontop_error{ t.fctx } );
+            }
+        }
         return execution_context( t.fctx);
     }
 

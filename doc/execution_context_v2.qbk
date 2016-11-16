@@ -230,9 +230,9 @@ arguments.
         return std::move(ctx);
     }
 
-    std::tuple<boost::context::execution_context<int>,int> f2(boost::context::execution_context<int> && ctx,int data) {
+    int f2(int data) {
         std::cout << "f2: entered: " << data << std::endl;
-        return std::make_tuple(std::move(ctx),-1);
+        return -1;
     }
 
     int data=0;
@@ -255,7 +255,7 @@ The expression `ctx(ctx::exec_ontop_arg,f2,data+1)` executes `f2()` on top of
 context `ctx`, e.g. an additional stack frame is allocated on top of the context
 stack (in front of `f1()`). `f2()` returns argument `-1` that will returned by
 the second invocation of `ctx(data+1)` in `f1()`.
-
+[/
 Another option is to execute a function on top of the context that throws an
 exception.
 
@@ -296,7 +296,7 @@ exception.
         f1(): interrupted
 
 In this example `f2()` is used to interrupt the `for`-loop in `f1()`.
-
+]
 
 [heading stack unwinding]
 On construction of __econtext__ a stack is allocated.
@@ -426,6 +426,12 @@ pattern). The user is responsible for this task.
 
     struct exec_ontop_arg_t {};
     const exec_ontop_arg_t exec_ontop_arg{};
+
+    class ontop_error {
+    public:
+        template< typename ... Args >
+        execution_context< Args ... > get_context() const noexcept;
+    }
 
     template< typename ... Args >
     class execution_context {
@@ -583,8 +589,8 @@ execution_context representing the context that has been suspended .]]
 passed as arguments to the context-function of resumed context (if the context
 is entered the first time) or those arguments are returned from
 `execution_context::operator()` within the resumed context.]]
-[[Note:] [Function `fn` needs to return a tuple of execution_context and
-arguments ([link ecv2_ontop see description]).]]
+[[Note:] [Function `fn` needs to return a tuple of arguments
+([link ecv2_ontop see description]).]]
 [[Note:] [The context calling this function must not be destroyed before the
 arguments, that will be returned from `fn`, are preserved at least in the stack
 frame of the resumed context.]]

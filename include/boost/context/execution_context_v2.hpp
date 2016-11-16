@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <ostream>
@@ -83,24 +84,7 @@ void context_entry( transfer_t t_) noexcept {
 }
 
 template< typename Ctx, typename Fn, typename ... Args >
-transfer_t context_ontop( transfer_t t) {
-    auto tpl = static_cast< std::tuple< Fn, std::tuple< Args ... > > * >( t.data);
-    BOOST_ASSERT( nullptr != tpl);
-    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * tpl) );
-    auto args = std::move( std::get< 1 >( * tpl) );
-    Ctx ctx{ t.fctx };
-    // execute function
-    auto result = apply(
-            fn,
-            std::tuple_cat(
-                std::forward_as_tuple( std::move( ctx) ),
-                std::move( args) ) );
-    ctx = std::move( std::get< 0 >( result) );
-    // apply returned data
-    detail::tail( args) = std::move( result);
-    std::get< 1 >( * tpl) = std::move( args);
-    return { exchange( ctx.fctx_, nullptr), & std::get< 1 >( * tpl) };
-}
+transfer_t context_ontop( transfer_t t);
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
 class record {
@@ -214,6 +198,8 @@ fcontext_t context_create( preallocated palloc, StackAlloc salloc, Fn && fn, Par
 template< typename ... Args >
 class execution_context {
 private:
+    friend class ontop_error;
+
     typedef std::tuple< Args ... >     args_tpl_t;
     typedef std::tuple< execution_context, typename std::decay< Args >::type ... >               ret_tpl_t;
 
@@ -384,6 +370,21 @@ public:
     }
 };
 
+class ontop_error : public std::exception {
+private:
+    detail::fcontext_t  fctx_;
+
+public:
+    ontop_error( detail::fcontext_t fctx) noexcept :
+        fctx_{ fctx } {
+    }
+
+    template< typename ... Args >
+    execution_context< Args ... > get_context() const noexcept {
+        return execution_context< Args ... >{ fctx_ };
+    }
+};
+
 #include <boost/context/execution_context_v2_void.ipp>
 
 template< typename ... Args >
@@ -391,7 +392,25 @@ void swap( execution_context< Args ... > & l, execution_context< Args ... > & r)
     l.swap( r);
 }
 
-}}
+namespace detail {
+
+template< typename Ctx, typename Fn, typename ... Args >
+transfer_t context_ontop( transfer_t t) {
+    auto tpl = static_cast< std::tuple< Fn, std::tuple< Args ... > > * >( t.data);
+    BOOST_ASSERT( nullptr != tpl);
+    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * tpl) );
+    Ctx ctx{ t.fctx };
+    try {
+        // execute function
+        std::get< 1 >( * tpl) = apply( fn, std::move( std::get< 1 >( * tpl) ) );
+    } catch (...) {
+        std::throw_with_nested( ontop_error{ t.fctx } );
+    }
+    // apply returned data
+    return { exchange( ctx.fctx_, nullptr), & std::get< 1 >( * tpl) };
+}
+
+}}}
 
 #if defined(BOOST_MSVC)
 # pragma warning(pop)

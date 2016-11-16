@@ -5,18 +5,14 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <stdexcept>
 #include <tuple>
 
 #include <boost/context/all.hpp>
 
-struct my_exception {
-    boost::context::execution_context< void >   ctx;
-
-    my_exception( boost::context::execution_context< void > && ctx_) :
-        ctx( std::forward< boost::context::execution_context< void > >( ctx_) ) {
-    }
+struct my_exception : public std::exception {
 };
 
 boost::context::execution_context<void> f1(boost::context::execution_context<void> && ctx) {
@@ -25,16 +21,18 @@ boost::context::execution_context<void> f1(boost::context::execution_context<voi
             std::cout << "f1()" << std::endl;
             ctx = ctx();
         }
-    } catch ( my_exception & e) {
-        std::cout << "f1(): my_exception catched" << std::endl;
-        ctx = std::move( e.ctx);
+    } catch ( std::exception const& ex) {
+        try {
+            std::rethrow_if_nested( ex);
+        } catch ( boost::context::ontop_error const& e) {
+            return e.get_context< void >();
+        }
     }
     return std::move( ctx);
 }
 
-boost::context::execution_context<void> f2(boost::context::execution_context<void> && ctx) {
-    throw my_exception( std::move( ctx) );
-    return std::move( ctx);
+void f2() {
+    throw my_exception();
 }
 
 int main() {
