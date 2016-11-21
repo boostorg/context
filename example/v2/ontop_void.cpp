@@ -21,9 +21,8 @@ ctx::execution_context< void > f1( ctx::execution_context< void > && ctx) {
     return std::move( ctx);
 }
 
-ctx::execution_context< void > f2( ctx::execution_context< void > && ctx) {
+void f2() {
     std::cout << "f2: entered" << std::endl;
-    return std::move( ctx);
 }
 
 int main() {

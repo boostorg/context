@@ -21,9 +21,9 @@ ctx::execution_context< int > f1( ctx::execution_context< int > && ctx, int data
     return std::move( ctx);
 }
 
-std::tuple< ctx::execution_context< int >, int > f2( ctx::execution_context< int > && ctx, int data) {
+int f2( int data) {
     std::cout << "f2: entered: " << data << std::endl;
-    return std::make_tuple( std::move( ctx), -1);
+    return -1;
 }
 
 int main() {

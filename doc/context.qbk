@@ -145,6 +145,7 @@
 [def __jump_fcontext__ ['jump_fcontext()]]
 [def __make_fcontext__ ['make_fcontext()]]
 [def __invalid_argument__ ['std::invalid_argument]]
+[def __ot_error__ ['ontop_error]]
 [def __stack_alloc__ ['allocate()]]
 [def __stack_dealloc__ ['deallocate()]]
 [def __stack_helper__ ['stack_helper]]

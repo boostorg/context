@@ -5,43 +5,39 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <stdexcept>
-#include <tuple>
+#include <string>
 
 #include <boost/context/all.hpp>
 
-struct my_exception {
-    boost::context::execution_context< void >   ctx;
-
-    my_exception( boost::context::execution_context< void > && ctx_) :
-        ctx( std::forward< boost::context::execution_context< void > >( ctx_) ) {
+struct my_exception : public std::runtime_error {
+    my_exception( std::string const& what) :
+        std::runtime_error{ what } {
     }
 };
 
-boost::context::execution_context<void> f1(boost::context::execution_context<void> && ctx) {
-    try {
-        for (;;) {
-            std::cout << "f1()" << std::endl;
-            ctx = ctx();
-        }
-    } catch ( my_exception & e) {
-        std::cout << "f1(): my_exception catched" << std::endl;
-        ctx = std::move( e.ctx);
-    }
-    return std::move( ctx);
-}
-
-boost::context::execution_context<void> f2(boost::context::execution_context<void> && ctx) {
-    throw my_exception( std::move( ctx) );
-    return std::move( ctx);
-}
-
 int main() {
-    boost::context::execution_context< void > ctx( f1);
+    boost::context::execution_context< void > ctx([](boost::context::execution_context<void> && ctx) {
+        for (;;) {
+            try {
+                    std::cout << "entered" << std::endl;
+                    ctx = ctx();
+            } catch ( boost::context::ontop_error const& e) {
+                try {
+                    std::rethrow_if_nested( e);
+                } catch ( my_exception const& ex) {
+                    std::cerr << "my_exception: " << ex.what() << std::endl;
+                }
+                return e.get_context< void >();
+            }
+        }
+        return std::move( ctx);
+    });
     ctx = ctx();
     ctx = ctx();
-    ctx = ctx( boost::context::exec_ontop_arg, f2);
+    ctx = ctx( boost::context::exec_ontop_arg, []() { throw my_exception("abc"); });
 
     std::cout << "main: done" << std::endl;
 
