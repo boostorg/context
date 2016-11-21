@@ -352,18 +352,68 @@ void test_ontop() {
 }
 
 void test_ontop_exception() {
-    value1 = 0;
-    value2 = "";
-    ctx::execution_context< void > ctx( fn6);
-    ctx = ctx();
-    BOOST_CHECK_EQUAL( 3, value1);
-    const char * what = "hello world";
-    ctx( ctx::exec_ontop_arg,
-         [what](){
-            throw my_exception( what);
-         });
-    BOOST_CHECK_EQUAL( 3, value1);
-    BOOST_CHECK_EQUAL( std::string( what), value2);
+    {
+        value1 = 0;
+        value2 = "";
+        ctx::execution_context< void > ctx([](ctx::execution_context< void > && ctx){
+                for (;;) {
+                    value1 = 3;
+                    try {
+                        ctx = ctx();
+                    } catch ( ctx::ontop_error const& e) {
+                        try {
+                            std::rethrow_if_nested( e);
+                        } catch ( my_exception const& ex) {
+                            value2 = ex.what();
+                        }
+                        return e.get_context< void >();
+                    }
+                }
+                return std::move( ctx);
+        });
+        ctx = ctx();
+        BOOST_CHECK_EQUAL( 3, value1);
+        const char * what = "hello world";
+        ctx( ctx::exec_ontop_arg,
+             [what](){
+                throw my_exception( what);
+             });
+        BOOST_CHECK_EQUAL( 3, value1);
+        BOOST_CHECK_EQUAL( std::string( what), value2);
+    }
+    {
+        value2 = "";
+        int i = 3, j = 1;
+        ctx::execution_context< int, int > ctx([]( ctx::execution_context< int, int > && ctx, int x, int y) {
+                for (;;) {
+                    try {
+                            std::tie( ctx, x, y) = ctx( x+y,x-y);
+                    } catch ( boost::context::ontop_error const& e) {
+                        try {
+                            std::rethrow_if_nested( e);
+                        } catch ( my_exception const& ex) {
+                            value2 = ex.what();
+                        }
+                        return e.get_context< int, int >();
+                    }
+                }
+                return std::move( ctx);
+        });
+        std::tie( ctx, i, j) = ctx( i, j);
+        BOOST_CHECK( ctx);
+        BOOST_CHECK_EQUAL( i, 4);
+        BOOST_CHECK_EQUAL( j, 2);
+        const char * what = "hello world";
+        std::tie( ctx, i, j) = ctx( ctx::exec_ontop_arg,
+                [what](int x, int y) {
+                    throw my_exception(what);
+                    return std::make_tuple( x*y, x/y);
+                },
+                i, j);
+        BOOST_CHECK_EQUAL( i, 4);
+        BOOST_CHECK_EQUAL( j, 2);
+        BOOST_CHECK_EQUAL( std::string( what), value2);
+    }
 }
 
 void test_termination() {

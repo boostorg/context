@@ -236,7 +236,7 @@ arguments.
     }
 
     int data=0;
-    ctx::execution_context< int > ctx(f1);
+    boost::context::execution_context< int > ctx(f1);
     std::tie(ctx,data)=ctx(data+1);
     std::cout << "f1: returned first time: " << data << std::endl;
     std::tie(ctx,data)=ctx(data+1);
@@ -257,46 +257,44 @@ stack (in front of `f1()`). `f2()` returns argument `-1` that will returned by
 the second invocation of `ctx(data+1)` in `f1()`.
 [/
 Another option is to execute a function on top of the context that throws an
-exception.
+exception. The thrown exception is catched and re-thrown as nested exception of
+__ot_error__ from __ec_op__. __ot_error__ gives access to the context that has
+resumed the current context.
 
-    struct interrupt {
-        boost::context::execution_context< void >   ctx;
-
-        interrupt(boost::context::execution_context< void > && ctx_) :
-            ctx(std::forward<boost::context::execution_context<void>>(ctx_)) {
+    struct my_exception : public std::runtime_error {
+        my_exception( std::string const& what) :
+            std::runtime_error{ what } {
         }
     };
 
-    boost::context::execution_context<void> f1(boost::context::execution_context<void> && ctx) {
-        try {
-            for (;;) {
-                std::cout << "f1()" << std::endl;
-                ctx=ctx();
+    boost::context::execution_context<void> ctx([](boost::context::execution_context<void> && ctx) {
+        for (;;) {
+            try {
+                    std::cout << "entered" << std::endl;
+                    ctx = ctx();
+                }
+            } catch ( boost::context::ontop_error const& e) {
+                try {
+                    std::rethrow_if_nested( e);
+                } catch ( my_exception const& ex) {
+                    std::cerr << "my_exception: " << ex.what() << std::endl;
+                }
+                return e.get_context< void >();
             }
-        } catch (interrupt & e) {
-            std::cout << "f1(): interrupted" << std::endl;
-            ctx=std::move(e.ctx);
         }
-        return std::move(ctx);
-    }
-
-    boost::context::execution_context<void> f2(boost::context::execution_context<void> && ctx) {
-        throw interrupt(std::move(ctx));
-        return std::move(ctx);
-    }
-
-    boost::context::execution_context< void > ctx(f1);
-    ctx=ctx();
-    ctx=ctx();
-    ctx=ctx(boost::context::exec_ontop_arg,f2);
+        return std::move( ctx);
+    });
+    ctx = ctx();
+    ctx = ctx();
+    ctx = ctx( boost::context::exec_ontop_arg,[](){ throw my_exception{ "abc" }; });
 
     output:
-        f1()
-        f1()
-        f1(): interrupted
+        entered
+        entered
+        my_exception: abc
 
-In this example `f2()` is used to interrupt the `for`-loop in `f1()`.
-]
+In this exception `my_exception` is throw from a function invoked ontop of
+context `ctx` and catched inside the `for`-loop.
 
 [heading stack unwinding]
 On construction of __econtext__ a stack is allocated.

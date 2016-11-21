@@ -8,38 +8,36 @@
 #include <exception>
 #include <iostream>
 #include <stdexcept>
-#include <tuple>
+#include <string>
 
 #include <boost/context/all.hpp>
 
-struct my_exception : public std::exception {
+struct my_exception : public std::runtime_error {
+    my_exception( std::string const& what) :
+        std::runtime_error{ what } {
+    }
 };
 
-boost::context::execution_context<void> f1(boost::context::execution_context<void> && ctx) {
-    try {
-        for (;;) {
-            std::cout << "f1()" << std::endl;
-            ctx = ctx();
-        }
-    } catch ( std::exception const& ex) {
-        try {
-            std::rethrow_if_nested( ex);
-        } catch ( boost::context::ontop_error const& e) {
-            return e.get_context< void >();
-        }
-    }
-    return std::move( ctx);
-}
-
-void f2() {
-    throw my_exception();
-}
-
 int main() {
-    boost::context::execution_context< void > ctx( f1);
+    boost::context::execution_context< void > ctx([](boost::context::execution_context<void> && ctx) {
+        for (;;) {
+            try {
+                    std::cout << "entered" << std::endl;
+                    ctx = ctx();
+            } catch ( boost::context::ontop_error const& e) {
+                try {
+                    std::rethrow_if_nested( e);
+                } catch ( my_exception const& ex) {
+                    std::cerr << "my_exception: " << ex.what() << std::endl;
+                }
+                return e.get_context< void >();
+            }
+        }
+        return std::move( ctx);
+    });
     ctx = ctx();
     ctx = ctx();
-    ctx = ctx( boost::context::exec_ontop_arg, f2);
+    ctx = ctx( boost::context::exec_ontop_arg, []() { throw my_exception("abc"); });
 
     std::cout << "main: done" << std::endl;
 
