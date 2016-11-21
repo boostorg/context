@@ -470,25 +470,7 @@ void swap( execution_context< Args ... > & l, execution_context< Args ... > & r)
     l.swap( r);
 }
 
-namespace detail {
-
-template< typename Ctx, typename Fn, typename ... Args >
-transfer_t context_ontop( transfer_t t) {
-    auto tpl = static_cast< std::tuple< Fn, std::tuple< Args ... > > * >( t.data);
-    BOOST_ASSERT( nullptr != tpl);
-    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * tpl) );
-    Ctx ctx{ t.fctx };
-    try {
-        // execute function
-        std::get< 1 >( * tpl) = apply( fn, std::move( std::get< 1 >( * tpl) ) );
-    } catch (...) {
-        std::throw_with_nested( ontop_error{ t.fctx } );
-    }
-    // apply returned data
-    return { exchange( ctx.fctx_, nullptr), & std::get< 1 >( * tpl) };
-}
-
-}}}
+}}
 
 #if defined(BOOST_MSVC)
 # pragma warning(pop)
