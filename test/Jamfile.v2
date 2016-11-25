@@ -57,6 +57,10 @@ test-suite minimal :
                cxx11_thread_local
                cxx11_variadic_templates ] ]
 
+[ run test_fcontext.cpp :
+    : :
+    ]
+
 [ run test_execution_context.cpp :
     : :
     [ requires cxx11_auto_declarations
