@@ -331,7 +331,7 @@
 <span class="special">}</span>
 
 <span class="keyword">int</span> <span class="identifier">data</span><span class="special">=</span><span class="number">0</span><span class="special">;</span>
-<span class="identifier">ctx</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">int</span> <span class="special">&gt;</span> <span class="identifier">ctx</span><span class="special">(</span><span class="identifier">f1</span><span class="special">);</span>
+<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="keyword">int</span> <span class="special">&gt;</span> <span class="identifier">ctx</span><span class="special">(</span><span class="identifier">f1</span><span class="special">);</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">,</span><span class="identifier">data</span><span class="special">)=</span><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">);</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: returned first time: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">,</span><span class="identifier">data</span><span class="special">)=</span><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">);</span>
@@ -352,7 +352,49 @@
       front of <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>).
       <code class="computeroutput"><span class="identifier">f2</span><span class="special">()</span></code>
       returns argument <code class="computeroutput"><span class="special">-</span><span class="number">1</span></code>
-      that will returned by the second invocation of <code class="computeroutput"><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">)</span></code> in <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>.
+      that will returned by the second invocation of <code class="computeroutput"><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">)</span></code> in <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>. [/
+      Another option is to execute a function on top of the context that throws an
+      exception. The thrown exception is catched and re-thrown as nested exception
+      of <span class="emphasis"><em>ontop_error</em></span> from <span class="emphasis"><em>execution_context::operator()</em></span>.
+      <span class="emphasis"><em>ontop_error</em></span> gives access to the context that has resumed
+      the current context.
+    </p>
+<pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">my_exception</span> <span class="special">:</span> <span class="keyword">public</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">runtime_error</span> <span class="special">{</span>
+    <span class="identifier">my_exception</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">what</span><span class="special">)</span> <span class="special">:</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">runtime_error</span><span class="special">{</span> <span class="identifier">what</span> <span class="special">}</span> <span class="special">{</span>
+    <span class="special">}</span>
+<span class="special">};</span>
+
+<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="identifier">ctx</span><span class="special">([](</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="special">&amp;&amp;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span>
+    <span class="keyword">for</span> <span class="special">(;;)</span> <span class="special">{</span>
+        <span class="keyword">try</span> <span class="special">{</span>
+                <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"entered"</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
+                <span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">();</span>
+            <span class="special">}</span>
+        <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">ontop_error</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">e</span><span class="special">)</span> <span class="special">{</span>
+            <span class="keyword">try</span> <span class="special">{</span>
+                <span class="identifier">std</span><span class="special">::</span><span class="identifier">rethrow_if_nested</span><span class="special">(</span> <span class="identifier">e</span><span class="special">);</span>
+            <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(</span> <span class="identifier">my_exception</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">ex</span><span class="special">)</span> <span class="special">{</span>
+                <span class="identifier">std</span><span class="special">::</span><span class="identifier">cerr</span> <span class="special">&lt;&lt;</span> <span class="string">"my_exception: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">ex</span><span class="special">.</span><span class="identifier">what</span><span class="special">()</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
+            <span class="special">}</span>
+            <span class="keyword">return</span> <span class="identifier">e</span><span class="special">.</span><span class="identifier">get_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;();</span>
+        <span class="special">}</span>
+    <span class="special">}</span>
+    <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span> <span class="identifier">ctx</span><span class="special">);</span>
+<span class="special">});</span>
+<span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">();</span>
+<span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">();</span>
+<span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">(</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">exec_ontop_arg</span><span class="special">,[](){</span> <span class="keyword">throw</span> <span class="identifier">my_exception</span><span class="special">{</span> <span class="string">"abc"</span> <span class="special">};</span> <span class="special">});</span>
+
+<span class="identifier">output</span><span class="special">:</span>
+    <span class="identifier">entered</span>
+    <span class="identifier">entered</span>
+    <span class="identifier">my_exception</span><span class="special">:</span> <span class="identifier">abc</span>
+</pre>
+<p>
+      In this exception <code class="computeroutput"><span class="identifier">my_exception</span></code>
+      is throw from a function invoked ontop of context <code class="computeroutput"><span class="identifier">ctx</span></code>
+      and catched inside the <code class="computeroutput"><span class="keyword">for</span></code>-loop.
     </p>
 <h4>
 <a name="context.ecv2.h4"></a>
@@ -515,6 +557,12 @@
     </h4>
 <pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">exec_ontop_arg_t</span> <span class="special">{};</span>
 <span class="keyword">const</span> <span class="identifier">exec_ontop_arg_t</span> <span class="identifier">exec_ontop_arg</span><span class="special">{};</span>
+
+<span class="keyword">class</span> <span class="identifier">ontop_error</span> <span class="special">{</span>
+<span class="keyword">public</span><span class="special">:</span>
+    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Args</span> <span class="special">&gt;</span>
+    <span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="special">&gt;</span> <span class="identifier">get_context</span><span class="special">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+<span class="special">}</span>
 
 <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Args</span> <span class="special">&gt;</span>
 <span class="keyword">class</span> <span class="identifier">execution_context</span> <span class="special">{</span>
