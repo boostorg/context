@@ -50,7 +50,6 @@ jump_fcontext:
 
     @ prepare stack for FPU
     sub  sp, sp, #64
-
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
     @ save S16-S31
     vstmia sp, {d8-d15}
@@ -66,7 +65,6 @@ jump_fcontext:
     @ restore S16-S31
     vldmia  sp, {d8-d15}
 #endif
-
     @ prepare stack for FPU
     add  sp, sp, #64
 
