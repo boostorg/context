@@ -92,20 +92,22 @@ _jump_fcontext:
     movl  0x18(%esp), %ecx
     movl  %ecx, (%edx)
 
+    movl  0x2c(%esp), %ecx  /* restore EIP */
+
     movl  0x1c(%esp), %edi  /* restore EDI */
     movl  0x20(%esp), %esi  /* restore ESI */
     movl  0x24(%esp), %ebx  /* restore EBX */
     movl  0x28(%esp), %ebp  /* restore EBP */
 
     /* prepare stack */
-    leal  0x2c(%esp), %esp
+    leal  0x30(%esp), %esp
 
     /* return transfer_t */
     /* FCTX == EAX, DATA == EDX */
     movl  0x34(%eax), %edx
 
     /* jump to context */
-    ret
+    ret *%ecx
 
 .section .drectve
 .ascii " -export:\"jump_fcontext\""

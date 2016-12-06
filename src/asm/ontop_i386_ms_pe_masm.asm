@@ -112,6 +112,8 @@ ontop_fcontext PROC BOOST_CONTEXT_EXPORT
     ; prepare stack
     lea  esp, [esp+02ch]
 
+    ; keep return-address on stack
+
     ; jump to context
     jmp ecx
 ontop_fcontext ENDP

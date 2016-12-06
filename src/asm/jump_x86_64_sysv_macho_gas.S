@@ -46,6 +46,8 @@ _jump_fcontext:
     /* restore RSP (pointing to context-data) from RDI */
     movq  %rdi, %rsp
 
+    movq  0x38(%rsp), %r8  /* restore return-address */
+
     ldmxcsr  (%rsp)     /* restore MMX control- and status-word */
     fldcw    0x4(%rsp)  /* restore x87 control-word */
 
@@ -56,10 +58,7 @@ _jump_fcontext:
     movq  0x28(%rsp), %rbx  /* restore RBX */
     movq  0x30(%rsp), %rbp  /* restore RBP */
 
-    leaq  0x38(%rsp), %rsp /* prepare stack */
-
-    /* restore return-address */
-    popq  %r8
+    leaq  0x40(%rsp), %rsp /* prepare stack */
 
     /* return transfer_t from jump */
     /* RAX == fctx, RDX == data */

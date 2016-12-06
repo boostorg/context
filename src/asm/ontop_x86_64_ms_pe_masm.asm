@@ -87,8 +87,6 @@
 ontop_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     .endprolog
 
-    
-
     ; prepare stack
     lea rsp, [rsp-0118h]
 
