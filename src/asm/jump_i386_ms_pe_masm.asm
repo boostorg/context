@@ -92,19 +92,21 @@ jump_fcontext PROC BOOST_CONTEXT_EXPORT
     mov  ecx, [esp+018h]
     mov  [edx], ecx
 
+    mov  ecx, [esp+02ch]  ; restore EIP
+
     mov  edi, [esp+01ch]  ; restore EDI 
     mov  esi, [esp+020h]  ; restore ESI 
     mov  ebx, [esp+024h]  ; restore EBX 
     mov  ebp, [esp+028h]  ; restore EBP 
 
     ; prepare stack
-    lea  esp, [esp+02ch]
+    lea  esp, [esp+030h]
 
     ; return transfer_t
     ; FCTX == EAX, DATA == EDX
     mov  edx, [eax+034h]
 
     ; jump to context
-    ret
+    jmp ecx
 jump_fcontext ENDP
 END

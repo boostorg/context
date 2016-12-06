@@ -57,6 +57,8 @@ _jump_fcontext:
     /* return data */
     movl %edx, 0x4(%eax)
 
+    movl  0x18(%esp), %ecx  /* restore EIP */
+
     ldmxcsr  (%esp)     /* restore MMX control- and status-word */
     fldcw    0x4(%esp)  /* restore x87 control-word */
 
@@ -65,7 +67,7 @@ _jump_fcontext:
     movl  0x10(%esp), %ebx  /* restore EBX */
     movl  0x14(%esp), %ebp  /* restore EBP */
 
-    leal  0x18(%esp), %esp  /* prepare stack */
+    leal  0x20(%esp), %esp  /* prepare stack */
 
     /* jump to context */
-    ret $4
+    jmp *%ecx

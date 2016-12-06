@@ -28,6 +28,9 @@
 .globl _ontop_fcontext
 .align 8
 _ontop_fcontext:
+    /* preserve ontop-function in R8 */
+    movq  %rdx, %r8
+
     leaq  -0x38(%rsp), %rsp /* prepare stack */
 
     stmxcsr  (%rsp)     /* save MMX control- and status-word */
@@ -57,9 +60,6 @@ _ontop_fcontext:
     movq  0x30(%rsp), %rbp  /* restore RBP */
 
     leaq  0x38(%rsp), %rsp /* prepare stack */
-
-    /* preserve ontop-function in R8 */
-    movq  %rdx, %r8
 
     /* return transfer_t from jump */
     /* RAX == fctx, RDX == data */

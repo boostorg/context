@@ -112,6 +112,8 @@ _ontop_fcontext:
     /* prepare stack */
     leal  0x2c(%esp), %esp
 
+    /* keep return-address on stack */
+
     /* jump to context */
     jmp  *%ecx
 
