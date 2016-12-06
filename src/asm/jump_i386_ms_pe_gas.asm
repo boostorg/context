@@ -107,7 +107,7 @@ _jump_fcontext:
     movl  0x34(%eax), %edx
 
     /* jump to context */
-    ret *%ecx
+    jmp *%ecx
 
 .section .drectve
 .ascii " -export:\"jump_fcontext\""
