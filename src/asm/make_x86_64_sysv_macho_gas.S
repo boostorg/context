@@ -73,5 +73,5 @@ finish:
     /* exit code is zero */
     xorq  %rdi, %rdi
     /* exit application */
-    call  _exit@PLT
+    call  __exit
     hlt
