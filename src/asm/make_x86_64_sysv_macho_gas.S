@@ -67,7 +67,7 @@ trampoline:
     /* fix stack alignment */
     push %rbp
     /* jump to context-function */
-    jmp %rbx
+    jmp *%rbx
 
 finish:
     /* exit code is zero */
