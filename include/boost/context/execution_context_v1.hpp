@@ -24,7 +24,9 @@
 #include <boost/config.hpp>
 #include <boost/intrusive_ptr.hpp>
 
+#if defined(BOOST_NO_CXX17_STD_APPLY)
 #include <boost/context/detail/apply.hpp>
+#endif
 #include <boost/context/detail/disable_overload.hpp>
 #include <boost/context/detail/fcontext.hpp>
 #include <boost/context/fixedsize_stack.hpp>
@@ -157,7 +159,11 @@ transfer_t context_ontop( transfer_t t) {
     BOOST_ASSERT( nullptr != tpl);
     auto data = std::get< 0 >( * tpl);
     typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 1 >( * tpl) );
+#if defined(BOOST_NO_CXX17_STD_APPLY)
     dp->data = apply( fn, std::tie( data) );
+#else
+    dp->data = std::apply( fn, std::tie( data) );
+#endif
     return { t.fctx, dp };
 }
 
@@ -196,7 +202,11 @@ public:
 
     void run() {
         auto data = caller_->resume( nullptr);
+#if defined(BOOST_NO_CXX17_STD_APPLY)
         apply( fn_, std::tuple_cat( args_, std::tie( data) ) );
+#else
+        std::apply( fn_, std::tuple_cat( args_, std::tie( data) ) );
+#endif
         BOOST_ASSERT_MSG( ! main_ctx, "main-context does not execute activation-record::run()");
     }
 };

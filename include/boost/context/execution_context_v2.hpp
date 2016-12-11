@@ -24,7 +24,9 @@
 #include <boost/config.hpp>
 #include <boost/intrusive_ptr.hpp>
 
+#if defined(BOOST_NO_CXX17_STD_APPLY)
 #include <boost/context/detail/apply.hpp>
+#endif
 #include <boost/context/detail/disable_overload.hpp>
 #include <boost/context/detail/exception.hpp>
 #include <boost/context/detail/exchange.hpp>
@@ -107,7 +109,11 @@ public:
                     std::forward_as_tuple( std::move( from) ),
                     std::move( args) );
         // invoke context-function
+#if defined(BOOST_NO_CXX17_STD_APPLY)
         Ctx cc = apply( std::move( fn_), std::move( tpl) );
+#else
+        Ctx cc = std::apply( std::move( fn_), std::move( tpl) );
+#endif
         return { exchange( cc.fctx_, nullptr), nullptr };
     }
 };
@@ -392,7 +398,11 @@ transfer_t context_ontop( transfer_t t) {
     auto args = std::move( std::get< 1 >( std::get< 1 >( * p) ) );
     try {
         // execute function
+#if defined(BOOST_NO_CXX17_STD_APPLY)
         std::get< 1 >( std::get< 1 >( * p) ) = helper< sizeof ... (Args) >::convert( apply( fn, std::move( args) ) );
+#else
+        std::get< 1 >( std::get< 1 >( * p) ) = helper< sizeof ... (Args) >::convert( std::apply( fn, std::move( args) ) );
+#endif
     } catch (...) {
         std::get< 0 >( std::get< 1 >( * p) ) = std::current_exception();
     }
