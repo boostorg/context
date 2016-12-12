@@ -67,11 +67,11 @@ trampoline:
     /* fix stack alignment */
     push %rbp
     /* jump to context-function */
-    jmp %rbx
+    jmp *%rbx
 
 finish:
     /* exit code is zero */
     xorq  %rdi, %rdi
     /* exit application */
-    call  _exit@PLT
+    call  __exit
     hlt
