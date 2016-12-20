@@ -72,7 +72,7 @@ struct activation_record {
 
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
-    constexpr activation_record() = default;
+    activation_record() = default;
 
     activation_record( fcontext_t fctx_, stack_context sctx_) noexcept :
         fctx{ fctx_ },

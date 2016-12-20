@@ -80,7 +80,7 @@ private:
     }
 
 public:
-    constexpr execution_context() noexcept = default;
+    execution_context() noexcept = default;
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
     // segmented-stack requires to preserve the segments of the `current` context
