@@ -92,43 +92,30 @@ private:
 int main() {
     try {
         std::istringstream is("1+1");
-        bool done=false;
-        std::exception_ptr except;
-
         // execute parser in new execution context
         boost::context::continuation source;
-        char c;
         // user-code pulls parsed data from parser
         // invert control flow
-        std::tie(source,c)=ctx::callcc<char>(
-                [&is,&done,&except](ctx::continuation && sink,char){
+        source=ctx::callcc<char>(
+                [&is](ctx::continuation && sink,char){
                 // create parser with callback function
                 Parser p( is,
                           [&sink](char c){
                                 // resume main execution context
-                                std::tie(sink,c)=ctx::callcc<char>(std::move(sink),c);
+                                sink=ctx::callcc<char>(std::move(sink),c);
                         });
-                    try {
-                        // start recursive parsing
-                        p.run();
-                    } catch (...) {
-                        // store other exceptions in exception-pointer
-                        except = std::current_exception();
-                    }
-                    // set termination flag
-                    done=true;
+                    // start recursive parsing
+                    p.run();
                     // resume main execution context
                     return std::move(sink);
                 },
                 '\0');
-        if (except) {
-            std::rethrow_exception(except);
-        }
-        while (!done) {
+        while(ctx::has_data(source)){
+            char c=ctx::get_data<char>(source);
             printf("Parsed: %c\n",c);
-            std::tie(source,c)=ctx::callcc<char>(std::move(source),'\0');
-            if (except) {
-                std::rethrow_exception(except);
+            source=ctx::callcc<char>(std::move(source),'\0');
+            if (!c) {
+                break;
             }
         }
         std::cout << "main: done" << std::endl;

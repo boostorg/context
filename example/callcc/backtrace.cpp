@@ -51,7 +51,7 @@ ctx::continuation f1( ctx::continuation && c) {
 }
 
 int main() {
-    ctx::callcc( f1);
+    ctx::callcc< void >( f1);
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;
 }

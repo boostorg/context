@@ -15,13 +15,12 @@ namespace ctx = boost::context;
 int main() {
     ctx::continuation c;
     int i=0;
-    std::tie(c,i)=ctx::callcc< int >(
+    c=ctx::callcc< int >(
         [](ctx::continuation && c, int) mutable {
             int a=0;
             int b=1;
             for(;;){
-                int i=0;
-                std::tie(c,i)=ctx::callcc< int >(std::move(c),a);
+                c=ctx::callcc< int >(std::move(c),a);
                 auto next=a+b;
                 a=b;
                 b=next;
@@ -29,14 +28,14 @@ int main() {
             return std::move( c);
         },
         0);
-    std::tie(c,i)=ctx::callcc< int >(std::move(c),0); std::cout<<i<<" ";
-    std::tie(c,i)=ctx::callcc< int >(std::move(c),0); std::cout<<i<<" ";
-    std::tie(c,i)=ctx::callcc< int >(std::move(c),0); std::cout<<i<<" ";
-    std::tie(c,i)=ctx::callcc< int >(std::move(c),0); std::cout<<i<<" ";
-    std::tie(c,i)=ctx::callcc< int >(std::move(c),0); std::cout<<i<<" ";
-    std::tie(c,i)=ctx::callcc< int >(std::move(c),0); std::cout<<i<<" ";
-    std::tie(c,i)=ctx::callcc< int >(std::move(c),0); std::cout<<i<<" ";
-    std::tie(c,i)=ctx::callcc< int >(std::move(c),0); std::cout<<i<<" ";
+    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
+    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
+    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
+    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
+    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
+    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
+    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
+    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
     std::cout<<std::endl;
     std::cout << "main: done" << std::endl;
 }

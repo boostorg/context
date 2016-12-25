@@ -54,10 +54,10 @@ exe ontop
     : ontop.cpp
     ;
 
-#exe backtrace
-#    : backtrace.cpp
-#    ;
-#
-#exe echosse
-#    : echosse.cpp
-#    ;
+exe backtrace
+    : backtrace.cpp
+    ;
+
+exe echosse
+    : echosse.cpp
+    ;
