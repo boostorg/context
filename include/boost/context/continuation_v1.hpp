@@ -27,6 +27,7 @@
 #if defined(BOOST_NO_CXX17_STD_APPLY)
 #include <boost/context/detail/apply.hpp>
 #endif
+#include <boost/context/detail/decay_copy.hpp>
 #include <boost/context/detail/disable_overload.hpp>
 #include <boost/context/detail/exception.hpp>
 #include <boost/context/detail/exchange.hpp>
@@ -293,8 +294,27 @@ fcontext_t context_create( preallocated palloc, StackAlloc salloc, Fn && fn) {
     return jump_fcontext( fctx, rec).fctx;
 }
 
-template< typename ... Ret >
-struct callcc_helper;
+template< typename ... Arg >
+struct result_type {
+    typedef std::tuple< Arg ... >   type;
+
+    static
+    type get( void * data) {
+        auto p = static_cast< std::tuple< std::exception_ptr, std::tuple< Arg ... > > * >( data);
+        return std::move( std::get< 1 >( * p) );
+    }
+};
+
+template< typename Arg >
+struct result_type< Arg > {
+    typedef Arg     type;
+
+    static
+    type get( void * data) {
+        auto p = static_cast< std::tuple< std::exception_ptr, std::tuple< Arg > > * >( data);
+        return std::forward< Arg >( std::get< 0 >( std::get< 1 >( * p) ) );
+    }
+};
 
 }}
 
@@ -302,24 +322,52 @@ inline namespace v1 {
 
 class continuation {
 private:
-    friend class ontop_error;
-
-    template< typename ... Ret >
-    friend struct detail::callcc_helper;
-
     template< typename Ctx, typename ArgTuple, typename StackAlloc, typename Fn >
     friend class detail::record;
 
     template< typename Ctx, typename StackAlloc, typename Fn >
     friend class detail::record_void;
 
+    friend class ontop_error;
+
+    template< typename StackAlloc, typename Fn, typename ... Arg >
+    friend continuation
+    callcc( std::allocator_arg_t, StackAlloc, Fn &&, Arg ...);
+
+    template< typename StackAlloc, typename Fn, typename ... Arg >
+    friend continuation
+    callcc( std::allocator_arg_t, preallocated, StackAlloc, Fn &&, Arg ...);
+
+    template< typename ... Arg >
+    friend continuation
+    callcc( continuation &&, Arg ...);
+
+    template< typename Fn, typename ... Arg >
+    friend continuation
+    callcc( continuation &&, exec_ontop_arg_t, Fn &&, Arg ...);
+
+    template< typename StackAlloc, typename Fn >
+    friend continuation
+    callcc( std::allocator_arg_t, StackAlloc, Fn &&);
+
+    template< typename StackAlloc, typename Fn >
+    friend continuation
+    callcc( std::allocator_arg_t, preallocated, StackAlloc, Fn &&);
+
+    friend continuation
+    callcc( continuation &&);
+
+    template< typename Fn >
+    friend continuation
+    callcc( continuation &&, exec_ontop_arg_t, Fn &&);
+
     friend bool has_data( continuation const&) noexcept;
 
     template< typename Arg >
-    friend Arg get_data( continuation const&);
+    friend Arg get( continuation const&);
 
     template< typename ... Arg >
-    friend std::tuple< Arg ... > get_data( continuation const&);
+    friend typename detail::result_type< Arg ... >::type data( continuation const&);
 
     detail::fcontext_t      fctx_{ nullptr };
     void                *   data_{ nullptr };
@@ -408,6 +456,17 @@ public:
     }
 };
 
+inline
+bool has_data( continuation const& c) noexcept {
+    return c &&  nullptr != c.data_;
+}
+
+template< typename ... Arg >
+typename detail::result_type< Arg ... >::type data( continuation const& c) {
+    BOOST_ASSERT( nullptr != c.data_);
+    return detail::result_type< Arg ... >::get( c.data_);
+}
+
 class ontop_error : public std::exception {
 private:
     detail::fcontext_t  fctx_;
@@ -422,238 +481,164 @@ public:
     }
 };
 
-inline
-bool has_data( continuation const& c) noexcept {
-    return c &&  nullptr != c.data_;
-}
-
-template< typename  Arg >
-Arg get_data( continuation const& c) {
-    BOOST_ASSERT( has_data( c) );
-    using ArgTuple = std::tuple< Arg >;
-    auto p = static_cast< std::tuple< std::exception_ptr, ArgTuple > * >( c.data_);
-    return std::get< 0 >( std::move( std::get< 1 >( * p) ) );
-}
-
-template< typename ... Arg >
-std::tuple< Arg ... > get_data( continuation const& c) {
-    BOOST_ASSERT( nullptr != c.data_);
-    using ArgTuple = std::tuple< Arg ... >;
-    auto p = static_cast< std::tuple< std::exception_ptr, ArgTuple > * >( c.data_);
-    return std::move( std::get< 1 >( * p) );
-}
-
-}
-
-namespace detail {
-inline namespace v1 {
-
-template< typename ... Arg >
-struct callcc_helper {
-    template< typename StackAlloc, typename Fn >
-    static
-    continuation
-    callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg ... arg) {
-        using ArgTuple = std::tuple< Arg ... >;
-        using Record = detail::record< continuation, ArgTuple, StackAlloc, Fn >;
-        return callcc( continuation{
-                           context_create< Record >(
-                                   salloc, std::forward< Fn >( fn) ) },
-                       std::forward< Arg >( arg) ... );
-    }
-
-    template< typename StackAlloc, typename Fn >
-    static
-    continuation
-    callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Arg ... arg) {
-        using ArgTuple = std::tuple< Arg ... >;
-        using Record = detail::record< continuation, ArgTuple, StackAlloc, Fn >;
-        return callcc( continuation{
-                           context_create< Record >(
-                                   palloc, salloc, std::forward< Fn >( fn) ) },
-                       std::forward< Arg >( arg) ... );
-    }
-
-    static
-    continuation
-    callcc( continuation && c, Arg ... arg) {
-        BOOST_ASSERT( nullptr != c.fctx_);
-        using ArgTuple = std::tuple< Arg ... >;
-        ArgTuple tpl{ std::forward< Arg >( arg) ... };
-        auto p = std::make_tuple( std::exception_ptr{}, std::move( tpl) );
-        detail::transfer_t t = detail::jump_fcontext( detail::exchange( c.fctx_, nullptr), & p);
-        if ( nullptr != t.data) {
-            auto p = static_cast< std::tuple< std::exception_ptr, ArgTuple > * >( t.data);
-            std::exception_ptr eptr = std::get< 0 >( * p);
-            if ( eptr) {
-                try {
-                    std::rethrow_exception( eptr);
-                } catch (...) {
-                    std::throw_with_nested( ontop_error{ t.fctx } );
-                }
-            }
-        }
-        return continuation{ t.fctx, t.data };
-    }
-
-    template< typename Fn >
-    static
-    continuation
-    callcc( continuation && c, exec_ontop_arg_t, Fn && fn, Arg ... arg) {
-        BOOST_ASSERT( nullptr != c.fctx_);
-        using ArgTuple = std::tuple< Arg ... >;
-        ArgTuple tpl{ std::forward< Arg >( arg) ... };
-        auto p = std::make_tuple( fn, std::make_tuple( std::exception_ptr{}, std::move( tpl) ) );
-        detail::transfer_t t = detail::ontop_fcontext(
-                detail::exchange( c.fctx_, nullptr),
-                & p,
-                detail::context_ontop< Fn, Arg ... >);
-        if ( nullptr != t.data) {
-            auto p = static_cast< std::tuple< std::exception_ptr, ArgTuple > * >( t.data);
-            std::exception_ptr eptr = std::get< 0 >( * p);
-            if ( eptr) {
-                try {
-                    std::rethrow_exception( eptr);
-                } catch (...) {
-                    std::throw_with_nested( ontop_error{ t.fctx } );
-                }
-            }
-        }
-        return continuation{ t.fctx, t.data };
-    }
-};
-
-template<>
-struct callcc_helper< void > {
-    template< typename StackAlloc, typename Fn >
-    static
-    continuation
-    callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn) {
-        using Record = detail::record_void< continuation, StackAlloc, Fn >;
-        return callcc(
-                continuation{
-                    detail::context_create< Record >(
-                            salloc, std::forward< Fn >( fn) ) } );
-    }
-
-    template< typename StackAlloc, typename Fn >
-    static
-    continuation
-    callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn) {
-        using Record = detail::record_void< continuation, StackAlloc, Fn >;
-        return callcc(
-                continuation{
-                    detail::context_create< Record >(
-                            palloc, salloc, std::forward< Fn >( fn) ) } );
-    }
-
-    static
-    continuation
-    callcc( continuation && c) {
-        BOOST_ASSERT( nullptr != c.fctx_);
-        detail::transfer_t t = detail::jump_fcontext( detail::exchange( c.fctx_, nullptr), nullptr);
-        if ( nullptr != t.data) {
-            std::exception_ptr * eptr = static_cast< std::exception_ptr * >( t.data);
-            try {
-                std::rethrow_exception( * eptr);
-            } catch (...) {
-                std::throw_with_nested( ontop_error{ t.fctx } );
-            }
-        }
-        return continuation{ t.fctx };
-    }
-
-    template< typename Fn >
-    static
-    continuation
-    callcc( continuation && c, exec_ontop_arg_t, Fn && fn) {
-        BOOST_ASSERT( nullptr != c.fctx_);
-        auto p = std::make_tuple( fn, std::exception_ptr{} );
-        detail::transfer_t t = detail::ontop_fcontext(
-                detail::exchange( c.fctx_, nullptr),
-                & p,
-                detail::context_ontop_void< Fn >);
-        if ( nullptr != t.data) {
-            std::exception_ptr * eptr = static_cast< std::exception_ptr * >( t.data);
-            try {
-                std::rethrow_exception( * eptr);
-            } catch (...) {
-                std::throw_with_nested( ontop_error{ t.fctx } );
-            }
-        }
-        return continuation{ t.fctx };
-    }
-
-};
-
-}}
-
-inline namespace v1 {
-
+// Arg
 template<
-    typename ... Ret,
     typename Fn,
     typename ... Arg,
     typename = detail::disable_overload< continuation, Fn >
 >
 continuation
-callcc( Fn && fn, Arg && ... arg) {
-    return detail::callcc_helper< Ret ... >::callcc(
+callcc( Fn && fn, Arg ... arg) {
+    return callcc(
             std::allocator_arg, fixedsize_stack(),
             std::forward< Fn >( fn), std::forward< Arg >( arg) ...);
 }
 
 template<
-    typename ... Ret,
     typename StackAlloc,
     typename Fn,
     typename ... Arg
 >
 continuation
-callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg && ... arg) {
-    return detail::callcc_helper< Ret ... >::callcc(
-            std::allocator_arg, salloc,
-            std::forward< Fn >( fn), std::forward< Arg >( arg) ...);
+callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg ... arg) {
+    using ArgTuple = std::tuple< Arg ... >;
+    using Record = detail::record< continuation, ArgTuple, StackAlloc, Fn >;
+    return callcc( continuation{
+                        detail::context_create< Record >(
+                               salloc, std::forward< Fn >( fn) ) },
+                   std::forward< Arg >( arg) ... );
 }
 
 template<
-    typename ... Ret,
     typename StackAlloc,
     typename Fn,
     typename ... Arg
 >
 continuation
-callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Arg && ... arg) {
-    return detail::callcc_helper< Ret ... >::callcc(
-            std::allocator_arg, palloc, salloc,
-            std::forward< Fn >( fn), std::forward< Arg >( arg) ...);
+callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Arg ... arg) {
+    using ArgTuple = std::tuple< Arg ... >;
+    using Record = detail::record< continuation, ArgTuple, StackAlloc, Fn >;
+    return callcc( continuation{
+                        detail::context_create< Record >(
+                               palloc, salloc, std::forward< Fn >( fn) ) },
+                   std::forward< Arg >( arg) ... );
 }
 
-template<
-    typename ... Ret,
-    typename ... Arg
->
+template< typename ... Arg >
 continuation
-callcc( continuation && c, Arg && ... arg) {
-    return detail::callcc_helper< Ret ... >::callcc(
-            std::move( c), std::forward< Arg >( arg) ... );
+callcc( continuation && c, Arg ... arg) {
+    BOOST_ASSERT( nullptr != c.fctx_);
+    using ArgTuple = std::tuple< Arg ... >;
+    auto p = std::make_tuple( std::exception_ptr{}, ArgTuple{ std::forward< Arg >( arg) ... } );
+    detail::transfer_t t = detail::jump_fcontext( detail::exchange( c.fctx_, nullptr), & p);
+    if ( nullptr != t.data) {
+        auto p = static_cast< std::tuple< std::exception_ptr, ArgTuple > * >( t.data);
+        std::exception_ptr eptr = std::get< 0 >( * p);
+        if ( eptr) {
+            try {
+                std::rethrow_exception( eptr);
+            } catch (...) {
+                std::throw_with_nested( ontop_error{ t.fctx } );
+            }
+        }
+    }
+    return continuation{ t.fctx, t.data };
 }
 
+template< typename Fn, typename ... Arg >
+continuation
+callcc( continuation && c, exec_ontop_arg_t, Fn && fn, Arg ... arg) {
+    BOOST_ASSERT( nullptr != c.fctx_);
+    using ArgTuple = std::tuple< Arg ... >;
+    auto p = std::make_tuple( fn, std::make_tuple( std::exception_ptr{}, ArgTuple{ std::forward< Arg >( arg) ... } ) );
+    detail::transfer_t t = detail::ontop_fcontext(
+            detail::exchange( c.fctx_, nullptr),
+            & p,
+            detail::context_ontop< Fn, Arg ... >);
+    if ( nullptr != t.data) {
+        auto p = static_cast< std::tuple< std::exception_ptr, ArgTuple > * >( t.data);
+        std::exception_ptr eptr = std::get< 0 >( * p);
+        if ( eptr) {
+            try {
+                std::rethrow_exception( eptr);
+            } catch (...) {
+                std::throw_with_nested( ontop_error{ t.fctx } );
+            }
+        }
+    }
+    return continuation{ t.fctx, t.data };
+}
+
+// void
 template<
-    typename ... Ret,
     typename Fn,
-    typename ... Arg
+    typename = detail::disable_overload< continuation, Fn >
 >
 continuation
-callcc( continuation && c, exec_ontop_arg_t, Fn && fn, Arg && ... arg) {
-    return detail::callcc_helper< Ret ... >::callcc(
-            std::move( c),
-            exec_ontop_arg, std::forward< Fn >( fn), std::forward< Arg >( arg) ... );
+callcc( Fn && fn) {
+    return callcc(
+            std::allocator_arg, fixedsize_stack(),
+            std::forward< Fn >( fn) );
+}
+
+template< typename StackAlloc, typename Fn >
+continuation
+callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn) {
+    using Record = detail::record_void< continuation, StackAlloc, Fn >;
+    return callcc(
+            continuation{
+                detail::context_create< Record >(
+                        salloc, std::forward< Fn >( fn) ) } );
+}
+
+template< typename StackAlloc, typename Fn >
+continuation
+callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn) {
+    using Record = detail::record_void< continuation, StackAlloc, Fn >;
+    return callcc(
+            continuation{
+                detail::context_create< Record >(
+                        palloc, salloc, std::forward< Fn >( fn) ) } );
+}
+
+inline
+continuation
+callcc( continuation && c) {
+    BOOST_ASSERT( nullptr != c.fctx_);
+    detail::transfer_t t = detail::jump_fcontext( detail::exchange( c.fctx_, nullptr), nullptr);
+    if ( nullptr != t.data) {
+        std::exception_ptr * eptr = static_cast< std::exception_ptr * >( t.data);
+        try {
+            std::rethrow_exception( * eptr);
+        } catch (...) {
+            std::throw_with_nested( ontop_error{ t.fctx } );
+        }
+    }
+    return continuation{ t.fctx };
+}
+
+template< typename Fn >
+continuation
+callcc( continuation && c, exec_ontop_arg_t, Fn && fn) {
+    BOOST_ASSERT( nullptr != c.fctx_);
+    auto p = std::make_tuple( fn, std::exception_ptr{} );
+    detail::transfer_t t = detail::ontop_fcontext(
+            detail::exchange( c.fctx_, nullptr),
+            & p,
+            detail::context_ontop_void< Fn >);
+    if ( nullptr != t.data) {
+        std::exception_ptr * eptr = static_cast< std::exception_ptr * >( t.data);
+        try {
+            std::rethrow_exception( * eptr);
+        } catch (...) {
+            std::throw_with_nested( ontop_error{ t.fctx } );
+        }
+    }
+    return continuation{ t.fctx };
 }
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
 template<
-    typename ... Ret,
     typename Fn,
     typename ... Arg
 >
@@ -661,7 +646,6 @@ continuation
 callcc( std::allocator_arg_t, segmented_stack, Fn &&, Arg ...);
 
 template<
-    typename ... Ret,
     typename StackAlloc,
     typename Fn,
     typename ... Arg

@@ -13,15 +13,15 @@ namespace ctx = boost::context;
 
 ctx::continuation f1( ctx::continuation && cm) {
     std::cout << "f1: entered first time" << std::endl;
-    cm = ctx::callcc< void >( std::move( cm) );
+    cm = ctx::callcc( std::move( cm) );
     std::cout << "f1: entered second time" << std::endl;
     return std::move( cm);
 }
 
 int main() {
-    ctx::continuation c = ctx::callcc< void >( f1);
+    ctx::continuation c = ctx::callcc( f1);
     std::cout << "f1: returned first time" << std::endl;
-    c = ctx::callcc< void >( std::move( c) );
+    c = ctx::callcc( std::move( c) );
     std::cout << "f1: returned second time" << std::endl;
 
     std::cout << "main: done" << std::endl;

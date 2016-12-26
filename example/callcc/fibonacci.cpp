@@ -15,12 +15,14 @@ namespace ctx = boost::context;
 int main() {
     ctx::continuation c;
     int i=0;
-    c=ctx::callcc< int >(
-        [](ctx::continuation && c, int) mutable {
+    c=ctx::callcc(
+        std::allocator_arg,
+        ctx::fixedsize_stack(),
+        [](ctx::continuation && c, int){
             int a=0;
             int b=1;
             for(;;){
-                c=ctx::callcc< int >(std::move(c),a);
+                c=ctx::callcc(std::move(c),a);
                 auto next=a+b;
                 a=b;
                 b=next;
@@ -28,14 +30,11 @@ int main() {
             return std::move( c);
         },
         0);
-    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
-    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
-    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
-    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
-    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
-    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
-    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
-    c=ctx::callcc< int >(std::move(c),0); i=ctx::get_data<int>(c); std::cout<<i<<" ";
+    for ( int j = 0; j < 10; ++j) {
+        c=ctx::callcc(std::move(c),0);
+        i=ctx::data<int>(c);
+        std::cout<<i<<" ";
+    }
     std::cout<<std::endl;
     std::cout << "main: done" << std::endl;
 }

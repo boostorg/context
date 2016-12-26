@@ -12,32 +12,31 @@
 
 namespace ctx = boost::context;
 
-ctx::continuation f1( ctx::continuation && c, int data) {
-    std::cout << "f1: entered first time: " << data  << std::endl;
-    c = ctx::callcc< int >( std::move( c), data + 1);
-    data = ctx::get_data< int >( c);
-    std::cout << "f1: entered second time: " << data  << std::endl;
-    c = ctx::callcc< int >( std::move( c), data + 1);
-    data = ctx::get_data< int >( c);
-    std::cout << "f1: entered third time: " << data << std::endl;
-    return std::move( c);
-}
-
-int f2( int data) {
-    std::cout << "f2: entered: " << data << std::endl;
-    return -1;
-}
-
 int main() {
     ctx::continuation c;
     int data = 0;
-    c = ctx::callcc< int >( f1, data + 1);
-    data = ctx::get_data< int >( c);
+    c = ctx::callcc( [](ctx::continuation && c,int data) {
+                        std::cout << "f1: entered first time: " << data  << std::endl;
+                        c = ctx::callcc( std::move( c), data + 1);
+                        data = ctx::data< int >( c);
+                        std::cout << "f1: entered second time: " << data  << std::endl;
+                        c = ctx::callcc( std::move( c), data + 1);
+                        data = ctx::data< int >( c);
+                        std::cout << "f1: entered third time: " << data << std::endl;
+                        return std::move( c);
+                    },
+                    data + 1);
+    data = ctx::data< int >( c);
     std::cout << "f1: returned first time: " << data << std::endl;
-    c = ctx::callcc< int >( std::move( c), data + 1);
-    data = ctx::get_data< int >( c);
+    c = ctx::callcc( std::move( c), data + 1);
+    data = ctx::data< int >( c);
     std::cout << "f1: returned second time: " << data << std::endl;
-    c = ctx::callcc< int >( std::move( c), ctx::exec_ontop_arg, f2, data + 1);
+    c = ctx::callcc( std::move( c), ctx::exec_ontop_arg,
+                     [](int data){
+                        std::cout << "f2: entered: " << data << std::endl;
+                        return -1;
+                     },
+                     data + 1);
     std::cout << "f1: returned third time" << std::endl;
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;

@@ -30,16 +30,16 @@ ctx::continuation echo( ctx::continuation && c, int i) {
         std::cout << i;
         echoSSE( i);
         std::cout << " ";
-        c = ctx::callcc< int >( std::move( c), 0);
-        i = ctx::get_data< int >( c);
+        c = ctx::callcc( std::move( c), 0);
+        std::tie( i) = ctx::data< int >( c);
     }
     return std::move( c);
 }
 
 int main( int argc, char * argv[]) {
-    ctx::continuation c = ctx::callcc< int >( echo, 0);
+    ctx::continuation c = ctx::callcc( echo, 0);
     for ( int i = 1; i < 10; ++i) {
-        c = ctx::callcc< int >( std::move( c), i);
+        c = ctx::callcc( std::move( c), i);
     }
     std::cout << "\nmain: done" << std::endl;
     return EXIT_SUCCESS;

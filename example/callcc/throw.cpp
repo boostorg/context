@@ -21,11 +21,11 @@ struct my_exception : public std::runtime_error {
 };
 
 int main() {
-    ctx::continuation c = ctx::callcc< void >([](boost::context::continuation && c) {
+    ctx::continuation c = ctx::callcc([](boost::context::continuation && c) {
         for (;;) {
             try {
                     std::cout << "entered" << std::endl;
-                    c = ctx::callcc< void >( std::move( c) );
+                    c = ctx::callcc( std::move( c) );
             } catch ( boost::context::ontop_error const& e) {
                 try {
                     std::rethrow_if_nested( e);
@@ -37,9 +37,9 @@ int main() {
         }
         return std::move( c);
     });
-    c = ctx::callcc< void >( std::move( c) );
-    c = ctx::callcc< void >( std::move( c) );
-    c = ctx::callcc< void >( std::move( c), ctx::exec_ontop_arg, []() { throw my_exception("abc"); });
+    c = ctx::callcc( std::move( c) );
+    c = ctx::callcc( std::move( c) );
+    c = ctx::callcc( std::move( c), ctx::exec_ontop_arg, []() { throw my_exception("abc"); });
 
     std::cout << "main: done" << std::endl;
 

@@ -96,13 +96,13 @@ int main() {
         boost::context::continuation source;
         // user-code pulls parsed data from parser
         // invert control flow
-        source=ctx::callcc<char>(
+        source=ctx::callcc(
                 [&is](ctx::continuation && sink,char){
                 // create parser with callback function
                 Parser p( is,
                           [&sink](char c){
                                 // resume main execution context
-                                sink=ctx::callcc<char>(std::move(sink),c);
+                                sink=ctx::callcc(std::move(sink),c);
                         });
                     // start recursive parsing
                     p.run();
@@ -111,9 +111,9 @@ int main() {
                 },
                 '\0');
         while(ctx::has_data(source)){
-            char c=ctx::get_data<char>(source);
+            char c=ctx::data<char>(source);
             printf("Parsed: %c\n",c);
-            source=ctx::callcc<char>(std::move(source),'\0');
+            source=ctx::callcc(std::move(source),'\0');
             if (!c) {
                 break;
             }

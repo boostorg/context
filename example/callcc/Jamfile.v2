@@ -42,6 +42,14 @@ exe jump
     : jump.cpp
     ;
 
+exe jump_ref
+    : jump_ref.cpp
+    ;
+
+exe jump_mov
+    : jump_mov.cpp
+    ;
+
 exe fibonacci
     : fibonacci.cpp
     ;
@@ -54,10 +62,10 @@ exe ontop
     : ontop.cpp
     ;
 
-exe backtrace
-    : backtrace.cpp
-    ;
-
-exe echosse
-    : echosse.cpp
-    ;
+#exe backtrace
+#    : backtrace.cpp
+#    ;
+#
+#exe echosse
+#    : echosse.cpp
+#    ;
