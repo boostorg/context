@@ -96,8 +96,10 @@ public:
 };
 
 struct my_exception : public std::runtime_error {
-    my_exception( char const* what) :
-        std::runtime_error( what) {
+    ctx::continuation   c;
+    my_exception( ctx::continuation && c_, char const* what) :
+        std::runtime_error( what),
+        c{ std::move( c_) } {
     }
 };
 
@@ -317,7 +319,14 @@ void test_ontop() {
                     }
                     return std::move( c);
                 }, i);
-        c = ctx::callcc( std::move( c), ctx::exec_ontop_arg, [](int x){ return x-10; }, i);
+        c = ctx::callcc(
+                std::move( c),
+                ctx::exec_ontop_arg,
+                [](ctx::continuation & c){
+                    int x = ctx::data< int >( c);
+                    return x-10;
+                },
+                i);
         if ( ctx::has_data( c) ) {
             j = ctx::data< int >( c);
         }
@@ -329,7 +338,15 @@ void test_ontop() {
         ctx::continuation c;
         c = ctx::callcc( fn17, i, j);
         std::tie( i, j) = ctx::data< int, int >( c);
-        c = ctx::callcc( std::move( c), ctx::exec_ontop_arg, [](int x,int y) { return std::make_tuple( x - y, x + y); }, i, j);
+        c = ctx::callcc(
+                std::move( c),
+                ctx::exec_ontop_arg,
+                [](ctx::continuation & c){
+                    int x, y;
+                    std::tie( x, y) = ctx::data< int, int >( c);
+                    return std::make_tuple( x - y, x + y);
+                },
+                i, j);
         std::tie( i, j) = ctx::data< int, int >( c);
         BOOST_CHECK_EQUAL( i, 2);
         BOOST_CHECK_EQUAL( j, 4);
@@ -342,13 +359,14 @@ void test_ontop() {
         BOOST_CHECK( -1 == m2.value);
         BOOST_CHECK( ! m2.state);
         c = ctx::callcc( std::move( c),
-                                        ctx::exec_ontop_arg,
-                                        [](moveable m){
-                                            BOOST_CHECK( m.state);
-                                            BOOST_CHECK( 7 == m.value);
-                                            return std::move( m);
-                                        },
-                                        std::move( m1) );
+                         ctx::exec_ontop_arg,
+                         [](ctx::continuation & c){
+                             moveable m = ctx::data< moveable >( c);
+                             BOOST_CHECK( m.state);
+                             BOOST_CHECK( 7 == m.value);
+                             return std::move( m);
+                         },
+                         std::move( m1) );
         m2 = ctx::data< moveable >( c);
         BOOST_CHECK( ! m1.state);
         BOOST_CHECK( -1 == m1.value);
@@ -366,13 +384,9 @@ void test_ontop_exception() {
                     value1 = 3;
                     try {
                         c = ctx::callcc( std::move( c) );
-                    } catch ( ctx::ontop_error const& e) {
-                        try {
-                            std::rethrow_if_nested( e);
-                        } catch ( my_exception const& ex) {
-                            value2 = ex.what();
-                        }
-                        return e.get_continuation();
+                    } catch ( my_exception & ex) {
+                        value2 = ex.what();
+                        return std::move( ex.c); 
                     }
                 }
                 return std::move( c);
@@ -380,28 +394,28 @@ void test_ontop_exception() {
         c = ctx::callcc( std::move( c) );
         BOOST_CHECK_EQUAL( 3, value1);
         const char * what = "hello world";
-        ctx::callcc( std::move( c), ctx::exec_ontop_arg, [what](){ throw my_exception( what); });
+        ctx::callcc(
+                std::move( c),
+                ctx::exec_ontop_arg,
+                [what](ctx::continuation & c){
+                    throw my_exception( std::move( c), what);
+                });
         BOOST_CHECK_EQUAL( 3, value1);
         BOOST_CHECK_EQUAL( std::string( what), value2);
     }
     {
         value2 = "";
         int i = 3, j = 1;
-        ctx::continuation c;
-        c = ctx::callcc([]( ctx::continuation && c) {
+        ctx::continuation c = ctx::callcc([]( ctx::continuation && c) {
                 int x; int y;
                 std::tie( x, y) = ctx::data< int, int >( c);
                 for (;;) {
                     try {
-                            c = ctx::callcc( std::move( c), x+y,x-y);
-                            std::tie( x, y) = ctx::data< int, int >( c);
-                    } catch ( boost::context::ontop_error const& e) {
-                        try {
-                            std::rethrow_if_nested( e);
-                        } catch ( my_exception const& ex) {
-                            value2 = ex.what();
-                        }
-                        return e.get_continuation();
+                        c = ctx::callcc( std::move( c), x+y,x-y);
+                        std::tie( x, y) = ctx::data< int, int >( c);
+                    } catch ( my_exception & ex) {
+                        value2 = ex.what();
+                        return std::move( ex.c); 
                     }
                 }
                 return std::move( c);
@@ -411,14 +425,16 @@ void test_ontop_exception() {
         std::tie( i, j) = ctx::data< int, int >( c);
         BOOST_CHECK_EQUAL( i, 4);
         BOOST_CHECK_EQUAL( j, 2);
-        const char * what = "hello world";
-        c = ctx::callcc( std::move( c),
+        char const * what = "hello world";
+        c = ctx::callcc(
+                std::move( c),
                 ctx::exec_ontop_arg,
-                [what](int x, int y) {
-                    throw my_exception(what);
-                    return std::make_tuple( x*y, x/y);
+                [](ctx::continuation & c) {
+                    char const * what = ctx::data< char const * >( c);
+                    throw my_exception( std::move( c), what);
+                    return what;
                 },
-                i, j);
+                what);
         BOOST_CHECK( ! c );
         BOOST_CHECK_EQUAL( i, 4);
         BOOST_CHECK_EQUAL( j, 2);
@@ -460,7 +476,6 @@ void test_termination() {
 
 void test_one_arg() {
     {
-        int dummy = 0;
         value1 = 0;
         ctx::continuation c;
         c = ctx::callcc( fn8, 7);
@@ -474,18 +489,15 @@ void test_one_arg() {
         BOOST_CHECK_EQUAL( i, j);
     }
     {
-        int i_ = 3, j_ = 7;
+        int i_ = 3;
         int & i = i_;
-        int & j = j_;
         BOOST_CHECK_EQUAL( i, i_);
-        BOOST_CHECK_EQUAL( j, j_);
-        BOOST_CHECK( & i != & j);
-        ctx::continuation c;
-        c = ctx::callcc( fn10, std::ref( i) );
+        ctx::continuation c = ctx::callcc( fn10, std::ref( i) );
         BOOST_CHECK( ctx::has_data( c) );
-        j = ctx::data< int & >( c);
+        int & j = ctx::data< int & >( c);
         BOOST_CHECK_EQUAL( i, i_);
         BOOST_CHECK_EQUAL( j, i_);
+        BOOST_CHECK( & i == & j);
     }
     {
         Y y;

@@ -1,5 +1,5 @@
 
-//          Copyright Oliver Kowalke 2014.
+//          Copyright Oliver Kowalke 2016.
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
@@ -15,31 +15,32 @@
 namespace ctx = boost::context;
 
 struct my_exception : public std::runtime_error {
-    my_exception( std::string const& what) :
-        std::runtime_error{ what } {
+    ctx::continuation    c;
+    my_exception( ctx::continuation && c_, std::string const& what) :
+        std::runtime_error{ what },
+        c{ std::move( c_) } {
     }
 };
 
 int main() {
-    ctx::continuation c = ctx::callcc([](boost::context::continuation && c) {
+    ctx::continuation c = ctx::callcc([](ctx::continuation && c) {
         for (;;) {
             try {
-                    std::cout << "entered" << std::endl;
-                    c = ctx::callcc( std::move( c) );
-            } catch ( boost::context::ontop_error const& e) {
-                try {
-                    std::rethrow_if_nested( e);
-                } catch ( my_exception const& ex) {
-                    std::cerr << "my_exception: " << ex.what() << std::endl;
-                }
-                return e.get_continuation();
+                std::cout << "entered" << std::endl;
+                c = ctx::callcc( std::move( c) );
+            } catch ( my_exception & ex) {
+                std::cerr << "my_exception: " << ex.what() << std::endl;
+                return std::move( ex.c);
             }
         }
         return std::move( c);
     });
-    c = ctx::callcc( std::move( c) );
-    c = ctx::callcc( std::move( c) );
-    c = ctx::callcc( std::move( c), ctx::exec_ontop_arg, []() { throw my_exception("abc"); });
+    c = ctx::callcc(
+            std::move( c),
+            ctx::exec_ontop_arg,
+            [](ctx::continuation & c){
+                throw my_exception(std::move( c), "abc");
+            });
 
     std::cout << "main: done" << std::endl;
 

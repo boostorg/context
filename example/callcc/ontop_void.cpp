@@ -21,7 +21,7 @@ ctx::continuation f1( ctx::continuation && c) {
     return std::move( c);
 }
 
-void f2() {
+void f2( ctx::continuation & c) {
     std::cout << "f2: entered" << std::endl;
 }
 

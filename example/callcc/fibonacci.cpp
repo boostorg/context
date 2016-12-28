@@ -1,5 +1,5 @@
 
-//          Copyright Oliver Kowalke 2014.
+//          Copyright Oliver Kowalke 2016.
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
@@ -13,11 +13,7 @@
 namespace ctx = boost::context;
 
 int main() {
-    ctx::continuation c;
-    int i=0;
-    c=ctx::callcc(
-        std::allocator_arg,
-        ctx::fixedsize_stack(),
+    ctx::continuation c=ctx::callcc(
         [](ctx::continuation && c){
             int a=0;
             int b=1;
@@ -28,13 +24,11 @@ int main() {
                 b=next;
             }
             return std::move( c);
-        },
-        0);
+        });
     for ( int j = 0; j < 10; ++j) {
-        c=ctx::callcc(std::move(c),0);
-        i=ctx::data<int>(c);
-        std::cout<<i<<" ";
+        c=ctx::callcc(std::move(c));
+        std::cout << ctx::data<int>(c) << " ";
     }
-    std::cout<<std::endl;
+    std::cout << std::endl;
     std::cout << "main: done" << std::endl;
 }

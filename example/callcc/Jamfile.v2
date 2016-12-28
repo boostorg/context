@@ -62,6 +62,10 @@ exe ontop
     : ontop.cpp
     ;
 
+exe types
+    : types.cpp
+    ;
+
 #exe backtrace
 #    : backtrace.cpp
 #    ;

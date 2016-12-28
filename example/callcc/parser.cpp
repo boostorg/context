@@ -93,7 +93,7 @@ int main() {
     try {
         std::istringstream is("1+1");
         // execute parser in new execution context
-        boost::context::continuation source;
+        ctx::continuation source;
         // user-code pulls parsed data from parser
         // invert control flow
         source=ctx::callcc(
@@ -108,15 +108,11 @@ int main() {
                     p.run();
                     // resume main execution context
                     return std::move(sink);
-                },
-                '\0');
+                });
         while(ctx::has_data(source)){
             char c=ctx::data<char>(source);
             printf("Parsed: %c\n",c);
-            source=ctx::callcc(std::move(source),'\0');
-            if (!c) {
-                break;
-            }
+            source=ctx::callcc(std::move(source) );
         }
         std::cout << "main: done" << std::endl;
         return EXIT_SUCCESS;

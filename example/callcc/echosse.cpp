@@ -31,7 +31,7 @@ ctx::continuation echo( ctx::continuation && c) {
         std::cout << i;
         echoSSE( i);
         std::cout << " ";
-        c = ctx::callcc( std::move( c), 0);
+        c = ctx::callcc( std::move( c) );
         i = ctx::data< int >( c);
     }
     return std::move( c);
