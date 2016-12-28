@@ -23,19 +23,19 @@ namespace ctx = boost::context;
 
 static ctx::continuation foo( ctx::continuation && c) {
     while ( true) {
-        c = ctx::callcc< void >( std::move( c) );
+        c = ctx::callcc( std::move( c) );
     }
     return std::move( c);
 }
 
 duration_type measure_time() {
     // cache warum-up
-    ctx::continuation c = ctx::callcc< void >( foo);
-    c = ctx::callcc< void >( std::move( c) );
+    ctx::continuation c = ctx::callcc( foo);
+    c = ctx::callcc( std::move( c) );
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = ctx::callcc< void >( std::move( c) );
+        c = ctx::callcc( std::move( c) );
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -48,12 +48,12 @@ duration_type measure_time() {
 duration_type measure_time_() {
     // cache warum-up
     ctx::fixedsize_stack alloc;
-    ctx::continuation c = ctx::callcc< void >( std::allocator_arg, alloc, foo);
-    c = ctx::callcc< void >( std::move( c) );
+    ctx::continuation c = ctx::callcc( std::allocator_arg, alloc, foo);
+    c = ctx::callcc( std::move( c) );
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = ctx::callcc< void >( std::move( c), ctx::exec_ontop_arg, [](){});
+        c = ctx::callcc( std::move( c), ctx::exec_ontop_arg, [](){});
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -67,12 +67,12 @@ duration_type measure_time_() {
 cycle_type measure_cycles() {
     // cache warum-up
     ctx::fixedsize_stack alloc;
-    ctx::continuation c = ctx::callcc< void >( std::allocator_arg, alloc, foo);
-    c = ctx::callcc< void >( std::move( c) );
+    ctx::continuation c = ctx::callcc( std::allocator_arg, alloc, foo);
+    c = ctx::callcc( std::move( c) );
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = ctx::callcc< void >( std::move( c) );
+        c = ctx::callcc( std::move( c) );
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
@@ -85,12 +85,12 @@ cycle_type measure_cycles() {
 cycle_type measure_cycles_() {
     // cache warum-up
     ctx::fixedsize_stack alloc;
-    ctx::continuation c = ctx::callcc< void >( std::allocator_arg, alloc, foo);
-    c = ctx::callcc< void >( std::move( c) );
+    ctx::continuation c = ctx::callcc( std::allocator_arg, alloc, foo);
+    c = ctx::callcc( std::move( c) );
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = ctx::callcc< void >( std::move( c), ctx::exec_ontop_arg, [](){});
+        c = ctx::callcc( std::move( c), ctx::exec_ontop_arg, [](){});
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement

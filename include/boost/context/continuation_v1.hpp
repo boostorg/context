@@ -27,7 +27,9 @@
 #if defined(BOOST_NO_CXX17_STD_APPLY)
 #include <boost/context/detail/apply.hpp>
 #endif
-#include <boost/context/detail/decay_copy.hpp>
+#if defined(BOOST_NO_CXX17_STD_INVOKE)
+#include <boost/context/detail/invoke.hpp>
+#endif
 #include <boost/context/detail/disable_overload.hpp>
 #include <boost/context/detail/exception.hpp>
 #include <boost/context/detail/exchange.hpp>
@@ -175,16 +177,13 @@ public:
     }
 
     transfer_t run( transfer_t t) {
-        Ctx from{ t.fctx };
         ArgTuple arg = std::move( * static_cast< ArgTuple * >( t.data) );
-        auto tpl = std::tuple_cat(
-                    std::forward_as_tuple( std::move( from) ),
-                    std::move( arg) );
+        Ctx from{ t.fctx, & arg };
         // invoke context-function
-#if defined(BOOST_NO_CXX17_STD_APPLY)
-        Ctx cc = apply( std::move( fn_), std::move( tpl) );
+#if defined(BOOST_NO_CXX17_STD_INVOKE)
+        Ctx cc = invoke( fn_, std::move( from) );
 #else
-        Ctx cc = std::apply( std::move( fn_), std::move( tpl) );
+        Ctx cc = std::invoke( fn_, std::move( from) );
 #endif
         return { exchange( cc.fctx_, nullptr), nullptr };
     }
@@ -228,10 +227,10 @@ public:
     transfer_t run( transfer_t t) {
         Ctx from{ t.fctx };
         // invoke context-function
-#if defined(BOOST_NO_CXX17_STD_APPLY)
-        Ctx cc = apply( fn_, std::tuple_cat( std::forward_as_tuple( std::move( from) ) ) );
+#if defined(BOOST_NO_CXX17_STD_INVOKE)
+        Ctx cc = invoke( fn_, std::move( from) );
 #else
-        Ctx cc = std::apply( fn_, std::tuple_cat( std::forward_as_tuple( std::move( from) ) ) );
+        Ctx cc = std::invoke( fn_, std::move( from) );
 #endif
         return { exchange( cc.fctx_, nullptr), nullptr };
     }

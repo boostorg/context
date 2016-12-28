@@ -37,8 +37,8 @@ std::string value2;
 double value3 = 0.;
 
 struct X {
-    ctx::continuation foo( ctx::continuation && c, int i) {
-        value1 = i;
+    ctx::continuation foo( ctx::continuation && c) {
+        value1 = ctx::data< int >( c);
         return std::move( c);
     }
 };
@@ -112,21 +112,22 @@ void seh( bool & catched) {
 }
 #endif
 
-ctx::continuation fn1( ctx::continuation && c, int i) {
-    value1 = i;
+ctx::continuation fn1( ctx::continuation && c) {
+    value1 = ctx::data< int >( c);
     return std::move( c);
 }
 
-ctx::continuation fn2( ctx::continuation && c, const char * what) {
+ctx::continuation fn2( ctx::continuation && c) {
     try {
-        throw std::runtime_error( what);
+        throw std::runtime_error( ctx::data< const char * >( c) );
     } catch ( std::runtime_error const& e) {
         value2 = e.what();
     }
     return std::move( c);
 }
 
-ctx::continuation fn3( ctx::continuation && c, double d) {
+ctx::continuation fn3( ctx::continuation && c) {
+    double d = ctx::data< double >( c);
     d += 3.45;
     value3 = d;
     return std::move( c);
@@ -160,54 +161,65 @@ ctx::continuation fn7( ctx::continuation && c) {
     return ctx::callcc( std::move( c) );
 }
 
-ctx::continuation fn8( ctx::continuation && c, int i) {
-    value1 = i;
-    return std::move( c);
-}
-
-ctx::continuation fn9( ctx::continuation && c, int i) {
-    value1 = i;
-    c = ctx::callcc( std::move( c), i);
+ctx::continuation fn8( ctx::continuation && c) {
     value1 = ctx::data< int >( c);
     return std::move( c);
 }
 
-ctx::continuation fn10( ctx::continuation && c, int & i) {
+ctx::continuation fn9( ctx::continuation && c) {
+    value1 = ctx::data< int >( c);
+    c = ctx::callcc( std::move( c), value1);
+    value1 = ctx::data< int >( c);
+    return std::move( c);
+}
+
+ctx::continuation fn10( ctx::continuation && c) {
+    int & i = ctx::data< int & >( c);
     return ctx::callcc( std::move( c), std::ref( i) );
 }
 
-ctx::continuation fn11( ctx::continuation && c, moveable m) {
+ctx::continuation fn11( ctx::continuation && c) {
+    moveable m = ctx::data< moveable >( c);
     c = ctx::callcc( std::move( c), std::move( m) );
     m = ctx::data< moveable >( c);
     return ctx::callcc( std::move( c), std::move( m) );
 }
 
-ctx::continuation fn12( ctx::continuation && c, int i, std::string str) {
+ctx::continuation fn12( ctx::continuation && c) {
+    int i; std::string str;
+    std::tie( i, str) = ctx::data< int, std::string >( c);
     return ctx::callcc( std::move( c), i, str);
 }
 
-ctx::continuation fn13( ctx::continuation && c, int i, moveable m) {
+ctx::continuation fn13( ctx::continuation && c) {
+    int i; moveable m;
+    std::tie( i, m) = ctx::data< int, moveable >( c);
     return ctx::callcc( std::move( c), i, std::move( m) );
 }
 
-ctx::continuation fn14( ctx::continuation && c, variant_t data) {
+ctx::continuation fn14( ctx::continuation && c) {
+    variant_t data = ctx::data< variant_t >( c);
     int i = boost::get< int >( data);
     data = boost::lexical_cast< std::string >( i);
     return ctx::callcc( std::move( c), data);
 }
 
-ctx::continuation fn15( ctx::continuation && c, Y * py) {
+ctx::continuation fn15( ctx::continuation && c) {
+    Y * py = ctx::data< Y * >( c);
     return ctx::callcc( std::move( c), py);
 }
 
-ctx::continuation fn16( ctx::continuation && c, int i) {
+ctx::continuation fn16( ctx::continuation && c) {
+    int i = ctx::data< int >( c);
     value1 = i;
     c = ctx::callcc( std::move( c), i);
     value1 = ctx::data< int >( c);
     return std::move( c);
 }
 
-ctx::continuation fn17( ctx::continuation && c, int i, int j) {
+ctx::continuation fn17( ctx::continuation && c) {
+    int i; int j;
+    std::tie( i, j) = ctx::data< int, int >( c);
     for (;;) {
         c = ctx::callcc( std::move( c), i, j);
         std::tie( i, j) = ctx::data< int, int >( c);
@@ -237,7 +249,7 @@ void test_move() {
 void test_bind() {
     value1 = 0;
     X x;
-    ctx::continuation c = ctx::callcc( std::bind( & X::foo, x, std::placeholders::_1, std::placeholders::_2), 7);
+    ctx::continuation c = ctx::callcc( std::bind( & X::foo, x, std::placeholders::_1), 7);
     BOOST_CHECK_EQUAL( 7, value1);
 }
 
@@ -295,7 +307,8 @@ void test_prealloc() {
 void test_ontop() {
     {
         int i = 3, j = 0;
-        ctx::continuation c = ctx::callcc([](ctx::continuation && c, int x) {
+        ctx::continuation c = ctx::callcc([](ctx::continuation && c) {
+                    int x = ctx::data< int >( c);
                     for (;;) {
                         c = ctx::callcc( std::move( c), x*10);
                         if ( ctx::has_data( c) ) {
@@ -375,7 +388,9 @@ void test_ontop_exception() {
         value2 = "";
         int i = 3, j = 1;
         ctx::continuation c;
-        c = ctx::callcc([]( ctx::continuation && c, int x, int y) {
+        c = ctx::callcc([]( ctx::continuation && c) {
+                int x; int y;
+                std::tie( x, y) = ctx::data< int, int >( c);
                 for (;;) {
                     try {
                             c = ctx::callcc( std::move( c), x+y,x-y);

@@ -97,7 +97,7 @@ int main() {
         // user-code pulls parsed data from parser
         // invert control flow
         source=ctx::callcc(
-                [&is](ctx::continuation && sink,char){
+                [&is](ctx::continuation && sink){
                 // create parser with callback function
                 Parser p( is,
                           [&sink](char c){

@@ -46,7 +46,8 @@ public:
     moveable & operator=( moveable const& other) = delete;
 };
 
-ctx::continuation f1( ctx::continuation && c, moveable && data) {
+ctx::continuation f1( ctx::continuation && c) {
+    moveable data = ctx::data< moveable >( c);
     c = ctx::callcc( std::move( c), std::move( data) );
     return std::move( c);
 }

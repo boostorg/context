@@ -25,13 +25,14 @@ void echoSSE( int i) {
     std::cout << v32[3]; 
 }
 
-ctx::continuation echo( ctx::continuation && c, int i) {
+ctx::continuation echo( ctx::continuation && c) {
+    int i = ctx::data< int >( c);
     for (;;) {
         std::cout << i;
         echoSSE( i);
         std::cout << " ";
         c = ctx::callcc( std::move( c), 0);
-        std::tie( i) = ctx::data< int >( c);
+        i = ctx::data< int >( c);
     }
     return std::move( c);
 }

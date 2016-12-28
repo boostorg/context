@@ -11,7 +11,8 @@
 
 namespace ctx = boost::context;
 
-ctx::continuation f1( ctx::continuation && c, int & data) {
+ctx::continuation f1( ctx::continuation && c) {
+    int & data = ctx::data< int & >( c);
     std::cout << "f1: entered first time: " << data << std::endl;
     data += 2;
     c = ctx::callcc( std::move( c), std::ref( data) );

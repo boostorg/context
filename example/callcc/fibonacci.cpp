@@ -18,7 +18,7 @@ int main() {
     c=ctx::callcc(
         std::allocator_arg,
         ctx::fixedsize_stack(),
-        [](ctx::continuation && c, int){
+        [](ctx::continuation && c){
             int a=0;
             int b=1;
             for(;;){
