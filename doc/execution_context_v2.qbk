@@ -8,7 +8,7 @@
 [#ecv2]
 [section:ecv2 Class execution_context (version 2)]
 
-[note This class is enabled per default.]
+[warning __econtext__ is deprecated.]
 
 Class __econtext__ encapsulates context switching and manages the associated
 context' stack (allocation/deallocation).

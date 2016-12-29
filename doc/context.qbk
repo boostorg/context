@@ -106,6 +106,7 @@
 [template `[text] '''<code>'''[text]'''</code>''']
 
 
+[def __callcc__ ['call/cc]]
 [def __context_fn__ ['context-function]]
 [def __coroutine__ ['coroutine]]
 [def __coroutines__ ['coroutines]]
@@ -122,6 +123,8 @@
 [def __stack_allocator_concept__ ['stack-allocator concept]]
 [def __stack_traits__ ['stack-traits]]
 
+[def __cc__ [link cc ['callcc()]]]
+[def __con__ [link cc ['continuation]]]
 [def __econtext__ ['execution_context]]
 [def __ecv1__ [link ecv1 ['execution_context] (v1)]]
 [def __ecv2__ [link ecv2 ['execution_context] (v2)]]
@@ -155,7 +158,7 @@
 
 [include overview.qbk]
 [include requirements.qbk]
-[/[include fcontext.qbk]]
+[include callcc.qbk]
 [include execution_context_v2.qbk]
 [include execution_context_v1.qbk]
 [include stack.qbk]
