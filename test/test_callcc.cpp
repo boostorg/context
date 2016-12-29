@@ -22,8 +22,11 @@
 #include <boost/context/continuation.hpp>
 #include <boost/context/detail/config.hpp>
 
-#if defined(BOOST_MSVC)
+#ifdef BOOST_WINDOWS
 #include <windows.h>
+#endif
+
+#if defined(BOOST_MSVC)
 # pragma warning(push)
 # pragma warning(disable: 4723)
 #endif

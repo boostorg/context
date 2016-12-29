@@ -10,7 +10,7 @@
 #include <iostream>
 #include <emmintrin.h>
 
-#include <boost/context/all.hpp>
+#include <boost/context/execution_context.hpp>
 
 void echoSSE( int i) {
     __m128i xmm;

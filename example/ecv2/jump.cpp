@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/context/all.hpp>
+#include <boost/context/execution_context.hpp>
 
 namespace ctx = boost::context;
 

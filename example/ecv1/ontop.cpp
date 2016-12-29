@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/context/all.hpp>
+#include <boost/context/execution_context.hpp>
 
 boost::context::execution_context * ctx1 = nullptr;
 boost::context::execution_context * ctx = nullptr;
