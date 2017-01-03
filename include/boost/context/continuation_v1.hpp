@@ -27,12 +27,14 @@
 #if defined(BOOST_NO_CXX17_STD_APPLY)
 #include <boost/context/detail/apply.hpp>
 #endif
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+#include <boost/context/detail/exchange.hpp>
+#endif
 #if defined(BOOST_NO_CXX17_STD_INVOKE)
 #include <boost/context/detail/invoke.hpp>
 #endif
 #include <boost/context/detail/disable_overload.hpp>
 #include <boost/context/detail/exception.hpp>
-#include <boost/context/detail/exchange.hpp>
 #include <boost/context/detail/fcontext.hpp>
 #include <boost/context/detail/tuple.hpp>
 #include <boost/context/fixedsize_stack.hpp>
@@ -148,7 +150,11 @@ public:
 #else
         Ctx cc = std::invoke( fn_, std::move( from) );
 #endif
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         return { exchange( cc.t_.fctx, nullptr), nullptr };
+#else
+        return { std::exchange( cc.t_.fctx, nullptr), nullptr };
+#endif
     }
 };
 
@@ -299,7 +305,11 @@ public:
 
     ~continuation() {
         if ( nullptr != t_.fctx) {
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
             detail::ontop_fcontext( detail::exchange( t_.fctx, nullptr), nullptr, detail::context_unwind);
+#else
+            detail::ontop_fcontext( std::exchange( t_.fctx, nullptr), nullptr, detail::context_unwind);
+#endif
         }
     }
 
@@ -386,7 +396,11 @@ detail::transfer_t context_ontop( detail::transfer_t t) {
     Ctx c{ t };
     // execute function, pass continuation via reference
     std::get< 1 >( * p) = detail::helper< sizeof ... (Arg) >::convert( fn( c) );
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
     return { detail::exchange( c.t_.fctx, nullptr), & std::get< 1 >( * p) };
+#else
+    return { std::exchange( c.t_.fctx, nullptr), & std::get< 1 >( * p) };
+#endif
 }
 
 template< typename Ctx, typename Fn >
@@ -397,7 +411,11 @@ detail::transfer_t context_ontop_void( detail::transfer_t t) {
     Ctx c{ t };
     // execute function, pass continuation via reference
     fn( c);
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
     return { detail::exchange( c.t_.fctx, nullptr), nullptr };
+#else
+    return { std::exchange( c.t_.fctx, nullptr), nullptr };
+#endif
 }
 
 // Arg
@@ -448,7 +466,11 @@ callcc( continuation && c, Arg ... arg) {
     auto tpl = std::make_tuple( std::forward< Arg >( arg) ... );
     return continuation{
         detail::jump_fcontext(
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                 detail::exchange( c.t_.fctx, nullptr),
+#else
+                std::exchange( c.t_.fctx, nullptr),
+#endif
                 & tpl) };
 }
 
@@ -459,7 +481,11 @@ callcc( continuation && c, exec_ontop_arg_t, Fn && fn, Arg ... arg) {
     auto tpl = std::make_tuple( std::forward< Fn >( fn), std::forward< Arg >( arg) ... );
     return continuation{
         detail::ontop_fcontext(
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                 detail::exchange( c.t_.fctx, nullptr),
+#else
+                std::exchange( c.t_.fctx, nullptr),
+#endif
                 & tpl,
                 context_ontop< continuation, Fn, Arg ... >) };
 }
@@ -502,7 +528,11 @@ callcc( continuation && c) {
     BOOST_ASSERT( nullptr != c.t_.fctx);
     return continuation{
         detail::jump_fcontext(
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                 detail::exchange( c.t_.fctx, nullptr),
+#else
+                std::exchange( c.t_.fctx, nullptr),
+#endif
                 nullptr) };
 }
 
@@ -513,7 +543,11 @@ callcc( continuation && c, exec_ontop_arg_t, Fn && fn) {
     auto p = std::make_tuple( std::forward< Fn >( fn) );
     return continuation{
         detail::ontop_fcontext(
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                 detail::exchange( c.t_.fctx, nullptr),
+#else
+                std::exchange( c.t_.fctx, nullptr),
+#endif
                 & p,
                 context_ontop_void< continuation, Fn >) };
 }
