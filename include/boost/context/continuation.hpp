@@ -55,7 +55,6 @@
 namespace boost {
 namespace context {
 namespace detail {
-inline namespace v1 {
 
 template< int N >
 struct helper {
@@ -237,9 +236,7 @@ struct result_type< Arg > {
     }
 };
 
-}}
-
-inline namespace v1 {
+}
 
 class continuation {
 private:
@@ -575,7 +572,7 @@ void swap( continuation & l, continuation & r) noexcept {
     l.swap( r);
 }
 
-}}}
+}}
 
 #if defined(BOOST_MSVC)
 # pragma warning(pop)
