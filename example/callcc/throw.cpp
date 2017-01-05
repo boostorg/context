@@ -27,7 +27,7 @@ int main() {
         for (;;) {
             try {
                 std::cout << "entered" << std::endl;
-                c = ctx::callcc( std::move( c) );
+                c = ctx::resume( std::move( c) );
             } catch ( my_exception & ex) {
                 std::cerr << "my_exception: " << ex.what() << std::endl;
                 return std::move( ex.c);
@@ -35,7 +35,7 @@ int main() {
         }
         return std::move( c);
     });
-    c = ctx::callcc(
+    c = ctx::resume(
             std::move( c),
             ctx::exec_ontop_arg,
             [](ctx::continuation & c){

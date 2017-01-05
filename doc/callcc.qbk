@@ -67,6 +67,8 @@ __con__ is  only move-constructible and move-assignable.
 As a first-class object __con__ can be applied to and returned from a function,
 assigned to a variable or stored in a container.
 
+A contiunation is continued by appling to function `resume()`.
+
 
 [heading Usage]
 
@@ -76,7 +78,7 @@ assigned to a variable or stored in a container.
                 int a=0;
                 int b=1;
                 for(;;){
-                    sink=ctx::callcc(std::move(sink),a);
+                    sink=ctx::resume(std::move(sink),a);
                     auto next=a+b;
                     a=b;
                     b=next;
@@ -84,8 +86,8 @@ assigned to a variable or stored in a container.
                 return std::move(sink);
             });
         for (int j=0;j<10;++j) {
-            source=ctx::callcc(std::move(source));
-            std::cout << ctx::data<int>(source) << " ";
+            source=ctx::resume(std::move(source));
+            std::cout << ctx::transfer_data<int>(source) << " ";
         }
 
         output:
@@ -102,7 +104,7 @@ after each call.
 The lambda that calculates the Fibonacci numbers is executed inside
 the continuation represented by `source`. Calculated Fibonacci numbers are
 transferred between the two continuations' as argument of __cc__ (and returned
-by `ctx::data<int>(source)`). Note that this example represents a ['generator]
+by `ctx::transfer_data<int>(source)`). Note that this example represents a ['generator]
 thus no value is transferred into the lambda via __cc__.
 
 The locale variables `a`, `b` and ` next` remain their values during each
@@ -115,17 +117,17 @@ Calling __cc__ without arguments means, that no data will be transferred, only
 the context switch is executed.
 
 The arguments passed to __cc__, in one continuation, are accessible via
-`ctx::data<>(c)` in the other continuation.
+`ctx::transfer_data<>(c)` in the other continuation.
 
     namespace ctx=boost::context;
     int i=1;
     ctx::continuation c1=callcc([](ctx::continuation && c2){
-                int j=ctx::data<int>(c2);
+                int j=ctx::transfer_data<int>(c2);
                 std::printf("inside c1,j==%d\n",j);
-                return callcc(std::move(c2),j+1);
+                return resume(std::move(c2),j+1);
             },
             i);
-    i=ctx::data<int>(c1);
+    i=ctx::transfer_data<int>(c1);
     std::printf("i==%d\n",i);
 
     output:
@@ -134,9 +136,9 @@ The arguments passed to __cc__, in one continuation, are accessible via
 
 `callcc(<lambda>,i)` enters the lambda in continuation represented by `c1` with
 argument `i=1`.
-The expression `callcc(std::move(c2),j+1)` resumes the continuation `c2` and
+The expression `resume(std::move(c2),j+1)` resumes the continuation `c2` and
 transfers back an integer of `j+1`. On return of `callcc(<lambda>, i)`, the
-variable `i` gets the value of `j+1` assigned (`i=data<int>(c1)`).
+variable `i` gets the value of `j+1` assigned (`i=transfer_data<int>(c1)`).
 
 More than one argument can be transferred too.
 
@@ -144,12 +146,12 @@ More than one argument can be transferred too.
     int i=2,j=1;
     ctx::continuation c1=callcc([](ctx::continuation && c2){
                 int i, j;
-                std::tie(i,j)=ctx::data<int,int>(c2);
+                std::tie(i,j)=ctx::transfer_data<int,int>(c2);
                 std::printf("inside c1,i==%d,j==%d\n",i,j);
-                return callcc(std::move(c2),i+j,i-j);
+                return resume(std::move(c2),i+j,i-j);
             },
             i, j);
-    std::tie(i,j)=ctx::data<int,int>(c1);
+    std::tie(i,j)=ctx::transfer_data<int,int>(c1);
     std::printf("i==%d,j==%d\n",i,j);
 
     output:
@@ -161,27 +163,27 @@ For use-cases, that require to transfer data of different type:
     namespace ctx=boost::context;
     ctx::continuation f1(ctx::continuation && c) {
         int i=3;
-        c=ctx::callcc(std::move(c),i);
+        c=ctx::resume(std::move(c),i);
         std::string s{ "abc" };
-        c=ctx::callcc(std::move(c),s);
+        c=ctx::resume(std::move(c),s);
         i=7;s="xyz";
-        c=ctx::callcc(std::move(c),i,s);
-        c=ctx::callcc(std::move(c));
+        c=ctx::resume(std::move(c),i,s);
+        c=ctx::resume(std::move(c));
         return std::move(c);
     }
 
     ctx::continuation c = ctx::callcc( f1);
-    int i = ctx::data< int >( c);
+    int i = ctx::transfer_data< int >( c);
     std::cout << "f1: returned : " << i << std::endl;
-    c = ctx::callcc( std::move( c) );
-    std::string s = ctx::data< std::string >( c);
+    c = ctx::resume( std::move( c) );
+    std::string s = ctx::transfer_data< std::string >( c);
     std::cout << "f1: returned : " << s << std::endl;
-    c = ctx::callcc( std::move( c) );
-    std::tie(i,s)=ctx::data< int, std::string >( c);
+    c = ctx::resume( std::move( c) );
+    std::tie(i,s)=ctx::transfer_data< int, std::string >( c);
     std::cout << "f1: returned : " << i << ", " << s << std::endl;
-    c = ctx::callcc( std::move( c) );
+    c = ctx::resume( std::move( c) );
     std::cout << std::boolalpha;
-    std::cout << "f1: returned data : " << ctx::has_data( c) << std::endl;
+    std::cout << "f1: returned data : " << ctx::data_available( c) << std::endl;
 
     output:
         f1: returned : 3
@@ -209,31 +211,31 @@ return type or void.
 
     namespace ctx=boost::context;
     ctx::continuation f1(ctx::continuation && c) {
-        int data=ctx::data<int>(c);
+        int data=ctx::transfer_data<int>(c);
         std::cout << "f1: entered first time: " << data  << std::endl;
-        c=ctx::callcc(std::move(c),data+1);
-        data=ctx::data<int>(c);
+        c=ctx::resume(std::move(c),data+1);
+        data=ctx::transfer_data<int>(c);
         std::cout << "f1: entered second time: " << data  << std::endl;
-        c=ctx::callcc(std::move(c),data+1);
-        data=ctx::data<int>(c);
+        c=ctx::resume(std::move(c),data+1);
+        data=ctx::transfer_data<int>(c);
         std::cout << "f1: entered third time: " << data << std::endl;
         return std::move(c);
     };
 
     int f2(ctx::continuation & c){
-        int data=ctx::data<int>(c);
+        int data=ctx::transfer_data<int>(c);
         std::cout << "f2: entered: " << data << std::endl;
         return data;
     };
 
     int data = 0;
     ctx::continuation c=ctx::callcc(f1,data+1);
-    data=ctx::data<int>(c);
+    data=ctx::transfer_data<int>(c);
     std::cout << "f1: returned first time: " << data << std::endl;
-    c=ctx::callcc(std::move(c),data+1);
-    data=ctx::data<int>(c);
+    c=ctx::resume(std::move(c),data+1);
+    data=ctx::transfer_data<int>(c);
     std::cout << "f1: returned second time: " << data << std::endl;
-    c=ctx::callcc(std::move(c),ctx::exec_ontop_arg,f2,-1);
+    c=ctx::resume(std::move(c),ctx::exec_ontop_arg,f2,-1);
     std::cout << "f1: returned third time" << std::endl;
 
     output:
@@ -245,10 +247,10 @@ return type or void.
         f1: entered third time: -1
         f1: returned third time
 
-The expression `callcc(std::move(c),ctx::exec_ontop_arg,f2,-1)` executes
+The expression `resume(std::move(c),ctx::exec_ontop_arg,f2,-1)` executes
 `f2()` on top of contiunation `c`, e.g. an additional stack frame is allocated
 on top of the stack (in front of `f1()`). `f2()` returns argument `-1` that will
-returned by the second invocation of `callcc(std::move(c),data+1)` in `f1()`.
+returned by the second invocation of `resume(std::move(c),data+1)` in `f1()`.
 
 Another option is to execute a function on top of the continuation that throws
 an exception.
@@ -266,7 +268,7 @@ an exception.
         for (;;) {
             try {
                 std::cout << "entered" << std::endl;
-                c=ctx::callcc(std::move(c));
+                c=ctx::resume(std::move(c));
             } catch (my_exception & ex) {
                 std::cerr << "my_exception: " << ex.what() << std::endl;
                 return std::move(ex.c);
@@ -274,7 +276,7 @@ an exception.
         }
         return std::move(c);
     });
-    c = ctx::callcc(std::move( c),
+    c = ctx::resume(std::move( c),
                     ctx::exec_ontop_arg,
                     [](ctx::continuation & c){
                         throw my_exception(std::move(c),"abc");
@@ -424,17 +426,17 @@ of the stack.]
             Parser p(is,
                      [&sink](char c){
                            // resume main continuation
-                           sink=ctx::callcc(std::move(sink),c);
+                           sink=ctx::resume(std::move(sink),c);
                      });
                 // start recursive parsing
                 p.run();
                 // resume main continuation
                 return std::move(sink);
             });
-    while(ctx::has_data(source)){
-        char c=ctx::data<char>(source);
+    while(ctx::data_available(source)){
+        char c=ctx::transfer_data<char>(source);
         printf("Parsed: %c\n",c);
-        source=ctx::callcc(std::move(source) );
+        source=ctx::resume(std::move(source) );
     }
 
     output:
@@ -616,9 +618,9 @@ before `other`, false otherwise.]]
 [[Returns:] [`os`]]
 ]
 
-[hding cc__..Non-member function [`has_data()]]
+[hding cc__..Non-member function [`data_available()]]
 
-    bool has_data(continuation const& c) noexcept;
+    bool data_available(continuation const& c) noexcept;
 
 [variablelist
 [[Efects:] [Tests if `c` has data.]]
@@ -632,12 +634,12 @@ before `other`, false otherwise.]]
     <unspecified> data(continuation & c);
 
 [variablelist
-[[Returns:] [Data that have been trasnferred via `callcc()` are
+[[Returns:] [Data that have been trasnferred via `callcc()` or `resume()` are
 returned as `std::tuple<Arg...>` or `Arg` if single parameter.]]
 ]
 
 
-[heading Continuation creation]
+[heading Call with current contiunation]
 
     #include <boost/context/continuation.hpp>
 
@@ -665,15 +667,15 @@ terminated (return from context-function) via `bool operator()`. If the returned
 continuation has terminated no data are transferred.]]
 ]
 
-[heading Continuation resumption]
+[heading Resume continuation]
 
     #include <boost/context/continuation.hpp>
 
     template<typename ...Arg>
-    continuation callcc(continuation && c,Arg ...arg);
+    continuation resume(continuation && c,Arg ...arg);
 
     template<typename Fn,typename ...Arg>
-    continuation callcc(continuation && c,exec_ontop_arg_t,Fn && fn,Arg ...arg);
+    continuation resume(continuation && c,exec_ontop_arg_t,Fn && fn,Arg ...arg);
 
 [variablelist
 [[Effects:] [Captures current continuation and resumes continuation `c`.

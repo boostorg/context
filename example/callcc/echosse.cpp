@@ -26,13 +26,13 @@ void echoSSE( int i) {
 }
 
 ctx::continuation echo( ctx::continuation && c) {
-    int i = ctx::data< int >( c);
+    int i = ctx::transfer_data< int >( c);
     for (;;) {
         std::cout << i;
         echoSSE( i);
         std::cout << " ";
-        c = ctx::callcc( std::move( c) );
-        i = ctx::data< int >( c);
+        c = ctx::resume( std::move( c) );
+        i = ctx::transfer_data< int >( c);
     }
     return std::move( c);
 }
@@ -40,7 +40,7 @@ ctx::continuation echo( ctx::continuation && c) {
 int main( int argc, char * argv[]) {
     ctx::continuation c = ctx::callcc( echo, 0);
     for ( int i = 1; i < 10; ++i) {
-        c = ctx::callcc( std::move( c), i);
+        c = ctx::resume( std::move( c), i);
     }
     std::cout << "\nmain: done" << std::endl;
     return EXIT_SUCCESS;

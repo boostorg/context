@@ -18,7 +18,7 @@ int main() {
             int a=0;
             int b=1;
             for(;;){
-                c=ctx::callcc(std::move(c),a);
+                c=ctx::resume(std::move(c),a);
                 auto next=a+b;
                 a=b;
                 b=next;
@@ -26,8 +26,8 @@ int main() {
             return std::move( c);
         });
     for ( int j = 0; j < 10; ++j) {
-        c=ctx::callcc(std::move(c));
-        std::cout << ctx::data<int>(c) << " ";
+        c=ctx::resume(std::move(c));
+        std::cout << ctx::transfer_data<int>(c) << " ";
     }
     std::cout << std::endl;
     std::cout << "main: done" << std::endl;

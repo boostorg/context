@@ -66,6 +66,10 @@ exe types
     : types.cpp
     ;
 
+exe endless_loop
+    : endless_loop.cpp
+    ;
+
 #exe backtrace
 #    : backtrace.cpp
 #    ;

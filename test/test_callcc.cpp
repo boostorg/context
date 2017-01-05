@@ -41,7 +41,7 @@ double value3 = 0.;
 
 struct X {
     ctx::continuation foo( ctx::continuation && c) {
-        value1 = ctx::data< int >( c);
+        value1 = ctx::transfer_data< int >( c);
         return std::move( c);
     }
 };
@@ -118,13 +118,13 @@ void seh( bool & catched) {
 #endif
 
 ctx::continuation fn1( ctx::continuation && c) {
-    value1 = ctx::data< int >( c);
+    value1 = ctx::transfer_data< int >( c);
     return std::move( c);
 }
 
 ctx::continuation fn2( ctx::continuation && c) {
     try {
-        throw std::runtime_error( ctx::data< const char * >( c) );
+        throw std::runtime_error( ctx::transfer_data< const char * >( c) );
     } catch ( std::runtime_error const& e) {
         value2 = e.what();
     }
@@ -132,7 +132,7 @@ ctx::continuation fn2( ctx::continuation && c) {
 }
 
 ctx::continuation fn3( ctx::continuation && c) {
-    double d = ctx::data< double >( c);
+    double d = ctx::transfer_data< double >( c);
     d += 3.45;
     value3 = d;
     return std::move( c);
@@ -152,9 +152,9 @@ ctx::continuation fn4( ctx::continuation && c) {
 ctx::continuation fn6( ctx::continuation && c) {
     try {
         value1 = 3;
-        c = ctx::callcc( std::move( c) );
+        c = ctx::resume( std::move( c) );
         value1 = 7;
-        c = ctx::callcc( std::move( c) );
+        c = ctx::resume( std::move( c) );
     } catch ( my_exception & e) {
         value2 = e.what();
     }
@@ -163,71 +163,71 @@ ctx::continuation fn6( ctx::continuation && c) {
 
 ctx::continuation fn7( ctx::continuation && c) {
     Y y;
-    return ctx::callcc( std::move( c) );
+    return ctx::resume( std::move( c) );
 }
 
 ctx::continuation fn8( ctx::continuation && c) {
-    value1 = ctx::data< int >( c);
+    value1 = ctx::transfer_data< int >( c);
     return std::move( c);
 }
 
 ctx::continuation fn9( ctx::continuation && c) {
-    value1 = ctx::data< int >( c);
-    c = ctx::callcc( std::move( c), value1);
-    value1 = ctx::data< int >( c);
+    value1 = ctx::transfer_data< int >( c);
+    c = ctx::resume( std::move( c), value1);
+    value1 = ctx::transfer_data< int >( c);
     return std::move( c);
 }
 
 ctx::continuation fn10( ctx::continuation && c) {
-    int & i = ctx::data< int & >( c);
-    return ctx::callcc( std::move( c), std::ref( i) );
+    int & i = ctx::transfer_data< int & >( c);
+    return ctx::resume( std::move( c), std::ref( i) );
 }
 
 ctx::continuation fn11( ctx::continuation && c) {
-    moveable m = ctx::data< moveable >( c);
-    c = ctx::callcc( std::move( c), std::move( m) );
-    m = ctx::data< moveable >( c);
-    return ctx::callcc( std::move( c), std::move( m) );
+    moveable m = ctx::transfer_data< moveable >( c);
+    c = ctx::resume( std::move( c), std::move( m) );
+    m = ctx::transfer_data< moveable >( c);
+    return ctx::resume( std::move( c), std::move( m) );
 }
 
 ctx::continuation fn12( ctx::continuation && c) {
     int i; std::string str;
-    std::tie( i, str) = ctx::data< int, std::string >( c);
-    return ctx::callcc( std::move( c), i, str);
+    std::tie( i, str) = ctx::transfer_data< int, std::string >( c);
+    return ctx::resume( std::move( c), i, str);
 }
 
 ctx::continuation fn13( ctx::continuation && c) {
     int i; moveable m;
-    std::tie( i, m) = ctx::data< int, moveable >( c);
-    return ctx::callcc( std::move( c), i, std::move( m) );
+    std::tie( i, m) = ctx::transfer_data< int, moveable >( c);
+    return ctx::resume( std::move( c), i, std::move( m) );
 }
 
 ctx::continuation fn14( ctx::continuation && c) {
-    variant_t data = ctx::data< variant_t >( c);
+    variant_t data = ctx::transfer_data< variant_t >( c);
     int i = boost::get< int >( data);
     data = boost::lexical_cast< std::string >( i);
-    return ctx::callcc( std::move( c), data);
+    return ctx::resume( std::move( c), data);
 }
 
 ctx::continuation fn15( ctx::continuation && c) {
-    Y * py = ctx::data< Y * >( c);
-    return ctx::callcc( std::move( c), py);
+    Y * py = ctx::transfer_data< Y * >( c);
+    return ctx::resume( std::move( c), py);
 }
 
 ctx::continuation fn16( ctx::continuation && c) {
-    int i = ctx::data< int >( c);
+    int i = ctx::transfer_data< int >( c);
     value1 = i;
-    c = ctx::callcc( std::move( c), i);
-    value1 = ctx::data< int >( c);
+    c = ctx::resume( std::move( c), i);
+    value1 = ctx::transfer_data< int >( c);
     return std::move( c);
 }
 
 ctx::continuation fn17( ctx::continuation && c) {
     int i; int j;
-    std::tie( i, j) = ctx::data< int, int >( c);
+    std::tie( i, j) = ctx::transfer_data< int, int >( c);
     for (;;) {
-        c = ctx::callcc( std::move( c), i, j);
-        std::tie( i, j) = ctx::data< int, int >( c);
+        c = ctx::resume( std::move( c), i, j);
+        std::tie( i, j) = ctx::transfer_data< int, int >( c);
     }
     return std::move( c);
 }
@@ -245,7 +245,7 @@ void test_move() {
     BOOST_CHECK( c1 );
     BOOST_CHECK( ! c2 );
     BOOST_CHECK_EQUAL( 3, value1);
-    ctx::callcc( std::move( c1), 0);
+    ctx::resume( std::move( c1), 0);
     BOOST_CHECK_EQUAL( 0, value1);
     BOOST_CHECK( ! c1 );
     BOOST_CHECK( ! c2 );
@@ -270,12 +270,12 @@ void test_exception() {
         bool catched = false;
         std::thread([&catched](){
                 ctx::continuation c = ctx::callcc([&catched](ctx::continuation && c){
-                c = ctx::callcc( std::move( c) );
+                c = ctx::resume( std::move( c) );
                             seh( catched);
                             return std::move( c);
                         });
             BOOST_CHECK( c );
-            ctx::callcc( std::move( c) );
+            ctx::resume( std::move( c) );
         }).join();
         BOOST_CHECK( catched);
     }
@@ -313,25 +313,25 @@ void test_ontop() {
     {
         int i = 3, j = 0;
         ctx::continuation c = ctx::callcc([](ctx::continuation && c) {
-                    int x = ctx::data< int >( c);
+                    int x = ctx::transfer_data< int >( c);
                     for (;;) {
-                        c = ctx::callcc( std::move( c), x*10);
-                        if ( ctx::has_data( c) ) {
-                            x = ctx::data< int >( c);
+                        c = ctx::resume( std::move( c), x*10);
+                        if ( ctx::data_available( c) ) {
+                            x = ctx::transfer_data< int >( c);
                         }
                     }
                     return std::move( c);
                 }, i);
-        c = ctx::callcc(
+        c = ctx::resume(
                 std::move( c),
                 ctx::exec_ontop_arg,
                 [](ctx::continuation & c){
-                    int x = ctx::data< int >( c);
+                    int x = ctx::transfer_data< int >( c);
                     return x-10;
                 },
                 i);
-        if ( ctx::has_data( c) ) {
-            j = ctx::data< int >( c);
+        if ( ctx::data_available( c) ) {
+            j = ctx::transfer_data< int >( c);
         }
         BOOST_CHECK( c );
         BOOST_CHECK_EQUAL( j, -70);
@@ -340,17 +340,17 @@ void test_ontop() {
         int i = 3, j = 1;
         ctx::continuation c;
         c = ctx::callcc( fn17, i, j);
-        std::tie( i, j) = ctx::data< int, int >( c);
-        c = ctx::callcc(
+        std::tie( i, j) = ctx::transfer_data< int, int >( c);
+        c = ctx::resume(
                 std::move( c),
                 ctx::exec_ontop_arg,
                 [](ctx::continuation & c){
                     int x, y;
-                    std::tie( x, y) = ctx::data< int, int >( c);
+                    std::tie( x, y) = ctx::transfer_data< int, int >( c);
                     return std::make_tuple( x - y, x + y);
                 },
                 i, j);
-        std::tie( i, j) = ctx::data< int, int >( c);
+        std::tie( i, j) = ctx::transfer_data< int, int >( c);
         BOOST_CHECK_EQUAL( i, 2);
         BOOST_CHECK_EQUAL( j, 4);
     }
@@ -361,16 +361,16 @@ void test_ontop() {
         BOOST_CHECK( m1.state);
         BOOST_CHECK( -1 == m2.value);
         BOOST_CHECK( ! m2.state);
-        c = ctx::callcc( std::move( c),
+        c = ctx::resume( std::move( c),
                          ctx::exec_ontop_arg,
                          [](ctx::continuation & c){
-                             moveable m = ctx::data< moveable >( c);
+                             moveable m = ctx::transfer_data< moveable >( c);
                              BOOST_CHECK( m.state);
                              BOOST_CHECK( 7 == m.value);
                              return std::move( m);
                          },
                          std::move( m1) );
-        m2 = ctx::data< moveable >( c);
+        m2 = ctx::transfer_data< moveable >( c);
         BOOST_CHECK( ! m1.state);
         BOOST_CHECK( -1 == m1.value);
         BOOST_CHECK( m2.state);
@@ -386,7 +386,7 @@ void test_ontop_exception() {
                 for (;;) {
                     value1 = 3;
                     try {
-                        c = ctx::callcc( std::move( c) );
+                        c = ctx::resume( std::move( c) );
                     } catch ( my_exception & ex) {
                         value2 = ex.what();
                         return std::move( ex.c); 
@@ -394,10 +394,10 @@ void test_ontop_exception() {
                 }
                 return std::move( c);
         });
-        c = ctx::callcc( std::move( c) );
+        c = ctx::resume( std::move( c) );
         BOOST_CHECK_EQUAL( 3, value1);
         const char * what = "hello world";
-        ctx::callcc(
+        ctx::resume(
                 std::move( c),
                 ctx::exec_ontop_arg,
                 [what](ctx::continuation & c){
@@ -411,11 +411,11 @@ void test_ontop_exception() {
         int i = 3, j = 1;
         ctx::continuation c = ctx::callcc([]( ctx::continuation && c) {
                 int x; int y;
-                std::tie( x, y) = ctx::data< int, int >( c);
+                std::tie( x, y) = ctx::transfer_data< int, int >( c);
                 for (;;) {
                     try {
-                        c = ctx::callcc( std::move( c), x+y,x-y);
-                        std::tie( x, y) = ctx::data< int, int >( c);
+                        c = ctx::resume( std::move( c), x+y,x-y);
+                        std::tie( x, y) = ctx::transfer_data< int, int >( c);
                     } catch ( my_exception & ex) {
                         value2 = ex.what();
                         return std::move( ex.c); 
@@ -425,15 +425,15 @@ void test_ontop_exception() {
             },
             i, j);
         BOOST_CHECK( c );
-        std::tie( i, j) = ctx::data< int, int >( c);
+        std::tie( i, j) = ctx::transfer_data< int, int >( c);
         BOOST_CHECK_EQUAL( i, 4);
         BOOST_CHECK_EQUAL( j, 2);
         char const * what = "hello world";
-        c = ctx::callcc(
+        c = ctx::resume(
                 std::move( c),
                 ctx::exec_ontop_arg,
                 [](ctx::continuation & c) {
-                    char const * what = ctx::data< char const * >( c);
+                    char const * what = ctx::transfer_data< char const * >( c);
                     throw my_exception( std::move( c), what);
                     return what;
                 },
@@ -467,11 +467,11 @@ void test_termination() {
         BOOST_CHECK( ! c );
         c = ctx::callcc( fn9, i);
         BOOST_CHECK( c );
-        i = ctx::data< int >( c);
+        i = ctx::transfer_data< int >( c);
         BOOST_CHECK_EQUAL( i, value1);
         BOOST_CHECK( c );
         i = 7;
-        c = ctx::callcc( std::move( c), i);
+        c = ctx::resume( std::move( c), i);
         BOOST_CHECK( ! c );
         BOOST_CHECK_EQUAL( i, value1);
     }
@@ -488,7 +488,7 @@ void test_one_arg() {
         int i = 3, j = 0;
         ctx::continuation c;
         c = ctx::callcc( fn9, i);
-        j = ctx::data< int >( c);
+        j = ctx::transfer_data< int >( c);
         BOOST_CHECK_EQUAL( i, j);
     }
     {
@@ -496,8 +496,8 @@ void test_one_arg() {
         int & i = i_;
         BOOST_CHECK_EQUAL( i, i_);
         ctx::continuation c = ctx::callcc( fn10, std::ref( i) );
-        BOOST_CHECK( ctx::has_data( c) );
-        int & j = ctx::data< int & >( c);
+        BOOST_CHECK( ctx::data_available( c) );
+        int & j = ctx::transfer_data< int & >( c);
         BOOST_CHECK_EQUAL( i, i_);
         BOOST_CHECK_EQUAL( j, i_);
         BOOST_CHECK( & i == & j);
@@ -507,7 +507,7 @@ void test_one_arg() {
         Y * py = nullptr;
         ctx::continuation c;
         c = ctx::callcc( fn15, & y);
-        py = ctx::data< Y * >( c);
+        py = ctx::transfer_data< Y * >( c);
         BOOST_CHECK( py == & y);
     }
     {
@@ -518,7 +518,7 @@ void test_one_arg() {
         BOOST_CHECK( ! m2.state);
         ctx::continuation c;
         c = ctx::callcc( fn11, std::move( m1) );
-        m2 = ctx::data< moveable >( c);
+        m2 = ctx::transfer_data< moveable >( c);
         BOOST_CHECK( -1 == m1.value);
         BOOST_CHECK( ! m1.state);
         BOOST_CHECK( 7 == m2.value);
@@ -531,7 +531,7 @@ void test_two_args() {
         int i1 = 3, i2 = 0;
         std::string str1("abc"), str2;
         ctx::continuation c = ctx::callcc( fn12, i1, str1);
-        std::tie( i2, str2) = ctx::data< int, std::string >( c);
+        std::tie( i2, str2) = ctx::transfer_data< int, std::string >( c);
         BOOST_CHECK_EQUAL( i1, i2);
         BOOST_CHECK_EQUAL( str1, str2);
     }
@@ -544,7 +544,7 @@ void test_two_args() {
         BOOST_CHECK( ! m2.state);
         ctx::continuation c;
         c = ctx::callcc( fn13, i1, std::move( m1) );
-        std::tie( i2, m2) = ctx::data< int, moveable >( c);
+        std::tie( i2, m2) = ctx::transfer_data< int, moveable >( c);
         BOOST_CHECK_EQUAL( i1, i2);
         BOOST_CHECK( -1 == m1.value);
         BOOST_CHECK( ! m1.state);
@@ -559,7 +559,7 @@ void test_variant() {
         variant_t data1 = i, data2;
         ctx::continuation c;
         c = ctx::callcc( fn14, data1);
-        data2 = ctx::data< variant_t >( c);
+        data2 = ctx::transfer_data< variant_t >( c);
         std::string str = boost::get< std::string >( data2);
         BOOST_CHECK_EQUAL( std::string("7"), str);
     }
