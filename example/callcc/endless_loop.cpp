@@ -12,19 +12,17 @@
 namespace ctx = boost::context;
 
 ctx::continuation foo( ctx::continuation && c) {
-    for (;;) {
+    do {
         std::cout << "foo\n";
-        c = ctx::resume( std::move( c) );
-    }
+    } while ( c = ctx::resume( std::move( c) ) );
     return std::move( c);
 }
 
 int main() {
     ctx::continuation c = ctx::callcc( foo);
-    for (;;) {
+    do {
         std::cout << "bar\n";
-        c = ctx::resume( std::move( c) );
-    }
+    } while ( c = ctx::resume( std::move( c) ) );
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;
 }
