@@ -86,12 +86,12 @@ A contiunation is continued by appling to function `resume()`.
                 return std::move(sink);
             });
         for (int j=0;j<10;++j) {
-            source=ctx::resume(std::move(source));
             std::cout << ctx::transfer_data<int>(source) << " ";
+            source=ctx::resume(std::move(source));
         }
 
         output:
-            1 1 2 3 5 8 13 21 34 55
+            0 1 1 2 3 5 8 13 21 34 55
 
 This simple example demonstrates the basic usage of __callcc__ as a generator.
 The continuation `sink` represents the ['main]-continuation (function `main()`).

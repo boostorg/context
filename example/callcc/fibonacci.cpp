@@ -26,8 +26,8 @@ int main() {
             return std::move( c);
         });
     for ( int j = 0; j < 10; ++j) {
-        c=ctx::resume(std::move(c));
         std::cout << ctx::transfer_data<int>(c) << " ";
+        c=ctx::resume(std::move(c));
     }
     std::cout << std::endl;
     std::cout << "main: done" << std::endl;
