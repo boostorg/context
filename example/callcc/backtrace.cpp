@@ -1,5 +1,5 @@
 
-//          Copyright Oliver Kowalke 2014.
+//          Copyright Oliver Kowalke 2016.
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
@@ -11,7 +11,7 @@
 
 #include <libunwind.h>
 
-#include <boost/context/all.hpp>
+#include <boost/context/continuation.hpp>
 
 namespace ctx = boost::context;
 
@@ -45,14 +45,13 @@ void foo() {
 	bar();
 }
 
-ctx::execution_context< void > f1( ctx::execution_context< void > && ctxm) {
+ctx::continuation f1( ctx::continuation && c) {
     foo();
-    return std::move( ctxm);
+    return std::move( c);
 }
 
 int main() {
-    ctx::execution_context< void > ctx1( f1);
-    ctx1 = ctx1();
+    ctx::callcc( f1);
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;
 }

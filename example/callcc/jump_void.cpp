@@ -1,5 +1,5 @@
 
-//          Copyright Oliver Kowalke 2014.
+//          Copyright Oliver Kowalke 2016.
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
@@ -7,22 +7,21 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/context/all.hpp>
+#include <boost/context/continuation.hpp>
 
 namespace ctx = boost::context;
 
-ctx::execution_context< void > f1( ctx::execution_context< void > && ctxm) {
+ctx::continuation f1( ctx::continuation && cm) {
     std::cout << "f1: entered first time" << std::endl;
-    ctxm = ctxm();
+    cm = ctx::resume( std::move( cm) );
     std::cout << "f1: entered second time" << std::endl;
-    return std::move( ctxm);
+    return std::move( cm);
 }
 
 int main() {
-    ctx::execution_context< void > ctx1( f1);
-    ctx1 = ctx1();
+    ctx::continuation c = ctx::callcc( f1);
     std::cout << "f1: returned first time" << std::endl;
-    ctx1 = ctx1();
+    c = ctx::resume( std::move( c) );
     std::cout << "f1: returned second time" << std::endl;
 
     std::cout << "main: done" << std::endl;

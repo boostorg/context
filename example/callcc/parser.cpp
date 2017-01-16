@@ -1,5 +1,5 @@
 
-//          Copyright Oliver Kowalke 2014.
+//          Copyright Oliver Kowalke 2016.
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
@@ -11,7 +11,9 @@
 #include <memory>
 #include <sstream>
 
-#include <boost/context/all.hpp>
+#include <boost/context/continuation.hpp>
+
+namespace ctx = boost::context;
 
 /*
  * grammar:
@@ -90,49 +92,31 @@ private:
 int main() {
     try {
         std::istringstream is("1+1");
-        bool done=false;
-        std::exception_ptr except;
-
-        // create handle to main execution context
-        auto sink(boost::context::execution_context::current());
         // execute parser in new execution context
-        boost::context::execution_context source(
-                [&sink,&is,&done,&except](void*){
-                // create parser with callback function
-                Parser p(is,
-                         [&sink](char ch){
-                                // resume main execution context
-                                sink(&ch);
-                        });
-                    try {
-                        // start recursive parsing
-                        p.run();
-                    } catch (...) {
-                        // store other exceptions in exception-pointer
-                        except = std::current_exception();
-                    }
-                    // set termination flag
-                    done=true;
-                    // resume main execution context
-                    sink();
-                });
-
+        ctx::continuation source;
         // user-code pulls parsed data from parser
         // invert control flow
-        void* vp = source();
-        if (except) {
-            std::rethrow_exception(except);
-        }
-        while( ! done) {
-            printf("Parsed: %c\n",* static_cast<char*>(vp));
-            vp = source();
-            if (except) {
-                std::rethrow_exception(except);
-            }
+        source=ctx::callcc(
+                [&is](ctx::continuation && sink){
+                // create parser with callback function
+                Parser p( is,
+                          [&sink](char c){
+                                // resume main execution context
+                                sink=ctx::resume(std::move(sink),c);
+                        });
+                    // start recursive parsing
+                    p.run();
+                    // resume main execution context
+                    return std::move(sink);
+                });
+        while(ctx::data_available(source)){
+            char c=ctx::transfer_data<char>(source);
+            printf("Parsed: %c\n",c);
+            source=ctx::resume(std::move(source) );
         }
         std::cout << "main: done" << std::endl;
         return EXIT_SUCCESS;
-    } catch ( std::exception const& e) {
+    } catch (std::exception const& e) {
         std::cerr << "exception: " << e.what() << std::endl;
     }
     return EXIT_FAILURE;

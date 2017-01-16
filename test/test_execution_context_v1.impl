@@ -16,8 +16,12 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/utility.hpp>
 
-#include <boost/context/all.hpp>
+#include <boost/context/execution_context.hpp>
 #include <boost/context/detail/config.hpp>
+
+#ifdef BOOST_WINDOWS
+#include <windows.h>
+#endif
 
 namespace ctx = boost::context;
 

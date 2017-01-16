@@ -8,6 +8,8 @@
 [#ecv1]
 [section:ecv1 Class execution_context (version 1)]
 
+[warning __econtext__ is deprecated.]
+
 [note This class is only enabled if property ['segmented-stacks=on] (enables
 segmented stacks) or compiler flag ['BOOST_EXECUTION_CONTEXT=1] is specified
 at b2-commandline.]

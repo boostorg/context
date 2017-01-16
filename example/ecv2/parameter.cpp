@@ -11,7 +11,7 @@
 #include <string>
 
 #include <boost/variant.hpp>
-#include <boost/context/all.hpp>
+#include <boost/context/execution_context.hpp>
 #include <boost/lexical_cast.hpp>
 
 typedef boost::variant<int,std::string> variant_t;

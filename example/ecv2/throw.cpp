@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <string>
 
-#include <boost/context/all.hpp>
+#include <boost/context/execution_context.hpp>
 
 struct my_exception : public std::runtime_error {
     my_exception( std::string const& what) :

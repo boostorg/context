@@ -10,7 +10,7 @@
 
 #include <boost/config.hpp>
 
-#include <boost/context/all.hpp>
+#include <boost/context/execution_context.hpp>
 
 #ifdef BOOST_MSVC //MS VisualStudio
 __declspec(noinline) void access( char *buf);

@@ -103,7 +103,7 @@ public:
 
     transfer_t run( transfer_t t) {
         Ctx from{ t.fctx };
-        typename Ctx::args_tpl_t args = std::move( * static_cast< typename Ctx::args_tpl_t * >( t.data) );
+        typename Ctx::args_tpl_t args = std::move( std::get<1>( * static_cast< std::tuple< std::exception_ptr, typename Ctx::args_tpl_t > * >( t.data) ) );
         auto tpl = std::tuple_cat(
                     params_,
                     std::forward_as_tuple( std::move( from) ),
@@ -141,7 +141,7 @@ private:
     }
 
 public:
-    constexpr execution_context() noexcept = default;
+    execution_context() noexcept = default;
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
     // segmented-stack requires to preserve the segments of the `current` context
