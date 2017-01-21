@@ -70,6 +70,10 @@ exe endless_loop
     : endless_loop.cpp
     ;
 
+exe stack_alignment
+    : stack_alignment.cpp
+    ;
+
 #exe backtrace
 #    : backtrace.cpp
 #    ;
