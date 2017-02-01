@@ -110,7 +110,7 @@ int main() {
                     return std::move(sink);
                 });
         while(ctx::data_available(source)){
-            char c=ctx::transfer_data<char>(source);
+            char c=ctx::get_data<char>(source);
             printf("Parsed: %c\n",c);
             source=ctx::resume(std::move(source) );
         }

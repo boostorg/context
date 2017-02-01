@@ -25,13 +25,13 @@ ctx::continuation f1( ctx::continuation && c) {
 
 int main() {
     ctx::continuation c = ctx::callcc( f1);
-    int i = ctx::transfer_data< int >( c);
+    int i = ctx::get_data< int >( c);
     std::cout << "f1: returned : " << i << std::endl;
     c = ctx::resume( std::move( c) );
-    std::string s = ctx::transfer_data< std::string >( c);
+    std::string s = ctx::get_data< std::string >( c);
     std::cout << "f1: returned : " << s << std::endl;
     c = ctx::resume( std::move( c) );
-    std::tie(i,s)=ctx::transfer_data< int, std::string >( c);
+    std::tie(i,s)=ctx::get_data< int, std::string >( c);
     std::cout << "f1: returned : " << i << ", " << s << std::endl;
     c = ctx::resume( std::move( c) );
     std::cout << std::boolalpha;

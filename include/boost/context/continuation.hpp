@@ -285,7 +285,7 @@ private:
     friend bool data_available( continuation const&) noexcept;
 
     template< typename ... Arg >
-    friend typename detail::result_type< Arg ... >::type transfer_data( continuation &);
+    friend typename detail::result_type< Arg ... >::type get_data( continuation &);
 
     detail::transfer_t  t_{ nullptr, nullptr };
 
@@ -379,7 +379,7 @@ bool data_available( continuation const& c) noexcept {
 }
 
 template< typename ... Arg >
-typename detail::result_type< Arg ... >::type transfer_data( continuation & c) {
+typename detail::result_type< Arg ... >::type get_data( continuation & c) {
     BOOST_ASSERT( nullptr != c.t_.data);
     return detail::result_type< Arg ... >::get( c.t_);
 }

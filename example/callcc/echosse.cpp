@@ -26,13 +26,13 @@ void echoSSE( int i) {
 }
 
 ctx::continuation echo( ctx::continuation && c) {
-    int i = ctx::transfer_data< int >( c);
+    int i = ctx::get_data< int >( c);
     for (;;) {
         std::cout << i;
         echoSSE( i);
         std::cout << " ";
         c = ctx::resume( std::move( c) );
-        i = ctx::transfer_data< int >( c);
+        i = ctx::get_data< int >( c);
     }
     return std::move( c);
 }
