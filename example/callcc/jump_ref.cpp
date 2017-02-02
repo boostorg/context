@@ -15,7 +15,7 @@ ctx::continuation f1( ctx::continuation && c) {
     int & data = ctx::get_data< int & >( c);
     std::cout << "f1: entered first time: " << data << std::endl;
     data += 2;
-    c = ctx::resume( std::move( c), std::ref( data) );
+    c = c( std::ref( data) );
     data += 2;
     std::cout << "f1: entered second time: " << data << std::endl;
     return std::move( c);
@@ -28,7 +28,7 @@ int main() {
     c = ctx::callcc( std::allocator_arg, ctx::fixedsize_stack{}, f1, std::ref( data) );
     data = ctx::get_data< int & >( c);
     std::cout << "f1: returned first time: " << data << std::endl;
-    c = ctx::resume( std::move( c), std::ref( data) );
+    c = c( std::ref( data) );
     if ( c) {
         std::cout << "f1: returned second time: " << data << std::endl;
     } else {

@@ -27,7 +27,7 @@ int main() {
         for (;;) {
             try {
                 std::cout << "entered" << std::endl;
-                c = ctx::resume( std::move( c) );
+                c = c();
             } catch ( my_exception & ex) {
                 std::cerr << "my_exception: " << ex.what() << std::endl;
                 return std::move( ex.c);
@@ -35,12 +35,10 @@ int main() {
         }
         return std::move( c);
     });
-    c = ctx::resume(
-            std::move( c),
-            ctx::exec_ontop_arg,
-            [](ctx::continuation & c){
-                throw my_exception(std::move( c), "abc");
-            });
+    c = c( ctx::exec_ontop_arg,
+           [](ctx::continuation & c){
+               throw my_exception(std::move( c), "abc");
+           });
 
     std::cout << "main: done" << std::endl;
 

@@ -31,7 +31,7 @@ ctx::continuation echo( ctx::continuation && c) {
         std::cout << i;
         echoSSE( i);
         std::cout << " ";
-        c = ctx::resume( std::move( c) );
+        c = c();
         i = ctx::get_data< int >( c);
     }
     return std::move( c);
@@ -40,7 +40,7 @@ ctx::continuation echo( ctx::continuation && c) {
 int main( int argc, char * argv[]) {
     ctx::continuation c = ctx::callcc( echo, 0);
     for ( int i = 1; i < 10; ++i) {
-        c = ctx::resume( std::move( c), i);
+        c = c( i);
     }
     std::cout << "\nmain: done" << std::endl;
     return EXIT_SUCCESS;

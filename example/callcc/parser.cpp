@@ -102,7 +102,7 @@ int main() {
                 Parser p( is,
                           [&sink](char c){
                                 // resume main execution context
-                                sink=ctx::resume(std::move(sink),c);
+                                sink=sink(c);
                         });
                     // start recursive parsing
                     p.run();
@@ -112,7 +112,7 @@ int main() {
         while(ctx::data_available(source)){
             char c=ctx::get_data<char>(source);
             printf("Parsed: %c\n",c);
-            source=ctx::resume(std::move(source) );
+            source=source();
         }
         std::cout << "main: done" << std::endl;
         return EXIT_SUCCESS;

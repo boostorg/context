@@ -48,7 +48,7 @@ public:
 
 ctx::continuation f1( ctx::continuation && c) {
     moveable data = ctx::get_data< moveable >( c);
-    c = ctx::resume( std::move( c), std::move( data) );
+    c = c( std::move( data) );
     return std::move( c);
 }
 
