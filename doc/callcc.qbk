@@ -205,7 +205,7 @@ in another continuation.]
 Sometimes it is useful to execute a new function on top of a resumed
 continuation. For this purpose __cc__ with second argument `exec_ontop_arg` has
 to be used.
-The function passed as argument must accept a reference to __con__ and return,
+The function passed as argument must accept a rvalue reference to __con__ and return,
 depending on functions argument list, a tuple of its argument types, a single
 return type or void.
 
@@ -222,8 +222,8 @@ return type or void.
         return std::move(c);
     };
 
-    int f2(ctx::continuation & c){
-        int data=ctx::get_data<int>(c);
+    int f2(ctx::continuation && c){
+        int data=ctx::transfer_data<int>(c);
         std::cout << "f2: entered: " << data << std::endl;
         return data;
     };
@@ -277,7 +277,7 @@ an exception.
         return std::move(c);
     });
     c = c( ctx::exec_ontop_arg,
-           [](ctx::continuation & c){
+           [](ctx::continuation && c){
                throw my_exception(std::move(c),"abc");
            });
 

@@ -246,7 +246,7 @@ detail::transfer_t context_ontop( detail::transfer_t t) {
     t.data = & std::get< 1 >( * p);
     Ctx c{ t };
     // execute function, pass continuation via reference
-    std::get< 1 >( * p) = detail::helper< sizeof ... (Arg) >::convert( fn( c) );
+    std::get< 1 >( * p) = detail::helper< sizeof ... (Arg) >::convert( fn( std::move( c) ) );
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
     return { detail::exchange( c.t_.fctx, nullptr), & std::get< 1 >( * p) };
 #else
@@ -261,7 +261,7 @@ detail::transfer_t context_ontop_void( detail::transfer_t t) {
     typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * p) );
     Ctx c{ t };
     // execute function, pass continuation via reference
-    fn( c);
+    fn( std::move( c) );
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
     return { detail::exchange( c.t_.fctx, nullptr), nullptr };
 #else

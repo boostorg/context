@@ -36,7 +36,7 @@ int main() {
         return std::move( c);
     });
     c = c( ctx::exec_ontop_arg,
-           [](ctx::continuation & c){
+           [](ctx::continuation && c){
                throw my_exception(std::move( c), "abc");
            });
 

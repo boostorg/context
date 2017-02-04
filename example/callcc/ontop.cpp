@@ -33,7 +33,7 @@ int main() {
     data = ctx::get_data< int >( c);
     std::cout << "f1: returned second time: " << data << std::endl;
     c = c( ctx::exec_ontop_arg,
-           [](ctx::continuation & c){
+           [](ctx::continuation && c){
               int data = ctx::get_data< int >( c);
               std::cout << "f2: entered: " << data << std::endl;
               return data;

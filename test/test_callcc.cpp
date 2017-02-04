@@ -323,7 +323,7 @@ void test_ontop() {
                     return std::move( c);
                 }, i);
         c = c( ctx::exec_ontop_arg,
-               [](ctx::continuation & c){
+               [](ctx::continuation && c){
                    int x = ctx::get_data< int >( c);
                    return x-10;
                },
@@ -338,9 +338,8 @@ void test_ontop() {
         int i = 3, j = 1;
         ctx::continuation c;
         c = ctx::callcc( fn17, i, j);
-        std::tie( i, j) = ctx::get_data< int, int >( c);
         c = c( ctx::exec_ontop_arg,
-               [](ctx::continuation & c){
+               [](ctx::continuation && c){
                    int x, y;
                    std::tie( x, y) = ctx::get_data< int, int >( c);
                    return std::make_tuple( x - y, x + y);
@@ -358,7 +357,7 @@ void test_ontop() {
         BOOST_CHECK( -1 == m2.value);
         BOOST_CHECK( ! m2.state);
         c = c( ctx::exec_ontop_arg,
-               [](ctx::continuation & c){
+               [](ctx::continuation && c){
                    moveable m = ctx::get_data< moveable >( c);
                    BOOST_CHECK( m.state);
                    BOOST_CHECK( 7 == m.value);
@@ -393,7 +392,7 @@ void test_ontop_exception() {
         BOOST_CHECK_EQUAL( 3, value1);
         const char * what = "hello world";
         c( ctx::exec_ontop_arg,
-           [what](ctx::continuation & c){
+           [what](ctx::continuation && c){
                throw my_exception( std::move( c), what);
            });
         BOOST_CHECK_EQUAL( 3, value1);
@@ -423,7 +422,7 @@ void test_ontop_exception() {
         BOOST_CHECK_EQUAL( j, 2);
         char const * what = "hello world";
         c = c( ctx::exec_ontop_arg,
-               [](ctx::continuation & c) {
+               [](ctx::continuation && c) {
                    char const * what = ctx::get_data< char const * >( c);
                    throw my_exception( std::move( c), what);
                    return what;
