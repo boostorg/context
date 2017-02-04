@@ -238,6 +238,37 @@ struct result_type< Arg > {
 
 }
 
+template< typename Ctx, typename Fn, typename ... Arg >
+detail::transfer_t context_ontop( detail::transfer_t t) {
+    auto p = static_cast< std::tuple< Fn, std::tuple< Arg ... > > * >( t.data);
+    BOOST_ASSERT( nullptr != p);
+    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * p) );
+    t.data = & std::get< 1 >( * p);
+    Ctx c{ t };
+    // execute function, pass continuation via reference
+    std::get< 1 >( * p) = detail::helper< sizeof ... (Arg) >::convert( fn( std::move( c) ) );
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+    return { detail::exchange( c.t_.fctx, nullptr), & std::get< 1 >( * p) };
+#else
+    return { std::exchange( c.t_.fctx, nullptr), & std::get< 1 >( * p) };
+#endif
+}
+
+template< typename Ctx, typename Fn >
+detail::transfer_t context_ontop_void( detail::transfer_t t) {
+    auto p = static_cast< std::tuple< Fn > * >( t.data);
+    BOOST_ASSERT( nullptr != p);
+    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * p) );
+    Ctx c{ t };
+    // execute function, pass continuation via reference
+    fn( std::move( c) );
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+    return { detail::exchange( c.t_.fctx, nullptr), nullptr };
+#else
+    return { std::exchange( c.t_.fctx, nullptr), nullptr };
+#endif
+}
+
 class continuation {
 private:
     template< typename Ctx, typename StackAlloc, typename Fn >
@@ -259,14 +290,6 @@ private:
     friend continuation
     callcc( std::allocator_arg_t, preallocated, StackAlloc, Fn &&, Arg ...);
 
-    template< typename ... Arg >
-    friend continuation
-    resume( continuation &&, Arg ...);
-
-    template< typename Fn, typename ... Arg >
-    friend continuation
-    resume( continuation &&, exec_ontop_arg_t, Fn &&, Arg ...);
-
     template< typename StackAlloc, typename Fn >
     friend continuation
     callcc( std::allocator_arg_t, StackAlloc, Fn &&);
@@ -275,17 +298,10 @@ private:
     friend continuation
     callcc( std::allocator_arg_t, preallocated, StackAlloc, Fn &&);
 
-    friend continuation
-    resume( continuation &&);
-
-    template< typename Fn >
-    friend continuation
-    resume( continuation &&, exec_ontop_arg_t, Fn &&);
-
     friend bool data_available( continuation const&) noexcept;
 
     template< typename ... Arg >
-    friend typename detail::result_type< Arg ... >::type transfer_data( continuation &);
+    friend typename detail::result_type< Arg ... >::type get_data( continuation &);
 
     detail::transfer_t  t_{ nullptr, nullptr };
 
@@ -325,6 +341,62 @@ public:
 
     continuation( continuation const& other) noexcept = delete;
     continuation & operator=( continuation const& other) noexcept = delete;
+
+    template< typename ... Arg >
+    continuation operator()( Arg ... arg) {
+        BOOST_ASSERT( nullptr != t_.fctx);
+        auto tpl = std::make_tuple( std::forward< Arg >( arg) ... );
+        return continuation{
+            detail::jump_fcontext(
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+                    detail::exchange( t_.fctx, nullptr),
+#else
+                    std::exchange( t_.fctx, nullptr),
+#endif
+                    & tpl) };
+    }
+
+    template< typename Fn, typename ... Arg >
+    continuation operator()( exec_ontop_arg_t, Fn && fn, Arg ... arg) {
+        BOOST_ASSERT( nullptr != t_.fctx);
+        auto tpl = std::make_tuple( std::forward< Fn >( fn), std::forward< Arg >( arg) ... );
+        return continuation{
+            detail::ontop_fcontext(
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+                    detail::exchange( t_.fctx, nullptr),
+#else
+                    std::exchange( t_.fctx, nullptr),
+#endif
+                    & tpl,
+                    context_ontop< continuation, Fn, Arg ... >) };
+    }
+
+    continuation operator()() {
+        BOOST_ASSERT( nullptr != t_.fctx);
+        return continuation{
+            detail::jump_fcontext(
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+                    detail::exchange( t_.fctx, nullptr),
+#else
+                    std::exchange( t_.fctx, nullptr),
+#endif
+                    nullptr) };
+    }
+
+    template< typename Fn >
+    continuation operator()( exec_ontop_arg_t, Fn && fn) {
+        BOOST_ASSERT( nullptr != t_.fctx);
+        auto p = std::make_tuple( std::forward< Fn >( fn) );
+        return continuation{
+            detail::ontop_fcontext(
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+                    detail::exchange( t_.fctx, nullptr),
+#else
+                    std::exchange( t_.fctx, nullptr),
+#endif
+                    & p,
+                    context_ontop_void< continuation, Fn >) };
+    }
 
     explicit operator bool() const noexcept {
         return nullptr != t_.fctx;
@@ -379,40 +451,9 @@ bool data_available( continuation const& c) noexcept {
 }
 
 template< typename ... Arg >
-typename detail::result_type< Arg ... >::type transfer_data( continuation & c) {
+typename detail::result_type< Arg ... >::type get_data( continuation & c) {
     BOOST_ASSERT( nullptr != c.t_.data);
     return detail::result_type< Arg ... >::get( c.t_);
-}
-
-template< typename Ctx, typename Fn, typename ... Arg >
-detail::transfer_t context_ontop( detail::transfer_t t) {
-    auto p = static_cast< std::tuple< Fn, std::tuple< Arg ... > > * >( t.data);
-    BOOST_ASSERT( nullptr != p);
-    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * p) );
-    t.data = & std::get< 1 >( * p);
-    Ctx c{ t };
-    // execute function, pass continuation via reference
-    std::get< 1 >( * p) = detail::helper< sizeof ... (Arg) >::convert( fn( c) );
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-    return { detail::exchange( c.t_.fctx, nullptr), & std::get< 1 >( * p) };
-#else
-    return { std::exchange( c.t_.fctx, nullptr), & std::get< 1 >( * p) };
-#endif
-}
-
-template< typename Ctx, typename Fn >
-detail::transfer_t context_ontop_void( detail::transfer_t t) {
-    auto p = static_cast< std::tuple< Fn > * >( t.data);
-    BOOST_ASSERT( nullptr != p);
-    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * p) );
-    Ctx c{ t };
-    // execute function, pass continuation via reference
-    fn( c);
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-    return { detail::exchange( c.t_.fctx, nullptr), nullptr };
-#else
-    return { std::exchange( c.t_.fctx, nullptr), nullptr };
-#endif
 }
 
 // Arg
@@ -436,9 +477,9 @@ template<
 continuation
 callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg ... arg) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
-    return resume( continuation{
+    return continuation{
                         detail::context_create< Record >(
-                               salloc, std::forward< Fn >( fn) ) },
+                               salloc, std::forward< Fn >( fn) ) }(
                    std::forward< Arg >( arg) ... );
 }
 
@@ -450,41 +491,10 @@ template<
 continuation
 callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Arg ... arg) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
-    return resume( continuation{
+    return continuation{
                         detail::context_create< Record >(
-                               palloc, salloc, std::forward< Fn >( fn) ) },
+                               palloc, salloc, std::forward< Fn >( fn) ) }(
                    std::forward< Arg >( arg) ... );
-}
-
-template< typename ... Arg >
-continuation
-resume( continuation && c, Arg ... arg) {
-    BOOST_ASSERT( nullptr != c.t_.fctx);
-    auto tpl = std::make_tuple( std::forward< Arg >( arg) ... );
-    return continuation{
-        detail::jump_fcontext(
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                detail::exchange( c.t_.fctx, nullptr),
-#else
-                std::exchange( c.t_.fctx, nullptr),
-#endif
-                & tpl) };
-}
-
-template< typename Fn, typename ... Arg >
-continuation
-resume( continuation && c, exec_ontop_arg_t, Fn && fn, Arg ... arg) {
-    BOOST_ASSERT( nullptr != c.t_.fctx);
-    auto tpl = std::make_tuple( std::forward< Fn >( fn), std::forward< Arg >( arg) ... );
-    return continuation{
-        detail::ontop_fcontext(
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                detail::exchange( c.t_.fctx, nullptr),
-#else
-                std::exchange( c.t_.fctx, nullptr),
-#endif
-                & tpl,
-                context_ontop< continuation, Fn, Arg ... >) };
 }
 
 // void
@@ -503,50 +513,18 @@ template< typename StackAlloc, typename Fn >
 continuation
 callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
-    return resume(
-            continuation{
+    return continuation{
                 detail::context_create< Record >(
-                        salloc, std::forward< Fn >( fn) ) } );
+                        salloc, std::forward< Fn >( fn) ) }();
 }
 
 template< typename StackAlloc, typename Fn >
 continuation
 callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
-    return resume(
-            continuation{
+    return continuation{
                 detail::context_create< Record >(
-                        palloc, salloc, std::forward< Fn >( fn) ) } );
-}
-
-inline
-continuation
-resume( continuation && c) {
-    BOOST_ASSERT( nullptr != c.t_.fctx);
-    return continuation{
-        detail::jump_fcontext(
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                detail::exchange( c.t_.fctx, nullptr),
-#else
-                std::exchange( c.t_.fctx, nullptr),
-#endif
-                nullptr) };
-}
-
-template< typename Fn >
-continuation
-resume( continuation && c, exec_ontop_arg_t, Fn && fn) {
-    BOOST_ASSERT( nullptr != c.t_.fctx);
-    auto p = std::make_tuple( std::forward< Fn >( fn) );
-    return continuation{
-        detail::ontop_fcontext(
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                detail::exchange( c.t_.fctx, nullptr),
-#else
-                std::exchange( c.t_.fctx, nullptr),
-#endif
-                & p,
-                context_ontop_void< continuation, Fn >) };
+                        palloc, salloc, std::forward< Fn >( fn) ) }();
 }
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)

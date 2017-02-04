@@ -23,7 +23,7 @@ namespace ctx = boost::context;
 
 static ctx::continuation foo( ctx::continuation && c) {
     while ( true) {
-        c = ctx::resume( std::move( c) );
+        c = c();
     }
     return std::move( c);
 }
@@ -31,11 +31,11 @@ static ctx::continuation foo( ctx::continuation && c) {
 duration_type measure_time() {
     // cache warum-up
     ctx::continuation c = ctx::callcc( foo);
-    c = ctx::resume( std::move( c) );
+    c = c();
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = ctx::resume( std::move( c) );
+        c = c();
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -49,11 +49,11 @@ duration_type measure_time_() {
     // cache warum-up
     ctx::fixedsize_stack alloc;
     ctx::continuation c = ctx::callcc( std::allocator_arg, alloc, foo);
-    c = ctx::resume( std::move( c) );
+    c = c();
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = ctx::resume( std::move( c), ctx::exec_ontop_arg, [](ctx::continuation &){});
+        c = c( ctx::exec_ontop_arg, [](ctx::continuation &){});
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -68,11 +68,11 @@ cycle_type measure_cycles() {
     // cache warum-up
     ctx::fixedsize_stack alloc;
     ctx::continuation c = ctx::callcc( std::allocator_arg, alloc, foo);
-    c = ctx::resume( std::move( c) );
+    c = c();
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = ctx::resume( std::move( c) );
+        c = c();
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
@@ -86,11 +86,11 @@ cycle_type measure_cycles_() {
     // cache warum-up
     ctx::fixedsize_stack alloc;
     ctx::continuation c = ctx::callcc( std::allocator_arg, alloc, foo);
-    c = ctx::resume( std::move( c) );
+    c = c();
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = ctx::resume( std::move( c), ctx::exec_ontop_arg, [](ctx::continuation &){});
+        c = c( ctx::exec_ontop_arg, [](ctx::continuation &){});
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
