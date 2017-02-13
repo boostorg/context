@@ -159,10 +159,8 @@
 [include overview.qbk]
 [include requirements.qbk]
 [include callcc.qbk]
-[/
 [include execution_context_v2.qbk]
 [include execution_context_v1.qbk]
-]
 [include stack.qbk]
 [include preallocated.qbk]
 [include performance.qbk]
