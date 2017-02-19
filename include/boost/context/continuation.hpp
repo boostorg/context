@@ -346,56 +346,52 @@ public:
     continuation operator()( Arg ... arg) {
         BOOST_ASSERT( nullptr != t_.fctx);
         auto tpl = std::make_tuple( std::forward< Arg >( arg) ... );
-        return continuation{
-            detail::jump_fcontext(
+        return detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( t_.fctx, nullptr),
 #else
                     std::exchange( t_.fctx, nullptr),
 #endif
-                    & tpl) };
+                    & tpl);
     }
 
     template< typename Fn, typename ... Arg >
     continuation operator()( exec_ontop_arg_t, Fn && fn, Arg ... arg) {
         BOOST_ASSERT( nullptr != t_.fctx);
         auto tpl = std::make_tuple( std::forward< Fn >( fn), std::forward< Arg >( arg) ... );
-        return continuation{
-            detail::ontop_fcontext(
+        return detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( t_.fctx, nullptr),
 #else
                     std::exchange( t_.fctx, nullptr),
 #endif
                     & tpl,
-                    context_ontop< continuation, Fn, Arg ... >) };
+                    context_ontop< continuation, Fn, Arg ... >);
     }
 
     continuation operator()() {
         BOOST_ASSERT( nullptr != t_.fctx);
-        return continuation{
-            detail::jump_fcontext(
+        return detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( t_.fctx, nullptr),
 #else
                     std::exchange( t_.fctx, nullptr),
 #endif
-                    nullptr) };
+                    nullptr);
     }
 
     template< typename Fn >
     continuation operator()( exec_ontop_arg_t, Fn && fn) {
         BOOST_ASSERT( nullptr != t_.fctx);
         auto p = std::make_tuple( std::forward< Fn >( fn) );
-        return continuation{
-            detail::ontop_fcontext(
+        return detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( t_.fctx, nullptr),
 #else
                     std::exchange( t_.fctx, nullptr),
 #endif
                     & p,
-                    context_ontop_void< continuation, Fn >) };
+                    context_ontop_void< continuation, Fn >);
     }
 
     explicit operator bool() const noexcept {
