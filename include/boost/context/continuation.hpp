@@ -269,7 +269,7 @@ detail::transfer_t context_ontop_void( detail::transfer_t t) {
 #endif
 }
 
-class continuation {
+class BOOST_CONTEXT_DECL continuation {
 private:
     template< typename Ctx, typename StackAlloc, typename Fn >
     friend class detail::record;

@@ -60,7 +60,7 @@ struct data_t {
     void                *   data;
 };
 
-struct activation_record {
+struct BOOST_CONTEXT_DECL activation_record {
     typedef boost::intrusive_ptr< activation_record >    ptr_t;
 
     thread_local static ptr_t   current_rec;
@@ -146,7 +146,7 @@ struct activation_record {
     }
 };
 
-struct activation_record_initializer {
+struct BOOST_CONTEXT_DECL activation_record_initializer {
     activation_record_initializer() noexcept;
     ~activation_record_initializer();
 };
