@@ -107,6 +107,8 @@ struct my_exception : public std::runtime_error {
 };
 
 #ifdef BOOST_MSVC
+// Optimizations can remove the integer-divide-by-zero here.
+#pragma optimize("", off)
 void seh( bool & catched) {
     __try {
         int i = 1;
@@ -115,6 +117,7 @@ void seh( bool & catched) {
         catched = true;
     }
 }
+#pragma optimize("", on)
 #endif
 
 ctx::continuation fn1( ctx::continuation && c) {

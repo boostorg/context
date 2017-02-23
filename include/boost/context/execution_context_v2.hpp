@@ -275,7 +275,7 @@ public:
     }
 };
 
-class ontop_error : public std::exception {
+class BOOST_CONTEXT_DECL ontop_error : public std::exception {
 private:
     detail::fcontext_t  fctx_;
 

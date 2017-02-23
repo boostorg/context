@@ -73,6 +73,7 @@ public:
 };
 
 typedef basic_fixedsize_stack< stack_traits > fixedsize_stack;
+typedef fixedsize_stack default_stack;
 
 }}
 
