@@ -18,7 +18,7 @@ int main() {
             int a=0;
             int b=1;
             for(;;){
-                c=c(a);
+                c=c.resume(a);
                 auto next=a+b;
                 a=b;
                 b=next;
@@ -26,8 +26,8 @@ int main() {
             return std::move( c);
         });
     for ( int j = 0; j < 10; ++j) {
-        std::cout << ctx::get_data<int>(c) << " ";
-        c=c();
+        std::cout << c.get_data<int>() << " ";
+        c=c.resume();
     }
     std::cout << std::endl;
     std::cout << "main: done" << std::endl;

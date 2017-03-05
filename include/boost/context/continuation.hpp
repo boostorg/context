@@ -298,11 +298,6 @@ private:
     friend continuation
     callcc( std::allocator_arg_t, preallocated, StackAlloc, Fn &&);
 
-    friend bool data_available( continuation const&) noexcept;
-
-    template< typename ... Arg >
-    friend typename detail::result_type< Arg ... >::type get_data( continuation &);
-
     detail::transfer_t  t_{ nullptr, nullptr };
 
     continuation( detail::fcontext_t fctx) noexcept :
@@ -343,7 +338,7 @@ public:
     continuation & operator=( continuation const& other) noexcept = delete;
 
     template< typename ... Arg >
-    continuation operator()( Arg ... arg) {
+    continuation resume( Arg ... arg) {
         BOOST_ASSERT( nullptr != t_.fctx);
         auto tpl = std::make_tuple( std::forward< Arg >( arg) ... );
         return detail::jump_fcontext(
@@ -356,7 +351,7 @@ public:
     }
 
     template< typename Fn, typename ... Arg >
-    continuation operator()( exec_ontop_arg_t, Fn && fn, Arg ... arg) {
+    continuation resume_with( Fn && fn, Arg ... arg) {
         BOOST_ASSERT( nullptr != t_.fctx);
         auto tpl = std::make_tuple( std::forward< Fn >( fn), std::forward< Arg >( arg) ... );
         return detail::ontop_fcontext(
@@ -369,7 +364,7 @@ public:
                     context_ontop< continuation, Fn, Arg ... >);
     }
 
-    continuation operator()() {
+    continuation resume() {
         BOOST_ASSERT( nullptr != t_.fctx);
         return detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
@@ -381,7 +376,7 @@ public:
     }
 
     template< typename Fn >
-    continuation operator()( exec_ontop_arg_t, Fn && fn) {
+    continuation resume_with( Fn && fn) {
         BOOST_ASSERT( nullptr != t_.fctx);
         auto p = std::make_tuple( std::forward< Fn >( fn) );
         return detail::ontop_fcontext(
@@ -392,6 +387,16 @@ public:
 #endif
                     & p,
                     context_ontop_void< continuation, Fn >);
+    }
+
+    bool data_available() noexcept {
+        return * this && nullptr != t_.data;
+    }
+
+    template< typename ... Arg >
+    typename detail::result_type< Arg ... >::type get_data() {
+        BOOST_ASSERT( nullptr != t_.data);
+        return detail::result_type< Arg ... >::get( t_);
     }
 
     explicit operator bool() const noexcept {
@@ -441,17 +446,6 @@ public:
     }
 };
 
-inline
-bool data_available( continuation const& c) noexcept {
-    return c && nullptr != c.t_.data;
-}
-
-template< typename ... Arg >
-typename detail::result_type< Arg ... >::type get_data( continuation & c) {
-    BOOST_ASSERT( nullptr != c.t_.data);
-    return detail::result_type< Arg ... >::get( c.t_);
-}
-
 // Arg
 template<
     typename Fn,
@@ -475,7 +469,7 @@ callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg ... arg) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
     return continuation{
                         detail::context_create< Record >(
-                               salloc, std::forward< Fn >( fn) ) }(
+                               salloc, std::forward< Fn >( fn) ) }.resume(
                    std::forward< Arg >( arg) ... );
 }
 
@@ -489,7 +483,7 @@ callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, 
     using Record = detail::record< continuation, StackAlloc, Fn >;
     return continuation{
                         detail::context_create< Record >(
-                               palloc, salloc, std::forward< Fn >( fn) ) }(
+                               palloc, salloc, std::forward< Fn >( fn) ) }.resume(
                    std::forward< Arg >( arg) ... );
 }
 
@@ -511,7 +505,7 @@ callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
     return continuation{
                 detail::context_create< Record >(
-                        salloc, std::forward< Fn >( fn) ) }();
+                        salloc, std::forward< Fn >( fn) ) }.resume();
 }
 
 template< typename StackAlloc, typename Fn >
@@ -520,7 +514,7 @@ callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn) 
     using Record = detail::record< continuation, StackAlloc, Fn >;
     return continuation{
                 detail::context_create< Record >(
-                        palloc, salloc, std::forward< Fn >( fn) ) }();
+                        palloc, salloc, std::forward< Fn >( fn) ) }.resume();
 }
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
