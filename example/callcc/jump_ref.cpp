@@ -12,10 +12,10 @@
 namespace ctx = boost::context;
 
 ctx::continuation f1( ctx::continuation && c) {
-    int & data = ctx::get_data< int & >( c);
+    int & data = c.get_data< int & >();
     std::cout << "f1: entered first time: " << data << std::endl;
     data += 2;
-    c = c( std::ref( data) );
+    c = c.resume( std::ref( data) );
     data += 2;
     std::cout << "f1: entered second time: " << data << std::endl;
     return std::move( c);
@@ -26,9 +26,9 @@ int main() {
     int data_ = 1;
     int & data = data_;
     c = ctx::callcc( std::allocator_arg, ctx::fixedsize_stack{}, f1, std::ref( data) );
-    data = ctx::get_data< int & >( c);
+    data = c.get_data< int & >();
     std::cout << "f1: returned first time: " << data << std::endl;
-    c = c( std::ref( data) );
+    c = c.resume( std::ref( data) );
     if ( c) {
         std::cout << "f1: returned second time: " << data << std::endl;
     } else {

@@ -23,7 +23,7 @@ namespace ctx = boost::context;
 
 static ctx::continuation foo( ctx::continuation && c) {
     while ( true) {
-        c = c();
+        c = c.resume();
     }
     return std::move( c);
 }
@@ -31,11 +31,11 @@ static ctx::continuation foo( ctx::continuation && c) {
 duration_type measure_time() {
     // cache warum-up
     ctx::continuation c = ctx::callcc( foo);
-    c = c();
+    c = c.resume();
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = c();
+        c = c.resume();
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -50,11 +50,11 @@ cycle_type measure_cycles() {
     // cache warum-up
     ctx::fixedsize_stack alloc;
     ctx::continuation c = ctx::callcc( std::allocator_arg, alloc, foo);
-    c = c();
+    c = c.resume();
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = c();
+        c = c.resume();
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement

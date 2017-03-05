@@ -14,9 +14,9 @@ namespace ctx = boost::context;
 
 ctx::continuation f1( ctx::continuation && c) {
     std::cout << "f1: entered first time"  << std::endl;
-    c = c();
+    c = c.resume();
     std::cout << "f1: entered second time" << std::endl;
-    c = c();
+    c = c.resume();
     std::cout << "f1: entered third time" << std::endl;
     return std::move( c);
 }
@@ -28,9 +28,9 @@ void f2( ctx::continuation && c) {
 int main() {
     ctx::continuation c = ctx::callcc( f1);
     std::cout << "f1: returned first time" << std::endl;
-    c = c();
+    c = c.resume();
     std::cout << "f1: returned second time" << std::endl;
-    c = c( ctx::exec_ontop_arg, f2);
+    c = c.resume_with( f2);
     std::cout << "f1: returned third time" << std::endl;
 
     std::cout << "main: done" << std::endl;

@@ -47,8 +47,8 @@ public:
 };
 
 ctx::continuation f1( ctx::continuation && c) {
-    moveable data = ctx::get_data< moveable >( c);
-    c = c( std::move( data) );
+    moveable data = c.get_data< moveable >();
+    c = c.resume( std::move( data) );
     return std::move( c);
 }
 
@@ -57,7 +57,7 @@ int main() {
     moveable data1{ 3 };
     c = ctx::callcc( std::allocator_arg, ctx::fixedsize_stack{}, f1, std::move( data1) );
     moveable data2;
-    data2 = ctx::get_data< moveable >( c);
+    data2 = c.get_data< moveable >();
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;
 }

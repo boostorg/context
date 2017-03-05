@@ -16,25 +16,25 @@ int main() {
     ctx::continuation c;
     int data = 0;
     c = ctx::callcc( [](ctx::continuation && c) {
-                        int data = ctx::get_data< int >( c);
+                        int data = c.get_data< int >();
                         std::cout << "f1: entered first time: " << data  << std::endl;
-                        c = c( data + 1);
-                        data = ctx::get_data< int >( c);
+                        c = c.resume( data + 1);
+                        data = c.get_data< int >();
                         std::cout << "f1: entered second time: " << data  << std::endl;
-                        c = c( data + 1);
-                        data = ctx::get_data< int >( c);
+                        c = c.resume( data + 1);
+                        data = c.get_data< int >();
                         std::cout << "f1: entered third time: " << data << std::endl;
                         return std::move( c);
                     },
                     data + 1);
-    data = ctx::get_data< int >( c);
+    data = c.get_data< int >();
     std::cout << "f1: returned first time: " << data << std::endl;
-    c = c( data + 1);
-    data = ctx::get_data< int >( c);
+    c = c.resume( data + 1);
+    data = c.get_data< int >();
     std::cout << "f1: returned second time: " << data << std::endl;
-    c = c( ctx::exec_ontop_arg,
+    c = c.resume_with(
            [](ctx::continuation && c){
-              int data = ctx::get_data< int >( c);
+              int data = c.get_data< int >();
               std::cout << "f2: entered: " << data << std::endl;
               return data;
            },
