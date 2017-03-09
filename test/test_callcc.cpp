@@ -278,7 +278,7 @@ void test_exception() {
                             return std::move( c);
                         });
             BOOST_CHECK( c );
-            c();
+            c.resume();
         }).join();
         BOOST_CHECK( catched);
     }
