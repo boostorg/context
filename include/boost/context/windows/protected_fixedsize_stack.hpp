@@ -38,8 +38,6 @@ public:
 
     basic_protected_fixedsize_stack( std::size_t size = traits_type::default_size() ) BOOST_NOEXCEPT_OR_NOTHROW :
         size_( size) {
-        BOOST_ASSERT( traits_type::minimum_size() <= size_);
-        BOOST_ASSERT( traits_type::is_unbounded() || ( traits_type::maximum_size() >= size_) );
     }
 
     stack_context allocate() {
@@ -74,8 +72,6 @@ public:
 
     void deallocate( stack_context & sctx) BOOST_NOEXCEPT_OR_NOTHROW {
         BOOST_ASSERT( sctx.sp);
-        BOOST_ASSERT( traits_type::minimum_size() <= sctx.size);
-        BOOST_ASSERT( traits_type::is_unbounded() || ( traits_type::maximum_size() >= sctx.size) );
 
         void * vp = static_cast< char * >( sctx.sp) - sctx.size;
         ::VirtualFree( vp, 0, MEM_RELEASE);
