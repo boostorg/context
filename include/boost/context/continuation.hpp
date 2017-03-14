@@ -90,6 +90,7 @@ template< typename Rec >
 void context_entry( transfer_t t_) noexcept {
     // transfer control structure to the context-stack
     Rec * rec = static_cast< Rec * >( t_.data);
+    BOOST_ASSERT( nullptr != t_.fctx);
     BOOST_ASSERT( nullptr != rec);
     transfer_t t = { nullptr, nullptr };
     try {
