@@ -10,9 +10,12 @@
 
 [warning __econtext__ is deprecated.]
 
+[note Include `execution_context.hpp` and provide flag
+['BOOST_EXECUTION_CONTEXT=1] in order to use __econtext__.]
+
 [note This class is only enabled if property ['segmented-stacks=on] (enables
-segmented stacks) or compiler flag ['BOOST_EXECUTION_CONTEXT=1] is specified
-at b2-commandline.]
+segmented stacks) is specified at b2-commandline or compiler flag
+['BOOST_EXECUTION_CONTEXT=1] was defined.]
 
 Class __econtext__ encapsulates context switching and manages the associated
 context' stack (allocation/deallocation).
