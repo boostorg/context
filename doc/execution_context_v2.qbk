@@ -10,6 +10,9 @@
 
 [warning __econtext__ is deprecated.]
 
+[note Include `execution_context.hpp` and provide flag
+['BOOST_EXECUTION_CONTEXT=2] in order to use __econtext__.]
+
 Class __econtext__ encapsulates context switching and manages the associated
 context' stack (allocation/deallocation).
 

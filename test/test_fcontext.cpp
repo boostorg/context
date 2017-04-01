@@ -142,6 +142,31 @@ void f12( ctx::transfer_t t_) {
     ctx::jump_fcontext( t.fctx, t.data);
 }
 
+void f13( ctx::transfer_t t) {
+    {
+        double n1 = 0;
+        double n2 = 0;
+        std::sscanf("3.14 7.13", "%lf %lf", & n1, & n2);
+        BOOST_CHECK( n1 == 3.14);
+        BOOST_CHECK( n2 == 7.13);
+    }
+    {
+        int n1=0;
+        int n2=0;
+        std::sscanf("1 23", "%d %d", & n1, & n2);
+        BOOST_CHECK( n1 == 1);
+        BOOST_CHECK( n2 == 23);
+    }
+    {
+        int n1=0;
+        int n2=0;
+        std::sscanf("1 jjj 23", "%d %*[j] %d", & n1, & n2);
+        BOOST_CHECK( n1 == 1);
+        BOOST_CHECK( n2 == 23);
+    }
+    ctx::jump_fcontext( t.fctx, 0);
+}
+
 void test_setup() {
     stack_allocator alloc;
     void * sp = alloc.allocate( stack_allocator::default_stacksize() );
@@ -267,6 +292,15 @@ void test_ontop() {
 	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
+void test_sscanf() {
+    stack_allocator alloc;
+    void * sp = alloc.allocate( stack_allocator::default_stacksize() );
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f13);
+    BOOST_CHECK( ctx);
+    ctx::jump_fcontext( ctx, 0);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
+}
+
 boost::unit_test::test_suite * init_unit_test_suite( int, char* []) {
     boost::unit_test::test_suite * test =
         BOOST_TEST_SUITE("Boost.Context: context test suite");
@@ -280,6 +314,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* []) {
     test->add( BOOST_TEST_CASE( & test_fp) );
     test->add( BOOST_TEST_CASE( & test_stacked) );
     test->add( BOOST_TEST_CASE( & test_ontop) );
+    test->add( BOOST_TEST_CASE( & test_sscanf) );
 
     return test;
 }

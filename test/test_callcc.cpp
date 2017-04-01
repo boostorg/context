@@ -4,6 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+#include <cstdio>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -234,7 +235,6 @@ ctx::continuation fn17( ctx::continuation && c) {
     }
     return std::move( c);
 }
-
 
 void test_move() {
     value1 = 0;
@@ -558,6 +558,34 @@ void test_variant() {
     }
 }
 
+void test_sscanf() {
+    ctx::continuation c = ctx::callcc(
+		[]( ctx::continuation && c) {
+			{
+				double n1 = 0;
+				double n2 = 0;
+				std::sscanf("3.14 7.13", "%lf %lf", & n1, & n2);
+				BOOST_CHECK( n1 == 3.14);
+				BOOST_CHECK( n2 == 7.13);
+			}
+			{
+				int n1=0;
+				int n2=0;
+				std::sscanf("1 23", "%d %d", & n1, & n2);
+				BOOST_CHECK( n1 == 1);
+				BOOST_CHECK( n2 == 23);
+			}
+			{
+				int n1=0;
+				int n2=0;
+				std::sscanf("1 jjj 23", "%d %*[j] %d", & n1, & n2);
+				BOOST_CHECK( n1 == 1);
+				BOOST_CHECK( n2 == 23);
+			}
+			return std::move( c);
+	});
+}
+
 #ifdef BOOST_WINDOWS
 void test_bug12215() {
         ctx::continuation c = ctx::callcc(
@@ -587,6 +615,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_one_arg) );
     test->add( BOOST_TEST_CASE( & test_two_args) );
     test->add( BOOST_TEST_CASE( & test_variant) );
+    test->add( BOOST_TEST_CASE( & test_sscanf) );
 #ifdef BOOST_WINDOWS
     test->add( BOOST_TEST_CASE( & test_bug12215) );
 #endif
