@@ -183,7 +183,7 @@ void f14( ctx::transfer_t t) {
         const char *fmt = "0x%016llX";
         char buf[100];
         std::snprintf( buf, sizeof( buf), fmt, n);
-        BOOST_ASSERT( std::string("0x0BCDEF1234567890") == std::string( buf) );
+        BOOST_CHECK( std::string("0x0BCDEF1234567890") == std::string( buf) );
     }
     ctx::jump_fcontext( t.fctx, 0);
 }
