@@ -4,6 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+#include <cmath>
 #include <cstdio>
 #include <iostream>
 #include <memory>
@@ -12,6 +13,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 #include <boost/array.hpp>
 #include <boost/assert.hpp>
@@ -586,6 +588,27 @@ void test_sscanf() {
 	});
 }
 
+void test_snprintf() {
+    ctx::continuation c = ctx::callcc(
+		[]( ctx::continuation && c) {
+            {
+                const char *fmt = "sqrt(2) = %f";
+                char buf[15];
+                std::snprintf( buf, sizeof( buf), fmt, std::sqrt( 2) );
+                BOOST_CHECK( 0 < sizeof( buf) );
+                BOOST_ASSERT( std::string("sqrt(2) = 1.41") == std::string( buf) );
+            }
+            {
+                std::uint64_t n = 0xbcdef1234567890;
+                const char *fmt = "0x%016llX";
+                char buf[100];
+                std::snprintf( buf, sizeof( buf), fmt, n);
+                BOOST_ASSERT( std::string("0x0BCDEF1234567890") == std::string( buf) );
+            }
+			return std::move( c);
+	});
+}
+
 #ifdef BOOST_WINDOWS
 void test_bug12215() {
         ctx::continuation c = ctx::callcc(
@@ -616,6 +639,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_two_args) );
     test->add( BOOST_TEST_CASE( & test_variant) );
     test->add( BOOST_TEST_CASE( & test_sscanf) );
+    test->add( BOOST_TEST_CASE( & test_snprintf) );
 #ifdef BOOST_WINDOWS
     test->add( BOOST_TEST_CASE( & test_bug12215) );
 #endif
