@@ -4,6 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+#include <cmath>
+#include <cstdio>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -167,6 +169,24 @@ void f13( ctx::transfer_t t) {
     ctx::jump_fcontext( t.fctx, 0);
 }
 
+void f14( ctx::transfer_t t) {
+    {
+        const char *fmt = "sqrt(2) = %f";
+        char buf[15];
+        std::snprintf( buf, sizeof( buf), fmt, std::sqrt( 2) );
+        BOOST_CHECK( 0 < sizeof( buf) );
+        BOOST_ASSERT( std::string("sqrt(2) = 1.41") == std::string( buf) );
+    }
+    {
+        std::uint64_t n = 0xbcdef1234567890;
+        const char *fmt = "0x%016llX";
+        char buf[100];
+        std::snprintf( buf, sizeof( buf), fmt, n);
+        BOOST_ASSERT( std::string("0x0BCDEF1234567890") == std::string( buf) );
+    }
+    ctx::jump_fcontext( t.fctx, 0);
+}
+
 void test_setup() {
     stack_allocator alloc;
     void * sp = alloc.allocate( stack_allocator::default_stacksize() );
@@ -301,6 +321,14 @@ void test_sscanf() {
 	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
+void test_snprintf() {
+    stack_allocator alloc;
+    void * sp = alloc.allocate( stack_allocator::default_stacksize() );
+    ctx::fcontext_t ctx = ctx::make_fcontext( sp, stack_allocator::default_stacksize(), f14);
+    ctx::jump_fcontext( ctx, 0);
+	alloc.deallocate( sp, stack_allocator::default_stacksize() );
+}
+
 boost::unit_test::test_suite * init_unit_test_suite( int, char* []) {
     boost::unit_test::test_suite * test =
         BOOST_TEST_SUITE("Boost.Context: context test suite");
@@ -315,6 +343,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* []) {
     test->add( BOOST_TEST_CASE( & test_stacked) );
     test->add( BOOST_TEST_CASE( & test_ontop) );
     test->add( BOOST_TEST_CASE( & test_sscanf) );
+    test->add( BOOST_TEST_CASE( & test_snprintf) );
 
     return test;
 }
