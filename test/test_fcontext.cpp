@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <cstdio>
 
 #include <boost/array.hpp>
 #include <boost/assert.hpp>
