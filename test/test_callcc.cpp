@@ -4,6 +4,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -367,7 +370,7 @@ void test_ontop() {
                    moveable m = c.get_data< moveable >();
                    BOOST_CHECK( m.state);
                    BOOST_CHECK( 7 == m.value);
-                   return std::move( m);
+                   return  m;
                },
                std::move( m1) );
         m2 = c.get_data< moveable >();
@@ -567,21 +570,21 @@ void test_sscanf() {
 			{
 				double n1 = 0;
 				double n2 = 0;
-				std::sscanf("3.14 7.13", "%lf %lf", & n1, & n2);
+				sscanf("3.14 7.13", "%lf %lf", & n1, & n2);
 				BOOST_CHECK( n1 == 3.14);
 				BOOST_CHECK( n2 == 7.13);
 			}
 			{
 				int n1=0;
 				int n2=0;
-				std::sscanf("1 23", "%d %d", & n1, & n2);
+				sscanf("1 23", "%d %d", & n1, & n2);
 				BOOST_CHECK( n1 == 1);
 				BOOST_CHECK( n2 == 23);
 			}
 			{
 				int n1=0;
 				int n2=0;
-				std::sscanf("1 jjj 23", "%d %*[j] %d", & n1, & n2);
+				sscanf("1 jjj 23", "%d %*[j] %d", & n1, & n2);
 				BOOST_CHECK( n1 == 1);
 				BOOST_CHECK( n2 == 23);
 			}
@@ -595,7 +598,7 @@ void test_snprintf() {
             {
                 const char *fmt = "sqrt(2) = %f";
                 char buf[15];
-                std::snprintf( buf, sizeof( buf), fmt, std::sqrt( 2) );
+                snprintf( buf, sizeof( buf), fmt, std::sqrt( 2) );
                 BOOST_CHECK( 0 < sizeof( buf) );
                 BOOST_ASSERT( std::string("sqrt(2) = 1.41") == std::string( buf) );
             }
@@ -603,7 +606,7 @@ void test_snprintf() {
                 std::uint64_t n = 0xbcdef1234567890;
                 const char *fmt = "0x%016llX";
                 char buf[100];
-                std::snprintf( buf, sizeof( buf), fmt, n);
+                snprintf( buf, sizeof( buf), fmt, n);
                 BOOST_ASSERT( std::string("0x0BCDEF1234567890") == std::string( buf) );
             }
 			return std::move( c);
