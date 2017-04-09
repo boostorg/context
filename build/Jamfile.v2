@@ -16,6 +16,9 @@ import toolset ;
 feature.feature segmented-stacks : on : optional propagated composite ;
 feature.compose <segmented-stacks>on : <define>BOOST_USE_SEGMENTED_STACKS ;
 
+feature.feature tsx : on : optional propagated composite ;
+feature.compose <tsx>on : <define>BOOST_USE_TSX ;
+
 feature.feature valgrind : on : optional propagated composite ;
 feature.compose <valgrind>on : <define>BOOST_USE_VALGRIND ;
 
