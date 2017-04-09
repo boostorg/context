@@ -6,7 +6,7 @@
 ]
 
 [#cc]
-[section:cc call/cc]
+[section:cc Context switching with call/cc]
 
 __callcc__ (call with current continuation) is a universal control operator
 (well-known from the programming language Scheme) that captures the current
