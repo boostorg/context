@@ -143,7 +143,7 @@ ontop_fcontext:
     /* restore RSP (pointing to context-data) from RDX */
     movq  %rdx, %rsp
 
-    /* save XMM storage */
+    /* restore XMM storage */
     movaps  0x0(%rsp), %xmm6
     movaps  0x10(%rsp), %xmm7
     movaps  0x20(%rsp), %xmm8
@@ -154,6 +154,8 @@ ontop_fcontext:
     movaps  0x70(%rsp), %xmm13
     movaps  0x80(%rsp), %xmm14
     movaps  0x90(%rsp), %xmm15
+ 	ldmxcsr 0xa0(%rsp) /* restore MMX control- and status-word */
+ 	fldcw   0xa4(%rsp) /* restore x87 control-word */
 
     /* load NT_TIB */
     movq  %gs:(0x30), %r10
