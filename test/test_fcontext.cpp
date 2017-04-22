@@ -178,14 +178,14 @@ void f14( ctx::transfer_t t) {
         char buf[15];
         snprintf( buf, sizeof( buf), fmt, std::sqrt( 2) );
         BOOST_CHECK( 0 < sizeof( buf) );
-        BOOST_CHECK_EQUAL( std::string("sqrt(2) = 1.41"), std::string( buf) );
+        BOOST_CHECK_EQUAL( std::string("sqrt(2) = 1.41"), std::string( buf, 14) );
     }
     {
         std::uint64_t n = 0xbcdef1234567890;
         const char *fmt = "0x%016llX";
         char buf[100];
         snprintf( buf, sizeof( buf), fmt, n);
-        BOOST_CHECK_EQUAL( std::string("0x0BCDEF1234567890"), std::string( buf) );
+        BOOST_CHECK_EQUAL( std::string("0x0BCDEF1234567890"), std::string( buf, 18) );
     }
     ctx::jump_fcontext( t.fctx, 0);
 }
