@@ -28,10 +28,12 @@ ontop_fcontext PROC BOOST_CONTEXT_EXPORT
     ; prepare stack
     lea  esp, [esp-02ch]
 
+IFNDEF BOOST_USE_TSX
     ; save MMX control- and status-word
     stmxcsr  [esp]
     ; save x87 control-word
     fnstcw  [esp+04h]
+ENDIF
 
     assume  fs:nothing
     ; load NT_TIB into ECX
@@ -79,10 +81,12 @@ ontop_fcontext PROC BOOST_CONTEXT_EXPORT
     ; restore ESP (pointing to context-data) from EAX
     mov  esp, eax
 
+IFNDEF BOOST_USE_TSX
     ; restore MMX control- and status-word
     ldmxcsr  [esp]
     ; restore x87 control-word
     fldcw  [esp+04h]
+ENDIF
 
     assume  fs:nothing
     ; load NT_TIB into EDX
