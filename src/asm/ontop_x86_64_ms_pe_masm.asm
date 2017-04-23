@@ -90,6 +90,7 @@ ontop_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     ; prepare stack
     lea rsp, [rsp-0118h]
 
+#if !defined(BOOST_USE_TSX)
     ; save XMM storage
     movaps  [rsp], xmm6
     movaps  [rsp+010h], xmm7
@@ -105,6 +106,7 @@ ontop_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     stmxcsr  [rsp+0a0h]
     ; save x87 control-word
     fnstcw  [rsp+0a4h]
+#endif
 
     ; load NT_TIB
     mov  r10,  gs:[030h]
@@ -138,6 +140,7 @@ ontop_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     ; restore RSP (pointing to context-data) from RDX
     mov  rsp, rdx
 
+#if !defined(BOOST_USE_TSX)
     ; restore XMM storage
     movaps  xmm6, [rsp]
     movaps  xmm7, [rsp+010h]
@@ -153,6 +156,7 @@ ontop_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     ldmxcsr  [rsp+0a0h]
     ; save x87 control-word
     fldcw   [rsp+0a4h]
+#endif
 
     ; load NT_TIB
     mov  r10,  gs:[030h]
