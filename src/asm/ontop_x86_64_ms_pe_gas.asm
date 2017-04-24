@@ -116,7 +116,7 @@ ontop_fcontext:
     /* load NT_TIB */
     movq  %gs:(0x30), %r10
     /* save fiber local storage */
-    movq  0x18(%r10), %rax
+    movq  0x20(%r10), %rax
     movq  %rax, 0xb0(%rsp)
     /* save current deallocation stack */
     movq  0x1478(%r10), %rax
@@ -165,7 +165,7 @@ ontop_fcontext:
     movq  %gs:(0x30), %r10
     /* restore fiber local storage */
     movq  0xb0(%rsp), %rax
-    movq  %rax, 0x18(%r10)
+    movq  %rax, 0x20(%r10)
     /* restore current deallocation stack */
     movq  0xb8(%rsp), %rax
     movq  %rax, 0x1478(%r10)
