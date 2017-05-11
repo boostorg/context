@@ -271,6 +271,31 @@ detail::transfer_t context_ontop_void( detail::transfer_t t) {
 #endif
 }
 
+class continuation;
+
+template<
+    typename StackAlloc,
+    typename Fn,
+    typename ... Arg,
+    typename = detail::disable_overload< preallocated, StackAlloc >
+#if defined(BOOST_USE_SEGMENTED_STACKS)
+    , typename = detail::disable_overload< segmented_stack, StackAlloc >
+#endif
+>
+continuation
+callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg ... arg);
+
+template<
+    typename StackAlloc,
+    typename Fn,
+    typename ... Arg
+#if defined(BOOST_USE_SEGMENTED_STACKS)
+    , typename = detail::disable_overload< segmented_stack, StackAlloc >
+#endif
+>
+continuation
+callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Arg ... arg);
+
 class continuation {
 private:
     template< typename Ctx, typename StackAlloc, typename Fn >
@@ -284,21 +309,28 @@ private:
     friend detail::transfer_t
     context_ontop_void( detail::transfer_t);
 
-    template< typename StackAlloc, typename Fn, typename ... Arg >
+    template<
+        typename StackAlloc,
+        typename Fn,
+        typename ... Arg,
+        typename
+#if defined(BOOST_USE_SEGMENTED_STACKS)
+        , typename
+#endif
+     >
     friend continuation
     callcc( std::allocator_arg_t, StackAlloc, Fn &&, Arg ...);
 
-    template< typename StackAlloc, typename Fn, typename ... Arg >
+    template<
+        typename StackAlloc,
+        typename Fn,
+        typename ... Arg
+#if defined(BOOST_USE_SEGMENTED_STACKS)
+        , typename
+#endif
+     >
     friend continuation
     callcc( std::allocator_arg_t, preallocated, StackAlloc, Fn &&, Arg ...);
-
-    template< typename StackAlloc, typename Fn >
-    friend continuation
-    callcc( std::allocator_arg_t, StackAlloc, Fn &&);
-
-    template< typename StackAlloc, typename Fn >
-    friend continuation
-    callcc( std::allocator_arg_t, preallocated, StackAlloc, Fn &&);
 
     detail::transfer_t  t_{ nullptr, nullptr };
 
@@ -448,7 +480,6 @@ public:
     }
 };
 
-// Arg
 template<
     typename Fn,
     typename ... Arg,
@@ -465,7 +496,11 @@ callcc( Fn && fn, Arg ... arg) {
 template<
     typename StackAlloc,
     typename Fn,
-    typename ... Arg
+    typename ... Arg,
+    typename // = detail::disable_overload< preallocated, StackAlloc >
+#if defined(BOOST_USE_SEGMENTED_STACKS)
+    , typename // = detail::disable_overload< segmented_stack, StackAlloc >
+#endif
 >
 continuation
 callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg ... arg) {
@@ -480,6 +515,9 @@ template<
     typename StackAlloc,
     typename Fn,
     typename ... Arg
+#if defined(BOOST_USE_SEGMENTED_STACKS)
+    , typename // = detail::disable_overload< segmented_stack, StackAlloc >
+#endif
 >
 continuation
 callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Arg ... arg) {
@@ -488,36 +526,6 @@ callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, 
                         detail::context_create< Record >(
                                palloc, salloc, std::forward< Fn >( fn) ) }.resume(
                    std::forward< Arg >( arg) ... );
-}
-
-// void
-template<
-    typename Fn,
-    typename = detail::disable_overload< continuation, Fn >
->
-continuation
-callcc( Fn && fn) {
-    return callcc(
-            std::allocator_arg, fixedsize_stack(),
-            std::forward< Fn >( fn) );
-}
-
-template< typename StackAlloc, typename Fn >
-continuation
-callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn) {
-    using Record = detail::record< continuation, StackAlloc, Fn >;
-    return continuation{
-                detail::context_create< Record >(
-                        salloc, std::forward< Fn >( fn) ) }.resume();
-}
-
-template< typename StackAlloc, typename Fn >
-continuation
-callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn) {
-    using Record = detail::record< continuation, StackAlloc, Fn >;
-    return continuation{
-                detail::context_create< Record >(
-                        palloc, salloc, std::forward< Fn >( fn) ) }.resume();
 }
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
