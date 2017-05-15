@@ -25,6 +25,9 @@ feature.compose <valgrind>on : <define>BOOST_USE_VALGRIND ;
 feature.feature context-switch : cc ec : optional propagated composite ;
 feature.compose <context-switch>ec : <define>BOOST_USE_EXECUTION_CONTEXT ;
 
+feature.feature context : ucontext : optional propagated composite ;
+feature.compose <context>ucontext : <define>BOOST_USE_UCONTEXT ;
+
 project boost/context
     : requirements
       <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack

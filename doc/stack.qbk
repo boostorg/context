@@ -199,6 +199,7 @@ address of the stack.]]
 [endsect]
 
 
+[#segmented]
 [section:segmented Class ['segmented_stack]]
 
 __boost_context__ supports usage of a __segmented__, e. g. the size of
@@ -211,10 +212,11 @@ stack which grows on demand.
 [note Segmented stacks are currently only supported by [*gcc] from version
 [*4.7] [*clang] from version [*3.4] onwards. In order to use a
 __segmented_stack__ __boost_context__ must be built with
-property `segmented-stacks`, e.g. [*toolset=gcc segmented-stacks=on] at b2/bjam
-command line.]
+property `segmented-stacks`, e.g. [*toolset=gcc segmented-stacks=on] and
+applying `BOOST_USE_SEGMENTED_STACKS` at b2/bjam command line.]
 
-[note Segmented stacks can only be used with __econtext__ (v1)].
+[note Segmented stacks can only be used with __cc__ (using ucontext_t) and
+__econtext__ (v1)].
 
         #include <boost/context/segmented_stack.hpp>
 
