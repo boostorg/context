@@ -14,7 +14,7 @@ continuation as a first-class object and pass it as an argument to another
 continuation.
 
 A continuation (abstract concept of functional programming languages)
-represents the state of the cotnrol flow of a program at a given point in time.
+represents the state of the control flow of a program at a given point in time.
 Continuations can be suspended and resumed later in order to change the control
 flow of a program.
 
@@ -52,7 +52,9 @@ not yet returned, the stack is traversed in order to access the control
 structure (address stored at the first stack frame) and continuation's stack is
 deallocated via the __stack_allocator__.
 
-[important Segmented stacks are not supported by __callcc__.]
+[note [link segmented ['Segmented stacks]] are supported by __cc__ using
+[link implementation ['ucontext_t]].]
+
 
 
 [heading __con__]
@@ -449,6 +451,24 @@ user-code pulls parsed symbols from the parser - instead to get pushed from the
 parser (via callback).
 
 The data (character) is transferred between the two continuations.
+
+
+[#implementation]
+[heading Implementation: fcontext_t/ucontext_t]
+
+The implementation uses __fcontext__ per default. fcontext_t is based on
+assembler and not available for all platforms. It provides a much better
+performance than __ucontext__
+(the context switch takes two magnitutes of order less CPU cycles; see section
+[link performance ['performance]]).
+
+As an alternative, [@https://en.wikipedia.org/wiki/Setcontext __ucontext__]
+can be used by compiling with `BOOST_USE_UCONTEXT` and b2 property `context=ucontext`.
+__ucontext__ might be available on a broader range of POSIX-platforms but has
+some [link ucontext ['disadvantages]] (for instance deprecated snce POSIX.1-2003).
+
+[link segmented ['Segmented stacks]] are supported by __cc__ only with
+__ucontext__ as its implementation.
 
 
 [heading Class `continuation`]

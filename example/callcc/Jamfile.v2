@@ -70,6 +70,10 @@ exe endless_loop
     : endless_loop.cpp
     ;
 
+exe segmented
+    : segmented.cpp
+    ;
+
 #exe backtrace
 #    : backtrace.cpp
 #    ;
