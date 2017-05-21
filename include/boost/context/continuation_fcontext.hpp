@@ -162,57 +162,35 @@ template< typename Record, typename StackAlloc, typename Fn >
 fcontext_t context_create( StackAlloc salloc, Fn && fn) {
     auto sctx = salloc.allocate();
     // reserve space for control structure
-#if defined(BOOST_NO_CXX11_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
-    const std::size_t size = sctx.size - sizeof( Record);
-    void * sp = static_cast< char * >( sctx.sp) - sizeof( Record);
-#else
-    constexpr std::size_t func_alignment = 64; // alignof( Record);
-    constexpr std::size_t func_size = sizeof( Record);
-    // reserve space on stack
-    void * sp = static_cast< char * >( sctx.sp) - func_size - func_alignment;
-    // align sp pointer
-    std::size_t space = func_size + func_alignment;
-    sp = std::align( func_alignment, func_size, sp, space);
-    BOOST_ASSERT( nullptr != sp);
-    // calculate remaining size
-    const std::size_t size = sctx.size - ( static_cast< char * >( sctx.sp) - static_cast< char * >( sp) );
-#endif
-    // create fast-context
-    const fcontext_t fctx = make_fcontext( sp, size, & context_entry< Record >);
-    BOOST_ASSERT( nullptr != fctx);
+    void * storage = static_cast< char * >( sctx.sp) - sizeof(Record);
+    void * stack_top = static_cast< char * >( storage) - 64;
     // placment new for control structure on context-stack
-    auto rec = ::new ( sp) Record{
+    Record * record = new ( storage) Record{
             sctx, salloc, std::forward< Fn >( fn) };
+    // stack size
+    const std::size_t size = sctx.size - sizeof(Record) - 64;
+    // create fast-context
+    const fcontext_t fctx = make_fcontext( stack_top, size, & context_entry< Record >);
+    BOOST_ASSERT( nullptr != fctx);
     // transfer control structure to context-stack
-    return jump_fcontext( fctx, rec).fctx;
+    return jump_fcontext( fctx, record).fctx;
 }
 
 template< typename Record, typename StackAlloc, typename Fn >
 fcontext_t context_create( preallocated palloc, StackAlloc salloc, Fn && fn) {
     // reserve space for control structure
-#if defined(BOOST_NO_CXX11_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
-    const std::size_t size = palloc.size - sizeof( Record);
-    void * sp = static_cast< char * >( palloc.sp) - sizeof( Record);
-#else
-    constexpr std::size_t func_alignment = 64; // alignof( Record);
-    constexpr std::size_t func_size = sizeof( Record);
-    // reserve space on stack
-    void * sp = static_cast< char * >( palloc.sp) - func_size - func_alignment;
-    // align sp pointer
-    std::size_t space = func_size + func_alignment;
-    sp = std::align( func_alignment, func_size, sp, space);
-    BOOST_ASSERT( nullptr != sp);
-    // calculate remaining size
-    const std::size_t size = palloc.size - ( static_cast< char * >( palloc.sp) - static_cast< char * >( sp) );
-#endif
-    // create fast-context
-    const fcontext_t fctx = make_fcontext( sp, size, & context_entry< Record >);
-    BOOST_ASSERT( nullptr != fctx);
+    void * storage = static_cast< char * >( palloc.sp) - sizeof(Record);
+    void * stack_top = static_cast< char * >( storage) - 64;
     // placment new for control structure on context-stack
-    auto rec = ::new ( sp) Record{
+    Record * record = new ( storage) Record{
             palloc.sctx, salloc, std::forward< Fn >( fn) };
+    // stack size
+    const std::size_t size = palloc.size - sizeof(Record) - 64;
+    // create fast-context
+    const fcontext_t fctx = make_fcontext( stack_top, size, & context_entry< Record >);
+    BOOST_ASSERT( nullptr != fctx);
     // transfer control structure to context-stack
-    return jump_fcontext( fctx, rec).fctx;
+    return jump_fcontext( fctx, record).fctx;
 }
 
 template< typename ... Arg >
