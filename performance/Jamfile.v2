@@ -13,43 +13,48 @@ import modules ;
 import os ;
 import toolset ;
 
-project boost/context/performance/winfiber
+project boost/context/performance
     : requirements
       <library>/boost/chrono//boost_chrono
       <library>/boost/context//boost_context
       <library>/boost/program_options//boost_program_options
+      <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
+      <toolset>clang,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>clang,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <link>static
-      <linkflags>"-lrt" 
+      <optimization>speed
       <threading>multi
+      <variant>release
     ;
 
 alias sources
-   : ../bind_processor_aix.cpp
+   : bind_processor_aix.cpp
    : <target-os>aix
    ;
 
 alias sources
-   : ../bind_processor_freebsd.cpp
+   : bind_processor_freebsd.cpp
    : <target-os>freebsd
    ;
 
 alias sources
-   : ../bind_processor_hpux.cpp
+   : bind_processor_hpux.cpp
    : <target-os>hpux
    ;
 
 alias sources
-   : ../bind_processor_linux.cpp
+   : bind_processor_linux.cpp
    : <target-os>linux
    ;
 
 alias sources
-   : ../bind_processor_solaris.cpp
+   : bind_processor_solaris.cpp
    : <target-os>solaris
    ;
 
 alias sources
-   : ../bind_processor_windows.cpp
+   : bind_processor_windows.cpp
    : <target-os>windows
    ;
 
