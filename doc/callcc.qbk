@@ -18,7 +18,7 @@ represents the state of the control flow of a program at a given point in time.
 Continuations can be suspended and resumed later in order to change the control
 flow of a program.
 
-Modern mico-processors are registers machines; the content of processor
+Modern micro-processors are registers machines; the content of processor
 registers represent a continuation of the executed program at a given point in
 time.
 Operating systems simulate parallel execution of programs on a single processor
@@ -30,7 +30,7 @@ continuation, e.g. the content of all registers.
 
 __cc__ is the C++ equivalent to Scheme's __callcc__ operator. It captures the
 current continuation (the rest of the computation; code after __cc__) and
-trickers a context switch. The context switch is achived by preserving certain
+triggers a context switch. The context switch is achieved by preserving certain
 registers (including instruction and stack pointer), defined by the calling
 convention of the ABI, of the current continuation and restoring those
 registers of the resumed continuation. The control flow of the resumed
@@ -59,7 +59,7 @@ deallocated via the __stack_allocator__.
 
 [heading __con__]
 
-__con__ represents a contiunation; it contains the content of preserved
+__con__ represents a continuation; it contains the content of preserved
 registers and manages the associated stack (allocation/deallocation).
 __con__ s a one-shot continuation - it can be used only once, after applied to
 __cc__ it is invalidated.
@@ -69,7 +69,7 @@ __con__ is  only move-constructible and move-assignable.
 As a first-class object __con__ can be applied to and returned from a function,
 assigned to a variable or stored in a container.
 
-A contiunation is continued by calling `resume()`/`resume_with()`.
+A continuation is continued by calling `resume()`/`resume_with()`.
 
 
 [heading Usage]
@@ -97,7 +97,7 @@ A contiunation is continued by calling `resume()`/`resume_with()`.
 
 This simple example demonstrates the basic usage of __callcc__ as a generator.
 The continuation `sink` represents the ['main]-continuation (function `main()`).
-`sink` is captured (current-contiunation) and passed as parameter to the lambda.
+`sink` is captured (current-continuation) and passed as parameter to the lambda.
 
 Because the state is invalidated (one-shot continuation) by each call of __cc__,
 the new state of the __con__, returned by __cc__, needs to be assigned to `sink`
@@ -250,7 +250,7 @@ return type or void.
         f1: returned third time
 
 The expression `c.resume_with(f2,-1)` executes
-`f2()` on top of contiunation `c`, e.g. an additional stack frame is allocated
+`f2()` on top of continuation `c`, e.g. an additional stack frame is allocated
 on top of the stack (in front of `f1()`). `f2()` returns argument `-1` that will
 returned by the second invocation of `c.resume(data+1)` in `f1()`.
 
@@ -287,7 +287,7 @@ an exception.
         entered
         my_exception: abc
 
-In this exception `my_exception` is throw from a function invoked ontop of
+In this exception `my_exception` is throw from a function invoked on-top of
 continuation `c` and catched inside the `for`-loop.
 
 [heading Stack unwinding]
@@ -459,13 +459,14 @@ The data (character) is transferred between the two continuations.
 The implementation uses __fcontext__ per default. fcontext_t is based on
 assembler and not available for all platforms. It provides a much better
 performance than __ucontext__
-(the context switch takes two magnitutes of order less CPU cycles; see section
+(the context switch takes two magnitudes of order less CPU cycles; see section
 [link performance ['performance]]).
 
 As an alternative, [@https://en.wikipedia.org/wiki/Setcontext __ucontext__]
 can be used by compiling with `BOOST_USE_UCONTEXT` and b2 property `context=ucontext`.
 __ucontext__ might be available on a broader range of POSIX-platforms but has
-some [link ucontext ['disadvantages]] (for instance deprecated snce POSIX.1-2003).
+some [link ucontext ['disadvantages]] (for instance deprecated since
+POSIX.1-2003).
 
 [link segmented ['Segmented stacks]] are supported by __cc__ only with
 __ucontext__ as its implementation.
@@ -588,7 +589,7 @@ continuation has terminated no data are transferred.]]
     bool data_available() noexcept;
 
 [variablelist
-[[Efects:] [Tests if `c` has data.]]
+[[Effects:] [Tests if `c` has data.]]
 [[Returns:] [`true` if data have been transferred, otherwise `false`.]]
 [[Throws:] [Nothing.]]
 ]
@@ -685,12 +686,12 @@ before `other`, false otherwise.]]
         operator<<(std::basic_ostream<charT,traitsT> & os,continuation const& other);
 
 [variablelist
-[[Efects:] [Writes the representation of `other` to stream `os`.]]
+[[Effects:] [Writes the representation of `other` to stream `os`.]]
 [[Returns:] [`os`]]
 ]
 
 
-[heading Call with current contiunation]
+[heading Call with current continuation]
 
     #include <boost/context/continuation.hpp>
 
