@@ -88,7 +88,7 @@ stack_traits::page_size() BOOST_NOEXCEPT_OR_NOTHROW {
 
 std::size_t
 stack_traits::default_size() BOOST_NOEXCEPT_OR_NOTHROW {
-    std::size_t size = 8 * minimum_size();
+    const std::size_t size = 64 * 1024;
     if ( is_unbounded() ) {
         return size;
     }
