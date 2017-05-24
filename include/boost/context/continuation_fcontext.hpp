@@ -114,8 +114,8 @@ template<
 >
 class record {
 private:
-    StackAlloc                                          salloc_;
     stack_context                                       sctx_;
+    StackAlloc                                          salloc_;
     typename std::decay< Fn >::type                     fn_;
 
     static void destroy( record * p) noexcept {
@@ -130,8 +130,8 @@ private:
 public:
     record( stack_context sctx, StackAlloc const& salloc,
             Fn && fn) noexcept :
-        salloc_( salloc),
         sctx_( sctx),
+        salloc_( salloc),
         fn_( std::forward< Fn >( fn) ) {
     }
 

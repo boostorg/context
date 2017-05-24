@@ -276,9 +276,9 @@ struct forced_unwind {
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
 class capture_record : public activation_record {
 private:
+    StackAlloc                                          salloc_;
     typename std::decay< Fn >::type                     fn_;
     std::tuple< Arg ... >                               arg_;
-    StackAlloc                                          salloc_;
 
     static void destroy( capture_record * p) noexcept {
         StackAlloc salloc = p->salloc_;
@@ -293,9 +293,9 @@ public:
     capture_record( stack_context sctx, StackAlloc const& salloc,
                     Fn && fn, Arg ... arg) noexcept :
         activation_record{ sctx },
+        salloc_{ salloc },
         fn_( std::forward< Fn >( fn) ),
-        arg_( std::forward< Arg >( arg) ... ),
-        salloc_{ salloc } {
+        arg_( std::forward< Arg >( arg) ... ) {
     }
 
     void deallocate() noexcept override final {
