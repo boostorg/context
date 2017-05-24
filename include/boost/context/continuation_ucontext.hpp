@@ -165,7 +165,7 @@ struct BOOST_CONTEXT_DECL activation_record {
         // context switch from parent context to `this`-context
         ::swapcontext( & from->uctx, & uctx);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        return detal::exchange( current()->from, nullptr);
+        return detail::exchange( current()->from, nullptr);
 #else
         return std::exchange( current()->from, nullptr);
 #endif
@@ -341,19 +341,28 @@ static activation_record * create_context( StackAlloc salloc, Fn && fn, Arg ... 
     typedef capture_record< Ctx, StackAlloc, Fn, Arg ... >  capture_t;
 
     auto sctx = salloc.allocate();
+    BOOST_ASSERT( ( sizeof( capture_t) + 2048) < sctx.size); // stack at least of 2kB
+	const std::size_t offset = sizeof( capture_t) + 63; 
     // reserve space for control structure
-    void * storage = static_cast< char * >( sctx.sp) - sizeof( capture_t);
-    // placment new for control structure on fast-context stack
+    void * storage = reinterpret_cast< void * >(
+            ( reinterpret_cast< uintptr_t >( sctx.sp) - static_cast< uintptr_t >( offset) )
+            & ~ static_cast< uintptr_t >( 0xff) );
+    // placment new for control structure on context stack
     capture_t * record = new ( storage) capture_t{
             sctx, salloc, std::forward< Fn >( fn), std::forward< Arg >( arg) ... };
+    // stack bottom
+    void * stack_bottom = reinterpret_cast< void * >(
+            reinterpret_cast< uintptr_t >( sctx.sp) - static_cast< uintptr_t >( sctx.size) );
     // create user-context
     if ( 0 != ::getcontext( & record->uctx) ) {
         throw std::system_error(
                 std::error_code( errno, std::system_category() ),
                 "getcontext() failed");
     }
-    record->uctx.uc_stack.ss_size = sctx.size - sizeof(capture_t) - 64;
-    record->uctx.uc_stack.ss_sp = static_cast< char * >( sctx.sp) - sctx.size;
+    record->uctx.uc_stack.ss_sp = stack_bottom;
+    // 64byte gap between control structure and stack top
+    record->uctx.uc_stack.ss_size = reinterpret_cast< uintptr_t >( storage) -
+            reinterpret_cast< uintptr_t >( stack_bottom) - static_cast< uintptr_t >( 64);
     record->uctx.uc_link = nullptr;
     ::makecontext( & record->uctx, ( void (*)() ) & detail::entry_func< capture_t >, 1, record);
 #if defined(BOOST_USE_ASAN)
@@ -368,19 +377,28 @@ static activation_record * create_context( preallocated palloc, StackAlloc sallo
                                                 Fn && fn, Arg ... arg) {
     typedef capture_record< Ctx, StackAlloc, Fn, Arg ... >  capture_t; 
 
+    BOOST_ASSERT( ( sizeof( capture_t) + 2048) < palloc.size); // stack at least of 2kB
+	const std::size_t offset = sizeof( capture_t) + 63; 
     // reserve space for control structure
-    void * storage = static_cast< char * >( palloc.sp) - sizeof( capture_t);
-    // placment new for control structure on fast-context stack
+    void * storage = reinterpret_cast< void * >(
+            ( reinterpret_cast< uintptr_t >( palloc.sp) - static_cast< uintptr_t >( offset) )
+            & ~ static_cast< uintptr_t >( 0xff) );
+    // placment new for control structure on context stack
     capture_t * record = new ( storage) capture_t{
             palloc.sctx, salloc, std::forward< Fn >( fn), std::forward< Arg >( arg) ... };
+    // stack bottom
+    void * stack_bottom = reinterpret_cast< void * >(
+            reinterpret_cast< uintptr_t >( palloc.sctx.sp) - static_cast< uintptr_t >( palloc.sctx.size) );
     // create user-context
     if ( 0 != ::getcontext( & record->uctx) ) {
         throw std::system_error(
                 std::error_code( errno, std::system_category() ),
                 "getcontext() failed");
     }
-    record->uctx.uc_stack.ss_size = palloc.size - sizeof(capture_t) - 64;
-    record->uctx.uc_stack.ss_sp = static_cast< char * >( palloc.sctx.sp) - palloc.sctx.size;
+    record->uctx.uc_stack.ss_sp = stack_bottom;
+    // 64byte gap between control structure and stack top
+    record->uctx.uc_stack.ss_size = reinterpret_cast< uintptr_t >( storage) -
+            reinterpret_cast< uintptr_t >( stack_bottom) - static_cast< uintptr_t >( 64);
     record->uctx.uc_link = nullptr;
     ::makecontext( & record->uctx,  ( void (*)() ) & detail::entry_func< capture_t >, 1, record);
 #if defined(BOOST_USE_ASAN)
