@@ -6,6 +6,8 @@
 
 #if defined(BOOST_USE_UCONTEXT)
 #include "boost/context/continuation_ucontext.hpp"
+#elif defined(BOOST_USE_WINFIB)
+#include "boost/context/continuation_winfib.hpp"
 #else
 #include "boost/context/execution_context.hpp"
 #endif
@@ -16,13 +18,15 @@
 # include BOOST_ABI_PREFIX
 #endif
 
-#if defined(BOOST_USE_UCONTEXT) || (defined(BOOST_EXECUTION_CONTEXT) && (BOOST_EXECUTION_CONTEXT == 1))
+#if defined(BOOST_USE_UCONTEXT) || \
+    defined(BOOST_USE_WINFIB) || \
+    (defined(BOOST_EXECUTION_CONTEXT) && (BOOST_EXECUTION_CONTEXT == 1))
 namespace boost {
 namespace context {
 namespace detail {
 
 thread_local
-#if defined(BOOST_USE_UCONTEXT)
+#if defined(BOOST_USE_UCONTEXT) || defined(BOOST_USE_WINFIB)
 activation_record *
 #elif defined(BOOST_EXECUTION_CONTEXT) && (BOOST_EXECUTION_CONTEXT == 1)
 activation_record::ptr_t
@@ -35,7 +39,7 @@ thread_local static std::size_t counter;
 // schwarz counter
 activation_record_initializer::activation_record_initializer() noexcept {
     if ( 0 == counter++) {
-#if defined(BOOST_USE_UCONTEXT)
+#if defined(BOOST_USE_UCONTEXT) || defined(BOOST_USE_WINFIB)
         activation_record::current_rec = new activation_record();
 #elif defined(BOOST_EXECUTION_CONTEXT) && (BOOST_EXECUTION_CONTEXT == 1)
         activation_record::current_rec.reset( new activation_record() );
@@ -46,7 +50,7 @@ activation_record_initializer::activation_record_initializer() noexcept {
 activation_record_initializer::~activation_record_initializer() {
     if ( 0 == --counter) {
         BOOST_ASSERT( activation_record::current_rec->is_main_context() );
-#if defined(BOOST_USE_UCONTEXT)
+#if defined(BOOST_USE_UCONTEXT) || defined(BOOST_USE_WINFIB)
         delete activation_record::current_rec;
 #elif defined(BOOST_EXECUTION_CONTEXT) && (BOOST_EXECUTION_CONTEXT == 1)
         delete activation_record::current_rec.detach();
@@ -56,7 +60,7 @@ activation_record_initializer::~activation_record_initializer() {
 
 }
 
-#if defined(BOOST_USE_UCONTEXT)
+#if defined(BOOST_USE_UCONTEXT) || defined(BOOST_USE_WINFIB)
 namespace detail {
 
 activation_record *&
