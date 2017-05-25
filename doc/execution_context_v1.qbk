@@ -10,8 +10,8 @@
 
 [warning __econtext__ is deprecated.]
 
-[note Include `execution_context.hpp` and pass define BOOST_EXECUTION_CONTEXT=1
-at compilers command-line in order to use __econtext__ (v1).]
+[note Include `execution_context.hpp` and pass `BOOST_EXECUTION_CONTEXT=1`
+and property `context-switch=ec` to b2 command-line in order to use __econtext__ (v1).]
 
 [note Segmented stacks (['segmented-stacks=on]), e.g. on demand growing stacks,
 can be used with __econtext__ (v1).]
