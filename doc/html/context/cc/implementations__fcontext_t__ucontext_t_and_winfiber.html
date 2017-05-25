@@ -45,9 +45,10 @@
 <p>
         As an alternative, <a href="https://en.wikipedia.org/wiki/Setcontext" target="_top"><span class="emphasis"><em>ucontext_t</em></span></a>
         can be used by compiling with <code class="computeroutput"><span class="identifier">BOOST_USE_UCONTEXT</span></code>
-        and b2 property <code class="computeroutput"><span class="identifier">context</span><span class="special">=</span><span class="identifier">ucontext</span></code>. <span class="emphasis"><em>ucontext_t</em></span>
-        might be available on a broader range of POSIX-platforms but has some <a class="link" href="../rationale/other_apis_.html#ucontext"><span class="emphasis"><em>disadvantages</em></span></a> (for instance
-        deprecated since POSIX.1-2003, not C99 conform).
+        and b2 property <code class="computeroutput"><span class="identifier">context</span><span class="special">-</span><span class="identifier">impl</span><span class="special">=</span><span class="identifier">ucontext</span></code>.
+        <span class="emphasis"><em>ucontext_t</em></span> might be available on a broader range of
+        POSIX-platforms but has some <a class="link" href="../rationale/other_apis_.html#ucontext"><span class="emphasis"><em>disadvantages</em></span></a>
+        (for instance deprecated since POSIX.1-2003, not C99 conform).
       </p>
 <div class="note"><table border="0" summary="Note">
 <tr>
@@ -65,8 +66,8 @@
       </h5>
 <p>
         With <code class="computeroutput"><span class="identifier">BOOST_USE_WINFIB</span></code> and
-        b2 property <code class="computeroutput"><span class="identifier">context</span><span class="special">=</span><span class="identifier">winfib</span></code> Win32-Fibers are used as implementation
-        for <a class="link" href="../cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a>.
+        b2 property <code class="computeroutput"><span class="identifier">context</span><span class="special">-</span><span class="identifier">impl</span><span class="special">=</span><span class="identifier">winfib</span></code>
+        Win32-Fibers are used as implementation for <a class="link" href="../cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a>.
       </p>
 <p>
         Because the TIB (thread information block) is not fully described in the

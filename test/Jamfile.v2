@@ -59,26 +59,6 @@ test-suite minimal :
                cxx11_thread_local
                cxx11_variadic_templates ] ]
 
-[ run test_fcontext.cpp :
-    : :
-    ]
-
-[ run test_execution_context.cpp :
-    : :
-    [ requires cxx11_auto_declarations
-               cxx11_constexpr
-               cxx11_defaulted_functions
-               cxx11_final
-               cxx11_hdr_thread
-               cxx11_hdr_tuple
-               cxx11_lambdas
-               cxx11_noexcept
-               cxx11_nullptr
-               cxx11_rvalue_references
-               cxx11_template_aliases
-               cxx11_thread_local
-               cxx11_variadic_templates ] ]
-
 [ run test_callcc.cpp :
     : :
     [ requires cxx11_auto_declarations
@@ -98,7 +78,28 @@ test-suite minimal :
 test-suite full :
     minimal ;
 
-test-suite extra ;
+test-suite fc :
+[ run test_fcontext.cpp :
+    : :
+    ] ;
+
+test-suite ec :
+[ run test_execution_context.cpp :
+    : :
+    [ requires cxx11_auto_declarations
+               cxx11_constexpr
+               cxx11_defaulted_functions
+               cxx11_final
+               cxx11_hdr_thread
+               cxx11_hdr_tuple
+               cxx11_lambdas
+               cxx11_noexcept
+               cxx11_nullptr
+               cxx11_rvalue_references
+               cxx11_template_aliases
+               cxx11_thread_local
+               cxx11_variadic_templates ] ] ;
 
 explicit minimal ;
-explicit extra ;
+explicit fc ;
+explicit ec ;

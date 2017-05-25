@@ -468,7 +468,7 @@ performance than __ucontext__
 [heading ucontext_t]
 
 As an alternative, [@https://en.wikipedia.org/wiki/Setcontext __ucontext__]
-can be used by compiling with `BOOST_USE_UCONTEXT` and b2 property `context=ucontext`.
+can be used by compiling with `BOOST_USE_UCONTEXT` and b2 property `context-impl=ucontext`.
 __ucontext__ might be available on a broader range of POSIX-platforms but has
 some [link ucontext ['disadvantages]] (for instance deprecated since
 POSIX.1-2003, not C99 conform).
@@ -479,7 +479,7 @@ __ucontext__ as its implementation.]
 
 [heading WinFiber]
 
-With `BOOST_USE_WINFIB` and b2 property `context=winfib` Win32-Fibers are used
+With `BOOST_USE_WINFIB` and b2 property `context-impl=winfib` Win32-Fibers are used
 as implementation for __cc__.
 
 Because the TIB (thread information block) is not fully described in the MSDN,

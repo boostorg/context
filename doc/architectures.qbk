@@ -24,7 +24,7 @@ architectures:
 
 [note If the architecture is not supported but the platform provides
 [link implementation __ucontext__], __boost_context__ should be
-compiled with `BOOST_USE_UCONTEXT` and b2 property `context=ucontext`.]
+compiled with `BOOST_USE_UCONTEXT` and b2 property `context-impl=ucontext`.]
 
 [section:crosscompiling Cross compiling]
 
