@@ -215,8 +215,8 @@ __segmented_stack__ __boost_context__ must be built with
 property `segmented-stacks`, e.g. [*toolset=gcc segmented-stacks=on] and
 applying `BOOST_USE_SEGMENTED_STACKS` at b2/bjam command line.]
 
-[note Segmented stacks can only be used with __cc__ (using ucontext_t) and
-__econtext__ (v1)].
+[note Segmented stacks can only be used with __cc__ (using
+[link implementation __ucontext__]) and __econtext__ (v1)].
 
         #include <boost/context/segmented_stack.hpp>
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2017/05/25 08:55:17 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2017/05/25 09:58:03 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -697,11 +697,11 @@
       <para>
         As an alternative, <ulink url="https://en.wikipedia.org/wiki/Setcontext"><emphasis>ucontext_t</emphasis></ulink>
         can be used by compiling with <code><phrase role="identifier">BOOST_USE_UCONTEXT</phrase></code>
-        and b2 property <code><phrase role="identifier">context</phrase><phrase role="special">=</phrase><phrase
-        role="identifier">ucontext</phrase></code>. <emphasis>ucontext_t</emphasis>
-        might be available on a broader range of POSIX-platforms but has some <link
-        linkend="ucontext"><emphasis>disadvantages</emphasis></link> (for instance
-        deprecated since POSIX.1-2003, not C99 conform).
+        and b2 property <code><phrase role="identifier">context</phrase><phrase role="special">-</phrase><phrase
+        role="identifier">impl</phrase><phrase role="special">=</phrase><phrase role="identifier">ucontext</phrase></code>.
+        <emphasis>ucontext_t</emphasis> might be available on a broader range of
+        POSIX-platforms but has some <link linkend="ucontext"><emphasis>disadvantages</emphasis></link>
+        (for instance deprecated since POSIX.1-2003, not C99 conform).
       </para>
       <note>
         <para>
@@ -716,9 +716,9 @@
       </bridgehead>
       <para>
         With <code><phrase role="identifier">BOOST_USE_WINFIB</phrase></code> and
-        b2 property <code><phrase role="identifier">context</phrase><phrase role="special">=</phrase><phrase
-        role="identifier">winfib</phrase></code> Win32-Fibers are used as implementation
-        for <link linkend="cc"><emphasis>callcc()</emphasis></link>.
+        b2 property <code><phrase role="identifier">context</phrase><phrase role="special">-</phrase><phrase
+        role="identifier">impl</phrase><phrase role="special">=</phrase><phrase role="identifier">winfib</phrase></code>
+        Win32-Fibers are used as implementation for <link linkend="cc"><emphasis>callcc()</emphasis></link>.
       </para>
       <para>
         Because the TIB (thread information block) is not fully described in the
@@ -3919,7 +3919,8 @@
       <note>
         <para>
           Segmented stacks can only be used with <link linkend="cc"><emphasis>callcc()</emphasis></link>
-          (using ucontext_t) and <emphasis>execution_context</emphasis> (v1)
+          (using <link linkend="implementation"><emphasis>ucontext_t</emphasis></link>)
+          and <emphasis>execution_context</emphasis> (v1)
         </para>
       </note>
       <para>
@@ -4592,8 +4593,8 @@
         If the architecture is not supported but the platform provides <link linkend="implementation"><emphasis>ucontext_t</emphasis></link>,
         <emphasis role="bold">Boost.Context</emphasis> should be compiled with <code><phrase
         role="identifier">BOOST_USE_UCONTEXT</phrase></code> and b2 property <code><phrase
-        role="identifier">context</phrase><phrase role="special">=</phrase><phrase
-        role="identifier">ucontext</phrase></code>.
+        role="identifier">context</phrase><phrase role="special">-</phrase><phrase
+        role="identifier">impl</phrase><phrase role="special">=</phrase><phrase role="identifier">ucontext</phrase></code>.
       </para>
     </note>
     <section id="context.architectures.crosscompiling">
