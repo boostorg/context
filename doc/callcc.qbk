@@ -454,26 +454,33 @@ The data (character) is transferred between the two continuations.
 
 
 [#implementation]
-[heading Implementations: fcontext_t, ucontext_t and WinFiber]
+[section Implementations: fcontext_t, ucontext_t and WinFiber]
+
+[heading fcontext_t]
 
 The implementation uses __fcontext__ per default. fcontext_t is based on
 assembler and not available for all platforms. It provides a much better
 performance than __ucontext__
 (the context switch takes two magnitudes of order less CPU cycles; see section
-[link performance ['performance]]).
+[link performance ['performance]]) and __winfib__.
+
+
+[heading ucontext_t]
 
 As an alternative, [@https://en.wikipedia.org/wiki/Setcontext __ucontext__]
 can be used by compiling with `BOOST_USE_UCONTEXT` and b2 property `context=ucontext`.
 __ucontext__ might be available on a broader range of POSIX-platforms but has
 some [link ucontext ['disadvantages]] (for instance deprecated since
-POSIX.1-2003).
+POSIX.1-2003, not C99 conform).
 
-[link segmented ['Segmented stacks]] are supported by __cc__ only with
-__ucontext__ as its implementation.
+[note __cc__ supports [link segmented ['Segmented stacks]] only with
+__ucontext__ as its implementation.]
 
-On Windows Win32-Fibers can be used as an alternative to __fcontext__.
+
+[heading WinFiber]
+
 With `BOOST_USE_WINFIB` and b2 property `context=winfib` Win32-Fibers are used
-for __cc__.
+as implementation for __cc__.
 
 Because the TIB (thread information block) is not fully described in the MSDN,
 it might be possible that not all required TIB-parts are swapped.
@@ -483,8 +490,10 @@ invoking `ConvertThreadToFiber()`. If desired, `ConvertFiberToThread()` has
 to be called by the user explicitly in order to release resources allocated
 by `ConvertThreadToFiber()` (e.g. after using boost.context). ]
 
+[endsect]
 
-[heading Class `continuation`]
+
+[section Class `continuation`]
 
     #include <boost/context/continuation.hpp>
 
@@ -730,6 +739,8 @@ transferred by the call to `callcc()` in the same thread.]]
 terminated (return from context-function) via `bool operator()`. If the returned
 continuation has terminated no data are transferred.]]
 ]
+
+[endsect]
 
 
 [endsect]
