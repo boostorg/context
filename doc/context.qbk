@@ -137,6 +137,7 @@
 [def __segmented__ [link segmented ['segmented_stack]]]
 [def __segmented_stack__ ['segmented_stack]]
 [def __stack_context__ ['stack_context]]
+[def __winfib__ ['WinFiber]]
 
 [def __fls_alloc__ ['::FlsAlloc()]]
 [def __fls_free__ ['::FlsFree()]]
