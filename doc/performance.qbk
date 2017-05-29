@@ -16,10 +16,11 @@ Tests were executed on dual Intel XEON E5 2620 2.2GHz, 16C/32T, 64GB RAM,
 running Linux (x86_64).
 
 [table Performance of context switch
-    [[callcc()/continuation (fcontext_t)] [callcc()/continuation (ucontext_t)]]
+    [[callcc()/continuation (fcontext_t)] [callcc()/continuation (ucontext_t)] [callcc()/continuation (Windows-Fiber)]]
     [
         [18 ns / 37 CPU cycles]
         [547 ns / 1130 CPU cycles]
+        [49 ns / 98 CPU cycles]
     ]
 ]
 
