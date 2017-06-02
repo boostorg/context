@@ -25,7 +25,6 @@ project boost/context/test
       <link>static
       <threading>multi
       <optimization>speed
-      <variant>release
     ;
 
 
