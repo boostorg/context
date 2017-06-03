@@ -283,7 +283,7 @@ public:
 };
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-static activation_record * create_context( StackAlloc salloc, Fn && fn, Arg ... arg) {
+static activation_record * create_context1( StackAlloc salloc, Fn && fn, Arg ... arg) {
     typedef capture_record< Ctx, StackAlloc, Fn, Arg ... >  capture_t;
 
     auto sctx = salloc.allocate();
@@ -302,7 +302,7 @@ static activation_record * create_context( StackAlloc salloc, Fn && fn, Arg ... 
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-static activation_record * create_context( preallocated palloc, StackAlloc salloc,
+static activation_record * create_context2( preallocated palloc, StackAlloc salloc,
                                                 Fn && fn, Arg ... arg) {
     typedef capture_record< Ctx, StackAlloc, Fn, Arg ... >  capture_t; 
 
@@ -352,10 +352,10 @@ private:
     friend class detail::capture_record;
 
     template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-    friend detail::activation_record * detail::create_context( StackAlloc, Fn &&, Arg ...);
+    friend detail::activation_record * detail::create_context1( StackAlloc, Fn &&, Arg ...);
 
     template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-    friend detail::activation_record * detail::create_context( preallocated, StackAlloc, Fn &&, Arg ...);
+    friend detail::activation_record * detail::create_context2( preallocated, StackAlloc, Fn &&, Arg ...);
 
     template< typename StackAlloc, typename Fn, typename ... Arg >
     friend continuation
@@ -557,7 +557,7 @@ template<
 continuation
 callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg ... arg) {
     return continuation{
-        detail::create_context< continuation >(
+        detail::create_context1< continuation >(
                 salloc, std::forward< Fn >( fn) ) }.resume(
                     std::forward< Arg >( arg) ... );
 }
@@ -570,7 +570,7 @@ template<
 continuation
 callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Arg ... arg) {
     return continuation{
-        detail::create_context< continuation >(
+        detail::create_context2< continuation >(
                 palloc, salloc, std::forward< Fn >( fn) ) }.resume(
                     std::forward< Arg >( arg) ... );
 }
@@ -592,7 +592,7 @@ template< typename StackAlloc, typename Fn >
 continuation
 callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn) {
     return continuation{
-        detail::create_context< continuation >(
+        detail::create_context1< continuation >(
                 salloc, std::forward< Fn >( fn) ) }.resume();
 }
 
@@ -600,7 +600,7 @@ template< typename StackAlloc, typename Fn >
 continuation
 callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn) {
     return continuation{
-        detail::create_context< continuation >(
+        detail::create_context2< continuation >(
                 palloc, salloc, std::forward< Fn >( fn) ) }.resume();
 }
 
