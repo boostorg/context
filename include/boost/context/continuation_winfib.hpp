@@ -98,7 +98,7 @@ struct BOOST_CONTEXT_DECL activation_record {
         }
 #else
         fiber = ::ConvertThreadToFiber( nullptr);
-        if ( nullptr == fiber) {
+        if ( BOOST_UNLIKELY( nullptr == fiber) ) {
             DWORD err = ::GetLastError();
             BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
             fiber = ::GetCurrentFiber(); 
@@ -114,7 +114,7 @@ struct BOOST_CONTEXT_DECL activation_record {
     } 
 
     virtual ~activation_record() {
-        if ( main_ctx) {
+        if ( BOOST_UNLIKELY( main_ctx) ) {
             ::ConvertFiberToThread();
         } else {
             ::DeleteFiber( fiber);
@@ -383,8 +383,8 @@ public:
     continuation() = default;
 
     ~continuation() {
-        if ( nullptr != ptr_ && ! ptr_->main_ctx) {
-            if ( ! ptr_->terminated) {
+        if ( BOOST_UNLIKELY( nullptr != ptr_) && ! ptr_->main_ctx) {
+            if ( BOOST_LIKELY( ! ptr_->terminated) ) {
                 ptr_->force_unwind = true;
                 ptr_->resume( nullptr);
                 BOOST_ASSERT( ptr_->terminated);
@@ -402,7 +402,7 @@ public:
     }
 
     continuation & operator=( continuation && other) noexcept {
-        if ( this == & other) return * this;
+        if ( BOOST_UNLIKELY( this == & other) ) return * this;
         continuation tmp{ std::move( other) };
         swap( tmp);
         return * this;
@@ -416,9 +416,9 @@ public:
 #else
         detail::activation_record * ptr = std::exchange( ptr_, nullptr)->resume( & tpl);
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
-        } else if ( detail::activation_record::current()->ontop) {
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }
@@ -435,9 +435,9 @@ public:
         detail::activation_record * ptr =
             std::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn), & tpl);
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
-            throw detail::forced_unwind{ ptr };
-        } else if ( detail::activation_record::current()->ontop) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+            throw detail::forced_unwind{ ptr};
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }
@@ -450,9 +450,9 @@ public:
 #else
         detail::activation_record * ptr = std::exchange( ptr_, nullptr)->resume( nullptr);
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
-            throw detail::forced_unwind{ ptr };
-        } else if ( detail::activation_record::current()->ontop) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+            throw detail::forced_unwind{ ptr};
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }
@@ -468,9 +468,9 @@ public:
         detail::activation_record * ptr =
             std::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn) );
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
-            throw detail::forced_unwind{ ptr };
-        } else if ( detail::activation_record::current()->ontop) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+            throw detail::forced_unwind{ ptr};
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }

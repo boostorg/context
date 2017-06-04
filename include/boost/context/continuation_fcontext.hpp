@@ -307,7 +307,7 @@ public:
     continuation() noexcept = default;
 
     ~continuation() {
-        if ( nullptr != t_.fctx) {
+        if ( BOOST_UNLIKELY( nullptr != t_.fctx) ) {
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
             detail::ontop_fcontext( detail::exchange( t_.fctx, nullptr), nullptr, detail::context_unwind);
 #else
@@ -322,7 +322,7 @@ public:
     }
 
     continuation & operator=( continuation && other) noexcept {
-        if ( this != & other) {
+        if ( BOOST_LIKELY( this != & other) ) {
             continuation tmp = std::move( other);
             swap( tmp);
         }

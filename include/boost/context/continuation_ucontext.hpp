@@ -115,7 +115,7 @@ struct BOOST_CONTEXT_DECL activation_record {
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
     activation_record() {
-        if ( 0 != ::getcontext( & uctx) ) {
+        if ( BOOST_UNLIKELY( 0 != ::getcontext( & uctx) ) ) {
             throw std::system_error(
                     std::error_code( errno, std::system_category() ),
                     "getcontext() failed");
@@ -354,7 +354,7 @@ static activation_record * create_context1( StackAlloc salloc, Fn && fn, Arg ...
     void * stack_bottom = reinterpret_cast< void * >(
             reinterpret_cast< uintptr_t >( sctx.sp) - static_cast< uintptr_t >( sctx.size) );
     // create user-context
-    if ( 0 != ::getcontext( & record->uctx) ) {
+    if ( BOOST_UNLIKELY( 0 != ::getcontext( & record->uctx) ) ) {
         throw std::system_error(
                 std::error_code( errno, std::system_category() ),
                 "getcontext() failed");
@@ -390,7 +390,7 @@ static activation_record * create_context2( preallocated palloc, StackAlloc sall
     void * stack_bottom = reinterpret_cast< void * >(
             reinterpret_cast< uintptr_t >( palloc.sctx.sp) - static_cast< uintptr_t >( palloc.sctx.size) );
     // create user-context
-    if ( 0 != ::getcontext( & record->uctx) ) {
+    if ( BOOST_UNLIKELY( 0 != ::getcontext( & record->uctx) ) ) {
         throw std::system_error(
                 std::error_code( errno, std::system_category() ),
                 "getcontext() failed");
@@ -471,8 +471,8 @@ public:
     continuation() = default;
 
     ~continuation() {
-        if ( nullptr != ptr_ && ! ptr_->main_ctx) {
-            if ( ! ptr_->terminated) {
+        if ( BOOST_UNLIKELY( nullptr != ptr_) && ! ptr_->main_ctx) {
+            if ( BOOST_LIKELY( ! ptr_->terminated) ) {
                 ptr_->force_unwind = true;
                 ptr_->resume( nullptr);
                 BOOST_ASSERT( ptr_->terminated);
@@ -504,9 +504,9 @@ public:
 #else
         detail::activation_record * ptr = std::exchange( ptr_, nullptr)->resume( & tpl);
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
-        } else if ( detail::activation_record::current()->ontop) {
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }
@@ -523,9 +523,9 @@ public:
         detail::activation_record * ptr =
             std::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn), & tpl);
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
-            throw detail::forced_unwind{ ptr };
-        } else if ( detail::activation_record::current()->ontop) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+            throw detail::forced_unwind{ ptr};
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }
@@ -538,9 +538,9 @@ public:
 #else
         detail::activation_record * ptr = std::exchange( ptr_, nullptr)->resume( nullptr);
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
-            throw detail::forced_unwind{ ptr };
-        } else if ( detail::activation_record::current()->ontop) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+            throw detail::forced_unwind{ ptr};
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }
@@ -556,9 +556,9 @@ public:
         detail::activation_record * ptr =
             std::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn) );
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
-            throw detail::forced_unwind{ ptr };
-        } else if ( detail::activation_record::current()->ontop) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+            throw detail::forced_unwind{ ptr};
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }
