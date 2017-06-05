@@ -127,8 +127,8 @@ struct BOOST_CONTEXT_DECL activation_record {
     }
 
     activation_record( stack_context sctx_) noexcept :
-        sctx{ sctx_ },
-        main_ctx{ false } {
+        sctx( sctx_ ),
+        main_ctx( false ) {
     } 
 
     virtual ~activation_record() {
