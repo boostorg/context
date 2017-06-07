@@ -35,7 +35,7 @@
 
 #if defined(BOOST_MSVC)
 # pragma warning(push)
-# pragma warning(disable: 4723)
+# pragma warning(disable: 4702 4723 4996)
 #endif
 
 typedef boost::variant<int,std::string> variant_t;

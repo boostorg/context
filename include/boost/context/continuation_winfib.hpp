@@ -80,7 +80,7 @@ struct BOOST_CONTEXT_DECL activation_record {
     stack_context               sctx{};
     bool                        main_ctx{ true };
     void                    *   data{ nullptr };
-	activation_record       *	from{ nullptr };
+    activation_record       *   from{ nullptr };
     std::function< void() >     ontop{};
     bool                        terminated{ false };
     bool                        force_unwind{ false };
@@ -90,6 +90,22 @@ struct BOOST_CONTEXT_DECL activation_record {
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
     activation_record() noexcept {
+#if ( _WIN32_WINNT > 0x0600)
+        if ( ::IsThreadAFiber() ) {
+            fiber = ::GetCurrentFiber();
+        } else {
+            fiber = ::ConvertThreadToFiber( nullptr);
+        }
+#else
+        fiber = ::ConvertThreadToFiber( nullptr);
+        if ( BOOST_UNLIKELY( nullptr == fiber) ) {
+            DWORD err = ::GetLastError();
+            BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
+            fiber = ::GetCurrentFiber(); 
+            BOOST_ASSERT( nullptr != fiber);
+            BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != fiber);
+        }
+#endif
     }
 
     activation_record( stack_context sctx_) noexcept :
@@ -98,7 +114,12 @@ struct BOOST_CONTEXT_DECL activation_record {
     } 
 
     virtual ~activation_record() {
-	}
+        if ( BOOST_UNLIKELY( main_ctx) ) {
+            ::ConvertFiberToThread();
+        } else {
+            ::DeleteFiber( fiber);
+        }
+    }
 
     activation_record( activation_record const&) = delete;
     activation_record & operator=( activation_record const&) = delete;
@@ -107,30 +128,14 @@ struct BOOST_CONTEXT_DECL activation_record {
         return main_ctx;
     }
 
-    detail::activation_record * resume( void * vp) {
+    activation_record * resume( void * vp) {
         data = vp;
-		from = current();
+        from = current();
         from->data = nullptr;
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
         current() = this;
         // context switch from parent context to `this`-context
-#if ( _WIN32_WINNT > 0x0600)
-        if ( ::IsThreadAFiber() ) {
-            from->fiber = ::GetCurrentFiber();
-        } else {
-            from->fiber = ::ConvertThreadToFiber( nullptr);
-        }
-#else
-        from->fiber = ::ConvertThreadToFiber( nullptr);
-        if ( nullptr == from->fiber) {
-            DWORD err = ::GetLastError();
-            BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
-            from->fiber = ::GetCurrentFiber(); 
-            BOOST_ASSERT( nullptr != from->fiber);
-            BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != from->fiber);
-        }
-#endif
         // context switch
         ::SwitchToFiber( fiber);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
@@ -141,9 +146,9 @@ struct BOOST_CONTEXT_DECL activation_record {
     }
 
     template< typename Ctx, typename Fn, typename Tpl >
-    detail::activation_record * resume_with( Fn && fn, Tpl * tpl) {
+    activation_record * resume_with( Fn && fn, Tpl * tpl) {
         data = nullptr;
-		from = current();
+        from = current();
         from->data = nullptr;
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
@@ -163,22 +168,6 @@ struct BOOST_CONTEXT_DECL activation_record {
             * tpl = helper< Tpl >::convert( fn( Ctx{ from } ) );
         };
 #endif
-#if ( _WIN32_WINNT > 0x0600)
-        if ( ::IsThreadAFiber() ) {
-            from->fiber = ::GetCurrentFiber();
-        } else {
-            from->fiber = ::ConvertThreadToFiber( nullptr);
-        }
-#else
-        from->fiber = ::ConvertThreadToFiber( nullptr);
-        if ( nullptr == from->fiber) {
-            DWORD err = ::GetLastError();
-            BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
-            from->fiber = ::GetCurrentFiber(); 
-            BOOST_ASSERT( nullptr != from->fiber);
-            BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != from->fiber);
-        }
-#endif
         // context switch
         ::SwitchToFiber( fiber);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
@@ -189,9 +178,9 @@ struct BOOST_CONTEXT_DECL activation_record {
     }
 
     template< typename Ctx, typename Fn >
-    detail::activation_record * resume_with( Fn && fn) {
+    activation_record * resume_with( Fn && fn) {
         data = nullptr;
-		from = current();
+        from = current();
         from->data = nullptr;
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
@@ -210,22 +199,6 @@ struct BOOST_CONTEXT_DECL activation_record {
             fn( Ctx{ from } );
             current()->data = nullptr;
         };
-#endif
-#if ( _WIN32_WINNT > 0x0600)
-        if ( ::IsThreadAFiber() ) {
-            from->fiber = ::GetCurrentFiber();
-        } else {
-            from->fiber = ::ConvertThreadToFiber( nullptr);
-        }
-#else
-        from->fiber = ::ConvertThreadToFiber( nullptr);
-        if ( nullptr == from->fiber) {
-            DWORD err = ::GetLastError();
-            BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
-            from->fiber = ::GetCurrentFiber(); 
-            BOOST_ASSERT( nullptr != from->fiber);
-            BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != from->fiber);
-        }
 #endif
         // context switch
         ::SwitchToFiber( fiber);
@@ -248,15 +221,15 @@ struct BOOST_CONTEXT_DECL activation_record_initializer {
 struct forced_unwind {
     activation_record  *   from{ nullptr };
 
-	explicit forced_unwind( activation_record * from_) :
-		from{ from_ } {
-	}
+    explicit forced_unwind( activation_record * from_) :
+        from{ from_ } {
+    }
 };
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
 class capture_record : public activation_record {
 private:
-	StackAlloc                                          salloc_;
+    StackAlloc                                          salloc_;
     typename std::decay< Fn >::type                     fn_;
     std::tuple< Arg ... >                               arg_;
 
@@ -273,15 +246,10 @@ public:
     capture_record( stack_context sctx, StackAlloc salloc,
                     Fn && fn, Arg ... arg) noexcept :
         activation_record( sctx),
-		salloc_( salloc),
+        salloc_( salloc),
         fn_( std::forward< Fn >( fn) ),
         arg_( std::forward< Arg >( arg) ... ) {
     }
-
-	~capture_record() {
-		// destroy fiber
-		::DeleteFiber(fiber);
-	}
 
     void deallocate() noexcept override final {
         BOOST_ASSERT( main_ctx || ( ! main_ctx && terminated) );
@@ -305,7 +273,7 @@ public:
         }
         // this context has finished its task
         data = nullptr;
-		from = nullptr;
+        from = nullptr;
         ontop = nullptr;
         terminated = true;
         force_unwind = false;
@@ -315,12 +283,12 @@ public:
 };
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-static activation_record * create_context( StackAlloc salloc, Fn && fn, Arg ... arg) {
+static activation_record * create_context1( StackAlloc salloc, Fn && fn, Arg ... arg) {
     typedef capture_record< Ctx, StackAlloc, Fn, Arg ... >  capture_t;
 
     auto sctx = salloc.allocate();
     BOOST_ASSERT( ( sizeof( capture_t) ) < sctx.size);
-	const std::size_t offset = sizeof( capture_t) + 63; 
+    const std::size_t offset = sizeof( capture_t) + 63; 
     // reserve space for control structure
     void * storage = reinterpret_cast< void * >(
             ( reinterpret_cast< uintptr_t >( sctx.sp) - static_cast< uintptr_t >( offset) )
@@ -334,12 +302,12 @@ static activation_record * create_context( StackAlloc salloc, Fn && fn, Arg ... 
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-static activation_record * create_context( preallocated palloc, StackAlloc salloc,
+static activation_record * create_context2( preallocated palloc, StackAlloc salloc,
                                                 Fn && fn, Arg ... arg) {
     typedef capture_record< Ctx, StackAlloc, Fn, Arg ... >  capture_t; 
 
     BOOST_ASSERT( ( sizeof( capture_t) ) < palloc.size);
-	const std::size_t offset = sizeof( capture_t) + 63; 
+    const std::size_t offset = sizeof( capture_t) + 63; 
     // reserve space for control structure
     void * storage = reinterpret_cast< void * >(
             ( reinterpret_cast< uintptr_t >( palloc.sp) - static_cast< uintptr_t >( offset) )
@@ -383,11 +351,11 @@ private:
     template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
     friend class detail::capture_record;
 
-	template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-	friend detail::activation_record * detail::create_context( StackAlloc, Fn &&, Arg ...);
+    template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
+    friend detail::activation_record * detail::create_context1( StackAlloc, Fn &&, Arg ...);
 
-	template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-	friend detail::activation_record * detail::create_context( preallocated, StackAlloc, Fn &&, Arg ...);
+    template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
+    friend detail::activation_record * detail::create_context2( preallocated, StackAlloc, Fn &&, Arg ...);
 
     template< typename StackAlloc, typename Fn, typename ... Arg >
     friend continuation
@@ -415,8 +383,8 @@ public:
     continuation() = default;
 
     ~continuation() {
-        if ( nullptr != ptr_ && ! ptr_->main_ctx) {
-            if ( ! ptr_->terminated) {
+        if ( BOOST_UNLIKELY( nullptr != ptr_) && ! ptr_->main_ctx) {
+            if ( BOOST_LIKELY( ! ptr_->terminated) ) {
                 ptr_->force_unwind = true;
                 ptr_->resume( nullptr);
                 BOOST_ASSERT( ptr_->terminated);
@@ -434,7 +402,7 @@ public:
     }
 
     continuation & operator=( continuation && other) noexcept {
-        if ( this == & other) return * this;
+        if ( BOOST_UNLIKELY( this == & other) ) return * this;
         continuation tmp{ std::move( other) };
         swap( tmp);
         return * this;
@@ -448,9 +416,9 @@ public:
 #else
         detail::activation_record * ptr = std::exchange( ptr_, nullptr)->resume( & tpl);
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
-        } else if ( detail::activation_record::current()->ontop) {
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }
@@ -467,9 +435,9 @@ public:
         detail::activation_record * ptr =
             std::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn), & tpl);
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
-            throw detail::forced_unwind{ ptr };
-        } else if ( detail::activation_record::current()->ontop) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+            throw detail::forced_unwind{ ptr};
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }
@@ -482,9 +450,9 @@ public:
 #else
         detail::activation_record * ptr = std::exchange( ptr_, nullptr)->resume( nullptr);
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
-            throw detail::forced_unwind{ ptr };
-        } else if ( detail::activation_record::current()->ontop) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+            throw detail::forced_unwind{ ptr};
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }
@@ -500,9 +468,9 @@ public:
         detail::activation_record * ptr =
             std::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn) );
 #endif
-        if ( detail::activation_record::current()->force_unwind) {
-            throw detail::forced_unwind{ ptr };
-        } else if ( detail::activation_record::current()->ontop) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
+            throw detail::forced_unwind{ ptr};
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             detail::activation_record::current()->ontop();
             detail::activation_record::current()->ontop = nullptr;
         }
@@ -575,10 +543,10 @@ template<
 >
 continuation
 callcc( Fn && fn, Arg ... arg) {
-	return callcc(
-			std::allocator_arg,
-			fixedsize_stack(),
-			std::forward< Fn >( fn), std::forward< Arg >( arg) ...);
+    return callcc(
+            std::allocator_arg,
+            fixedsize_stack(),
+            std::forward< Fn >( fn), std::forward< Arg >( arg) ...);
 }
 
 template<
@@ -588,10 +556,10 @@ template<
 >
 continuation
 callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg ... arg) {
-	return continuation{
-		detail::create_context< continuation >(
-				salloc, std::forward< Fn >( fn) ) }.resume(
-					std::forward< Arg >( arg) ... );
+    return continuation{
+        detail::create_context1< continuation >(
+                salloc, std::forward< Fn >( fn) ) }.resume(
+                    std::forward< Arg >( arg) ... );
 }
 
 template<
@@ -601,10 +569,10 @@ template<
 >
 continuation
 callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Arg ... arg) {
-	return continuation{
-		detail::create_context< continuation >(
-				palloc, salloc, std::forward< Fn >( fn) ) }.resume(
-					std::forward< Arg >( arg) ... );
+    return continuation{
+        detail::create_context2< continuation >(
+                palloc, salloc, std::forward< Fn >( fn) ) }.resume(
+                    std::forward< Arg >( arg) ... );
 }
 
 // void
@@ -614,26 +582,26 @@ template<
 >
 continuation
 callcc( Fn && fn) {
-	return callcc(
-			std::allocator_arg,
-			fixedsize_stack(),
-			std::forward< Fn >( fn) );
+    return callcc(
+            std::allocator_arg,
+            fixedsize_stack(),
+            std::forward< Fn >( fn) );
 }
 
 template< typename StackAlloc, typename Fn >
 continuation
 callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn) {
-	return continuation{
-		detail::create_context< continuation >(
-				salloc, std::forward< Fn >( fn) ) }.resume();
+    return continuation{
+        detail::create_context1< continuation >(
+                salloc, std::forward< Fn >( fn) ) }.resume();
 }
 
 template< typename StackAlloc, typename Fn >
 continuation
 callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn) {
-	return continuation{
-		detail::create_context< continuation >(
-				palloc, salloc, std::forward< Fn >( fn) ) }.resume();
+    return continuation{
+        detail::create_context2< continuation >(
+                palloc, salloc, std::forward< Fn >( fn) ) }.resume();
 }
 
 inline

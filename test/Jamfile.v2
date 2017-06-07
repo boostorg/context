@@ -25,8 +25,22 @@ project boost/context/test
       <link>static
       <threading>multi
       <optimization>speed
-      <variant>release
     ;
+
+
+rule configure-impl ( properties * )
+{
+    local result  ;
+    if ( ! ( <target-os>windows in $(properties) ) )
+    {
+        result = <context-impl>ucontext ;
+    }
+    else
+    {
+        result = <context-impl>winfib ;
+    }
+    return $(result) ;
+}
 
 test-suite minimal :
 [ run test_invoke.cpp :
@@ -63,6 +77,7 @@ test-suite minimal :
 
 [ run test_callcc.cpp :
     : :
+    <context-impl>fcontext
     [ requires cxx11_auto_declarations
                cxx11_constexpr
                cxx11_defaulted_functions
@@ -75,7 +90,37 @@ test-suite minimal :
                cxx11_rvalue_references
                cxx11_template_aliases
                cxx11_thread_local
-               cxx11_variadic_templates ] ] ;
+               cxx11_variadic_templates ]
+    : test_callcc_asm ]
+
+test-suite full :
+    minimal ;
+
+test-suite fc :
+[ run test_fcontext.cpp :
+    : :
+    ] ;
+
+test-suite ec :
+[ run test_execution_context.cpp :
+    : :
+    <conditional>@configure-impl
+    [ requires cxx11_auto_declarations
+               cxx11_constexpr
+               cxx11_defaulted_functions
+               cxx11_final
+               cxx11_hdr_thread
+               cxx11_hdr_tuple
+               cxx11_lambdas
+               cxx11_noexcept
+               cxx11_nullptr
+               cxx11_rvalue_references
+               cxx11_template_aliases
+               cxx11_thread_local
+               cxx11_variadic_templates ]
+    : test_call_native ] ;
+
+
 
 test-suite full :
     minimal ;

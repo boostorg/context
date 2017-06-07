@@ -94,7 +94,7 @@ void context_entry( transfer_t t_) noexcept {
     BOOST_ASSERT( nullptr != rec);
     transfer_t t = { nullptr, nullptr };
     try {
-        // jump back to `context_create()`
+        // jump back to `create_context()`
         t = jump_fcontext( t_.fctx, nullptr);
         // start executing
         t = rec->run( t);
@@ -159,7 +159,7 @@ public:
 };
 
 template< typename Record, typename StackAlloc, typename Fn >
-fcontext_t context_create( StackAlloc salloc, Fn && fn) {
+fcontext_t create_context1( StackAlloc salloc, Fn && fn) {
     auto sctx = salloc.allocate();
     BOOST_ASSERT( ( sizeof( Record) + 2048) < sctx.size); // stack at least of 2kB
 	const std::size_t offset = sizeof( Record) + 63; 
@@ -185,7 +185,7 @@ fcontext_t context_create( StackAlloc salloc, Fn && fn) {
 }
 
 template< typename Record, typename StackAlloc, typename Fn >
-fcontext_t context_create( preallocated palloc, StackAlloc salloc, Fn && fn) {
+fcontext_t create_context2( preallocated palloc, StackAlloc salloc, Fn && fn) {
     BOOST_ASSERT( ( sizeof( Record) + 2048) < palloc.size); // stack at least of 2kB
 	const std::size_t offset = sizeof(Record) + 63;
     // reserve space for control structure
@@ -307,7 +307,7 @@ public:
     continuation() noexcept = default;
 
     ~continuation() {
-        if ( nullptr != t_.fctx) {
+        if ( BOOST_UNLIKELY( nullptr != t_.fctx) ) {
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
             detail::ontop_fcontext( detail::exchange( t_.fctx, nullptr), nullptr, detail::context_unwind);
 #else
@@ -322,7 +322,7 @@ public:
     }
 
     continuation & operator=( continuation && other) noexcept {
-        if ( this != & other) {
+        if ( BOOST_LIKELY( this != & other) ) {
             continuation tmp = std::move( other);
             swap( tmp);
         }
@@ -464,7 +464,7 @@ continuation
 callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg ... arg) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
     return continuation{
-                        detail::context_create< Record >(
+                        detail::create_context1< Record >(
                                salloc, std::forward< Fn >( fn) ) }.resume(
                    std::forward< Arg >( arg) ... );
 }
@@ -478,7 +478,7 @@ continuation
 callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Arg ... arg) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
     return continuation{
-                        detail::context_create< Record >(
+                        detail::create_context2< Record >(
                                palloc, salloc, std::forward< Fn >( fn) ) }.resume(
                    std::forward< Arg >( arg) ... );
 }
@@ -500,7 +500,7 @@ continuation
 callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
     return continuation{
-                detail::context_create< Record >(
+                detail::create_context1< Record >(
                         salloc, std::forward< Fn >( fn) ) }.resume();
 }
 
@@ -509,7 +509,7 @@ continuation
 callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
     return continuation{
-                detail::context_create< Record >(
+                detail::create_context2< Record >(
                         palloc, salloc, std::forward< Fn >( fn) ) }.resume();
 }
 
