@@ -104,6 +104,7 @@
 # endif
 #endif
 
+#if ! defined(BOOST_NO_CXX11_CONSTEXPR)
 // modern architectures have cachelines with 64byte length
 // ARM Cortex-A15 32/64byte, Cortex-A9 16/32/64bytes
 // MIPS 74K: 32byte, 4KEc: 16byte
@@ -112,5 +113,6 @@ static constexpr std::size_t cache_alignment{ 64 };
 static constexpr std::size_t cacheline_length{ 64 };
 // lookahead size for prefetching
 static constexpr std::size_t prefetch_stride{ 4 * cacheline_length };
+#endif
 
 #endif // BOOST_CONTEXT_DETAIL_CONFIG_H
