@@ -93,16 +93,7 @@ test-suite minimal :
                cxx11_variadic_templates ]
     : test_callcc_asm ]
 
-test-suite full :
-    minimal ;
-
-test-suite fc :
-[ run test_fcontext.cpp :
-    : :
-    ] ;
-
-test-suite ec :
-[ run test_execution_context.cpp :
+[ run test_callcc.cpp :
     : :
     <conditional>@configure-impl
     [ requires cxx11_auto_declarations
