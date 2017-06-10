@@ -161,11 +161,9 @@ public:
 template< typename Record, typename StackAlloc, typename Fn >
 fcontext_t create_context1( StackAlloc salloc, Fn && fn) {
     auto sctx = salloc.allocate();
-    BOOST_ASSERT( ( sizeof( Record) + 2048) < sctx.size); // stack at least of 2kB
-	const std::size_t offset = sizeof( Record) + 63; 
     // reserve space for control structure
 	void * storage = reinterpret_cast< void * >(
-			( reinterpret_cast< uintptr_t >( sctx.sp) - static_cast< uintptr_t >( offset) )
+			( reinterpret_cast< uintptr_t >( sctx.sp) - static_cast< uintptr_t >( sizeof( Record) ) )
             & ~static_cast< uintptr_t >( 0xff) );
     // placment new for control structure on context stack
     Record * record = new ( storage) Record{
@@ -186,11 +184,9 @@ fcontext_t create_context1( StackAlloc salloc, Fn && fn) {
 
 template< typename Record, typename StackAlloc, typename Fn >
 fcontext_t create_context2( preallocated palloc, StackAlloc salloc, Fn && fn) {
-    BOOST_ASSERT( ( sizeof( Record) + 2048) < palloc.size); // stack at least of 2kB
-	const std::size_t offset = sizeof(Record) + 63;
     // reserve space for control structure
     void * storage = reinterpret_cast< void * >(
-            ( reinterpret_cast< uintptr_t >( palloc.sp) - static_cast< uintptr_t >( offset) )
+            ( reinterpret_cast< uintptr_t >( palloc.sp) - static_cast< uintptr_t >( sizeof( Record) ) )
             & ~ static_cast< uintptr_t >( 0xff) );
     // placment new for control structure on context-stack
     Record * record = new ( storage) Record{

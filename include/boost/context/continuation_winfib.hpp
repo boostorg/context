@@ -288,10 +288,9 @@ static activation_record * create_context1( StackAlloc salloc, Fn && fn, Arg ...
 
     auto sctx = salloc.allocate();
     BOOST_ASSERT( ( sizeof( capture_t) ) < sctx.size);
-    const std::size_t offset = sizeof( capture_t) + 63; 
     // reserve space for control structure
     void * storage = reinterpret_cast< void * >(
-            ( reinterpret_cast< uintptr_t >( sctx.sp) - static_cast< uintptr_t >( offset) )
+            ( reinterpret_cast< uintptr_t >( sctx.sp) - static_cast< uintptr_t >( sizeof( capture_t) ) )
             & ~ static_cast< uintptr_t >( 0xff) );
     // placment new for control structure on context stack
     capture_t * record = new ( storage) capture_t{
@@ -307,10 +306,9 @@ static activation_record * create_context2( preallocated palloc, StackAlloc sall
     typedef capture_record< Ctx, StackAlloc, Fn, Arg ... >  capture_t; 
 
     BOOST_ASSERT( ( sizeof( capture_t) ) < palloc.size);
-    const std::size_t offset = sizeof( capture_t) + 63; 
     // reserve space for control structure
     void * storage = reinterpret_cast< void * >(
-            ( reinterpret_cast< uintptr_t >( palloc.sp) - static_cast< uintptr_t >( offset) )
+            ( reinterpret_cast< uintptr_t >( palloc.sp) - static_cast< uintptr_t >( sizeof( capture_t) ) )
             & ~ static_cast< uintptr_t >( 0xff) );
     // placment new for control structure on context stack
     capture_t * record = new ( storage) capture_t{
