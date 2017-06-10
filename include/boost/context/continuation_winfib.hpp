@@ -42,6 +42,11 @@
 # include BOOST_ABI_PREFIX
 #endif
 
+#if defined(BOOST_MSVC)
+# pragma warning(push)
+# pragma warning(disable: 4702)
+#endif
+
 namespace boost {
 namespace context {
 namespace detail {
@@ -608,6 +613,10 @@ void swap( continuation & l, continuation & r) noexcept {
 }
 
 }}
+
+#if defined(BOOST_MSVC)
+# pragma warning(pop)
+#endif
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX
