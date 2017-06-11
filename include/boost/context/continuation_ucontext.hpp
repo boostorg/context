@@ -7,6 +7,11 @@
 #ifndef BOOST_CONTEXT_CONTINUATION_H
 #define BOOST_CONTEXT_CONTINUATION_H
 
+#include <boost/predef.h>
+#if BOOST_OS_MACOS
+#define _XOPEN_SOURCE 600
+#endif
+
 extern "C" {
 #include <ucontext.h>
 }
