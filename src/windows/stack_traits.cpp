@@ -68,12 +68,6 @@ std::size_t pagesize() BOOST_NOEXCEPT_OR_NOTHROW {
     return static_cast< std::size_t >( system_info().dwPageSize);
 }
 
-std::size_t page_count( std::size_t stacksize) BOOST_NOEXCEPT_OR_NOTHROW {
-    return static_cast< std::size_t >(
-        std::floor(
-            static_cast< float >( stacksize) / pagesize() ) );
-}
-
 }
 
 namespace boost {
