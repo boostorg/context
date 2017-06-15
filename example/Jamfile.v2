@@ -26,6 +26,10 @@ project boost/context/example
       <threading>multi
     ;
 
+exe stack
+    : stack.cpp
+    ;
+
 exe jump_void
     : jump_void.cpp
     ;
