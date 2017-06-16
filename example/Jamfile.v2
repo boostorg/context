@@ -30,6 +30,14 @@ exe stack
     : stack.cpp
     ;
 
+exe resume_with_single
+    : resume_with_single.cpp
+    ;
+
+exe resume_with_tuple
+    : resume_with_tuple.cpp
+    ;
+
 exe jump_void
     : jump_void.cpp
     ;
