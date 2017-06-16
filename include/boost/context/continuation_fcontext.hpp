@@ -232,7 +232,7 @@ template< typename Ctx, typename Fn, typename Arg >
 detail::transfer_t context_ontop( detail::transfer_t t) {
     auto p = static_cast< Arg * >( t.data);
     BOOST_ASSERT( nullptr != p);
-    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * p) );
+    typename std::decay< Fn >::type fn = std::get< 0 >( * p);
     t.data = & std::get< 1 >( * p);
     Ctx c{ t };
     // execute function, pass continuation via reference
@@ -249,7 +249,8 @@ template< typename Ctx, typename Fn >
 detail::transfer_t context_ontop_void( detail::transfer_t t) {
     auto p = static_cast< std::tuple< Fn > * >( t.data);
     BOOST_ASSERT( nullptr != p);
-    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * p) );
+    typename std::decay< Fn >::type fn = std::get< 0 >( * p);
+    t.data = nullptr;
     Ctx c{ t };
     // execute function, pass continuation via reference
     fn( std::move( c) );
