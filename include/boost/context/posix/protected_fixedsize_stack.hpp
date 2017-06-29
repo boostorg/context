@@ -52,7 +52,7 @@ public:
         // calculate how many pages are required
         const std::size_t pages(        
             static_cast< std::size_t >(
-                std::floor(
+                std::ceil(
                     static_cast< float >( size_) / traits_type::page_size() ) ) );
         // add one page at bottom that will be used as guard-page
         const std::size_t size__ = ( pages + 1) * traits_type::page_size();
