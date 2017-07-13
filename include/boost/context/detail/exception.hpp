@@ -9,7 +9,15 @@
 
 #include <boost/config.hpp>
 
+#if defined(BOOST_USE_UCONTEXT) || defined(BOOST_USE_WINFIB)
+namespace boost {
+namespace context {
+namespace detail {
+struct activation_record;
+}}}
+#else
 #include <boost/context/detail/fcontext.hpp>
+#endif
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_PREFIX
@@ -20,13 +28,26 @@ namespace context {
 namespace detail {
 
 struct forced_unwind {
+
+#if defined(BOOST_USE_UCONTEXT) || defined(BOOST_USE_WINFIB)
+    activation_record  *   from{ nullptr };
+    forced_unwind( activation_record * from_) noexcept :
+        from{ from_ } {
+    }
+#else
     fcontext_t  fctx{ nullptr };
+    forced_unwind( fcontext_t fctx_) noexcept :
+        fctx( fctx_ ) {
+    }
+#endif
+    bool        caught{ false };
 
     forced_unwind() = default;
 
-    forced_unwind( fcontext_t fctx_) :
-        fctx( fctx_) {
+    ~forced_unwind() {
+        BOOST_ASSERT( caught );
     }
+    
 };
 
 }}}

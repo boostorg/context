@@ -381,7 +381,8 @@ void context_entry( transfer_t t_) noexcept {
         t = jump_fcontext( t_.fctx, nullptr);
         // start executing
         t = rec->run( t);
-    } catch ( forced_unwind const& e) {
+    } catch ( forced_unwind & e) {
+        e.caught = true;
         t = { e.fctx, nullptr };
     }
     BOOST_ASSERT( nullptr != t.fctx);
