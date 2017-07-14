@@ -319,9 +319,13 @@ public:
             c = apply( std::move( fn_), std::move( tpl) );
 #else
             c = std::apply( std::move( fn_), std::move( tpl) );
-#endif  
+#endif
+#ifdef BOOST_ASSERT_IS_VOID
+        } catch ( const forced_unwind & ex) {
+#else
         } catch ( forced_unwind & ex) {
             ex.caught = true;
+#endif
             c = Ctx{ ex.from };
         }
         // this context has finished its task

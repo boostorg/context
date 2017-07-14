@@ -40,13 +40,16 @@ struct forced_unwind {
         fctx( fctx_ ) {
     }
 #endif
-    bool        caught{ false };
 
     forced_unwind() = default;
 
+#ifndef BOOST_ASSERT_IS_VOID
+    bool        caught{ false };
     ~forced_unwind() {
         BOOST_ASSERT( caught );
     }
+#endif
+
     
 };
 
