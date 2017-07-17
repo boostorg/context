@@ -37,6 +37,7 @@ extern "C" {
 #include <boost/context/detail/apply.hpp>
 #endif
 #include <boost/context/detail/disable_overload.hpp>
+#include <boost/context/detail/exception.hpp>
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
 #include <boost/context/detail/exchange.hpp>
 #endif
@@ -277,14 +278,6 @@ struct BOOST_CONTEXT_DECL activation_record_initializer {
     ~activation_record_initializer();
 };
 
-struct forced_unwind {
-    activation_record  *   from{ nullptr };
-
-    forced_unwind( activation_record * from_) noexcept :
-        from{ from_ } {
-    }
-};
-
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
 class capture_record : public activation_record {
 private:
@@ -326,8 +319,13 @@ public:
             c = apply( std::move( fn_), std::move( tpl) );
 #else
             c = std::apply( std::move( fn_), std::move( tpl) );
-#endif  
-        } catch ( forced_unwind const& ex) {
+#endif
+#ifdef BOOST_ASSERT_IS_VOID
+        } catch ( const forced_unwind & ex) {
+#else
+        } catch ( forced_unwind & ex) {
+            ex.caught = true;
+#endif
             c = Ctx{ ex.from };
         }
         // this context has finished its task
