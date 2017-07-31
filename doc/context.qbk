@@ -134,6 +134,8 @@
 [def __fixedsize__ ['fixedsize_stack]]
 [def __pooled_fixedsize__ ['pooled_fixedsize_stack]]
 [def __protected_fixedsize__ ['protected_fixedsize_stack]]
+[def __resume__ ['continuation::resume()]]
+[def __resume_with__ ['continuation::resume_with()]]
 [def __segmented__ [link segmented ['segmented_stack]]]
 [def __segmented_stack__ ['segmented_stack]]
 [def __stack_context__ ['stack_context]]

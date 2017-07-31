@@ -24,9 +24,6 @@
 #include <boost/config.hpp>
 #include <boost/intrusive_ptr.hpp>
 
-#if defined(BOOST_NO_CXX17_STD_APPLY)
-#include <boost/context/detail/apply.hpp>
-#endif
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
 #include <boost/context/detail/exchange.hpp>
 #endif
@@ -56,22 +53,6 @@ namespace boost {
 namespace context {
 namespace detail {
 
-template< typename U >
-struct helper {
-    template< typename T >
-    static T convert( T && t) noexcept {
-        return std::forward< T >( t);
-    }
-};
-
-template< typename U >
-struct helper< std::tuple< U > > {
-    template< typename T >
-    static std::tuple< T > convert( T && t) noexcept {
-        return std::make_tuple( std::forward< T >( t) );
-    }
-};
-
 inline
 transfer_t context_unwind( transfer_t t) {
     throw forced_unwind( t.fctx);
@@ -87,17 +68,16 @@ transfer_t context_exit( transfer_t t) noexcept {
 }
 
 template< typename Rec >
-void context_entry( transfer_t t_) noexcept {
+void context_entry( transfer_t t) noexcept {
     // transfer control structure to the context-stack
-    Rec * rec = static_cast< Rec * >( t_.data);
-    BOOST_ASSERT( nullptr != t_.fctx);
+    Rec * rec = static_cast< Rec * >( t.data);
+    BOOST_ASSERT( nullptr != t.fctx);
     BOOST_ASSERT( nullptr != rec);
-    transfer_t t = { nullptr, nullptr };
     try {
         // jump back to `create_context()`
-        t = jump_fcontext( t_.fctx, nullptr);
+        t = jump_fcontext( t.fctx, nullptr);
         // start executing
-        t = rec->run( t);
+        t.fctx = rec->run( t.fctx);
     } catch ( forced_unwind const& e) {
         t = { e.fctx, nullptr };
     }
@@ -107,11 +87,23 @@ void context_entry( transfer_t t_) noexcept {
     BOOST_ASSERT_MSG( false, "context already terminated");
 }
 
-template<
-    typename Ctx,
-    typename StackAlloc,
-    typename Fn
->
+template< typename Ctx, typename Fn >
+transfer_t context_ontop( transfer_t t) {
+    auto p = static_cast< std::tuple< Fn > * >( t.data);
+    BOOST_ASSERT( nullptr != p);
+    typename std::decay< Fn >::type fn = std::get< 0 >( * p);
+    t.data = nullptr;
+    Ctx c{ t.fctx };
+    // execute function, pass continuation via reference
+    fn( std::move( c) );
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+    return { exchange( c.fctx_, nullptr), nullptr };
+#else
+    return { std::exchange( c.fctx_, nullptr), nullptr };
+#endif
+}
+
+template< typename Ctx, typename StackAlloc, typename Fn >
 class record {
 private:
     stack_context                                       sctx_;
@@ -142,18 +134,18 @@ public:
         destroy( this);
     }
 
-    transfer_t run( transfer_t t) {
-        Ctx from{ t };
+    fcontext_t run( fcontext_t fctx) {
+        Ctx c{ fctx };
         // invoke context-function
 #if defined(BOOST_NO_CXX17_STD_INVOKE)
-        Ctx cc = invoke( fn_, std::move( from) );
+        c = invoke( fn_, std::move( c) );
 #else
-        Ctx cc = std::invoke( fn_, std::move( from) );
+        c = std::invoke( fn_, std::move( c) );
 #endif
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        return { exchange( cc.t_.fctx, nullptr), nullptr };
+        return exchange( c.fctx_, nullptr);
 #else
-        return { std::exchange( cc.t_.fctx, nullptr), nullptr };
+        return std::exchange( c.fctx_, nullptr);
 #endif
     }
 };
@@ -204,61 +196,6 @@ fcontext_t create_context2( preallocated palloc, StackAlloc salloc, Fn && fn) {
     return jump_fcontext( fctx, record).fctx;
 }
 
-template< typename ... Arg >
-struct result_type {
-    typedef std::tuple< Arg ... >   type;
-
-    static
-    type get( detail::transfer_t & t) {
-        auto p = static_cast< std::tuple< Arg ... > * >( t.data);
-        return std::move( * p);
-    }
-};
-
-template< typename Arg >
-struct result_type< Arg > {
-    typedef Arg     type;
-
-    static
-    type get( detail::transfer_t & t) {
-        auto p = static_cast< std::tuple< Arg > * >( t.data);
-        return std::forward< Arg >( std::get< 0 >( * p) );
-    }
-};
-
-}
-
-template< typename Ctx, typename Fn, typename Arg >
-detail::transfer_t context_ontop( detail::transfer_t t) {
-    auto p = static_cast< Arg * >( t.data);
-    BOOST_ASSERT( nullptr != p);
-    typename std::decay< Fn >::type fn = std::get< 0 >( * p);
-    t.data = & std::get< 1 >( * p);
-    Ctx c{ t };
-    // execute function, pass continuation via reference
-    typedef typename std::decay< decltype( std::get< 1 >( * p) )>::type Tpl;
-    std::get< 1 >( * p) = detail::helper< Tpl >::convert( fn( std::move( c) ) );
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-    return { detail::exchange( c.t_.fctx, nullptr), & std::get< 1 >( * p) };
-#else
-    return { std::exchange( c.t_.fctx, nullptr), & std::get< 1 >( * p) };
-#endif
-}
-
-template< typename Ctx, typename Fn >
-detail::transfer_t context_ontop_void( detail::transfer_t t) {
-    auto p = static_cast< std::tuple< Fn > * >( t.data);
-    BOOST_ASSERT( nullptr != p);
-    typename std::decay< Fn >::type fn = std::get< 0 >( * p);
-    t.data = nullptr;
-    Ctx c{ t };
-    // execute function, pass continuation via reference
-    fn( std::move( c) );
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-    return { detail::exchange( c.t_.fctx, nullptr), nullptr };
-#else
-    return { std::exchange( c.t_.fctx, nullptr), nullptr };
-#endif
 }
 
 class continuation {
@@ -266,21 +203,9 @@ private:
     template< typename Ctx, typename StackAlloc, typename Fn >
     friend class detail::record;
 
-    template< typename Ctx, typename Fn, typename Arg >
-    friend detail::transfer_t
-    context_ontop( detail::transfer_t);
-
     template< typename Ctx, typename Fn >
     friend detail::transfer_t
-    context_ontop_void( detail::transfer_t);
-
-    template< typename StackAlloc, typename Fn, typename ... Arg >
-    friend continuation
-    callcc( std::allocator_arg_t, StackAlloc, Fn &&, Arg ...);
-
-    template< typename StackAlloc, typename Fn, typename ... Arg >
-    friend continuation
-    callcc( std::allocator_arg_t, preallocated, StackAlloc, Fn &&, Arg ...);
+    detail::context_ontop( detail::transfer_t);
 
     template< typename StackAlloc, typename Fn >
     friend continuation
@@ -290,32 +215,30 @@ private:
     friend continuation
     callcc( std::allocator_arg_t, preallocated, StackAlloc, Fn &&);
 
-    detail::transfer_t  t_{ nullptr, nullptr };
+    detail::fcontext_t  fctx_{ nullptr };
 
     continuation( detail::fcontext_t fctx) noexcept :
-        t_{ fctx, nullptr } {
-    }
-
-    continuation( detail::transfer_t t) noexcept :
-        t_{ t.fctx, t.data } {
+        fctx_{ fctx } {
     }
 
 public:
     continuation() noexcept = default;
 
     ~continuation() {
-        if ( BOOST_UNLIKELY( nullptr != t_.fctx) ) {
+        if ( BOOST_UNLIKELY( nullptr != fctx_) ) {
+            detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-            detail::ontop_fcontext( detail::exchange( t_.fctx, nullptr), nullptr, detail::context_unwind);
+                    detail::exchange( fctx_, nullptr),
 #else
-            detail::ontop_fcontext( std::exchange( t_.fctx, nullptr), nullptr, detail::context_unwind);
+                    std::exchange( fctx_, nullptr),
 #endif
+                   nullptr,
+                   detail::context_unwind);
         }
     }
 
-    continuation( continuation && other) noexcept :
-        t_{ other.t_.fctx, other.t_.data } {
-        other.t_ = { nullptr, nullptr };
+    continuation( continuation && other) noexcept {
+        std::swap( fctx_, other.fctx_);
     }
 
     continuation & operator=( continuation && other) noexcept {
@@ -329,90 +252,53 @@ public:
     continuation( continuation const& other) noexcept = delete;
     continuation & operator=( continuation const& other) noexcept = delete;
 
-    template< typename ... Arg >
-    continuation resume( Arg ... arg) {
-        BOOST_ASSERT( nullptr != t_.fctx);
-        auto tpl = std::make_tuple( std::forward< Arg >( arg) ... );
-        return detail::jump_fcontext(
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                    detail::exchange( t_.fctx, nullptr),
-#else
-                    std::exchange( t_.fctx, nullptr),
-#endif
-                    & tpl);
-    }
-
-    template< typename Fn, typename ... Arg >
-    continuation resume_with( Fn && fn, Arg ... arg) {
-        BOOST_ASSERT( nullptr != t_.fctx);
-        auto tpl = std::make_tuple( std::forward< Fn >( fn), std::make_tuple( std::forward< Arg >( arg) ... ));
-        return detail::ontop_fcontext(
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                    detail::exchange( t_.fctx, nullptr),
-#else
-                    std::exchange( t_.fctx, nullptr),
-#endif
-                    & tpl,
-                    context_ontop< continuation, Fn, decltype(tpl) >);
-    }
-
     continuation resume() {
-        BOOST_ASSERT( nullptr != t_.fctx);
+        BOOST_ASSERT( nullptr != fctx_);
         return detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                    detail::exchange( t_.fctx, nullptr),
+                    detail::exchange( fctx_, nullptr),
 #else
-                    std::exchange( t_.fctx, nullptr),
+                    std::exchange( fctx_, nullptr),
 #endif
-                    nullptr);
+                    nullptr).fctx;
     }
 
     template< typename Fn >
     continuation resume_with( Fn && fn) {
-        BOOST_ASSERT( nullptr != t_.fctx);
+        BOOST_ASSERT( nullptr != fctx_);
         auto p = std::make_tuple( std::forward< Fn >( fn) );
         return detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                    detail::exchange( t_.fctx, nullptr),
+                    detail::exchange( fctx_, nullptr),
 #else
-                    std::exchange( t_.fctx, nullptr),
+                    std::exchange( fctx_, nullptr),
 #endif
                     & p,
-                    context_ontop_void< continuation, Fn >);
-    }
-
-    bool data_available() noexcept {
-        return * this && nullptr != t_.data;
-    }
-
-    template< typename ... Arg >
-    typename detail::result_type< Arg ... >::type get_data() {
-        BOOST_ASSERT( nullptr != t_.data);
-        return detail::result_type< Arg ... >::get( t_);
+                    detail::context_ontop< continuation, Fn >).fctx;
     }
 
     explicit operator bool() const noexcept {
-        return nullptr != t_.fctx;
+        return nullptr != fctx_;
     }
 
     bool operator!() const noexcept {
-        return nullptr == t_.fctx;
+        return nullptr == fctx_;
     }
 
     bool operator==( continuation const& other) const noexcept {
-        return t_.fctx == other.t_.fctx;
+        return fctx_ == other.fctx_;
     }
 
     bool operator!=( continuation const& other) const noexcept {
-        return t_.fctx != other.t_.fctx;
+        return fctx_ != other.fctx_;
     }
 
     bool operator<( continuation const& other) const noexcept {
-        return t_.fctx < other.t_.fctx;
+        return fctx_ < other.fctx_;
     }
 
     bool operator>( continuation const& other) const noexcept {
-        return other.t_.fctx < t_.fctx;
+        return other.fctx_ < fctx_;
     }
 
     bool operator<=( continuation const& other) const noexcept {
@@ -426,61 +312,18 @@ public:
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
     operator<<( std::basic_ostream< charT, traitsT > & os, continuation const& other) {
-        if ( nullptr != other.t_.fctx) {
-            return os << other.t_.fctx;
+        if ( nullptr != other.fctx_) {
+            return os << other.fctx_;
         } else {
             return os << "{not-a-context}";
         }
     }
 
     void swap( continuation & other) noexcept {
-        std::swap( t_, other.t_);
+        std::swap( fctx_, other.fctx_);
     }
 };
 
-// Arg
-template<
-    typename Fn,
-    typename ... Arg,
-    typename = detail::disable_overload< continuation, Fn >,
-    typename = detail::disable_overload< std::allocator_arg_t, Fn >
->
-continuation
-callcc( Fn && fn, Arg ... arg) {
-    return callcc(
-            std::allocator_arg, fixedsize_stack(),
-            std::forward< Fn >( fn), std::forward< Arg >( arg) ...);
-}
-
-template<
-    typename StackAlloc,
-    typename Fn,
-    typename ... Arg
->
-continuation
-callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg ... arg) {
-    using Record = detail::record< continuation, StackAlloc, Fn >;
-    return continuation{
-                        detail::create_context1< Record >(
-                               salloc, std::forward< Fn >( fn) ) }.resume(
-                   std::forward< Arg >( arg) ... );
-}
-
-template<
-    typename StackAlloc,
-    typename Fn,
-    typename ... Arg
->
-continuation
-callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Arg ... arg) {
-    using Record = detail::record< continuation, StackAlloc, Fn >;
-    return continuation{
-                        detail::create_context2< Record >(
-                               palloc, salloc, std::forward< Fn >( fn) ) }.resume(
-                   std::forward< Arg >( arg) ... );
-}
-
-// void
 template<
     typename Fn,
     typename = detail::disable_overload< continuation, Fn >
@@ -511,20 +354,13 @@ callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn) 
 }
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
-template<
-    typename Fn,
-    typename ... Arg
->
+template< typename Fn >
 continuation
-callcc( std::allocator_arg_t, segmented_stack, Fn &&, Arg ...);
+callcc( std::allocator_arg_t, segmented_stack, Fn &&);
 
-template<
-    typename StackAlloc,
-    typename Fn,
-    typename ... Arg
->
+template< typename StackAlloc, typename Fn >
 continuation
-callcc( std::allocator_arg_t, preallocated, segmented_stack, Fn &&, Arg ...);
+callcc( std::allocator_arg_t, preallocated, segmented_stack, Fn &&);
 #endif
 
 // swap

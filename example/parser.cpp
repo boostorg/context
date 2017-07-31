@@ -97,21 +97,25 @@ int main() {
         ctx::continuation source;
         // user-code pulls parsed data from parser
         // invert control flow
+        char c;
+        bool done = false;
         source=ctx::callcc(
-                [&is](ctx::continuation && sink){
-                // create parser with callback function
-                Parser p( is,
-                          [&sink](char c){
-                                // resume main execution context
-                                sink=sink.resume(c);
-                        });
+                [&is,&c,&done](ctx::continuation && sink){
+                    // create parser with callback function
+                    Parser p( is,
+                              [&sink,&c](char c_){
+                                    // resume main execution context
+                                    c = c_;
+                                    sink=sink.resume();
+                            });
                     // start recursive parsing
                     p.run();
+                    // signal termination
+                    done = true;
                     // resume main execution context
                     return std::move(sink);
                 });
-        while(source.data_available()){
-            char c=source.get_data<char>();
+        while(!done){
             printf("Parsed: %c\n",c);
             source=source.resume();
         }

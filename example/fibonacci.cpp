@@ -13,20 +13,21 @@
 namespace ctx = boost::context;
 
 int main() {
+    int a;
     ctx::continuation c=ctx::callcc(
-        [](ctx::continuation && c){
-            int a=0;
+        [&a](ctx::continuation && c){
+            a=0;
             int b=1;
             for(;;){
-                c=c.resume(a);
-                auto next=a+b;
+                c=c.resume();
+                int next=a+b;
                 a=b;
                 b=next;
             }
             return std::move( c);
         });
     for ( int j = 0; j < 10; ++j) {
-        std::cout << c.get_data<int>() << " ";
+        std::cout << a << " ";
         c=c.resume();
     }
     std::cout << std::endl;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2017/05/25 09:58:03 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2017/08/01 07:38:54 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -156,11 +156,9 @@
     <para>
       <link linkend="cc"><emphasis>callcc()</emphasis></link> expects a <emphasis>context-function</emphasis>
       with signature <code><phrase role="char">'continuation(continuation &amp;&amp;
-      c, Arg ...arg)'</phrase></code>. The parameter <code><phrase role="identifier">c</phrase></code>
+      c)'</phrase></code>. The parameter <code><phrase role="identifier">c</phrase></code>
       represents the current continuation from which this continuation was resumed
-      (e.g. that has called <link linkend="cc"><emphasis>callcc()</emphasis></link>)
-      and <code><phrase role="identifier">arg</phrase></code> are the data passed
-      to <link linkend="cc"><emphasis>callcc()</emphasis></link>.
+      (e.g. that has called <link linkend="cc"><emphasis>callcc()</emphasis></link>).
     </para>
     <para>
       On return the <emphasis>context-function</emphasis> of the current continuation
@@ -190,8 +188,8 @@
       <link linkend="cc"><emphasis>continuation</emphasis></link> represents a continuation;
       it contains the content of preserved registers and manages the associated stack
       (allocation/deallocation). <link linkend="cc"><emphasis>continuation</emphasis></link>
-      s a one-shot continuation - it can be used only once, after applied to <link
-      linkend="cc"><emphasis>callcc()</emphasis></link> it is invalidated.
+      is a one-shot continuation - it can be used only once, after calling <emphasis>continuation::resume()</emphasis>
+      or <emphasis>continuation::resume_with()</emphasis> it is invalidated.
     </para>
     <para>
       <link linkend="cc"><emphasis>continuation</emphasis></link> is only move-constructible
@@ -211,162 +209,91 @@
       <phrase id="context.cc.usage"/><link linkend="context.cc.usage">Usage</link>
     </bridgehead>
 <programlisting><phrase role="keyword">namespace</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">;</phrase>
+<phrase role="keyword">int</phrase> <phrase role="identifier">a</phrase><phrase role="special">;</phrase>
 <phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">callcc</phrase><phrase role="special">(</phrase>
-    <phrase role="special">[](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">sink</phrase><phrase role="special">){</phrase>
-        <phrase role="keyword">int</phrase> <phrase role="identifier">a</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
+    <phrase role="special">[&amp;</phrase><phrase role="identifier">a</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">sink</phrase><phrase role="special">){</phrase>
+        <phrase role="identifier">a</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
         <phrase role="keyword">int</phrase> <phrase role="identifier">b</phrase><phrase role="special">=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
         <phrase role="keyword">for</phrase><phrase role="special">(;;){</phrase>
-            <phrase role="identifier">sink</phrase><phrase role="special">=</phrase><phrase role="identifier">sink</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">a</phrase><phrase role="special">);</phrase>
-            <phrase role="keyword">auto</phrase> <phrase role="identifier">next</phrase><phrase role="special">=</phrase><phrase role="identifier">a</phrase><phrase role="special">+</phrase><phrase role="identifier">b</phrase><phrase role="special">;</phrase>
+            <phrase role="identifier">sink</phrase><phrase role="special">=</phrase><phrase role="identifier">sink</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+            <phrase role="keyword">int</phrase> <phrase role="identifier">next</phrase><phrase role="special">=</phrase><phrase role="identifier">a</phrase><phrase role="special">+</phrase><phrase role="identifier">b</phrase><phrase role="special">;</phrase>
             <phrase role="identifier">a</phrase><phrase role="special">=</phrase><phrase role="identifier">b</phrase><phrase role="special">;</phrase>
             <phrase role="identifier">b</phrase><phrase role="special">=</phrase><phrase role="identifier">next</phrase><phrase role="special">;</phrase>
         <phrase role="special">}</phrase>
         <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">sink</phrase><phrase role="special">);</phrase>
     <phrase role="special">});</phrase>
 <phrase role="keyword">for</phrase> <phrase role="special">(</phrase><phrase role="keyword">int</phrase> <phrase role="identifier">j</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase><phrase role="identifier">j</phrase><phrase role="special">&lt;</phrase><phrase role="number">10</phrase><phrase role="special">;++</phrase><phrase role="identifier">j</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">source</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;()</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot; &quot;</phrase><phrase role="special">;</phrase>
+    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">a</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot; &quot;</phrase><phrase role="special">;</phrase>
     <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">source</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="special">}</phrase>
 
 <phrase role="identifier">output</phrase><phrase role="special">:</phrase>
-    <phrase role="number">0</phrase> <phrase role="number">1</phrase> <phrase role="number">1</phrase> <phrase role="number">2</phrase> <phrase role="number">3</phrase> <phrase role="number">5</phrase> <phrase role="number">8</phrase> <phrase role="number">13</phrase> <phrase role="number">21</phrase> <phrase role="number">34</phrase> <phrase role="number">55</phrase>
+    <phrase role="number">0</phrase> <phrase role="number">1</phrase> <phrase role="number">1</phrase> <phrase role="number">2</phrase> <phrase role="number">3</phrase> <phrase role="number">5</phrase> <phrase role="number">8</phrase> <phrase role="number">13</phrase> <phrase role="number">21</phrase> <phrase role="number">34</phrase>
 </programlisting>
     <para>
       This simple example demonstrates the basic usage of <emphasis>call/cc</emphasis>
-      as a generator. The continuation <code><phrase role="identifier">sink</phrase></code>
+      as a <emphasis>generator</emphasis>. The continuation <code><phrase role="identifier">sink</phrase></code>
       represents the <emphasis>main</emphasis>-continuation (function <code><phrase
       role="identifier">main</phrase><phrase role="special">()</phrase></code>).
       <code><phrase role="identifier">sink</phrase></code> is captured (current-continuation)
-      and passed as parameter to the lambda.
+      by invoking <link linkend="cc"><emphasis>callcc()</emphasis></link> and passed
+      as parameter to the lambda.
     </para>
     <para>
-      Because the state is invalidated (one-shot continuation) by each call of <link
-      linkend="cc"><emphasis>callcc()</emphasis></link>, the new state of the <link
-      linkend="cc"><emphasis>continuation</emphasis></link>, returned by <link linkend="cc"><emphasis>callcc()</emphasis></link>,
-      needs to be assigned to <code><phrase role="identifier">sink</phrase></code>
-      after each call.
+      Because the state is invalidated (one-shot continuation) by each call of <emphasis>continuation::resume()</emphasis>,
+      the new state of the <link linkend="cc"><emphasis>continuation</emphasis></link>,
+      returned by <emphasis>continuation::resume()</emphasis>, needs to be assigned
+      to <code><phrase role="identifier">sink</phrase></code> after each call.
     </para>
     <para>
       The lambda that calculates the Fibonacci numbers is executed inside the continuation
       represented by <code><phrase role="identifier">source</phrase></code>. Calculated
-      Fibonacci numbers are transferred between the two continuations' as argument
-      of <link linkend="cc"><emphasis>callcc()</emphasis></link> (and returned by
-      <code><phrase role="identifier">source</phrase><phrase role="special">.</phrase><phrase
-      role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase
-      role="keyword">int</phrase><phrase role="special">&gt;()</phrase></code>).
-      Note that this example represents a <emphasis>generator</emphasis> thus no
-      value is transferred into the lambda via <link linkend="cc"><emphasis>callcc()</emphasis></link>.
+      Fibonacci numbers are transferred between the two continuations via variable
+      <code><phrase role="identifier">a</phrase></code> (lambda capture reference).
     </para>
     <para>
-      The locale variables <code><phrase role="identifier">a</phrase></code>, <code><phrase
-      role="identifier">b</phrase></code> and <code> <phrase role="identifier">next</phrase></code>
-      remain their values during each context switch. This is possible due <code><phrase
-      role="identifier">source</phrase></code> has its own stack and the stack is
-      exchanged by each context switch.
+      The locale variables <code><phrase role="identifier">b</phrase></code> and
+      <code> <phrase role="identifier">next</phrase></code> remain their values during
+      each context switch. This is possible due <code><phrase role="identifier">source</phrase></code>
+      has its own stack and the stack is exchanged by each context switch.
     </para>
     <bridgehead renderas="sect3" id="context.cc.h3">
       <phrase id="context.cc.parameter_passing"/><link linkend="context.cc.parameter_passing">Parameter
       passing</link>
     </bridgehead>
     <para>
-      Calling <link linkend="cc"><emphasis>callcc()</emphasis></link> without arguments
-      means, that no data will be transferred, only the context switch is executed.
-    </para>
-    <para>
-      The arguments passed to <link linkend="cc"><emphasis>callcc()</emphasis></link>,
-      in one continuation, are accessible via <code><phrase role="identifier">c</phrase><phrase
-      role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase
-      role="special">&lt;&gt;()</phrase></code> in the other continuation.
+      Data can be transferred between two continuations via global pointers, calling
+      wrappers (like <code><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase
+      role="identifier">bind</phrase></code>) or lambda captures.
     </para>
 <programlisting><phrase role="keyword">namespace</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">;</phrase>
 <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="identifier">c1</phrase><phrase role="special">=</phrase><phrase role="identifier">callcc</phrase><phrase role="special">([](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">c2</phrase><phrase role="special">){</phrase>
-            <phrase role="keyword">int</phrase> <phrase role="identifier">j</phrase><phrase role="special">=</phrase><phrase role="identifier">c2</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;();</phrase>
-            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;inside c1,j==%d\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">j</phrase><phrase role="special">);</phrase>
-            <phrase role="keyword">return</phrase> <phrase role="identifier">c2</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">j</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
-        <phrase role="special">},</phrase>
-        <phrase role="identifier">i</phrase><phrase role="special">);</phrase>
-<phrase role="identifier">i</phrase><phrase role="special">=</phrase><phrase role="identifier">c1</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;();</phrase>
+<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="identifier">c1</phrase><phrase role="special">=</phrase><phrase role="identifier">callcc</phrase><phrase role="special">([&amp;</phrase><phrase role="identifier">i</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">c2</phrase><phrase role="special">){</phrase>
+            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;inside c1,i==%d\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">);</phrase>
+            <phrase role="identifier">i</phrase><phrase role="special">+=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
+            <phrase role="keyword">return</phrase> <phrase role="identifier">c2</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+        <phrase role="special">});</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;i==%d\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">);</phrase>
 
 <phrase role="identifier">output</phrase><phrase role="special">:</phrase>
-    <phrase role="identifier">inside</phrase> <phrase role="identifier">c1</phrase><phrase role="special">,</phrase><phrase role="identifier">j</phrase><phrase role="special">==</phrase><phrase role="number">1</phrase>
+    <phrase role="identifier">inside</phrase> <phrase role="identifier">c1</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">==</phrase><phrase role="number">1</phrase>
     <phrase role="identifier">i</phrase><phrase role="special">==</phrase><phrase role="number">2</phrase>
 </programlisting>
     <para>
       <code><phrase role="identifier">callcc</phrase><phrase role="special">(&lt;</phrase><phrase
-      role="identifier">lambda</phrase><phrase role="special">&gt;,</phrase><phrase
-      role="identifier">i</phrase><phrase role="special">)</phrase></code> enters
-      the lambda in continuation represented by <code><phrase role="identifier">c1</phrase></code>
-      with argument <code><phrase role="identifier">i</phrase><phrase role="special">=</phrase><phrase
-      role="number">1</phrase></code>. The expression <code><phrase role="identifier">c2</phrase><phrase
-      role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase
-      role="identifier">j</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase
-      role="special">)</phrase></code> resumes the continuation <code><phrase role="identifier">c2</phrase></code>
-      and transfers back an integer of <code><phrase role="identifier">j</phrase><phrase
-      role="special">+</phrase><phrase role="number">1</phrase></code>. On return
-      of <code><phrase role="identifier">callcc</phrase><phrase role="special">(&lt;</phrase><phrase
-      role="identifier">lambda</phrase><phrase role="special">&gt;,</phrase> <phrase
-      role="identifier">i</phrase><phrase role="special">)</phrase></code>, the variable
-      <code><phrase role="identifier">i</phrase></code> gets the value of <code><phrase
-      role="identifier">j</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase></code>
-      assigned (<code><phrase role="identifier">i</phrase><phrase role="special">=</phrase><phrase
-      role="identifier">c1</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase
-      role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;()</phrase></code>).
+      role="identifier">lambda</phrase><phrase role="special">&gt;)</phrase></code>
+      enters the lambda in continuation represented by <code><phrase role="identifier">c1</phrase></code>
+      with lambda capture reference <code><phrase role="identifier">i</phrase><phrase
+      role="special">=</phrase><phrase role="number">1</phrase></code>. The expression
+      <code><phrase role="identifier">c2</phrase><phrase role="special">.</phrase><phrase
+      role="identifier">resume</phrase><phrase role="special">()</phrase></code>
+      resumes the continuation <code><phrase role="identifier">c2</phrase></code>.
+      On return of <code><phrase role="identifier">callcc</phrase><phrase role="special">(&lt;</phrase><phrase
+      role="identifier">lambda</phrase><phrase role="special">&gt;)</phrase></code>,
+      the variable <code><phrase role="identifier">i</phrase></code> has the value
+      of <code><phrase role="identifier">i</phrase><phrase role="special">+</phrase><phrase
+      role="number">1</phrase></code>.
     </para>
-    <para>
-      More than one argument can be transferred too.
-    </para>
-<programlisting><phrase role="keyword">namespace</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">;</phrase>
-<phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">=</phrase><phrase role="number">2</phrase><phrase role="special">,</phrase><phrase role="identifier">j</phrase><phrase role="special">=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="identifier">c1</phrase><phrase role="special">=</phrase><phrase role="identifier">callcc</phrase><phrase role="special">([](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">c2</phrase><phrase role="special">){</phrase>
-            <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">;</phrase>
-            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">,</phrase><phrase role="identifier">j</phrase><phrase role="special">)=</phrase><phrase role="identifier">c2</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">,</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;();</phrase>
-            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;inside c1,i==%d,j==%d\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">,</phrase><phrase role="identifier">j</phrase><phrase role="special">);</phrase>
-            <phrase role="keyword">return</phrase> <phrase role="identifier">c2</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">+</phrase><phrase role="identifier">j</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">-</phrase><phrase role="identifier">j</phrase><phrase role="special">);</phrase>
-        <phrase role="special">},</phrase>
-        <phrase role="identifier">i</phrase><phrase role="special">,</phrase> <phrase role="identifier">j</phrase><phrase role="special">);</phrase>
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">,</phrase><phrase role="identifier">j</phrase><phrase role="special">)=</phrase><phrase role="identifier">c1</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">,</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;();</phrase>
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;i==%d,j==%d\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">,</phrase><phrase role="identifier">j</phrase><phrase role="special">);</phrase>
-
-<phrase role="identifier">output</phrase><phrase role="special">:</phrase>
-    <phrase role="identifier">inside</phrase> <phrase role="identifier">c1</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">==</phrase><phrase role="number">2</phrase><phrase role="special">,</phrase><phrase role="identifier">j</phrase><phrase role="special">==</phrase><phrase role="number">1</phrase>
-    <phrase role="identifier">i</phrase><phrase role="special">==</phrase><phrase role="number">3</phrase><phrase role="special">,</phrase><phrase role="identifier">j</phrase><phrase role="special">==</phrase><phrase role="number">1</phrase>
-</programlisting>
-    <para>
-      For use-cases, that require to transfer data of different type:
-    </para>
-<programlisting><phrase role="keyword">namespace</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="identifier">f1</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">c</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-    <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">=</phrase><phrase role="number">3</phrase><phrase role="special">;</phrase>
-    <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">);</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="identifier">s</phrase><phrase role="special">{</phrase> <phrase role="string">&quot;abc&quot;</phrase> <phrase role="special">};</phrase>
-    <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">s</phrase><phrase role="special">);</phrase>
-    <phrase role="identifier">i</phrase><phrase role="special">=</phrase><phrase role="number">7</phrase><phrase role="special">;</phrase><phrase role="identifier">s</phrase><phrase role="special">=</phrase><phrase role="string">&quot;xyz&quot;</phrase><phrase role="special">;</phrase>
-    <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">,</phrase><phrase role="identifier">s</phrase><phrase role="special">);</phrase>
-    <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
-    <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">c</phrase><phrase role="special">);</phrase>
-<phrase role="special">}</phrase>
-
-<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">callcc</phrase><phrase role="special">(</phrase><phrase role="identifier">f1</phrase><phrase role="special">);</phrase>
-<phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;();</phrase>
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned : &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">i</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="identifier">s</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase><phrase role="special">&gt;();</phrase>
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned : &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">s</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">tie</phrase><phrase role="special">(</phrase><phrase role="identifier">i</phrase><phrase role="special">,</phrase><phrase role="identifier">s</phrase><phrase role="special">)=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">int</phrase><phrase role="special">,</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="special">&gt;();</phrase>
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned : &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">i</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;, &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">s</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">boolalpha</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned data : &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">data_available</phrase><phrase role="special">(</phrase> <phrase role="identifier">c</phrase><phrase role="special">)</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-
-<phrase role="identifier">output</phrase><phrase role="special">:</phrase>
-    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">returned</phrase> <phrase role="special">:</phrase> <phrase role="number">3</phrase>
-    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">returned</phrase> <phrase role="special">:</phrase> <phrase role="identifier">abc</phrase>
-    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">returned</phrase> <phrase role="special">:</phrase> <phrase role="number">7</phrase><phrase role="special">,</phrase> <phrase role="identifier">xyz</phrase>
-    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">returned</phrase> <phrase role="identifier">data</phrase> <phrase role="special">:</phrase> <phrase role="keyword">false</phrase>
-</programlisting>
     <bridgehead renderas="sect3" id="context.cc.h4">
       <phrase id="context.cc.exception_handling"/><link linkend="context.cc.exception_handling">Exception
       handling</link>
@@ -393,66 +320,52 @@
     </bridgehead>
     <para>
       Sometimes it is useful to execute a new function on top of a resumed continuation.
-      For this purpose <link linkend="cc"><emphasis>callcc()</emphasis></link> with
-      second argument <code><phrase role="identifier">exec_ontop_arg</phrase></code>
-      has to be used. The function passed as argument must accept a rvalue reference
-      to <link linkend="cc"><emphasis>continuation</emphasis></link> and return,
-      depending on functions argument list, a tuple of its argument types, a single
-      return type or void.
+      For this purpose <emphasis>continuation::resume_with()</emphasis> has to be
+      used. The function passed as argument must accept a rvalue reference to <link
+      linkend="cc"><emphasis>continuation</emphasis></link> and return <code><phrase
+      role="keyword">void</phrase></code>.
     </para>
 <programlisting><phrase role="keyword">namespace</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="identifier">f1</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">c</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-    <phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;();</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered first time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase>  <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-    <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
-    <phrase role="identifier">data</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;();</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered second time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase>  <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-    <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
-    <phrase role="identifier">data</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;();</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered third time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-    <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">c</phrase><phrase role="special">);</phrase>
-<phrase role="special">};</phrase>
-
-<phrase role="keyword">int</phrase> <phrase role="identifier">f2</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">c</phrase><phrase role="special">){</phrase>
-    <phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;(</phrase><phrase role="identifier">c</phrase><phrase role="special">);</phrase>
-    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f2: entered: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-    <phrase role="keyword">return</phrase> <phrase role="identifier">data</phrase><phrase role="special">;</phrase>
-<phrase role="special">};</phrase>
-
-<phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase> <phrase role="special">=</phrase> <phrase role="number">0</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">callcc</phrase><phrase role="special">(</phrase><phrase role="identifier">f1</phrase><phrase role="special">,</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
-<phrase role="identifier">data</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;();</phrase>
+<phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
+<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">callcc</phrase><phrase role="special">([&amp;</phrase><phrase role="identifier">data</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">c</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+                    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered first time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+                    <phrase role="identifier">data</phrase><phrase role="special">+=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
+                    <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+                    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered second time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+                    <phrase role="identifier">data</phrase><phrase role="special">+=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
+                    <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+                    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered third time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+                    <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">c</phrase><phrase role="special">);</phrase>
+                <phrase role="special">});</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned first time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
-<phrase role="identifier">data</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">int</phrase><phrase role="special">&gt;();</phrase>
+<phrase role="identifier">data</phrase><phrase role="special">+=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
+<phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned second time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume_with</phrase><phrase role="special">(</phrase><phrase role="identifier">f2</phrase><phrase role="special">,-</phrase><phrase role="number">1</phrase><phrase role="special">);</phrase>
+<phrase role="identifier">data</phrase><phrase role="special">+=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
+<phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase role="identifier">resume_with</phrase><phrase role="special">([&amp;</phrase><phrase role="identifier">data</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">c</phrase><phrase role="special">){</phrase>
+                    <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f2: entered: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
+                    <phrase role="identifier">data</phrase><phrase role="special">=-</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
+                <phrase role="special">});</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned third time&quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
 
 <phrase role="identifier">output</phrase><phrase role="special">:</phrase>
-    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase> <phrase role="identifier">first</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">1</phrase>
-    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">returned</phrase> <phrase role="identifier">first</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">2</phrase>
-    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase> <phrase role="identifier">second</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">3</phrase>
-    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">returned</phrase> <phrase role="identifier">second</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">4</phrase>
-    <phrase role="identifier">f2</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase><phrase role="special">:</phrase> <phrase role="special">-</phrase><phrase role="number">1</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase> <phrase role="identifier">first</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">0</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">returned</phrase> <phrase role="identifier">first</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">1</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase> <phrase role="identifier">second</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">2</phrase>
+    <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">returned</phrase> <phrase role="identifier">second</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="number">3</phrase>
+    <phrase role="identifier">f2</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase><phrase role="special">:</phrase> <phrase role="number">4</phrase>
     <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">entered</phrase> <phrase role="identifier">third</phrase> <phrase role="identifier">time</phrase><phrase role="special">:</phrase> <phrase role="special">-</phrase><phrase role="number">1</phrase>
     <phrase role="identifier">f1</phrase><phrase role="special">:</phrase> <phrase role="identifier">returned</phrase> <phrase role="identifier">third</phrase> <phrase role="identifier">time</phrase>
 </programlisting>
     <para>
       The expression <code><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase
-      role="identifier">resume_with</phrase><phrase role="special">(</phrase><phrase
-      role="identifier">f2</phrase><phrase role="special">,-</phrase><phrase role="number">1</phrase><phrase
-      role="special">)</phrase></code> executes <code><phrase role="identifier">f2</phrase><phrase
-      role="special">()</phrase></code> on top of continuation <code><phrase role="identifier">c</phrase></code>,
-      e.g. an additional stack frame is allocated on top of the stack (in front of
-      <code><phrase role="identifier">f1</phrase><phrase role="special">()</phrase></code>).
-      <code><phrase role="identifier">f2</phrase><phrase role="special">()</phrase></code>
-      returns argument <code><phrase role="special">-</phrase><phrase role="number">1</phrase></code>
-      that will returned by the second invocation of <code><phrase role="identifier">c</phrase><phrase
-      role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase
-      role="identifier">data</phrase><phrase role="special">+</phrase><phrase role="number">1</phrase><phrase
-      role="special">)</phrase></code> in <code><phrase role="identifier">f1</phrase><phrase
-      role="special">()</phrase></code>.
+      role="identifier">resume_with</phrase><phrase role="special">(...)</phrase></code>
+      executes a lambda on top of continuation <code><phrase role="identifier">c</phrase></code>,
+      e.g. an additional stack frame is allocated on top of the stack. This lambda
+      assigns <code><phrase role="special">-</phrase><phrase role="number">1</phrase></code>
+      to <code><phrase role="identifier">data</phrase></code> and returns to the
+      second invocation of <code><phrase role="identifier">c</phrase><phrase role="special">.</phrase><phrase
+      role="identifier">resume</phrase><phrase role="special">()</phrase></code>.
     </para>
     <para>
       Another option is to execute a function on top of the continuation that throws
@@ -509,7 +422,7 @@
     <important>
       <para>
         Code executed by <emphasis>context-function</emphasis> must not prevent the
-        propagation of the <emphasis>detail::forced_unwind</emphasis> exception.
+        propagation ofs the <emphasis>detail::forced_unwind</emphasis> exception.
         Absorbing that exception will cause stack unwinding to fail. Thus, any code
         that catches all exceptions must re-throw any pending <emphasis>detail::forced_unwind</emphasis>
         exception.
@@ -643,21 +556,25 @@
 <phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="identifier">source</phrase><phrase role="special">;</phrase>
 <phrase role="comment">// user-code pulls parsed data from parser</phrase>
 <phrase role="comment">// invert control flow</phrase>
+<phrase role="keyword">char</phrase> <phrase role="identifier">c</phrase><phrase role="special">;</phrase>
+<phrase role="keyword">bool</phrase> <phrase role="identifier">done</phrase><phrase role="special">=</phrase><phrase role="keyword">false</phrase><phrase role="special">;</phrase>
 <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">callcc</phrase><phrase role="special">(</phrase>
-        <phrase role="special">[&amp;</phrase><phrase role="identifier">is</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">sink</phrase><phrase role="special">){</phrase>
+        <phrase role="special">[&amp;</phrase><phrase role="identifier">is</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">c</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">done</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">continuation</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">sink</phrase><phrase role="special">){</phrase>
         <phrase role="comment">// create parser with callback function</phrase>
         <phrase role="identifier">Parser</phrase> <phrase role="identifier">p</phrase><phrase role="special">(</phrase><phrase role="identifier">is</phrase><phrase role="special">,</phrase>
-                 <phrase role="special">[&amp;</phrase><phrase role="identifier">sink</phrase><phrase role="special">](</phrase><phrase role="keyword">char</phrase> <phrase role="identifier">c</phrase><phrase role="special">){</phrase>
-                       <phrase role="comment">// resume main continuation</phrase>
-                       <phrase role="identifier">sink</phrase><phrase role="special">=</phrase><phrase role="identifier">sink</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">c</phrase><phrase role="special">);</phrase>
+                 <phrase role="special">[&amp;</phrase><phrase role="identifier">sink</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">c</phrase><phrase role="special">](</phrase><phrase role="keyword">char</phrase> <phrase role="identifier">c_</phrase><phrase role="special">){</phrase>
+                    <phrase role="comment">// resume main continuation</phrase>
+                    <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c_</phrase><phrase role="special">;</phrase>
+                    <phrase role="identifier">sink</phrase><phrase role="special">=</phrase><phrase role="identifier">sink</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
                  <phrase role="special">});</phrase>
             <phrase role="comment">// start recursive parsing</phrase>
             <phrase role="identifier">p</phrase><phrase role="special">.</phrase><phrase role="identifier">run</phrase><phrase role="special">();</phrase>
+            <phrase role="comment">// signal termination</phrase>
+            <phrase role="identifier">done</phrase><phrase role="special">=</phrase><phrase role="keyword">true</phrase><phrase role="special">;</phrase>
             <phrase role="comment">// resume main continuation</phrase>
             <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">sink</phrase><phrase role="special">);</phrase>
         <phrase role="special">});</phrase>
-<phrase role="keyword">while</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">data_available</phrase><phrase role="special">(</phrase><phrase role="identifier">source</phrase><phrase role="special">)){</phrase>
-    <phrase role="keyword">char</phrase> <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">source</phrase><phrase role="special">.</phrase><phrase role="identifier">get_data</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">char</phrase><phrase role="special">&gt;();</phrase>
+<phrase role="keyword">while</phrase><phrase role="special">(!</phrase><phrase role="identifier">done</phrase><phrase role="special">){</phrase>
     <phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;Parsed: %c\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">c</phrase><phrase role="special">);</phrase>
     <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">source</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="special">}</phrase>
@@ -690,6 +607,13 @@
         switch takes two magnitudes of order less CPU cycles; see section <link linkend="performance"><emphasis>performance</emphasis></link>)
         and <emphasis>WinFiber</emphasis>.
       </para>
+      <note>
+        <para>
+          Because the TIB (thread information block on Windows) is not fully described
+          in the MSDN, it might be possible that not all required TIB-parts are swapped.
+          Using WinFiber implementation migh be an alternative.
+        </para>
+      </note>
       <bridgehead renderas="sect4" id="context.cc.implementations__fcontext_t__ucontext_t_and_winfiber.h1">
         <phrase id="context.cc.implementations__fcontext_t__ucontext_t_and_winfiber.ucontext_t"/><link
         linkend="context.cc.implementations__fcontext_t__ucontext_t_and_winfiber.ucontext_t">ucontext_t</link>
@@ -720,10 +644,6 @@
         role="identifier">impl</phrase><phrase role="special">=</phrase><phrase role="identifier">winfib</phrase></code>
         Win32-Fibers are used as implementation for <link linkend="cc"><emphasis>callcc()</emphasis></link>.
       </para>
-      <para>
-        Because the TIB (thread information block) is not fully described in the
-        MSDN, it might be possible that not all required TIB-parts are swapped.
-      </para>
       <note>
         <para>
           The first call of <link linkend="cc"><emphasis>callcc()</emphasis></link>
@@ -753,16 +673,10 @@
     <phrase role="identifier">continuation</phrase><phrase role="special">(</phrase><phrase role="identifier">continuation</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">noexcept</phrase> <phrase role="special">=</phrase> <phrase role="keyword">delete</phrase><phrase role="special">;</phrase>
     <phrase role="identifier">continuation</phrase> <phrase role="special">&amp;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">=(</phrase><phrase role="identifier">continuation</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">noexcept</phrase> <phrase role="special">=</phrase> <phrase role="keyword">delete</phrase><phrase role="special">;</phrase>
 
-    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="special">...</phrase><phrase role="identifier">Arg</phrase><phrase role="special">&gt;</phrase>
-    <phrase role="identifier">continuation</phrase> <phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">Arg</phrase> <phrase role="special">...</phrase><phrase role="identifier">arg</phrase><phrase role="special">);</phrase>
+    <phrase role="identifier">continuation</phrase> <phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 
-    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase><phrase role="keyword">typename</phrase> <phrase role="special">...</phrase><phrase role="identifier">Arg</phrase><phrase role="special">&gt;</phrase>
-    <phrase role="identifier">continuation</phrase> <phrase role="identifier">resume_with</phrase><phrase role="special">(</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase><phrase role="identifier">Arg</phrase> <phrase role="special">...</phrase><phrase role="identifier">arg</phrase><phrase role="special">);</phrase>
-
-    <phrase role="keyword">bool</phrase> <phrase role="identifier">data_available</phrase><phrase role="special">()</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
-
-    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="special">...</phrase><phrase role="identifier">Arg</phrase><phrase role="special">&gt;</phrase>
-    <phrase role="special">&lt;</phrase><phrase role="identifier">unspecified</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">get_data</phrase><phrase role="special">();</phrase>
+    <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">&gt;</phrase>
+    <phrase role="identifier">continuation</phrase> <phrase role="identifier">resume_with</phrase><phrase role="special">(</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">);</phrase>
 
     <phrase role="keyword">explicit</phrase> <phrase role="keyword">operator</phrase> <phrase role="keyword">bool</phrase><phrase role="special">()</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 
@@ -911,11 +825,10 @@
         <code>operator()</code>()</link>
 </bridgehead>
       </para>
-<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="special">...</phrase><phrase role="identifier">Arg</phrase><phrase role="special">&gt;</phrase>
-<phrase role="identifier">continuation</phrase> <phrase role="identifier">resume</phrase><phrase role="special">(</phrase><phrase role="identifier">Arg</phrase> <phrase role="special">...</phrase><phrase role="identifier">arg</phrase><phrase role="special">);</phrase>
+<programlisting><phrase role="identifier">continuation</phrase> <phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 
-<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase><phrase role="keyword">typename</phrase> <phrase role="special">...</phrase><phrase role="identifier">Arg</phrase><phrase role="special">&gt;</phrase>
-<phrase role="identifier">continuation</phrase> <phrase role="identifier">resume_with</phrase><phrase role="special">(</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase><phrase role="identifier">Arg</phrase> <phrase role="special">...</phrase><phrase role="identifier">arg</phrase><phrase role="special">);</phrase>
+<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">&gt;</phrase>
+<phrase role="identifier">continuation</phrase> <phrase role="identifier">resume_with</phrase><phrase role="special">(</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">);</phrase>
 </programlisting>
       <variablelist>
         <title></title>
@@ -924,9 +837,8 @@
           <listitem>
             <para>
               Captures current continuation and resumes <code><phrase role="special">*</phrase><phrase
-              role="keyword">this</phrase></code>. The function with argument type
-              <code><phrase role="identifier">exec_ontop_arg</phrase></code>, is
-              used to execute function <code><phrase role="identifier">fn</phrase></code>
+              role="keyword">this</phrase></code>. The function <code><phrase role="identifier">resume_with</phrase></code>,
+              is used to execute function <code><phrase role="identifier">fn</phrase></code>
               in continuation <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
               (e.g. the stack frame of <code><phrase role="identifier">fn</phrase></code>
               is allocated on stack of <code><phrase role="special">*</phrase><phrase
@@ -946,17 +858,8 @@
           <term>Note:</term>
           <listitem>
             <para>
-              The returned arguments from <code><phrase role="identifier">fn</phrase></code>
-              are passed as arguments to the context-function of resumed continuation.
-            </para>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>Note:</term>
-          <listitem>
-            <para>
               Function <code><phrase role="identifier">fn</phrase></code> needs to
-              return a tuple of arguments (<link linkend="cc_ontop">see description</link>).
+              return void.
             </para>
           </listitem>
         </varlistentry>
@@ -967,71 +870,6 @@
               The returned continuation indicates if the suspended continuation has
               terminated (return from context-function) via <code><phrase role="keyword">bool</phrase>
               <phrase role="keyword">operator</phrase><phrase role="special">()</phrase></code>.
-              If the returned continuation has terminated no data are transferred.
-            </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-      <para>
-        <bridgehead renderas="sect4" id="cc_data_available_bridgehead">
-  <phrase id="cc_data_available"/>
-  <link linkend="cc_data_available">Member function
-        <code>data_available</code>()</link>
-</bridgehead>
-      </para>
-<programlisting><phrase role="keyword">bool</phrase> <phrase role="identifier">data_available</phrase><phrase role="special">()</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
-</programlisting>
-      <variablelist>
-        <title></title>
-        <varlistentry>
-          <term>Effects:</term>
-          <listitem>
-            <para>
-              Tests if <code><phrase role="identifier">c</phrase></code> has data.
-            </para>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>Returns:</term>
-          <listitem>
-            <para>
-              <code><phrase role="keyword">true</phrase></code> if data have been
-              transferred, otherwise <code><phrase role="keyword">false</phrase></code>.
-            </para>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>Throws:</term>
-          <listitem>
-            <para>
-              Nothing.
-            </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-      <para>
-        <bridgehead renderas="sect4" id="cc_get_available_bridgehead">
-  <phrase id="cc_get_available"/>
-  <link linkend="cc_get_available">Member function
-        <code>get_available</code>()</link>
-</bridgehead>
-      </para>
-<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="special">...</phrase><phrase role="identifier">Arg</phrase><phrase role="special">&gt;</phrase>
-<phrase role="special">&lt;</phrase><phrase role="identifier">unspecified</phrase><phrase role="special">&gt;</phrase> <phrase role="identifier">get_data</phrase><phrase role="special">();</phrase>
-</programlisting>
-      <variablelist>
-        <title></title>
-        <varlistentry>
-          <term>Returns:</term>
-          <listitem>
-            <para>
-              Data that have been transferred via <code><phrase role="identifier">callcc</phrase><phrase
-              role="special">()</phrase></code> or <code><phrase role="keyword">operator</phrase><phrase
-              role="special">()</phrase></code> are returned as <code><phrase role="identifier">std</phrase><phrase
-              role="special">::</phrase><phrase role="identifier">tuple</phrase><phrase
-              role="special">&lt;</phrase><phrase role="identifier">Arg</phrase><phrase
-              role="special">...&gt;</phrase></code> or <code><phrase role="identifier">Arg</phrase></code>
-              if single parameter.
             </para>
           </listitem>
         </varlistentry>
@@ -1317,14 +1155,14 @@
       </bridgehead>
 <programlisting><phrase role="preprocessor">#include</phrase> <phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">/</phrase><phrase role="identifier">context</phrase><phrase role="special">/</phrase><phrase role="identifier">continuation</phrase><phrase role="special">.</phrase><phrase role="identifier">hpp</phrase><phrase role="special">&gt;</phrase>
 
-<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase><phrase role="keyword">typename</phrase> <phrase role="special">...</phrase><phrase role="identifier">Arg</phrase><phrase role="special">&gt;</phrase>
-<phrase role="identifier">continuation</phrase> <phrase role="identifier">callcc</phrase><phrase role="special">(</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase><phrase role="identifier">Arg</phrase> <phrase role="special">...</phrase><phrase role="identifier">arg</phrase><phrase role="special">);</phrase>
+<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">&gt;</phrase>
+<phrase role="identifier">continuation</phrase> <phrase role="identifier">callcc</phrase><phrase role="special">(</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">);</phrase>
 
-<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase role="special">,</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase><phrase role="keyword">typename</phrase> <phrase role="special">...</phrase><phrase role="identifier">Arg</phrase><phrase role="special">&gt;</phrase>
-<phrase role="identifier">continuation</phrase> <phrase role="identifier">callcc</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">allocator_arg_t</phrase><phrase role="special">,</phrase><phrase role="identifier">StackAlloc</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">,</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase><phrase role="identifier">Arg</phrase> <phrase role="special">...</phrase><phrase role="identifier">arg</phrase><phrase role="special">);</phrase>
+<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase role="special">,</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">&gt;</phrase>
+<phrase role="identifier">continuation</phrase> <phrase role="identifier">callcc</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">allocator_arg_t</phrase><phrase role="special">,</phrase><phrase role="identifier">StackAlloc</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">,</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">);</phrase>
 
-<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase role="special">,</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">,</phrase><phrase role="keyword">typename</phrase> <phrase role="special">...</phrase><phrase role="identifier">Arg</phrase><phrase role="special">&gt;</phrase>
-<phrase role="identifier">continuation</phrase> <phrase role="identifier">callcc</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">allocator_arg_t</phrase><phrase role="special">,</phrase><phrase role="identifier">preallocated</phrase> <phrase role="identifier">palloc</phrase><phrase role="special">,</phrase><phrase role="identifier">StackAlloc</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">,</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase><phrase role="identifier">Arg</phrase> <phrase role="special">...</phrase><phrase role="identifier">arg</phrase><phrase role="special">);</phrase>
+<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">StackAlloc</phrase><phrase role="special">,</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">&gt;</phrase>
+<phrase role="identifier">continuation</phrase> <phrase role="identifier">callcc</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">allocator_arg_t</phrase><phrase role="special">,</phrase><phrase role="identifier">preallocated</phrase> <phrase role="identifier">palloc</phrase><phrase role="special">,</phrase><phrase role="identifier">StackAlloc</phrase> <phrase role="identifier">salloc</phrase><phrase role="special">,</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">);</phrase>
 </programlisting>
       <variablelist>
         <title></title>
@@ -1339,10 +1177,6 @@
               The function with argument type <code><phrase role="identifier">preallocated</phrase></code>,
               is used to create a user defined data <link linkend="cc_prealloc">(for
               instance additional control structures)</link> on top of the stack.
-              The arguments, <code><phrase role="special">...</phrase> <phrase role="identifier">arg</phrase></code>,
-              are passed to the current continuation to be transferred by the call
-              to <code><phrase role="identifier">callcc</phrase><phrase role="special">()</phrase></code>
-              in the same thread.
             </para>
           </listitem>
         </varlistentry>
@@ -1362,7 +1196,6 @@
               The returned continuation indicates if the suspended continuation has
               terminated (return from context-function) via <code><phrase role="keyword">bool</phrase>
               <phrase role="keyword">operator</phrase><phrase role="special">()</phrase></code>.
-              If the returned continuation has terminated no data are transferred.
             </para>
           </listitem>
         </varlistentry>
@@ -1381,8 +1214,12 @@
       <para>
         Include <code><phrase role="identifier">execution_context</phrase><phrase
         role="special">.</phrase><phrase role="identifier">hpp</phrase></code> and
-        pass define BOOST_EXECUTION_CONTEXT=2 at compilers command-line in order
-        to use <emphasis>execution_context</emphasis> (v2).
+        pass <code><phrase role="identifier">BOOST_EXECUTION_CONTEXT</phrase><phrase
+        role="special">=</phrase><phrase role="number">2</phrase></code> and property
+        <code><phrase role="identifier">context</phrase><phrase role="special">-</phrase><phrase
+        role="keyword">switch</phrase><phrase role="special">=</phrase><phrase role="identifier">ec</phrase></code>
+        to b2 command-line in order to use <emphasis>execution_context</emphasis>
+        (v2).
       </para>
     </note>
     <note>
@@ -2518,8 +2355,12 @@
       <para>
         Include <code><phrase role="identifier">execution_context</phrase><phrase
         role="special">.</phrase><phrase role="identifier">hpp</phrase></code> and
-        pass define BOOST_EXECUTION_CONTEXT=1 at compilers command-line in order
-        to use <emphasis>execution_context</emphasis> (v1).
+        pass <code><phrase role="identifier">BOOST_EXECUTION_CONTEXT</phrase><phrase
+        role="special">=</phrase><phrase role="number">1</phrase></code> and property
+        <code><phrase role="identifier">context</phrase><phrase role="special">-</phrase><phrase
+        role="keyword">switch</phrase><phrase role="special">=</phrase><phrase role="identifier">ec</phrase></code>
+        to b2 command-line in order to use <emphasis>execution_context</emphasis>
+        (v1).
       </para>
     </note>
     <note>
@@ -4294,11 +4135,11 @@
       role="special">::</phrase><phrase role="identifier">highresolution_clock</phrase></code>,
       with overhead corrections. The code was compiled with gcc-6.3.1, using build
       options: variant = release, optimization = speed. Tests were executed on dual
-      Intel XEON E5 2620 2.2GHz, 16C/32T, 64GB RAM, running Linux (x86_64).
+      Intel XEON E5 2620v4 2.2GHz, 16C/32T, 64GB RAM, running Linux (x86_64).
     </para>
     <table frame="all" id="context.performance.performance_of_context_switch">
       <title>Performance of context switch</title>
-      <tgroup cols="2">
+      <tgroup cols="3">
         <thead>
           <row>
             <entry>
@@ -4311,18 +4152,28 @@
                 callcc()/continuation (ucontext_t)
               </para>
             </entry>
+            <entry>
+              <para>
+                callcc()/continuation (Windows-Fiber)
+              </para>
+            </entry>
           </row>
         </thead>
         <tbody>
           <row>
             <entry>
               <para>
-                18 ns / 37 CPU cycles
+                9 ns / 19 CPU cycles
               </para>
             </entry>
             <entry>
               <para>
                 547 ns / 1130 CPU cycles
+              </para>
+            </entry>
+            <entry>
+              <para>
+                49 ns / 98 CPU cycles
               </para>
             </entry>
           </row>

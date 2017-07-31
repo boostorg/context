@@ -41,16 +41,10 @@
     <span class="identifier">continuation</span><span class="special">(</span><span class="identifier">continuation</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">noexcept</span> <span class="special">=</span> <span class="keyword">delete</span><span class="special">;</span>
     <span class="identifier">continuation</span> <span class="special">&amp;</span> <span class="keyword">operator</span><span class="special">=(</span><span class="identifier">continuation</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">noexcept</span> <span class="special">=</span> <span class="keyword">delete</span><span class="special">;</span>
 
-    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="special">...</span><span class="identifier">Arg</span><span class="special">&gt;</span>
-    <span class="identifier">continuation</span> <span class="identifier">resume</span><span class="special">(</span><span class="identifier">Arg</span> <span class="special">...</span><span class="identifier">arg</span><span class="special">);</span>
+    <span class="identifier">continuation</span> <span class="identifier">resume</span><span class="special">();</span>
 
-    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span><span class="keyword">typename</span> <span class="special">...</span><span class="identifier">Arg</span><span class="special">&gt;</span>
-    <span class="identifier">continuation</span> <span class="identifier">resume_with</span><span class="special">(</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span><span class="identifier">Arg</span> <span class="special">...</span><span class="identifier">arg</span><span class="special">);</span>
-
-    <span class="keyword">bool</span> <span class="identifier">data_available</span><span class="special">()</span> <span class="keyword">noexcept</span><span class="special">;</span>
-
-    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="special">...</span><span class="identifier">Arg</span><span class="special">&gt;</span>
-    <span class="special">&lt;</span><span class="identifier">unspecified</span><span class="special">&gt;</span> <span class="identifier">get_data</span><span class="special">();</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">&gt;</span>
+    <span class="identifier">continuation</span> <span class="identifier">resume_with</span><span class="special">(</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">);</span>
 
     <span class="keyword">explicit</span> <span class="keyword">operator</span> <span class="keyword">bool</span><span class="special">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
 
@@ -186,20 +180,18 @@
 </h5>
 <p>
       </p>
-<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="special">...</span><span class="identifier">Arg</span><span class="special">&gt;</span>
-<span class="identifier">continuation</span> <span class="identifier">resume</span><span class="special">(</span><span class="identifier">Arg</span> <span class="special">...</span><span class="identifier">arg</span><span class="special">);</span>
+<pre class="programlisting"><span class="identifier">continuation</span> <span class="identifier">resume</span><span class="special">();</span>
 
-<span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span><span class="keyword">typename</span> <span class="special">...</span><span class="identifier">Arg</span><span class="special">&gt;</span>
-<span class="identifier">continuation</span> <span class="identifier">resume_with</span><span class="special">(</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span><span class="identifier">Arg</span> <span class="special">...</span><span class="identifier">arg</span><span class="special">);</span>
+<span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">&gt;</span>
+<span class="identifier">continuation</span> <span class="identifier">resume_with</span><span class="special">(</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">);</span>
 </pre>
 <div class="variablelist">
 <p class="title"><b></b></p>
 <dl>
 <dt><span class="term">Effects:</span></dt>
 <dd><p>
-              Captures current continuation and resumes <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>. The function with argument type
-              <code class="computeroutput"><span class="identifier">exec_ontop_arg</span></code>, is
-              used to execute function <code class="computeroutput"><span class="identifier">fn</span></code>
+              Captures current continuation and resumes <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>. The function <code class="computeroutput"><span class="identifier">resume_with</span></code>,
+              is used to execute function <code class="computeroutput"><span class="identifier">fn</span></code>
               in continuation <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>
               (e.g. the stack frame of <code class="computeroutput"><span class="identifier">fn</span></code>
               is allocated on stack of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>).
@@ -210,73 +202,14 @@
             </p></dd>
 <dt><span class="term">Note:</span></dt>
 <dd><p>
-              The returned arguments from <code class="computeroutput"><span class="identifier">fn</span></code>
-              are passed as arguments to the context-function of resumed continuation.
-            </p></dd>
-<dt><span class="term">Note:</span></dt>
-<dd><p>
               Function <code class="computeroutput"><span class="identifier">fn</span></code> needs to
-              return a tuple of arguments (<a class="link" href="../cc.html#cc_ontop">see description</a>).
+              return void.
             </p></dd>
 <dt><span class="term">Note:</span></dt>
 <dd><p>
               The returned continuation indicates if the suspended continuation has
               terminated (return from context-function) via <code class="computeroutput"><span class="keyword">bool</span>
               <span class="keyword">operator</span><span class="special">()</span></code>.
-              If the returned continuation has terminated no data are transferred.
-            </p></dd>
-</dl>
-</div>
-<p>
-        </p>
-<h5>
-<a name="cc_data_available_bridgehead"></a>
-  <span><a name="cc_data_available"></a></span>
-  <a class="link" href="class__continuation_.html#cc_data_available">Member function
-        <code class="computeroutput">data_available</code>()</a>
-</h5>
-<p>
-      </p>
-<pre class="programlisting"><span class="keyword">bool</span> <span class="identifier">data_available</span><span class="special">()</span> <span class="keyword">noexcept</span><span class="special">;</span>
-</pre>
-<div class="variablelist">
-<p class="title"><b></b></p>
-<dl>
-<dt><span class="term">Effects:</span></dt>
-<dd><p>
-              Tests if <code class="computeroutput"><span class="identifier">c</span></code> has data.
-            </p></dd>
-<dt><span class="term">Returns:</span></dt>
-<dd><p>
-              <code class="computeroutput"><span class="keyword">true</span></code> if data have been
-              transferred, otherwise <code class="computeroutput"><span class="keyword">false</span></code>.
-            </p></dd>
-<dt><span class="term">Throws:</span></dt>
-<dd><p>
-              Nothing.
-            </p></dd>
-</dl>
-</div>
-<p>
-        </p>
-<h5>
-<a name="cc_get_available_bridgehead"></a>
-  <span><a name="cc_get_available"></a></span>
-  <a class="link" href="class__continuation_.html#cc_get_available">Member function
-        <code class="computeroutput">get_available</code>()</a>
-</h5>
-<p>
-      </p>
-<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="special">...</span><span class="identifier">Arg</span><span class="special">&gt;</span>
-<span class="special">&lt;</span><span class="identifier">unspecified</span><span class="special">&gt;</span> <span class="identifier">get_data</span><span class="special">();</span>
-</pre>
-<div class="variablelist">
-<p class="title"><b></b></p>
-<dl>
-<dt><span class="term">Returns:</span></dt>
-<dd><p>
-              Data that have been transferred via <code class="computeroutput"><span class="identifier">callcc</span><span class="special">()</span></code> or <code class="computeroutput"><span class="keyword">operator</span><span class="special">()</span></code> are returned as <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span><span class="identifier">Arg</span><span class="special">...&gt;</span></code> or <code class="computeroutput"><span class="identifier">Arg</span></code>
-              if single parameter.
             </p></dd>
 </dl>
 </div>
@@ -525,14 +458,14 @@
       </h5>
 <pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">context</span><span class="special">/</span><span class="identifier">continuation</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 
-<span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span><span class="keyword">typename</span> <span class="special">...</span><span class="identifier">Arg</span><span class="special">&gt;</span>
-<span class="identifier">continuation</span> <span class="identifier">callcc</span><span class="special">(</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span><span class="identifier">Arg</span> <span class="special">...</span><span class="identifier">arg</span><span class="special">);</span>
+<span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">&gt;</span>
+<span class="identifier">continuation</span> <span class="identifier">callcc</span><span class="special">(</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">);</span>
 
-<span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span><span class="keyword">typename</span> <span class="special">...</span><span class="identifier">Arg</span><span class="special">&gt;</span>
-<span class="identifier">continuation</span> <span class="identifier">callcc</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg_t</span><span class="special">,</span><span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span><span class="identifier">Arg</span> <span class="special">...</span><span class="identifier">arg</span><span class="special">);</span>
+<span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">&gt;</span>
+<span class="identifier">continuation</span> <span class="identifier">callcc</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg_t</span><span class="special">,</span><span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">);</span>
 
-<span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span><span class="keyword">typename</span> <span class="special">...</span><span class="identifier">Arg</span><span class="special">&gt;</span>
-<span class="identifier">continuation</span> <span class="identifier">callcc</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg_t</span><span class="special">,</span><span class="identifier">preallocated</span> <span class="identifier">palloc</span><span class="special">,</span><span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span><span class="identifier">Arg</span> <span class="special">...</span><span class="identifier">arg</span><span class="special">);</span>
+<span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">&gt;</span>
+<span class="identifier">continuation</span> <span class="identifier">callcc</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg_t</span><span class="special">,</span><span class="identifier">preallocated</span> <span class="identifier">palloc</span><span class="special">,</span><span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">);</span>
 </pre>
 <div class="variablelist">
 <p class="title"><b></b></p>
@@ -545,10 +478,6 @@
               The function with argument type <code class="computeroutput"><span class="identifier">preallocated</span></code>,
               is used to create a user defined data <a class="link" href="../cc.html#cc_prealloc">(for
               instance additional control structures)</a> on top of the stack.
-              The arguments, <code class="computeroutput"><span class="special">...</span> <span class="identifier">arg</span></code>,
-              are passed to the current continuation to be transferred by the call
-              to <code class="computeroutput"><span class="identifier">callcc</span><span class="special">()</span></code>
-              in the same thread.
             </p></dd>
 <dt><span class="term">Returns:</span></dt>
 <dd><p>
@@ -560,7 +489,6 @@
               The returned continuation indicates if the suspended continuation has
               terminated (return from context-function) via <code class="computeroutput"><span class="keyword">bool</span>
               <span class="keyword">operator</span><span class="special">()</span></code>.
-              If the returned continuation has terminated no data are transferred.
             </p></dd>
 </dl>
 </div>

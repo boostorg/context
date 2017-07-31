@@ -30,12 +30,13 @@
       Performance measurements were taken using <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">highresolution_clock</span></code>,
       with overhead corrections. The code was compiled with gcc-6.3.1, using build
       options: variant = release, optimization = speed. Tests were executed on dual
-      Intel XEON E5 2620 2.2GHz, 16C/32T, 64GB RAM, running Linux (x86_64).
+      Intel XEON E5 2620v4 2.2GHz, 16C/32T, 64GB RAM, running Linux (x86_64).
     </p>
 <div class="table">
 <a name="context.performance.performance_of_context_switch"></a><p class="title"><b>Table&#160;1.1.&#160;Performance of context switch</b></p>
 <div class="table-contents"><table class="table" summary="Performance of context switch">
 <colgroup>
+<col>
 <col>
 <col>
 </colgroup>
@@ -50,16 +51,26 @@
                 callcc()/continuation (ucontext_t)
               </p>
             </th>
+<th>
+              <p>
+                callcc()/continuation (Windows-Fiber)
+              </p>
+            </th>
 </tr></thead>
 <tbody><tr>
 <td>
               <p>
-                18 ns / 37 CPU cycles
+                9 ns / 19 CPU cycles
               </p>
             </td>
 <td>
               <p>
                 547 ns / 1130 CPU cycles
+              </p>
+            </td>
+<td>
+              <p>
+                49 ns / 98 CPU cycles
               </p>
             </td>
 </tr></tbody>

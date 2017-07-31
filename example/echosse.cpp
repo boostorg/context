@@ -25,22 +25,21 @@ void echoSSE( int i) {
     std::cout << v32[3]; 
 }
 
-ctx::continuation echo( ctx::continuation && c) {
-    int i = c.get_data< int >();
-    for (;;) {
-        std::cout << i;
-        echoSSE( i);
-        std::cout << " ";
-        c = c.resume();
-        i = c.get_data< int >();
-    }
-    return std::move( c);
-}
 
 int main( int argc, char * argv[]) {
-    ctx::continuation c = ctx::callcc( echo, 0);
-    for ( int i = 1; i < 10; ++i) {
-        c = c( i);
+    int i = 0;
+    ctx::continuation c = ctx::callcc(
+        [&i](ctx::continuation && c) {
+            for (;;) {
+                std::cout << i;
+                echoSSE( i);
+                std::cout << " ";
+                c = c.resume();
+            }
+            return std::move( c);
+        });
+    for (; i < 10; ++i) {
+        c = c.resume();
     }
     std::cout << "\nmain: done" << std::endl;
     return EXIT_SUCCESS;

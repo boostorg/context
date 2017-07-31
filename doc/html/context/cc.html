@@ -68,11 +68,9 @@
 <p>
       <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a> expects a <span class="emphasis"><em>context-function</em></span>
       with signature <code class="computeroutput"><span class="char">'continuation(continuation &amp;&amp;
-      c, Arg ...arg)'</span></code>. The parameter <code class="computeroutput"><span class="identifier">c</span></code>
+      c)'</span></code>. The parameter <code class="computeroutput"><span class="identifier">c</span></code>
       represents the current continuation from which this continuation was resumed
-      (e.g. that has called <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a>)
-      and <code class="computeroutput"><span class="identifier">arg</span></code> are the data passed
-      to <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a>.
+      (e.g. that has called <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a>).
     </p>
 <p>
       On return the <span class="emphasis"><em>context-function</em></span> of the current continuation
@@ -105,7 +103,8 @@
       <a class="link" href="cc.html#cc"><span class="emphasis"><em>continuation</em></span></a> represents a continuation;
       it contains the content of preserved registers and manages the associated stack
       (allocation/deallocation). <a class="link" href="cc.html#cc"><span class="emphasis"><em>continuation</em></span></a>
-      s a one-shot continuation - it can be used only once, after applied to <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a> it is invalidated.
+      is a one-shot continuation - it can be used only once, after calling <span class="emphasis"><em>continuation::resume()</em></span>
+      or <span class="emphasis"><em>continuation::resume_with()</em></span> it is invalidated.
     </p>
 <p>
       <a class="link" href="cc.html#cc"><span class="emphasis"><em>continuation</em></span></a> is only move-constructible
@@ -124,51 +123,52 @@
       <span><a name="context.cc.usage"></a></span><a class="link" href="cc.html#context.cc.usage">Usage</a>
     </h4>
 <pre class="programlisting"><span class="keyword">namespace</span> <span class="identifier">ctx</span><span class="special">=</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">;</span>
+<span class="keyword">int</span> <span class="identifier">a</span><span class="special">;</span>
 <span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="identifier">source</span><span class="special">=</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">callcc</span><span class="special">(</span>
-    <span class="special">[](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">sink</span><span class="special">){</span>
-        <span class="keyword">int</span> <span class="identifier">a</span><span class="special">=</span><span class="number">0</span><span class="special">;</span>
+    <span class="special">[&amp;</span><span class="identifier">a</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">sink</span><span class="special">){</span>
+        <span class="identifier">a</span><span class="special">=</span><span class="number">0</span><span class="special">;</span>
         <span class="keyword">int</span> <span class="identifier">b</span><span class="special">=</span><span class="number">1</span><span class="special">;</span>
         <span class="keyword">for</span><span class="special">(;;){</span>
-            <span class="identifier">sink</span><span class="special">=</span><span class="identifier">sink</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">a</span><span class="special">);</span>
-            <span class="keyword">auto</span> <span class="identifier">next</span><span class="special">=</span><span class="identifier">a</span><span class="special">+</span><span class="identifier">b</span><span class="special">;</span>
+            <span class="identifier">sink</span><span class="special">=</span><span class="identifier">sink</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
+            <span class="keyword">int</span> <span class="identifier">next</span><span class="special">=</span><span class="identifier">a</span><span class="special">+</span><span class="identifier">b</span><span class="special">;</span>
             <span class="identifier">a</span><span class="special">=</span><span class="identifier">b</span><span class="special">;</span>
             <span class="identifier">b</span><span class="special">=</span><span class="identifier">next</span><span class="special">;</span>
         <span class="special">}</span>
         <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">sink</span><span class="special">);</span>
     <span class="special">});</span>
 <span class="keyword">for</span> <span class="special">(</span><span class="keyword">int</span> <span class="identifier">j</span><span class="special">=</span><span class="number">0</span><span class="special">;</span><span class="identifier">j</span><span class="special">&lt;</span><span class="number">10</span><span class="special">;++</span><span class="identifier">j</span><span class="special">)</span> <span class="special">{</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="identifier">source</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;()</span> <span class="special">&lt;&lt;</span> <span class="string">" "</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="identifier">a</span> <span class="special">&lt;&lt;</span> <span class="string">" "</span><span class="special">;</span>
     <span class="identifier">source</span><span class="special">=</span><span class="identifier">source</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
 <span class="special">}</span>
 
 <span class="identifier">output</span><span class="special">:</span>
-    <span class="number">0</span> <span class="number">1</span> <span class="number">1</span> <span class="number">2</span> <span class="number">3</span> <span class="number">5</span> <span class="number">8</span> <span class="number">13</span> <span class="number">21</span> <span class="number">34</span> <span class="number">55</span>
+    <span class="number">0</span> <span class="number">1</span> <span class="number">1</span> <span class="number">2</span> <span class="number">3</span> <span class="number">5</span> <span class="number">8</span> <span class="number">13</span> <span class="number">21</span> <span class="number">34</span>
 </pre>
 <p>
       This simple example demonstrates the basic usage of <span class="emphasis"><em>call/cc</em></span>
-      as a generator. The continuation <code class="computeroutput"><span class="identifier">sink</span></code>
+      as a <span class="emphasis"><em>generator</em></span>. The continuation <code class="computeroutput"><span class="identifier">sink</span></code>
       represents the <span class="emphasis"><em>main</em></span>-continuation (function <code class="computeroutput"><span class="identifier">main</span><span class="special">()</span></code>).
       <code class="computeroutput"><span class="identifier">sink</span></code> is captured (current-continuation)
-      and passed as parameter to the lambda.
+      by invoking <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a> and passed
+      as parameter to the lambda.
     </p>
 <p>
-      Because the state is invalidated (one-shot continuation) by each call of <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a>, the new state of the <a class="link" href="cc.html#cc"><span class="emphasis"><em>continuation</em></span></a>, returned by <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a>,
-      needs to be assigned to <code class="computeroutput"><span class="identifier">sink</span></code>
-      after each call.
+      Because the state is invalidated (one-shot continuation) by each call of <span class="emphasis"><em>continuation::resume()</em></span>,
+      the new state of the <a class="link" href="cc.html#cc"><span class="emphasis"><em>continuation</em></span></a>,
+      returned by <span class="emphasis"><em>continuation::resume()</em></span>, needs to be assigned
+      to <code class="computeroutput"><span class="identifier">sink</span></code> after each call.
     </p>
 <p>
       The lambda that calculates the Fibonacci numbers is executed inside the continuation
       represented by <code class="computeroutput"><span class="identifier">source</span></code>. Calculated
-      Fibonacci numbers are transferred between the two continuations' as argument
-      of <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a> (and returned by
-      <code class="computeroutput"><span class="identifier">source</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;()</span></code>).
-      Note that this example represents a <span class="emphasis"><em>generator</em></span> thus no
-      value is transferred into the lambda via <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a>.
+      Fibonacci numbers are transferred between the two continuations via variable
+      <code class="computeroutput"><span class="identifier">a</span></code> (lambda capture reference).
     </p>
 <p>
-      The locale variables <code class="computeroutput"><span class="identifier">a</span></code>, <code class="computeroutput"><span class="identifier">b</span></code> and <code class="computeroutput"> <span class="identifier">next</span></code>
-      remain their values during each context switch. This is possible due <code class="computeroutput"><span class="identifier">source</span></code> has its own stack and the stack is
-      exchanged by each context switch.
+      The locale variables <code class="computeroutput"><span class="identifier">b</span></code> and
+      <code class="computeroutput"> <span class="identifier">next</span></code> remain their values during
+      each context switch. This is possible due <code class="computeroutput"><span class="identifier">source</span></code>
+      has its own stack and the stack is exchanged by each context switch.
     </p>
 <h4>
 <a name="context.cc.h3"></a>
@@ -176,90 +176,32 @@
       passing</a>
     </h4>
 <p>
-      Calling <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a> without arguments
-      means, that no data will be transferred, only the context switch is executed.
-    </p>
-<p>
-      The arguments passed to <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a>,
-      in one continuation, are accessible via <code class="computeroutput"><span class="identifier">c</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;&gt;()</span></code> in the other continuation.
+      Data can be transferred between two continuations via global pointers, calling
+      wrappers (like <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">bind</span></code>) or lambda captures.
     </p>
 <pre class="programlisting"><span class="keyword">namespace</span> <span class="identifier">ctx</span><span class="special">=</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">;</span>
 <span class="keyword">int</span> <span class="identifier">i</span><span class="special">=</span><span class="number">1</span><span class="special">;</span>
-<span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="identifier">c1</span><span class="special">=</span><span class="identifier">callcc</span><span class="special">([](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">c2</span><span class="special">){</span>
-            <span class="keyword">int</span> <span class="identifier">j</span><span class="special">=</span><span class="identifier">c2</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;();</span>
-            <span class="identifier">std</span><span class="special">::</span><span class="identifier">printf</span><span class="special">(</span><span class="string">"inside c1,j==%d\n"</span><span class="special">,</span><span class="identifier">j</span><span class="special">);</span>
-            <span class="keyword">return</span> <span class="identifier">c2</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">j</span><span class="special">+</span><span class="number">1</span><span class="special">);</span>
-        <span class="special">},</span>
-        <span class="identifier">i</span><span class="special">);</span>
-<span class="identifier">i</span><span class="special">=</span><span class="identifier">c1</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;();</span>
+<span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="identifier">c1</span><span class="special">=</span><span class="identifier">callcc</span><span class="special">([&amp;</span><span class="identifier">i</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">c2</span><span class="special">){</span>
+            <span class="identifier">std</span><span class="special">::</span><span class="identifier">printf</span><span class="special">(</span><span class="string">"inside c1,i==%d\n"</span><span class="special">,</span><span class="identifier">i</span><span class="special">);</span>
+            <span class="identifier">i</span><span class="special">+=</span><span class="number">1</span><span class="special">;</span>
+            <span class="keyword">return</span> <span class="identifier">c2</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
+        <span class="special">});</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">printf</span><span class="special">(</span><span class="string">"i==%d\n"</span><span class="special">,</span><span class="identifier">i</span><span class="special">);</span>
 
 <span class="identifier">output</span><span class="special">:</span>
-    <span class="identifier">inside</span> <span class="identifier">c1</span><span class="special">,</span><span class="identifier">j</span><span class="special">==</span><span class="number">1</span>
+    <span class="identifier">inside</span> <span class="identifier">c1</span><span class="special">,</span><span class="identifier">i</span><span class="special">==</span><span class="number">1</span>
     <span class="identifier">i</span><span class="special">==</span><span class="number">2</span>
 </pre>
 <p>
-      <code class="computeroutput"><span class="identifier">callcc</span><span class="special">(&lt;</span><span class="identifier">lambda</span><span class="special">&gt;,</span><span class="identifier">i</span><span class="special">)</span></code> enters
-      the lambda in continuation represented by <code class="computeroutput"><span class="identifier">c1</span></code>
-      with argument <code class="computeroutput"><span class="identifier">i</span><span class="special">=</span><span class="number">1</span></code>. The expression <code class="computeroutput"><span class="identifier">c2</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">j</span><span class="special">+</span><span class="number">1</span><span class="special">)</span></code> resumes the continuation <code class="computeroutput"><span class="identifier">c2</span></code>
-      and transfers back an integer of <code class="computeroutput"><span class="identifier">j</span><span class="special">+</span><span class="number">1</span></code>. On return
-      of <code class="computeroutput"><span class="identifier">callcc</span><span class="special">(&lt;</span><span class="identifier">lambda</span><span class="special">&gt;,</span> <span class="identifier">i</span><span class="special">)</span></code>, the variable
-      <code class="computeroutput"><span class="identifier">i</span></code> gets the value of <code class="computeroutput"><span class="identifier">j</span><span class="special">+</span><span class="number">1</span></code>
-      assigned (<code class="computeroutput"><span class="identifier">i</span><span class="special">=</span><span class="identifier">c1</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;()</span></code>).
+      <code class="computeroutput"><span class="identifier">callcc</span><span class="special">(&lt;</span><span class="identifier">lambda</span><span class="special">&gt;)</span></code>
+      enters the lambda in continuation represented by <code class="computeroutput"><span class="identifier">c1</span></code>
+      with lambda capture reference <code class="computeroutput"><span class="identifier">i</span><span class="special">=</span><span class="number">1</span></code>. The expression
+      <code class="computeroutput"><span class="identifier">c2</span><span class="special">.</span><span class="identifier">resume</span><span class="special">()</span></code>
+      resumes the continuation <code class="computeroutput"><span class="identifier">c2</span></code>.
+      On return of <code class="computeroutput"><span class="identifier">callcc</span><span class="special">(&lt;</span><span class="identifier">lambda</span><span class="special">&gt;)</span></code>,
+      the variable <code class="computeroutput"><span class="identifier">i</span></code> has the value
+      of <code class="computeroutput"><span class="identifier">i</span><span class="special">+</span><span class="number">1</span></code>.
     </p>
-<p>
-      More than one argument can be transferred too.
-    </p>
-<pre class="programlisting"><span class="keyword">namespace</span> <span class="identifier">ctx</span><span class="special">=</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">;</span>
-<span class="keyword">int</span> <span class="identifier">i</span><span class="special">=</span><span class="number">2</span><span class="special">,</span><span class="identifier">j</span><span class="special">=</span><span class="number">1</span><span class="special">;</span>
-<span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="identifier">c1</span><span class="special">=</span><span class="identifier">callcc</span><span class="special">([](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">c2</span><span class="special">){</span>
-            <span class="keyword">int</span> <span class="identifier">i</span><span class="special">,</span> <span class="identifier">j</span><span class="special">;</span>
-            <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">i</span><span class="special">,</span><span class="identifier">j</span><span class="special">)=</span><span class="identifier">c2</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">,</span><span class="keyword">int</span><span class="special">&gt;();</span>
-            <span class="identifier">std</span><span class="special">::</span><span class="identifier">printf</span><span class="special">(</span><span class="string">"inside c1,i==%d,j==%d\n"</span><span class="special">,</span><span class="identifier">i</span><span class="special">,</span><span class="identifier">j</span><span class="special">);</span>
-            <span class="keyword">return</span> <span class="identifier">c2</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">i</span><span class="special">+</span><span class="identifier">j</span><span class="special">,</span><span class="identifier">i</span><span class="special">-</span><span class="identifier">j</span><span class="special">);</span>
-        <span class="special">},</span>
-        <span class="identifier">i</span><span class="special">,</span> <span class="identifier">j</span><span class="special">);</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">i</span><span class="special">,</span><span class="identifier">j</span><span class="special">)=</span><span class="identifier">c1</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">,</span><span class="keyword">int</span><span class="special">&gt;();</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">printf</span><span class="special">(</span><span class="string">"i==%d,j==%d\n"</span><span class="special">,</span><span class="identifier">i</span><span class="special">,</span><span class="identifier">j</span><span class="special">);</span>
-
-<span class="identifier">output</span><span class="special">:</span>
-    <span class="identifier">inside</span> <span class="identifier">c1</span><span class="special">,</span><span class="identifier">i</span><span class="special">==</span><span class="number">2</span><span class="special">,</span><span class="identifier">j</span><span class="special">==</span><span class="number">1</span>
-    <span class="identifier">i</span><span class="special">==</span><span class="number">3</span><span class="special">,</span><span class="identifier">j</span><span class="special">==</span><span class="number">1</span>
-</pre>
-<p>
-      For use-cases, that require to transfer data of different type:
-    </p>
-<pre class="programlisting"><span class="keyword">namespace</span> <span class="identifier">ctx</span><span class="special">=</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">;</span>
-<span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="identifier">f1</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">c</span><span class="special">)</span> <span class="special">{</span>
-    <span class="keyword">int</span> <span class="identifier">i</span><span class="special">=</span><span class="number">3</span><span class="special">;</span>
-    <span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">i</span><span class="special">);</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">s</span><span class="special">{</span> <span class="string">"abc"</span> <span class="special">};</span>
-    <span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">s</span><span class="special">);</span>
-    <span class="identifier">i</span><span class="special">=</span><span class="number">7</span><span class="special">;</span><span class="identifier">s</span><span class="special">=</span><span class="string">"xyz"</span><span class="special">;</span>
-    <span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">i</span><span class="special">,</span><span class="identifier">s</span><span class="special">);</span>
-    <span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
-    <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">c</span><span class="special">);</span>
-<span class="special">}</span>
-
-<span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="identifier">c</span><span class="special">=</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">callcc</span><span class="special">(</span><span class="identifier">f1</span><span class="special">);</span>
-<span class="keyword">int</span> <span class="identifier">i</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;();</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: returned : "</span> <span class="special">&lt;&lt;</span> <span class="identifier">i</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-<span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">s</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;();</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: returned : "</span> <span class="special">&lt;&lt;</span> <span class="identifier">s</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-<span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">i</span><span class="special">,</span><span class="identifier">s</span><span class="special">)=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span> <span class="keyword">int</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="special">&gt;();</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: returned : "</span> <span class="special">&lt;&lt;</span> <span class="identifier">i</span> <span class="special">&lt;&lt;</span> <span class="string">", "</span> <span class="special">&lt;&lt;</span> <span class="identifier">s</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-<span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">boolalpha</span><span class="special">;</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: returned data : "</span> <span class="special">&lt;&lt;</span> <span class="identifier">ctx</span><span class="special">::</span><span class="identifier">data_available</span><span class="special">(</span> <span class="identifier">c</span><span class="special">)</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-
-<span class="identifier">output</span><span class="special">:</span>
-    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">returned</span> <span class="special">:</span> <span class="number">3</span>
-    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">returned</span> <span class="special">:</span> <span class="identifier">abc</span>
-    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">returned</span> <span class="special">:</span> <span class="number">7</span><span class="special">,</span> <span class="identifier">xyz</span>
-    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">returned</span> <span class="identifier">data</span> <span class="special">:</span> <span class="keyword">false</span>
-</pre>
 <h4>
 <a name="context.cc.h4"></a>
       <span><a name="context.cc.exception_handling"></a></span><a class="link" href="cc.html#context.cc.exception_handling">Exception
@@ -287,58 +229,48 @@
     </h4>
 <p>
       Sometimes it is useful to execute a new function on top of a resumed continuation.
-      For this purpose <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a> with
-      second argument <code class="computeroutput"><span class="identifier">exec_ontop_arg</span></code>
-      has to be used. The function passed as argument must accept a rvalue reference
-      to <a class="link" href="cc.html#cc"><span class="emphasis"><em>continuation</em></span></a> and return,
-      depending on functions argument list, a tuple of its argument types, a single
-      return type or void.
+      For this purpose <span class="emphasis"><em>continuation::resume_with()</em></span> has to be
+      used. The function passed as argument must accept a rvalue reference to <a class="link" href="cc.html#cc"><span class="emphasis"><em>continuation</em></span></a> and return <code class="computeroutput"><span class="keyword">void</span></code>.
     </p>
 <pre class="programlisting"><span class="keyword">namespace</span> <span class="identifier">ctx</span><span class="special">=</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">;</span>
-<span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="identifier">f1</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">c</span><span class="special">)</span> <span class="special">{</span>
-    <span class="keyword">int</span> <span class="identifier">data</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;();</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: entered first time: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span>  <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-    <span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">);</span>
-    <span class="identifier">data</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;();</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: entered second time: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span>  <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-    <span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">);</span>
-    <span class="identifier">data</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;();</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: entered third time: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-    <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">c</span><span class="special">);</span>
-<span class="special">};</span>
-
-<span class="keyword">int</span> <span class="identifier">f2</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">c</span><span class="special">){</span>
-    <span class="keyword">int</span> <span class="identifier">data</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;(</span><span class="identifier">c</span><span class="special">);</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f2: entered: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-    <span class="keyword">return</span> <span class="identifier">data</span><span class="special">;</span>
-<span class="special">};</span>
-
-<span class="keyword">int</span> <span class="identifier">data</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span>
-<span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="identifier">c</span><span class="special">=</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">callcc</span><span class="special">(</span><span class="identifier">f1</span><span class="special">,</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">);</span>
-<span class="identifier">data</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;();</span>
+<span class="keyword">int</span> <span class="identifier">data</span><span class="special">=</span><span class="number">0</span><span class="special">;</span>
+<span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="identifier">c</span><span class="special">=</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">callcc</span><span class="special">([&amp;</span><span class="identifier">data</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">c</span><span class="special">)</span> <span class="special">{</span>
+                    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: entered first time: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
+                    <span class="identifier">data</span><span class="special">+=</span><span class="number">1</span><span class="special">;</span>
+                    <span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
+                    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: entered second time: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
+                    <span class="identifier">data</span><span class="special">+=</span><span class="number">1</span><span class="special">;</span>
+                    <span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
+                    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: entered third time: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
+                    <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">c</span><span class="special">);</span>
+                <span class="special">});</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: returned first time: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-<span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">);</span>
-<span class="identifier">data</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;();</span>
+<span class="identifier">data</span><span class="special">+=</span><span class="number">1</span><span class="special">;</span>
+<span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: returned second time: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-<span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume_with</span><span class="special">(</span><span class="identifier">f2</span><span class="special">,-</span><span class="number">1</span><span class="special">);</span>
+<span class="identifier">data</span><span class="special">+=</span><span class="number">1</span><span class="special">;</span>
+<span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume_with</span><span class="special">([&amp;</span><span class="identifier">data</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">c</span><span class="special">){</span>
+                    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f2: entered: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
+                    <span class="identifier">data</span><span class="special">=-</span><span class="number">1</span><span class="special">;</span>
+                <span class="special">});</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: returned third time"</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
 
 <span class="identifier">output</span><span class="special">:</span>
-    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">entered</span> <span class="identifier">first</span> <span class="identifier">time</span><span class="special">:</span> <span class="number">1</span>
-    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">returned</span> <span class="identifier">first</span> <span class="identifier">time</span><span class="special">:</span> <span class="number">2</span>
-    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">entered</span> <span class="identifier">second</span> <span class="identifier">time</span><span class="special">:</span> <span class="number">3</span>
-    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">returned</span> <span class="identifier">second</span> <span class="identifier">time</span><span class="special">:</span> <span class="number">4</span>
-    <span class="identifier">f2</span><span class="special">:</span> <span class="identifier">entered</span><span class="special">:</span> <span class="special">-</span><span class="number">1</span>
+    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">entered</span> <span class="identifier">first</span> <span class="identifier">time</span><span class="special">:</span> <span class="number">0</span>
+    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">returned</span> <span class="identifier">first</span> <span class="identifier">time</span><span class="special">:</span> <span class="number">1</span>
+    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">entered</span> <span class="identifier">second</span> <span class="identifier">time</span><span class="special">:</span> <span class="number">2</span>
+    <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">returned</span> <span class="identifier">second</span> <span class="identifier">time</span><span class="special">:</span> <span class="number">3</span>
+    <span class="identifier">f2</span><span class="special">:</span> <span class="identifier">entered</span><span class="special">:</span> <span class="number">4</span>
     <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">entered</span> <span class="identifier">third</span> <span class="identifier">time</span><span class="special">:</span> <span class="special">-</span><span class="number">1</span>
     <span class="identifier">f1</span><span class="special">:</span> <span class="identifier">returned</span> <span class="identifier">third</span> <span class="identifier">time</span>
 </pre>
 <p>
-      The expression <code class="computeroutput"><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume_with</span><span class="special">(</span><span class="identifier">f2</span><span class="special">,-</span><span class="number">1</span><span class="special">)</span></code> executes <code class="computeroutput"><span class="identifier">f2</span><span class="special">()</span></code> on top of continuation <code class="computeroutput"><span class="identifier">c</span></code>,
-      e.g. an additional stack frame is allocated on top of the stack (in front of
-      <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>).
-      <code class="computeroutput"><span class="identifier">f2</span><span class="special">()</span></code>
-      returns argument <code class="computeroutput"><span class="special">-</span><span class="number">1</span></code>
-      that will returned by the second invocation of <code class="computeroutput"><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">)</span></code> in <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>.
+      The expression <code class="computeroutput"><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume_with</span><span class="special">(...)</span></code>
+      executes a lambda on top of continuation <code class="computeroutput"><span class="identifier">c</span></code>,
+      e.g. an additional stack frame is allocated on top of the stack. This lambda
+      assigns <code class="computeroutput"><span class="special">-</span><span class="number">1</span></code>
+      to <code class="computeroutput"><span class="identifier">data</span></code> and returns to the
+      second invocation of <code class="computeroutput"><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume</span><span class="special">()</span></code>.
     </p>
 <p>
       Another option is to execute a function on top of the continuation that throws
@@ -400,7 +332,7 @@
 </tr>
 <tr><td align="left" valign="top"><p>
         Code executed by <span class="emphasis"><em>context-function</em></span> must not prevent the
-        propagation of the <span class="emphasis"><em>detail::forced_unwind</em></span> exception.
+        propagation ofs the <span class="emphasis"><em>detail::forced_unwind</em></span> exception.
         Absorbing that exception will cause stack unwinding to fail. Thus, any code
         that catches all exceptions must re-throw any pending <span class="emphasis"><em>detail::forced_unwind</em></span>
         exception.
@@ -538,21 +470,25 @@
 <span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="identifier">source</span><span class="special">;</span>
 <span class="comment">// user-code pulls parsed data from parser</span>
 <span class="comment">// invert control flow</span>
+<span class="keyword">char</span> <span class="identifier">c</span><span class="special">;</span>
+<span class="keyword">bool</span> <span class="identifier">done</span><span class="special">=</span><span class="keyword">false</span><span class="special">;</span>
 <span class="identifier">source</span><span class="special">=</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">callcc</span><span class="special">(</span>
-        <span class="special">[&amp;</span><span class="identifier">is</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">sink</span><span class="special">){</span>
+        <span class="special">[&amp;</span><span class="identifier">is</span><span class="special">,&amp;</span><span class="identifier">c</span><span class="special">,&amp;</span><span class="identifier">done</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">sink</span><span class="special">){</span>
         <span class="comment">// create parser with callback function</span>
         <span class="identifier">Parser</span> <span class="identifier">p</span><span class="special">(</span><span class="identifier">is</span><span class="special">,</span>
-                 <span class="special">[&amp;</span><span class="identifier">sink</span><span class="special">](</span><span class="keyword">char</span> <span class="identifier">c</span><span class="special">){</span>
-                       <span class="comment">// resume main continuation</span>
-                       <span class="identifier">sink</span><span class="special">=</span><span class="identifier">sink</span><span class="special">.</span><span class="identifier">resume</span><span class="special">(</span><span class="identifier">c</span><span class="special">);</span>
+                 <span class="special">[&amp;</span><span class="identifier">sink</span><span class="special">,&amp;</span><span class="identifier">c</span><span class="special">](</span><span class="keyword">char</span> <span class="identifier">c_</span><span class="special">){</span>
+                    <span class="comment">// resume main continuation</span>
+                    <span class="identifier">c</span><span class="special">=</span><span class="identifier">c_</span><span class="special">;</span>
+                    <span class="identifier">sink</span><span class="special">=</span><span class="identifier">sink</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
                  <span class="special">});</span>
             <span class="comment">// start recursive parsing</span>
             <span class="identifier">p</span><span class="special">.</span><span class="identifier">run</span><span class="special">();</span>
+            <span class="comment">// signal termination</span>
+            <span class="identifier">done</span><span class="special">=</span><span class="keyword">true</span><span class="special">;</span>
             <span class="comment">// resume main continuation</span>
             <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">sink</span><span class="special">);</span>
         <span class="special">});</span>
-<span class="keyword">while</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">data_available</span><span class="special">(</span><span class="identifier">source</span><span class="special">)){</span>
-    <span class="keyword">char</span> <span class="identifier">c</span><span class="special">=</span><span class="identifier">source</span><span class="special">.</span><span class="identifier">get_data</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">&gt;();</span>
+<span class="keyword">while</span><span class="special">(!</span><span class="identifier">done</span><span class="special">){</span>
     <span class="identifier">printf</span><span class="special">(</span><span class="string">"Parsed: %c\n"</span><span class="special">,</span><span class="identifier">c</span><span class="special">);</span>
     <span class="identifier">source</span><span class="special">=</span><span class="identifier">source</span><span class="special">.</span><span class="identifier">resume</span><span class="special">();</span>
 <span class="special">}</span>

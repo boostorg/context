@@ -23,8 +23,6 @@ int main() {
     std::cout << "f1: returned first time" << std::endl;
     c = c.resume();
     std::cout << "f1: returned second time" << std::endl;
-
     std::cout << "main: done" << std::endl;
-
     return EXIT_SUCCESS;
 }
