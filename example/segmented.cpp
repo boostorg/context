@@ -31,7 +31,7 @@ void bar( int i) {
 }
 
 int main() {
-    int count = 384;
+    int count = 100*1024;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
     std::cout << "using segmented_stack stacks: allocates " << count << " * 4kB == " << 4 * count << "kB on stack, ";
     std::cout << "initial stack size = " << boost::context::segmented_stack::traits_type::default_size() / 1024 << "kB" << std::endl;

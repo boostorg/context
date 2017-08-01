@@ -26,12 +26,12 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 
-#if defined(BOOST_NO_CXX17_STD_APPLY)
-#include <boost/context/detail/apply.hpp>
-#endif
 #include <boost/context/detail/disable_overload.hpp>
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
 #include <boost/context/detail/exchange.hpp>
+#endif
+#if defined(BOOST_NO_CXX17_STD_INVOKE)
+#include <boost/context/detail/invoke.hpp>
 #endif
 #include <boost/context/fixedsize_stack.hpp>
 #include <boost/context/flags.hpp>
@@ -51,22 +51,6 @@ namespace boost {
 namespace context {
 namespace detail {
 
-template< typename U >
-struct helper {
-    template< typename T >
-    static T convert( T && t) noexcept {
-        return std::forward< T >( t);
-    }
-};
-
-template< typename U >
-struct helper< std::tuple< U > > {
-    template< typename T >
-    static std::tuple< T > convert( T && t) noexcept {
-        return std::make_tuple( std::forward< T >( t) );
-    }
-};
-
 // tampoline function
 // entered if the execution context
 // is resumed for the first time
@@ -81,14 +65,13 @@ static VOID WINAPI entry_func( LPVOID data) noexcept {
 struct BOOST_CONTEXT_DECL activation_record {
     thread_local static activation_record   *   current_rec;
 
-    LPVOID                      fiber{ nullptr };
-    stack_context               sctx{};
-    bool                        main_ctx{ true };
-    void                    *   data{ nullptr };
-    activation_record       *   from{ nullptr };
-    std::function< void() >     ontop{};
-    bool                        terminated{ false };
-    bool                        force_unwind{ false };
+    LPVOID                                      fiber{ nullptr };
+    stack_context                               sctx{};
+    bool                                        main_ctx{ true };
+    activation_record                       *   from{ nullptr };
+    std::function< void(activation_record*&) >  ontop{};
+    bool                                        terminated{ false };
+    bool                                        force_unwind{ false };
 
     static activation_record *& current() noexcept;
 
@@ -133,10 +116,8 @@ struct BOOST_CONTEXT_DECL activation_record {
         return main_ctx;
     }
 
-    activation_record * resume( void * vp) {
-        data = vp;
+    activation_record * resume() {
         from = current();
-        from->data = nullptr;
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
         current() = this;
@@ -150,59 +131,31 @@ struct BOOST_CONTEXT_DECL activation_record {
 #endif
     }
 
-    template< typename Ctx, typename Fn, typename Tpl >
-    activation_record * resume_with( Fn && fn, Tpl * tpl) {
-        data = nullptr;
-        from = current();
-        from->data = nullptr;
-        // store `this` in static, thread local pointer
-        // `this` will become the active (running) context
-        // returned by continuation::current()
-        current() = this;
-#if defined(BOOST_NO_CXX14_GENERIC_LAMBDAS)
-        auto from_ = current()->from;
-        current()->ontop = std::bind(
-                [tpl,from_](typename std::decay< Fn >::type & fn){
-                    current()->data = tpl;
-                    * tpl = helper< Tpl >::convert( fn( Ctx{ from_ } ) );
-                },
-                std::forward< Fn >( fn) );
-#else
-        current()->ontop = [fn=std::forward<Fn>(fn),tpl,from=current()->from]() {
-            current()->data = tpl;
-            * tpl = helper< Tpl >::convert( fn( Ctx{ from } ) );
-        };
-#endif
-        // context switch
-        ::SwitchToFiber( fiber);
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        return detail::exchange( current()->from, nullptr);
-#else
-        return std::exchange( current()->from, nullptr);
-#endif
-    }
-
     template< typename Ctx, typename Fn >
     activation_record * resume_with( Fn && fn) {
-        data = nullptr;
         from = current();
-        from->data = nullptr;
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
         // returned by continuation::current()
         current() = this;
 #if defined(BOOST_NO_CXX14_GENERIC_LAMBDAS)
-        auto from_ = current()->from;
         current()->ontop = std::bind(
-                [from_](typename std::decay< Fn >::type & fn){
-                    fn( Ctx{ from_ } );
-                    current()->data = nullptr;
+                [](typename std::decay< Fn >::type & fn, activation_record *& ptr){
+                    Ctx c{ ptr };
+                    fn( std::move( c) );
+                    if ( ! c) {
+                        ptr = nullptr;
+                    }
                 },
-                std::forward< Fn >( fn) );
+                std::forward< Fn >( fn),
+                std::placeholders::_1);
 #else
-        current()->ontop = [fn=std::forward<Fn>(fn),from=current()->from]() {
-            fn( Ctx{ from } );
-            current()->data = nullptr;
+        current()->ontop = [fn=std::forward<Fn>(fn)](activation_record *& ptr){
+            Ctx c{ ptr };
+            fn( std::move( c) );
+            if ( ! c) {
+                ptr = nullptr;
+            }
         };
 #endif
         // context switch
@@ -231,12 +184,11 @@ struct forced_unwind {
     }
 };
 
-template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
+template< typename Ctx, typename StackAlloc, typename Fn >
 class capture_record : public activation_record {
 private:
     StackAlloc                                          salloc_;
     typename std::decay< Fn >::type                     fn_;
-    std::tuple< Arg ... >                               arg_;
 
     static void destroy( capture_record * p) noexcept {
         StackAlloc salloc = p->salloc_;
@@ -248,12 +200,10 @@ private:
     }
 
 public:
-    capture_record( stack_context sctx, StackAlloc salloc,
-                    Fn && fn, Arg ... arg) noexcept :
+    capture_record( stack_context sctx, StackAlloc salloc, Fn && fn) noexcept :
         activation_record( sctx),
         salloc_( salloc),
-        fn_( std::forward< Fn >( fn) ),
-        arg_( std::forward< Arg >( arg) ... ) {
+        fn_( std::forward< Fn >( fn) ) {
     }
 
     void deallocate() noexcept override final {
@@ -263,21 +213,17 @@ public:
 
     void run() {
         Ctx c{ from };
-        auto tpl = std::tuple_cat(
-                    std::forward_as_tuple( std::move( c) ),
-                    std::move( arg_) );
         try {
             // invoke context-function
-#if defined(BOOST_NO_CXX17_STD_APPLY)
-            c = apply( std::move( fn_), std::move( tpl) );
+#if defined(BOOST_NO_CXX17_STD_INVOKE)
+            c = invoke( fn_, std::move( c) );
 #else
-            c = std::apply( std::move( fn_), std::move( tpl) );
+            c = std::invoke( fn_, std::move( c) );
 #endif  
         } catch ( forced_unwind const& ex) {
             c = Ctx{ ex.from };
         }
         // this context has finished its task
-        data = nullptr;
         from = nullptr;
         ontop = nullptr;
         terminated = true;
@@ -287,9 +233,9 @@ public:
     }
 };
 
-template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-static activation_record * create_context1( StackAlloc salloc, Fn && fn, Arg ... arg) {
-    typedef capture_record< Ctx, StackAlloc, Fn, Arg ... >  capture_t;
+template< typename Ctx, typename StackAlloc, typename Fn >
+static activation_record * create_context1( StackAlloc salloc, Fn && fn) {
+    typedef capture_record< Ctx, StackAlloc, Fn >  capture_t;
 
     auto sctx = salloc.allocate();
     BOOST_ASSERT( ( sizeof( capture_t) ) < sctx.size);
@@ -299,16 +245,15 @@ static activation_record * create_context1( StackAlloc salloc, Fn && fn, Arg ...
             & ~ static_cast< uintptr_t >( 0xff) );
     // placment new for control structure on context stack
     capture_t * record = new ( storage) capture_t{
-            sctx, salloc, std::forward< Fn >( fn), std::forward< Arg >( arg) ... };
+            sctx, salloc, std::forward< Fn >( fn) };
     // create user-context
     record->fiber = ::CreateFiber( sctx.size, & detail::entry_func< capture_t >, record);
     return record;
 }
 
-template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-static activation_record * create_context2( preallocated palloc, StackAlloc salloc,
-                                                Fn && fn, Arg ... arg) {
-    typedef capture_record< Ctx, StackAlloc, Fn, Arg ... >  capture_t; 
+template< typename Ctx, typename StackAlloc, typename Fn >
+static activation_record * create_context2( preallocated palloc, StackAlloc salloc, Fn && fn) {
+    typedef capture_record< Ctx, StackAlloc, Fn >  capture_t; 
 
     BOOST_ASSERT( ( sizeof( capture_t) ) < palloc.size);
     // reserve space for control structure
@@ -317,33 +262,11 @@ static activation_record * create_context2( preallocated palloc, StackAlloc sall
             & ~ static_cast< uintptr_t >( 0xff) );
     // placment new for control structure on context stack
     capture_t * record = new ( storage) capture_t{
-            palloc.sctx, salloc, std::forward< Fn >( fn), std::forward< Arg >( arg) ... };
+            palloc.sctx, salloc, std::forward< Fn >( fn) };
     // create user-context
     record->fiber = ::CreateFiber( palloc.sctx.size, & detail::entry_func< capture_t >, record);
     return record;
 }
-
-template< typename ... Arg >
-struct result_type {
-    typedef std::tuple< Arg ... >   type;
-
-    static
-    type get( void * data) {
-        auto p = static_cast< std::tuple< Arg ... > * >( data);
-        return std::move( * p);
-    }
-};
-
-template< typename Arg >
-struct result_type< Arg > {
-    typedef Arg     type; 
-
-    static
-    type get( void * data) {
-        auto p = static_cast< std::tuple< Arg > * >( data);
-        return std::forward< Arg >( std::get< 0 >( * p) );
-    }
-};
 
 }
 
@@ -351,22 +274,14 @@ class BOOST_CONTEXT_DECL continuation {
 private:
     friend struct detail::activation_record;
 
-    template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
+    template< typename Ctx, typename StackAlloc, typename Fn >
     friend class detail::capture_record;
 
-    template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-    friend detail::activation_record * detail::create_context1( StackAlloc, Fn &&, Arg ...);
+    template< typename Ctx, typename StackAlloc, typename Fn >
+    friend detail::activation_record * detail::create_context1( StackAlloc, Fn &&);
 
-    template< typename Ctx, typename StackAlloc, typename Fn, typename ... Arg >
-    friend detail::activation_record * detail::create_context2( preallocated, StackAlloc, Fn &&, Arg ...);
-
-    template< typename StackAlloc, typename Fn, typename ... Arg >
-    friend continuation
-    callcc( std::allocator_arg_t, StackAlloc, Fn &&, Arg ...);
-
-    template< typename StackAlloc, typename Fn, typename ... Arg >
-    friend continuation
-    callcc( std::allocator_arg_t, preallocated, StackAlloc, Fn &&, Arg ...);
+    template< typename Ctx, typename StackAlloc, typename Fn >
+    friend detail::activation_record * detail::create_context2( preallocated, StackAlloc, Fn &&);
 
     template< typename StackAlloc, typename Fn >
     friend continuation
@@ -389,7 +304,7 @@ public:
         if ( BOOST_UNLIKELY( nullptr != ptr_) && ! ptr_->main_ctx) {
             if ( BOOST_LIKELY( ! ptr_->terminated) ) {
                 ptr_->force_unwind = true;
-                ptr_->resume( nullptr);
+                ptr_->resume();
                 BOOST_ASSERT( ptr_->terminated);
             }
             ptr_->deallocate();
@@ -405,58 +320,23 @@ public:
     }
 
     continuation & operator=( continuation && other) noexcept {
-        if ( BOOST_UNLIKELY( this == & other) ) return * this;
-        continuation tmp{ std::move( other) };
-        swap( tmp);
+        if ( BOOST_LIKELY( this != & other) ) {
+            ptr_ = other.ptr_;
+            other.ptr_ = nullptr;
+        }
         return * this;
-    }
-
-    template< typename ... Arg >
-    continuation resume( Arg ... arg) {
-        auto tpl = std::make_tuple( std::forward< Arg >( arg) ... );
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        detail::activation_record * ptr = detail::exchange( ptr_, nullptr)->resume( & tpl);
-#else
-        detail::activation_record * ptr = std::exchange( ptr_, nullptr)->resume( & tpl);
-#endif
-        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
-            throw detail::forced_unwind{ ptr};
-        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
-            detail::activation_record::current()->ontop();
-            detail::activation_record::current()->ontop = nullptr;
-        }
-        return continuation{ ptr };
-    }
-    
-    template< typename Fn, typename ... Arg >
-    continuation resume_with( Fn && fn, Arg ... arg) {
-        auto tpl = std::make_tuple( std::forward< Arg >( arg) ... );
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        detail::activation_record * ptr =
-            detail::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn), & tpl);
-#else
-        detail::activation_record * ptr =
-            std::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn), & tpl);
-#endif
-        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
-            throw detail::forced_unwind{ ptr};
-        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
-            detail::activation_record::current()->ontop();
-            detail::activation_record::current()->ontop = nullptr;
-        }
-        return continuation{ ptr };
     }
 
     continuation resume() {
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        detail::activation_record * ptr = detail::exchange( ptr_, nullptr)->resume( nullptr);
+        detail::activation_record * ptr = detail::exchange( ptr_, nullptr)->resume();
 #else
-        detail::activation_record * ptr = std::exchange( ptr_, nullptr)->resume( nullptr);
+        detail::activation_record * ptr = std::exchange( ptr_, nullptr)->resume();
 #endif
         if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
         } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
-            detail::activation_record::current()->ontop();
+            detail::activation_record::current()->ontop( ptr);
             detail::activation_record::current()->ontop = nullptr;
         }
         return continuation{ ptr };
@@ -474,20 +354,10 @@ public:
         if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
         } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
-            detail::activation_record::current()->ontop();
+            detail::activation_record::current()->ontop( ptr);
             detail::activation_record::current()->ontop = nullptr;
         }
         return continuation{ ptr };
-    }
-
-    bool data_available() noexcept {
-        return * this && nullptr != detail::activation_record::current()->data;
-    }
-
-    template< typename ... Arg >
-    typename detail::result_type< Arg ... >::type get_data() {
-        BOOST_ASSERT( data_available() );;
-        return detail::result_type< Arg ... >::get( detail::activation_record::current()->data);
     }
 
     explicit operator bool() const noexcept {
@@ -537,48 +407,6 @@ public:
     }
 };
 
-// Arg
-template<
-    typename Fn,
-    typename ... Arg,
-    typename = detail::disable_overload< continuation, Fn >,
-    typename = detail::disable_overload< std::allocator_arg_t, Fn >
->
-continuation
-callcc( Fn && fn, Arg ... arg) {
-    return callcc(
-            std::allocator_arg,
-            fixedsize_stack(),
-            std::forward< Fn >( fn), std::forward< Arg >( arg) ...);
-}
-
-template<
-    typename StackAlloc,
-    typename Fn,
-    typename ... Arg
->
-continuation
-callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Arg ... arg) {
-    return continuation{
-        detail::create_context1< continuation >(
-                salloc, std::forward< Fn >( fn) ) }.resume(
-                    std::forward< Arg >( arg) ... );
-}
-
-template<
-    typename StackAlloc,
-    typename Fn,
-    typename ... Arg
->
-continuation
-callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Arg ... arg) {
-    return continuation{
-        detail::create_context2< continuation >(
-                palloc, salloc, std::forward< Fn >( fn) ) }.resume(
-                    std::forward< Arg >( arg) ... );
-}
-
-// void
 template<
     typename Fn,
     typename = detail::disable_overload< continuation, Fn >

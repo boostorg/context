@@ -30,16 +30,16 @@ exe stack
     : stack.cpp
     ;
 
-exe resume_with_single
-    : resume_with_single.cpp
-    ;
-
-exe resume_with_tuple
-    : resume_with_tuple.cpp
-    ;
-
 exe jump_void
     : jump_void.cpp
+    ;
+
+exe jump
+    : jump.cpp
+    ;
+
+exe jump_mov
+    : jump_mov.cpp
     ;
 
 exe ontop_void
@@ -48,18 +48,6 @@ exe ontop_void
 
 exe throw
     : throw.cpp
-    ;
-
-exe jump
-    : jump.cpp
-    ;
-
-exe jump_ref
-    : jump_ref.cpp
-    ;
-
-exe jump_mov
-    : jump_mov.cpp
     ;
 
 exe fibonacci
@@ -72,10 +60,6 @@ exe parser
 
 exe ontop
     : ontop.cpp
-    ;
-
-exe types
-    : types.cpp
     ;
 
 exe endless_loop

@@ -38,6 +38,17 @@
         switch takes two magnitudes of order less CPU cycles; see section <a class="link" href="../performance.html#performance"><span class="emphasis"><em>performance</em></span></a>)
         and <span class="emphasis"><em>WinFiber</em></span>.
       </p>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../../doc/src/images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          Because the TIB (thread information block on Windows) is not fully described
+          in the MSDN, it might be possible that not all required TIB-parts are swapped.
+          Using WinFiber implementation migh be an alternative.
+        </p></td></tr>
+</table></div>
 <h5>
 <a name="context.cc.implementations__fcontext_t__ucontext_t_and_winfiber.h1"></a>
         <span><a name="context.cc.implementations__fcontext_t__ucontext_t_and_winfiber.ucontext_t"></a></span><a class="link" href="implementations__fcontext_t__ucontext_t_and_winfiber.html#context.cc.implementations__fcontext_t__ucontext_t_and_winfiber.ucontext_t">ucontext_t</a>
@@ -68,10 +79,6 @@
         With <code class="computeroutput"><span class="identifier">BOOST_USE_WINFIB</span></code> and
         b2 property <code class="computeroutput"><span class="identifier">context</span><span class="special">-</span><span class="identifier">impl</span><span class="special">=</span><span class="identifier">winfib</span></code>
         Win32-Fibers are used as implementation for <a class="link" href="../cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a>.
-      </p>
-<p>
-        Because the TIB (thread information block) is not fully described in the
-        MSDN, it might be possible that not all required TIB-parts are swapped.
       </p>
 <div class="note"><table border="0" summary="Note">
 <tr>

@@ -39,9 +39,9 @@ The current continuation is suspended and passed as argument to the resumed
 continuation.
 
 __cc__ expects a __context_fn__ with signature
-`'continuation(continuation && c, Arg ...arg)'`. The parameter `c`
-represents the current continuation from which this continuation was resumed
-(e.g. that has called __cc__) and `arg` are the data passed to __cc__.
+`'continuation(continuation && c)'`. The parameter `c` represents the current
+continuation from which this continuation was resumed (e.g. that has called
+__cc__).
 
 On return the __context_fn__ of the current continuation has to specify an
 __con__ to which the execution control is transferred after termination
@@ -56,13 +56,12 @@ deallocated via the __stack_allocator__.
 [link implementation ['ucontext_t]].]
 
 
-
 [heading __con__]
 
 __con__ represents a continuation; it contains the content of preserved
 registers and manages the associated stack (allocation/deallocation).
-__con__ s a one-shot continuation - it can be used only once, after applied to
-__cc__ it is invalidated.
+__con__ is a one-shot continuation - it can be used only once, after calling
+__resume__ or __resume_with__ it is invalidated.
 
 __con__ is  only move-constructible and move-assignable.
 
@@ -75,126 +74,72 @@ A continuation is continued by calling `resume()`/`resume_with()`.
 [heading Usage]
 
         namespace ctx=boost::context;
+        int a;
         ctx::continuation source=ctx::callcc(
-            [](ctx::continuation && sink){
-                int a=0;
+            [&a](ctx::continuation && sink){
+                a=0;
                 int b=1;
                 for(;;){
-                    sink=sink.resume(a);
-                    auto next=a+b;
+                    sink=sink.resume();
+                    int next=a+b;
                     a=b;
                     b=next;
                 }
                 return std::move(sink);
             });
         for (int j=0;j<10;++j) {
-            std::cout << source.get_data<int>() << " ";
+            std::cout << a << " ";
             source=source.resume();
         }
 
         output:
-            0 1 1 2 3 5 8 13 21 34 55
+            0 1 1 2 3 5 8 13 21 34
 
-This simple example demonstrates the basic usage of __callcc__ as a generator.
+This simple example demonstrates the basic usage of __callcc__ as a ['generator].
 The continuation `sink` represents the ['main]-continuation (function `main()`).
-`sink` is captured (current-continuation) and passed as parameter to the lambda.
+`sink` is captured (current-continuation) by invoking __cc__ and passed as
+parameter to the lambda.
 
-Because the state is invalidated (one-shot continuation) by each call of __cc__,
-the new state of the __con__, returned by __cc__, needs to be assigned to `sink`
-after each call.
+Because the state is invalidated (one-shot continuation) by each call of
+__resume__, the new state of the __con__, returned by __resume__, needs to be
+assigned to `sink` after each call.
 
-The lambda that calculates the Fibonacci numbers is executed inside
-the continuation represented by `source`. Calculated Fibonacci numbers are
-transferred between the two continuations' as argument of __cc__ (and returned
-by `source.get_data<int>()`). Note that this example represents a ['generator]
-thus no value is transferred into the lambda via __cc__.
+The lambda that calculates the Fibonacci numbers is executed inside the
+continuation represented by `source`. Calculated Fibonacci numbers are
+transferred between the two continuations via variable `a` (lambda capture
+reference).
 
-The locale variables `a`, `b` and ` next` remain their values during each
-context switch. This is possible due `source` has its own stack
-and the stack is exchanged by each context switch.
+The locale variables `b` and ` next` remain their values during each context
+switch. This is possible due `source` has its own stack and the stack is
+exchanged by each context switch.
 
 
 [heading Parameter passing]
-Calling __cc__ without arguments means, that no data will be transferred, only
-the context switch is executed.
 
-The arguments passed to __cc__, in one continuation, are accessible via
-`c.get_data<>()` in the other continuation.
+Data can be transferred between two continuations via global pointers,
+calling wrappers (like `std::bind`) or lambda captures.
 
     namespace ctx=boost::context;
     int i=1;
-    ctx::continuation c1=callcc([](ctx::continuation && c2){
-                int j=c2.get_data<int>();
-                std::printf("inside c1,j==%d\n",j);
-                return c2.resume(j+1);
-            },
-            i);
-    i=c1.get_data<int>();
+    ctx::continuation c1=callcc([&i](ctx::continuation && c2){
+                std::printf("inside c1,i==%d\n",i);
+                i+=1;
+                return c2.resume();
+            });
     std::printf("i==%d\n",i);
 
     output:
-        inside c1,j==1
+        inside c1,i==1
         i==2
 
-`callcc(<lambda>,i)` enters the lambda in continuation represented by `c1` with
-argument `i=1`.
-The expression `c2.resume(j+1)` resumes the continuation `c2` and
-transfers back an integer of `j+1`. On return of `callcc(<lambda>, i)`, the
-variable `i` gets the value of `j+1` assigned (`i=c1.get_data<int>()`).
-
-More than one argument can be transferred too.
-
-    namespace ctx=boost::context;
-    int i=2,j=1;
-    ctx::continuation c1=callcc([](ctx::continuation && c2){
-                int i, j;
-                std::tie(i,j)=c2.get_data<int,int>();
-                std::printf("inside c1,i==%d,j==%d\n",i,j);
-                return c2.resume(i+j,i-j);
-            },
-            i, j);
-    std::tie(i,j)=c1.get_data<int,int>();
-    std::printf("i==%d,j==%d\n",i,j);
-
-    output:
-        inside c1,i==2,j==1
-        i==3,j==1
-
-For use-cases, that require to transfer data of different type:
-
-    namespace ctx=boost::context;
-    ctx::continuation f1(ctx::continuation && c) {
-        int i=3;
-        c=c.resume(i);
-        std::string s{ "abc" };
-        c=c.resume(s);
-        i=7;s="xyz";
-        c=c.resume(i,s);
-        c=c.resume();
-        return std::move(c);
-    }
-
-    ctx::continuation c=ctx::callcc(f1);
-    int i=c.get_data<int>();
-    std::cout << "f1: returned : " << i << std::endl;
-    c=c.resume();
-    std::string s=c.get_data<std::string>();
-    std::cout << "f1: returned : " << s << std::endl;
-    c=c.resume();
-    std::tie(i,s)=c.get_data< int, std::string >();
-    std::cout << "f1: returned : " << i << ", " << s << std::endl;
-    c=c.resume();
-    std::cout << std::boolalpha;
-    std::cout << "f1: returned data : " << ctx::data_available( c) << std::endl;
-
-    output:
-        f1: returned : 3
-        f1: returned : abc
-        f1: returned : 7, xyz
-        f1: returned data : false
+`callcc(<lambda>)` enters the lambda in continuation represented by `c1` with
+lambda capture reference `i=1`.
+The expression `c2.resume()` resumes the continuation `c2`.
+On return of `callcc(<lambda>)`, the variable `i` has the value of `i+1`.
 
 
 [heading Exception handling]
+
 If the function executed inside a __context_fn__ emits ans exception, the
 application is terminated by calling `std::terminate()`. `std::exception_ptr`
 can be used to transfer exceptions between different continuations.
@@ -202,57 +147,52 @@ can be used to transfer exceptions between different continuations.
 [important Do not jump from inside a catch block and then re-throw the exception
 in another continuation.]
 
+
 [#cc_ontop]
 [heading Executing function on top of a continuation]
+
 Sometimes it is useful to execute a new function on top of a resumed
-continuation. For this purpose __cc__ with second argument `exec_ontop_arg` has
-to be used.
-The function passed as argument must accept a rvalue reference to __con__ and return,
-depending on functions argument list, a tuple of its argument types, a single
-return type or void.
+continuation. For this purpose __resume_with__ has to be used.
+The function passed as argument must accept a rvalue reference to __con__ and
+return `void`.
 
     namespace ctx=boost::context;
-    ctx::continuation f1(ctx::continuation && c) {
-        int data=c.get_data<int>();
-        std::cout << "f1: entered first time: " << data  << std::endl;
-        c=c.resume(data+1);
-        data=c.get_data<int>();
-        std::cout << "f1: entered second time: " << data  << std::endl;
-        c=c.resume(data+1);
-        data=c.get_data<int>();
-        std::cout << "f1: entered third time: " << data << std::endl;
-        return std::move(c);
-    };
-
-    int f2(ctx::continuation && c){
-        int data=c.get_data<int>(c);
-        std::cout << "f2: entered: " << data << std::endl;
-        return data;
-    };
-
-    int data = 0;
-    ctx::continuation c=ctx::callcc(f1,data+1);
-    data=c.get_data<int>();
+    int data=0;
+    ctx::continuation c=ctx::callcc([&data](ctx::continuation && c) {
+                        std::cout << "f1: entered first time: " << data << std::endl;
+                        data+=1;
+                        c=c.resume();
+                        std::cout << "f1: entered second time: " << data << std::endl;
+                        data+=1;
+                        c=c.resume();
+                        std::cout << "f1: entered third time: " << data << std::endl;
+                        return std::move(c);
+                    });
     std::cout << "f1: returned first time: " << data << std::endl;
-    c=c.resume(data+1);
-    data=c.get_data<int>();
+    data+=1;
+    c=c.resume();
     std::cout << "f1: returned second time: " << data << std::endl;
-    c=c.resume_with(f2,-1);
+    data+=1;
+    c=c.resume_with([&data](ctx::continuation && c){
+                        std::cout << "f2: entered: " << data << std::endl;
+                        data=-1;
+                    });
     std::cout << "f1: returned third time" << std::endl;
 
     output:
-        f1: entered first time: 1
-        f1: returned first time: 2
-        f1: entered second time: 3
-        f1: returned second time: 4
-        f2: entered: -1
+        f1: entered first time: 0
+        f1: returned first time: 1
+        f1: entered second time: 2
+        f1: returned second time: 3
+        f2: entered: 4
         f1: entered third time: -1
         f1: returned third time
 
-The expression `c.resume_with(f2,-1)` executes
-`f2()` on top of continuation `c`, e.g. an additional stack frame is allocated
-on top of the stack (in front of `f1()`). `f2()` returns argument `-1` that will
-returned by the second invocation of `c.resume(data+1)` in `f1()`.
+
+The expression `c.resume_with(...)` executes a lambda on top of continuation
+`c`, e.g. an additional stack frame is allocated on top of the stack.
+This lambda assigns `-1` to `data` and returns to the second invocation of
+`c.resume()`.
 
 Another option is to execute a function on top of the continuation that throws
 an exception.
@@ -297,8 +237,8 @@ If the __context_fn__ has not yet returned and the destructor of an valid
 __con__ instance (e.g. ['continuation::operator bool()] returns
 `true`) is called, the stack will be destructed too.
 
-[important Code executed by __context_fn__ must not prevent the propagation of the
-__forced_unwind__ exception.  Absorbing that exception will cause stack
+[important Code executed by __context_fn__ must not prevent the propagation ofs
+the __forced_unwind__ exception.  Absorbing that exception will cause stack
 unwinding to fail.  Thus, any code that catches all exceptions must re-throw any
 pending __forced_unwind__ exception.]
 
@@ -421,21 +361,25 @@ of the stack.]
     ctx::continuation source;
     // user-code pulls parsed data from parser
     // invert control flow
+    char c;
+    bool done=false;
     source=ctx::callcc(
-            [&is](ctx::continuation && sink){
+            [&is,&c,&done](ctx::continuation && sink){
             // create parser with callback function
             Parser p(is,
-                     [&sink](char c){
-                           // resume main continuation
-                           sink=sink.resume(c);
+                     [&sink,&c](char c_){
+                        // resume main continuation
+                        c=c_;
+                        sink=sink.resume();
                      });
                 // start recursive parsing
                 p.run();
+                // signal termination
+                done=true;
                 // resume main continuation
                 return std::move(sink);
             });
-    while(ctx::data_available(source)){
-        char c=source.get_data<char>();
+    while(!done){
         printf("Parsed: %c\n",c);
         source=source.resume();
     }
@@ -457,18 +401,21 @@ The data (character) is transferred between the two continuations.
 [section Implementations: fcontext_t, ucontext_t and WinFiber]
 
 [heading fcontext_t]
-
 The implementation uses __fcontext__ per default. fcontext_t is based on
 assembler and not available for all platforms. It provides a much better
 performance than __ucontext__
 (the context switch takes two magnitudes of order less CPU cycles; see section
 [link performance ['performance]]) and __winfib__.
 
+[note Because the TIB (thread information block on Windows) is not fully
+described in the MSDN, it might be possible that not all required TIB-parts are
+swapped. Using WinFiber implementation migh be an alternative.]
+
 
 [heading ucontext_t]
-
 As an alternative, [@https://en.wikipedia.org/wiki/Setcontext __ucontext__]
-can be used by compiling with `BOOST_USE_UCONTEXT` and b2 property `context-impl=ucontext`.
+can be used by compiling with `BOOST_USE_UCONTEXT` and b2 property
+`context-impl=ucontext`.
 __ucontext__ might be available on a broader range of POSIX-platforms but has
 some [link ucontext ['disadvantages]] (for instance deprecated since
 POSIX.1-2003, not C99 conform).
@@ -478,12 +425,8 @@ __ucontext__ as its implementation.]
 
 
 [heading WinFiber]
-
-With `BOOST_USE_WINFIB` and b2 property `context-impl=winfib` Win32-Fibers are used
-as implementation for __cc__.
-
-Because the TIB (thread information block) is not fully described in the MSDN,
-it might be possible that not all required TIB-parts are swapped.
+With `BOOST_USE_WINFIB` and b2 property `context-impl=winfib` Win32-Fibers are
+used as implementation for __cc__.
 
 [note The first call of __cc__ converts the thread into a Windows fiber by
 invoking `ConvertThreadToFiber()`. If desired, `ConvertFiberToThread()` has
@@ -510,16 +453,10 @@ by `ConvertThreadToFiber()` (e.g. after using boost.context). ]
         continuation(continuation const& other) noexcept = delete;
         continuation & operator=(continuation const& other) noexcept = delete;
 
-        template<typename ...Arg>
-        continuation resume(Arg ...arg);
+        continuation resume();
 
-        template<typename Fn,typename ...Arg>
-        continuation resume_with(Fn && fn,Arg ...arg);
-
-        bool data_available() noexcept;
-
-        template<typename ...Arg>
-        <unspecified> get_data();
+        template<typename Fn>
+        continuation resume_with(Fn && fn);
 
         explicit operator bool() const noexcept;
 
@@ -583,46 +520,20 @@ e.g. ['continuation::operator bool()] returns `true`.]]
 
 [operator_heading cc..operator_call..operator()]
 
-        template<typename ...Arg>
-        continuation resume(Arg ...arg);
+        continuation resume();
 
-        template<typename Fn,typename ...Arg>
-        continuation resume_with(Fn && fn,Arg ...arg);
+        template<typename Fn>
+        continuation resume_with(Fn && fn);
 
 [variablelist
 [[Effects:] [Captures current continuation and resumes `*this`.
-The function with argument type `exec_ontop_arg`, is used to execute function
-`fn` in continuation `*this` (e.g. the stack frame of `fn` is allocated on stack of
-`*this`).]]
+The function `resume_with`, is used to execute function `fn` in continuation
+`*this` (e.g. the stack frame of `fn` is allocated on stack of `*this`).]]
 [[Returns:] [The continuation representing the continuation that has been
 suspended.]]
-[[Note:] [The returned arguments from `fn` are passed as arguments to the
-context-function of resumed continuation.]]
-[[Note:] [Function `fn` needs to return a tuple of arguments ([link cc_ontop see
-description]).]]
+[[Note:] [Function `fn` needs to return void.]]
 [[Note:] [The returned continuation indicates if the suspended continuation has
-terminated (return from context-function) via `bool operator()`. If the returned
-continuation has terminated no data are transferred.]]
-]
-
-[member_heading cc..data_available]
-
-    bool data_available() noexcept;
-
-[variablelist
-[[Effects:] [Tests if `c` has data.]]
-[[Returns:] [`true` if data have been transferred, otherwise `false`.]]
-[[Throws:] [Nothing.]]
-]
-
-[member_heading cc..get_available]
-
-    template<typename ...Arg>
-    <unspecified> get_data();
-
-[variablelist
-[[Returns:] [Data that have been transferred via `callcc()` or `operator()` are
-returned as `std::tuple<Arg...>` or `Arg` if single parameter.]]
+terminated (return from context-function) via `bool operator()`.]]
 ]
 
 [operator_heading cc..operator_bool..operator bool]
@@ -716,14 +627,14 @@ before `other`, false otherwise.]]
 
     #include <boost/context/continuation.hpp>
 
-    template<typename Fn,typename ...Arg>
-    continuation callcc(Fn && fn,Arg ...arg);
+    template<typename Fn>
+    continuation callcc(Fn && fn);
 
-    template<typename StackAlloc,typename Fn,typename ...Arg>
-    continuation callcc(std::allocator_arg_t,StackAlloc salloc,Fn && fn,Arg ...arg);
+    template<typename StackAlloc,typename Fn>
+    continuation callcc(std::allocator_arg_t,StackAlloc salloc,Fn && fn);
 
-    template<typename StackAlloc,typename Fn,typename ...Arg>
-    continuation callcc(std::allocator_arg_t,preallocated palloc,StackAlloc salloc,Fn && fn,Arg ...arg);
+    template<typename StackAlloc,typename Fn>
+    continuation callcc(std::allocator_arg_t,preallocated palloc,StackAlloc salloc,Fn && fn);
 
 [variablelist
 [[Effects:] [Captures current continuation and creates a new continuation
@@ -731,13 +642,11 @@ prepared to execute `fn`. `fixedsize_stack` is used as default stack allocator
 (stack size == fixedsize_stack::traits::default_size()).
 The function with argument type `preallocated`, is used to create a user
 defined data [link cc_prealloc (for instance additional control structures)] on
-top of the stack.
-The arguments, `... arg`, are passed to the current continuation to be
-transferred by the call to `callcc()` in the same thread.]]
-[[Returns:] [The continuation representing the contexcontinuation that has been suspended.]]
+top of the stack.]]
+[[Returns:] [The continuation representing the contexcontinuation that has been
+suspended.]]
 [[Note:] [The returned continuation indicates if the suspended continuation has
-terminated (return from context-function) via `bool operator()`. If the returned
-continuation has terminated no data are transferred.]]
+terminated (return from context-function) via `bool operator()`.]]
 ]
 
 [endsect]
