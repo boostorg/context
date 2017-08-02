@@ -12,14 +12,14 @@
  *  ----------------------------------------------------------------------------------  *
  *  |   0x0   |   0x4   |   0x8   |   0xc   |   0x10   |   0x14  |   0x18  |   0x1c  |  *
  *  ----------------------------------------------------------------------------------  *
- *  | fc_mxcsr|fc_x87_cw|   EDI   |   ESI   |   EBX    |   EBP   |   EIP   |  hidden |  *
+ *  | fc_mxcsr|fc_x87_cw|   EDI   |   ESI   |   EBX    |   EBP   |   EIP   |    to   |  *
  *  ----------------------------------------------------------------------------------  *
  *  ----------------------------------------------------------------------------------  *
  *  |    8    |    9    |    10   |    11   |    12    |    13   |    14   |    15   |  *
  *  ----------------------------------------------------------------------------------  *
- *  |   0x20  |   0x24  |                                                            |  *
+ *  |   0x20  |                                                                      |  *
  *  ----------------------------------------------------------------------------------  *
- *  |    to   |   data  |                                                            |  *
+ *  |   data  |                                                                      |  *
  *  ----------------------------------------------------------------------------------  *
  *                                                                                      *
  ****************************************************************************************/
@@ -44,19 +44,17 @@ _jump_fcontext:
     movl  %esp, %ecx
 
     /* first arg of jump_fcontext() == fcontext to jump to */
-    movl  0x20(%esp), %eax
+    movl  0x1c(%esp), %eax
 
     /* second arg of jump_fcontext() == data to be transferred */
-    movl  0x24(%esp), %edx
+    movl  0x20(%esp), %edx
 
     /* restore ESP (pointing to context-data) from EAX */
     movl  %eax, %esp
 
-    /* address of returned transport_t */
-    movl 0x1c(%esp), %eax
     /* return parent fcontext_t */
-    movl  %ecx, (%eax)
-    /* return data */
+    movl  %ecx, %eax
+    /* returned data is stored in EDX */
     movl %edx, 0x4(%eax)
 
     movl  0x18(%esp), %ecx  /* restore EIP */
@@ -71,7 +69,7 @@ _jump_fcontext:
     movl  0x10(%esp), %ebx  /* restore EBX */
     movl  0x14(%esp), %ebp  /* restore EBP */
 
-    leal  0x20(%esp), %esp  /* prepare stack */
+    leal  0x1c(%esp), %esp  /* prepare stack */
 
     /* jump to context */
     jmp *%ecx
