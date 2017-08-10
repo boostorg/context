@@ -176,6 +176,7 @@ return `void`.
     c=c.resume_with([&data](ctx::continuation && c){
                         std::cout << "f2: entered: " << data << std::endl;
                         data=-1;
+                        return std::move( c);
                     });
     std::cout << "f1: returned third time" << std::endl;
 
@@ -221,6 +222,7 @@ an exception.
     c = c.resume_with(
            [](ctx::continuation && c){
                throw my_exception(std::move(c),"abc");
+               return std::move( c);
            });
 
     output:
@@ -527,11 +529,11 @@ e.g. ['continuation::operator bool()] returns `true`.]]
 
 [variablelist
 [[Effects:] [Captures current continuation and resumes `*this`.
-The function `resume_with`, is used to execute function `fn` in continuation
+The function `resume_with`, is used to execute function `fn` in the execution context of
 `*this` (e.g. the stack frame of `fn` is allocated on stack of `*this`).]]
 [[Returns:] [The continuation representing the continuation that has been
 suspended.]]
-[[Note:] [Function `fn` needs to return void.]]
+[[Note:] [Function `fn` needs to return `continuation`.]]
 [[Note:] [The returned continuation indicates if the suspended continuation has
 terminated (return from context-function) via `bool operator()`.]]
 ]

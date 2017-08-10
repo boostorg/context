@@ -252,6 +252,7 @@ void test_ontop() {
         c = c.resume_with(
                [&i](ctx::continuation && c){
                    i -= 10;
+                   return std::move( c);
                });
         BOOST_CHECK( c);
         BOOST_CHECK_EQUAL( i, 200);
@@ -266,6 +267,7 @@ void test_ontop() {
         c = c.resume_with(
                [&c1](ctx::continuation && c){
                    c1 = std::move( c);
+                   return std::move( c);
                });
     }
 }
@@ -290,7 +292,8 @@ void test_ontop_exception() {
     const char * what = "hello world";
     c.resume_with(
        [what](ctx::continuation && c){
-           throw my_exception( std::move( c), what);
+            throw my_exception( std::move( c), what);
+            return std::move( c);
        });
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK_EQUAL( std::string( what), value2);
