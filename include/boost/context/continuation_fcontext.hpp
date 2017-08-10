@@ -95,7 +95,7 @@ transfer_t context_ontop( transfer_t t) {
     t.data = nullptr;
     Ctx c{ t.fctx };
     // execute function, pass continuation via reference
-    fn( std::move( c) );
+    c = fn( std::move( c) );
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
     return { exchange( c.fctx_, nullptr), nullptr };
 #else

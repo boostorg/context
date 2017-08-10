@@ -32,6 +32,7 @@ int main() {
     c = c.resume_with( [&data](ctx::continuation && c){
                             std::cout << "f2: entered: " << data << std::endl;
                             data = -1;
+                            return std::move( c);
                         });
     std::cout << "f1: returned third time" << std::endl;
     std::cout << "main: done" << std::endl;

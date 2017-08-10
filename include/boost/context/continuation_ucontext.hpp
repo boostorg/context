@@ -84,18 +84,18 @@ static void entry_func( void * data) noexcept {
 struct BOOST_CONTEXT_DECL activation_record {
     thread_local static activation_record   *   current_rec;
 
-    ucontext_t                                  uctx{};
-    stack_context                               sctx{};
-    bool                                        main_ctx{ true };
-	activation_record                       *	from{ nullptr };
-    std::function< void(activation_record*&) >  ontop{};
-    bool                                        terminated{ false };
-    bool                                        force_unwind{ false };
+    ucontext_t                                                  uctx{};
+    stack_context                                               sctx{};
+    bool                                                        main_ctx{ true };
+	activation_record                                       *	from{ nullptr };
+    std::function< activation_record*(activation_record*&) >    ontop{};
+    bool                                                        terminated{ false };
+    bool                                                        force_unwind{ false };
 #if defined(BOOST_USE_ASAN)
-    void                                    *   fake_stack{ nullptr };
-    void                                    *   stack_bottom{ nullptr };
-    std::size_t                                 stack_size{ 0 };
-    bool                                        started{ false };
+    void                                                    *   fake_stack{ nullptr };
+    void                                                    *   stack_bottom{ nullptr };
+    std::size_t                                                 stack_size{ 0 };
+    bool                                                        started{ false };
 #endif
 
     static activation_record *& current() noexcept;
@@ -168,20 +168,30 @@ struct BOOST_CONTEXT_DECL activation_record {
         current()->ontop = std::bind(
                 [](typename std::decay< Fn >::type & fn, activation_record *& ptr){
                     Ctx c{ ptr };
-                    fn( std::move( c) );
+                    c = fn( std::move( c) );
                     if ( ! c) {
                         ptr = nullptr;
                     }
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+                    return exchange( c.ptr_, nullptr);
+#else
+                    return std::exchange( c.ptr_, nullptr);
+#endif
                 },
                 std::forward< Fn >( fn),
                 std::placeholders::_1);
 #else
         current()->ontop = [fn=std::forward<Fn>(fn)](activation_record *& ptr){
             Ctx c{ ptr };
-            fn( std::move( c) );
+            c = fn( std::move( c) );
             if ( ! c) {
                 ptr = nullptr;
             }
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+            return exchange( c.ptr_, nullptr);
+#else
+            return std::exchange( c.ptr_, nullptr);
+#endif
         };
 #endif
 #if defined(BOOST_USE_SEGMENTED_STACKS)
@@ -408,7 +418,7 @@ public:
         if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
         } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
-            detail::activation_record::current()->ontop( ptr);
+            ptr = detail::activation_record::current()->ontop( ptr);
             detail::activation_record::current()->ontop = nullptr;
         }
         return continuation{ ptr };
@@ -426,7 +436,7 @@ public:
         if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
         } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
-            detail::activation_record::current()->ontop( ptr);
+            ptr = detail::activation_record::current()->ontop( ptr);
             detail::activation_record::current()->ontop = nullptr;
         }
         return continuation{ ptr };
