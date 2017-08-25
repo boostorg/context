@@ -55,6 +55,7 @@ _jump_fcontext:
     /* return parent fcontext_t */
     movl  %ecx, %eax
     /* returned data is stored in EDX */
+    movl %edx, 0x4(%eax)
 
     movl  0x18(%esp), %ecx  /* restore EIP */
 
