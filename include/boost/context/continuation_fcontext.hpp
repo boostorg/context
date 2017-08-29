@@ -363,7 +363,6 @@ continuation
 callcc( std::allocator_arg_t, preallocated, segmented_stack, Fn &&);
 #endif
 
-// swap
 inline
 void swap( continuation & l, continuation & r) noexcept {
     l.swap( r);
