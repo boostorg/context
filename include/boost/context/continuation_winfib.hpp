@@ -324,15 +324,14 @@ public:
     continuation( continuation const&) = delete;
     continuation & operator=( continuation const&) = delete;
 
-    continuation( continuation && other) noexcept :
-        ptr_{ nullptr } {
+    continuation( continuation && other) noexcept {
         swap( other);
     }
 
     continuation & operator=( continuation && other) noexcept {
         if ( BOOST_LIKELY( this != & other) ) {
-            ptr_ = other.ptr_;
-            other.ptr_ = nullptr;
+            continuation tmp = std::move( other);
+            swap( tmp);
         }
         return * this;
     }

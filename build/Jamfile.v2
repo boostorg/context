@@ -515,6 +515,18 @@ alias asm_sources
      <address-model>32
      <architecture>x86
      <binary-format>pe
+     <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_i386_ms_pe_gas.asm
+     asm/jump_i386_ms_pe_gas.asm
+     asm/ontop_i386_ms_pe_gas.asm
+     dummy.cpp
+   : <abi>ms
+     <address-model>32
+     <architecture>x86
+     <binary-format>pe
      <toolset>clang-win
    ;
 
@@ -624,6 +636,18 @@ alias asm_sources
    ;
 
 # X86_64/MS/PE
+alias asm_sources
+   : asm/make_x86_64_ms_pe_gas.asm
+     asm/jump_x86_64_ms_pe_gas.asm
+     asm/ontop_x86_64_ms_pe_gas.asm
+     dummy.cpp
+   : <abi>ms
+     <address-model>64
+     <architecture>x86
+     <binary-format>pe
+     <toolset>clang
+   ;
+
 alias asm_sources
    : asm/make_x86_64_ms_pe_gas.asm
      asm/jump_x86_64_ms_pe_gas.asm

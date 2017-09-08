@@ -95,7 +95,6 @@ struct BOOST_CONTEXT_DECL activation_record {
     void                                                    *   fake_stack{ nullptr };
     void                                                    *   stack_bottom{ nullptr };
     std::size_t                                                 stack_size{ 0 };
-    bool                                                        started{ false };
 #endif
 
     static activation_record *& current() noexcept;
@@ -108,10 +107,6 @@ struct BOOST_CONTEXT_DECL activation_record {
                     std::error_code( errno, std::system_category() ),
                     "getcontext() failed");
         }
-#if defined(BOOST_USE_ASAN)
-        stack_bottom = uctx.uc_stack.ss_sp;
-        stack_size = uctx.uc_stack.ss_size;
-#endif
     }
 
     activation_record( stack_context sctx_) noexcept :
@@ -140,16 +135,19 @@ struct BOOST_CONTEXT_DECL activation_record {
         __splitstack_setcontext( sctx.segments_ctx);
 #endif
 #if defined(BOOST_USE_ASAN)
-        if ( from->started) {
-             __sanitizer_finish_switch_fiber( from->fake_stack, (const void **) & from->stack_bottom,
-                                              & from->stack_size);
-             from->started = false;
+        if ( terminated) {
+            __sanitizer_start_switch_fiber( nullptr, stack_bottom, stack_size);
+        } else {
+            __sanitizer_start_switch_fiber( & from->fake_stack, stack_bottom, stack_size);
         }
-        __sanitizer_start_switch_fiber( & fake_stack, stack_bottom, stack_size);
-        started = true;
 #endif
         // context switch from parent context to `this`-context
         ::swapcontext( & from->uctx, & uctx);
+#if defined(BOOST_USE_ASAN)
+        __sanitizer_finish_switch_fiber( current()->fake_stack,
+                                         (const void **) & current()->from->stack_bottom,
+                                         & current()->from->stack_size);
+#endif
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         return exchange( current()->from, nullptr);
 #else
@@ -200,16 +198,15 @@ struct BOOST_CONTEXT_DECL activation_record {
         __splitstack_setcontext( sctx.segments_ctx);
 #endif
 #if defined(BOOST_USE_ASAN)
-        if ( from->started) {
-             __sanitizer_finish_switch_fiber( from->fake_stack, (const void **) & from->stack_bottom,
-                                              & from->stack_size);
-             from->started = false;
-        }
-        __sanitizer_start_switch_fiber( & fake_stack, stack_bottom, stack_size);
-        started = true;
+        __sanitizer_start_switch_fiber( & from->fake_stack, stack_bottom, stack_size);
 #endif
         // context switch from parent context to `this`-context
         ::swapcontext( & from->uctx, & uctx);
+#if defined(BOOST_USE_ASAN)
+        __sanitizer_finish_switch_fiber( current()->fake_stack,
+                                         (const void **) & current()->from->stack_bottom,
+                                         & current()->from->stack_size);
+#endif
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         return exchange( current()->from, nullptr);
 #else
@@ -262,6 +259,9 @@ public:
     }
 
     void run() {
+        __sanitizer_finish_switch_fiber( fake_stack,
+                                         (const void **) & from->stack_bottom,
+                                         & from->stack_size);
         Ctx c{ from };
         try {
             // invoke context-function
@@ -396,15 +396,14 @@ public:
     continuation( continuation const&) = delete;
     continuation & operator=( continuation const&) = delete;
 
-    continuation( continuation && other) noexcept :
-        ptr_{ nullptr } {
+    continuation( continuation && other) noexcept {
         swap( other);
     }
 
     continuation & operator=( continuation && other) noexcept {
         if ( BOOST_LIKELY( this != & other) ) {
-            ptr_ = other.ptr_;
-            other.ptr_ = nullptr;
+            continuation tmp = std::move( other);
+            swap( tmp);
         }
         return * this;
     }
