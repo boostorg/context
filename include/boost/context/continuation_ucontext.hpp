@@ -259,9 +259,11 @@ public:
     }
 
     void run() {
+#if defined(BOOST_USE_ASAN)
         __sanitizer_finish_switch_fiber( fake_stack,
                                          (const void **) & from->stack_bottom,
                                          & from->stack_size);
+#endif
         Ctx c{ from };
         try {
             // invoke context-function
