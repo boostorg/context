@@ -107,11 +107,11 @@ template< typename Ctx, typename StackAlloc, typename Fn >
 class record {
 private:
     stack_context                                       sctx_;
-    StackAlloc                                          salloc_;
+    typename std::decay< StackAlloc >::type             salloc_;
     typename std::decay< Fn >::type                     fn_;
 
     static void destroy( record * p) noexcept {
-        StackAlloc salloc = p->salloc_;
+        typename std::decay< StackAlloc >::type salloc = std::move( p->salloc_);
         stack_context sctx = p->sctx_;
         // deallocate record
         p->~record();
@@ -120,10 +120,10 @@ private:
     }
 
 public:
-    record( stack_context sctx, StackAlloc const& salloc,
+    record( stack_context sctx, StackAlloc && salloc,
             Fn && fn) noexcept :
         sctx_( sctx),
-        salloc_( salloc),
+        salloc_( std::forward< StackAlloc >( salloc)),
         fn_( std::forward< Fn >( fn) ) {
     }
 
@@ -151,7 +151,7 @@ public:
 };
 
 template< typename Record, typename StackAlloc, typename Fn >
-fcontext_t create_context1( StackAlloc salloc, Fn && fn) {
+fcontext_t create_context1( StackAlloc && salloc, Fn && fn) {
     auto sctx = salloc.allocate();
     // reserve space for control structure
 	void * storage = reinterpret_cast< void * >(
@@ -159,7 +159,7 @@ fcontext_t create_context1( StackAlloc salloc, Fn && fn) {
             & ~static_cast< uintptr_t >( 0xff) );
     // placment new for control structure on context stack
     Record * record = new ( storage) Record{
-            sctx, salloc, std::forward< Fn >( fn) };
+            sctx, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) };
     // 64byte gab between control structure and stack top
     // should be 16byte aligned
     void * stack_top = reinterpret_cast< void * >(
@@ -175,14 +175,14 @@ fcontext_t create_context1( StackAlloc salloc, Fn && fn) {
 }
 
 template< typename Record, typename StackAlloc, typename Fn >
-fcontext_t create_context2( preallocated palloc, StackAlloc salloc, Fn && fn) {
+fcontext_t create_context2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
     // reserve space for control structure
     void * storage = reinterpret_cast< void * >(
             ( reinterpret_cast< uintptr_t >( palloc.sp) - static_cast< uintptr_t >( sizeof( Record) ) )
             & ~ static_cast< uintptr_t >( 0xff) );
     // placment new for control structure on context-stack
     Record * record = new ( storage) Record{
-            palloc.sctx, salloc, std::forward< Fn >( fn) };
+            palloc.sctx, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) };
     // 64byte gab between control structure and stack top
     void * stack_top = reinterpret_cast< void * >(
             reinterpret_cast< uintptr_t >( storage) - static_cast< uintptr_t >( 64) );
@@ -209,11 +209,11 @@ private:
 
     template< typename StackAlloc, typename Fn >
     friend continuation
-    callcc( std::allocator_arg_t, StackAlloc, Fn &&);
+    callcc( std::allocator_arg_t, StackAlloc &&, Fn &&);
 
     template< typename StackAlloc, typename Fn >
     friend continuation
-    callcc( std::allocator_arg_t, preallocated, StackAlloc, Fn &&);
+    callcc( std::allocator_arg_t, preallocated, StackAlloc &&, Fn &&);
 
     detail::fcontext_t  fctx_{ nullptr };
 
@@ -337,20 +337,20 @@ callcc( Fn && fn) {
 
 template< typename StackAlloc, typename Fn >
 continuation
-callcc( std::allocator_arg_t, StackAlloc salloc, Fn && fn) {
+callcc( std::allocator_arg_t, StackAlloc && salloc, Fn && fn) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
     return continuation{
                 detail::create_context1< Record >(
-                        salloc, std::forward< Fn >( fn) ) }.resume();
+                        std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) }.resume();
 }
 
 template< typename StackAlloc, typename Fn >
 continuation
-callcc( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn) {
+callcc( std::allocator_arg_t, preallocated palloc, StackAlloc && salloc, Fn && fn) {
     using Record = detail::record< continuation, StackAlloc, Fn >;
     return continuation{
                 detail::create_context2< Record >(
-                        palloc, salloc, std::forward< Fn >( fn) ) }.resume();
+                        palloc, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) }.resume();
 }
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
