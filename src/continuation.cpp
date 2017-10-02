@@ -22,24 +22,21 @@ namespace boost {
 namespace context {
 namespace detail {
 
-thread_local
-activation_record *
-activation_record::current_rec;
-
 // zero-initialization
+thread_local activation_record * current_rec;
 thread_local static std::size_t counter;
 
 // schwarz counter
 activation_record_initializer::activation_record_initializer() noexcept {
     if ( 0 == counter++) {
-        activation_record::current_rec = new activation_record();
+        current_rec = new activation_record();
     }
 }
 
 activation_record_initializer::~activation_record_initializer() {
     if ( 0 == --counter) {
-        BOOST_ASSERT( activation_record::current_rec->is_main_context() );
-        delete activation_record::current_rec;
+        BOOST_ASSERT( current_rec->is_main_context() );
+        delete current_rec;
     }
 }
 
@@ -51,7 +48,7 @@ activation_record *&
 activation_record::current() noexcept {
     // initialized the first time control passes; per thread
     thread_local static activation_record_initializer initializer;
-    return activation_record::current_rec;
+    return current_rec;
 }
 
 }

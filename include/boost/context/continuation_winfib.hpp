@@ -63,8 +63,6 @@ static VOID WINAPI entry_func( LPVOID data) noexcept {
 }
 
 struct BOOST_CONTEXT_DECL activation_record {
-    thread_local static activation_record   *   current_rec;
-
     LPVOID                                                      fiber{ nullptr };
     stack_context                                               sctx{};
     bool                                                        main_ctx{ true };

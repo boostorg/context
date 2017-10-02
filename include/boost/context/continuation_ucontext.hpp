@@ -82,8 +82,6 @@ static void entry_func( void * data) noexcept {
 }
 
 struct BOOST_CONTEXT_DECL activation_record {
-    thread_local static activation_record   *   current_rec;
-
     ucontext_t                                                  uctx{};
     stack_context                                               sctx{};
     bool                                                        main_ctx{ true };
