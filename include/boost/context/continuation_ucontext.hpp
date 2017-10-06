@@ -265,7 +265,7 @@ public:
         Ctx c{ from };
         try {
             // invoke context-function
-#if defined(BOOST_NO_CXX17_STD_APPLY)
+#if defined(BOOST_NO_CXX17_STD_INVOKE)
             c = invoke( fn_, std::move( c) );
 #else
             c = std::invoke( fn_, std::move( c) );
