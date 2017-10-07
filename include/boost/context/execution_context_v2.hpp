@@ -63,21 +63,21 @@ template< typename Ctx, typename Fn, typename ... Args >
 transfer_t context_ontop( transfer_t);
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
-fcontext_t context_create( StackAlloc, Fn &&, Params && ...);
+fcontext_t context_create( StackAlloc &&, Fn &&, Params && ...);
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
-fcontext_t context_create( preallocated, StackAlloc, Fn &&, Params && ...);
+fcontext_t context_create( preallocated, StackAlloc &&, Fn &&, Params && ...);
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
 class record {
 private:
-    StackAlloc                                          salloc_;
+    typename std::decay< StackAlloc >::type             salloc_;
     stack_context                                       sctx_;
     typename std::decay< Fn >::type                     fn_;
     std::tuple< typename std::decay< Params >::type ... > params_;
 
     static void destroy( record * p) noexcept {
-        StackAlloc salloc = p->salloc_;
+        typename std::decay< StackAlloc >::type salloc = std::move( p->salloc_);
         stack_context sctx = p->sctx_;
         // deallocate record
         p->~record();
@@ -86,9 +86,9 @@ private:
     }
 
 public:
-    record( stack_context sctx, StackAlloc const& salloc,
+    record( stack_context sctx, StackAlloc && salloc,
             Fn && fn, Params && ... params) noexcept :
-        salloc_( salloc),
+        salloc_( std::forward< StackAlloc >( salloc)),
         sctx_( sctx),
         fn_( std::forward< Fn >( fn) ),
         params_( std::forward< Params >( params) ... ) {
@@ -172,14 +172,14 @@ public:
               typename Fn,
               typename ... Params
     >
-    execution_context( std::allocator_arg_t, StackAlloc salloc, Fn && fn, Params && ... params) :
+    execution_context( std::allocator_arg_t, StackAlloc && salloc, Fn && fn, Params && ... params) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
         fctx_( detail::context_create< execution_context >(
-                    salloc,
+                    std::forward< StackAlloc >( salloc),
                     std::forward< Fn >( fn),
                     std::forward< Params >( params) ... ) ) {
     }
@@ -188,14 +188,14 @@ public:
               typename Fn,
               typename ... Params
     >
-    execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc salloc, Fn && fn, Params && ... params) :
+    execution_context( std::allocator_arg_t, preallocated palloc, StackAlloc && salloc, Fn && fn, Params && ... params) :
         // deferred execution of fn and its arguments
         // arguments are stored in std::tuple<>
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
         fctx_( detail::context_create< execution_context >(
-                    palloc, salloc,
+                    palloc, std::forward< StackAlloc >( salloc),
                     std::forward< Fn >( fn),
                     std::forward< Params >( params) ... ) ) {
     }
@@ -411,7 +411,7 @@ transfer_t context_ontop( transfer_t t) {
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
-fcontext_t context_create( StackAlloc salloc, Fn && fn, Params && ... params) {
+fcontext_t context_create( StackAlloc && salloc, Fn && fn, Params && ... params) {
     typedef record< Ctx, StackAlloc, Fn, Params ... >  record_t;
 
     auto sctx = salloc.allocate();
@@ -436,13 +436,13 @@ fcontext_t context_create( StackAlloc salloc, Fn && fn, Params && ... params) {
     BOOST_ASSERT( nullptr != fctx);
     // placment new for control structure on context-stack
     auto rec = ::new ( sp) record_t{
-            sctx, salloc, std::forward< Fn >( fn), std::forward< Params >( params) ... };
+            sctx, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn), std::forward< Params >( params) ... };
     // transfer control structure to context-stack
     return jump_fcontext( fctx, rec).fctx;
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
-fcontext_t context_create( preallocated palloc, StackAlloc salloc, Fn && fn, Params && ... params) {
+fcontext_t context_create( preallocated palloc, StackAlloc && salloc, Fn && fn, Params && ... params) {
     typedef record< Ctx, StackAlloc, Fn, Params ... >  record_t;
 
     // reserve space for control structure
@@ -466,7 +466,7 @@ fcontext_t context_create( preallocated palloc, StackAlloc salloc, Fn && fn, Par
     BOOST_ASSERT( nullptr != fctx);
     // placment new for control structure on context-stack
     auto rec = ::new ( sp) record_t{
-            palloc.sctx, salloc, std::forward< Fn >( fn), std::forward< Params >( params) ... };
+            palloc.sctx, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn), std::forward< Params >( params) ... };
     // transfer control structure to context-stack
     return jump_fcontext( fctx, rec).fctx;
 }
