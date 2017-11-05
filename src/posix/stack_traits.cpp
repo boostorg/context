@@ -93,7 +93,7 @@ stack_traits::page_size() BOOST_NOEXCEPT_OR_NOTHROW {
 
 std::size_t
 stack_traits::default_size() BOOST_NOEXCEPT_OR_NOTHROW {
-    return 64 * 1024;
+    return 128 * 1024;
 }
 
 std::size_t
