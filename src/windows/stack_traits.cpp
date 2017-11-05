@@ -90,7 +90,7 @@ stack_traits::page_size() BOOST_NOEXCEPT_OR_NOTHROW {
 BOOST_CONTEXT_DECL
 std::size_t
 stack_traits::default_size() BOOST_NOEXCEPT_OR_NOTHROW {
-    return 64 * 1024;
+    return 128 * 1024;
 }
 
 // because Windows seams not to provide a limit for minimum stacksize
