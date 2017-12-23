@@ -8,27 +8,27 @@
 #include <iostream>
 #include <memory>
 
-#include <boost/context/continuation.hpp>
+#include <boost/context/fiber.hpp>
 
 namespace ctx = boost::context;
 
 int main() {
     int a;
-    ctx::continuation c=ctx::callcc(
-        [&a](ctx::continuation && c){
+    ctx::fiber f{
+        [&a](ctx::fiber && f){
             a=0;
             int b=1;
             for(;;){
-                c=c.resume();
+                f.resume();
                 int next=a+b;
                 a=b;
                 b=next;
             }
-            return std::move( c);
-        });
+            return std::move( f);
+        }};
     for ( int j = 0; j < 10; ++j) {
+        f.resume();
         std::cout << a << " ";
-        c=c.resume();
     }
     std::cout << std::endl;
     std::cout << "main: done" << std::endl;

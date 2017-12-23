@@ -51,7 +51,7 @@ ctx::continuation f1( ctx::continuation && c) {
 }
 
 int main() {
-    ctx::callcc( f1);
+    ctx::fiber{ f1 }.resume();
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;
 }

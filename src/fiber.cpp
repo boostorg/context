@@ -5,11 +5,9 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #if defined(BOOST_USE_UCONTEXT)
-#include "boost/context/continuation_ucontext.hpp"
+#include "boost/context/fiber_ucontext.hpp"
 #elif defined(BOOST_USE_WINFIB)
-#include "boost/context/continuation_winfib.hpp"
-#else
-#include "boost/context/execution_context.hpp"
+#include "boost/context/fiber_winfib.hpp"
 #endif
 
 #include <boost/config.hpp>
