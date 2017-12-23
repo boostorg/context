@@ -103,15 +103,6 @@ feature.compose <context-impl>ucontext : <define>BOOST_USE_UCONTEXT ;
 feature.compose <context-impl>winfib : <define>BOOST_USE_WINFIB ;
 
 
-feature.feature context-switch
-    : cc
-      ec
-    : propagated
-      composite ;
-feature.set-default context-switch : cc ;
-feature.compose <context-switch>ec : <define>BOOST_USE_EXECUTION_CONTEXT ;
-
-
 actions gas32
 {
     cpp -x assembler-with-cpp "$(>)" | as --32 -o "$(<)"
@@ -758,25 +749,17 @@ explicit asm_sources ;
 alias impl_sources
     : asm_sources
     : <context-impl>fcontext
-      <context-switch>cc
-    ;
-
-alias impl_sources
-    : asm_sources
-      execution_context.cpp
-    : <context-impl>fcontext
-      <context-switch>ec
     ;
 
 # ucontext_t
 alias impl_sources
-    : continuation.cpp
+    : fiber.cpp
     : <context-impl>ucontext
     ;
 
 # WinFiber
 alias impl_sources
-    : continuation.cpp
+    : fiber.cpp
     : <context-impl>winfib
     ;
 
