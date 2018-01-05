@@ -49,13 +49,9 @@ make_fcontext:
 .cpload $t9
 .set    reorder
 #endif
-    # first arg of make_fcontext() == top address of context-stack
-    move $v0, $a0
-
     # shift address in A0 to lower 16 byte boundary
-    move $v1, $v0
-    li $v0, -16 # 0xfffffffffffffff0
-    and $v0, $v1, $v0
+    li $v1, -16 # 0xfffffffffffffff0
+    and $v0, $v1, $a0
 
     # reserve space for context-data on context-stack
     # including 48 byte of shadow space (sp % 16 == 0)
