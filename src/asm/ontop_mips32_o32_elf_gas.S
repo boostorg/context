@@ -97,7 +97,7 @@ ontop_fcontext:
     lw  $ra, 88($sp)  # restore RA
 
     # load PC
-    lw  $t9, 44($sp)
+    move $t9, $a3
 
     # adjust stack
     addiu $sp, $sp, 96
@@ -111,7 +111,7 @@ ontop_fcontext:
     move  $a0, $v0
 
     # jump to context
-    jr  $a3
+    jr  $t9
 .end ontop_fcontext
 .size ontop_fcontext, .-ontop_fcontext
 
