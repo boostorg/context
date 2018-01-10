@@ -80,20 +80,15 @@ make_fcontext:
     jr  $ra # return pointer to context-data
 
 finish:
+    # reload our gp register (needed for la)
     lw $gp, 16($sp)
-    # allocate stack space (contains shadow space for subroutines)
-    addiu  $sp, $sp, -32
-    # save return address
-    sw  $ra, 28($sp)
 
-    # restore GP (global pointer)
-#    move  $gp, $s1
-    # exit code is zero
-    move  $a0, $zero
-    # address of exit
-    lw  $t9, %call16(_exit)($gp)
-    # exit application
-    jalr  $t9
+    # call _exit(0)
+    #  the previous function should have left the 16 bytes incoming argument
+    #  area on the stack which we reuse for calling _exit
+    la $t9, _exit
+    move $a0, $zero
+    jr $t9
 .end make_fcontext
 .size make_fcontext, .-make_fcontext
 
