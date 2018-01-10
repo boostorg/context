@@ -33,7 +33,7 @@
  *  -------------------------------------------------  *
  *  |  96 | 100 | 104 | 108 | 112 | 116 | 120 | 124 |  *
  *  -------------------------------------------------  *
- *  |  GP | FCTX| DATA|     |     |     |     |     |  *
+ *  |       ABI ARGS        |  GP | FCTX| DATA|     |  *
  *  -------------------------------------------------  *
  *                                                     *
  * *****************************************************/
@@ -54,16 +54,21 @@ make_fcontext:
     and $v0, $v1, $a0
 
     # reserve space for context-data on context-stack
-    # including 48 byte of shadow space (sp % 16 == 0)
-    addiu $v0, $v0, -112
+    #  includes an extra 32 bytes for:
+    #  - 16-byte incoming argument area required by mips ABI used when
+    #    jump_context calls the initial function
+    #  - 4 bytes to save our GP register used in finish
+    #  - 8 bytes to as space for transfer_t returned to finish
+    #  - 4 bytes for alignment
+    addiu $v0, $v0, -128
 
     # third arg of make_fcontext() == address of context-function
     sw  $a2, 92($v0)
     # save global pointer in context-data
-    sw  $gp, 96($v0)
+    sw  $gp, 112($v0)
 
     # compute address of returned transfer_t
-    addiu $t0, $v0, 52
+    addiu $t0, $v0, 116
     sw  $t0, 84($v0)
 
     # compute abs address of label finish
@@ -75,7 +80,7 @@ make_fcontext:
     jr  $ra # return pointer to context-data
 
 finish:
-    lw $gp, 0($sp)
+    lw $gp, 16($sp)
     # allocate stack space (contains shadow space for subroutines)
     addiu  $sp, $sp, -32
     # save return address
