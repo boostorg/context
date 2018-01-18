@@ -238,7 +238,7 @@ public:
     }
 
     continuation( continuation && other) noexcept {
-        std::swap( fctx_, other.fctx_);
+        swap( other);
     }
 
     continuation & operator=( continuation && other) noexcept {
