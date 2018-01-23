@@ -354,6 +354,7 @@ public:
     }
 
     void resume() {
+        BOOST_ASSERT( nullptr != ptr_);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         detail::activation_record * ptr = detail::exchange( ptr_, nullptr)->resume();
 #else
@@ -370,6 +371,7 @@ public:
 
     template< typename Fn >
     void resume_with( Fn && fn) {
+        BOOST_ASSERT( nullptr != ptr_);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         detail::activation_record * ptr =
             detail::exchange( ptr_, nullptr)->resume_with< fiber >( std::forward< Fn >( fn) );
