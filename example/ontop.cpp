@@ -17,20 +17,20 @@ int main() {
     ctx::fiber f{ [&data](ctx::fiber && f) {
                         std::cout << "f1: entered first time: " << data  << std::endl;
                         data += 1;
-                        f.resume();
+                        f = f.resume();
                         std::cout << "f1: entered second time: " << data  << std::endl;
                         data += 1;
-                        f.resume();
+                        f = f.resume();
                         std::cout << "f1: entered third time: " << data << std::endl;
                         return std::move( f);
                     }};
-    f.resume();
+    f = f.resume();
     std::cout << "f1: returned first time: " << data << std::endl;
     data += 1;
-    f.resume();
+    f = f.resume();
     std::cout << "f1: returned second time: " << data << std::endl;
     data += 1;
-    f.resume_with([&data](ctx::fiber && f){
+    f = f.resume_with([&data](ctx::fiber && f){
         std::cout << "f2: entered: " << data << std::endl;
         data = -1;
         return std::move( f);

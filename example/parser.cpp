@@ -105,7 +105,7 @@ int main() {
                               [&sink,&c](char c_){
                                     // resume main execution context
                                     c = c_;
-                                    sink.resume();
+                                    sink = sink.resume();
                             });
                     // start recursive parsing
                     p.run();
@@ -114,10 +114,10 @@ int main() {
                     // resume main execution context
                     return std::move(sink);
                 }};
-        source.resume();
+        source = source.resume();
         while(!done){
             printf("Parsed: %c\n",c);
-            source.resume();
+            source = source.resume();
         }
         std::cout << "main: done" << std::endl;
         return EXIT_SUCCESS;

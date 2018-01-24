@@ -34,12 +34,12 @@ int main( int argc, char * argv[]) {
                 std::cout << i;
                 echoSSE( i);
                 std::cout << " ";
-                f.resume();
+                f = f.resume();
             }
             return std::move( f);
         }};
     for (; i < 11; ++i) {
-        f.resume();
+        f = f.resume();
     }
     std::cout << "\nmain: done" << std::endl;
     return EXIT_SUCCESS;

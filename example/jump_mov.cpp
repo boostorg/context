@@ -44,15 +44,15 @@ int main() {
                      [&data](ctx::fiber && f){
                         std::cout << "entered first time: " << data.value << std::endl;
                         data = std::move( moveable{ 3 });
-                        f.resume();
+                        f = f.resume();
                         std::cout << "entered second time: " << data.value << std::endl;
                         data = std::move( moveable{});
                         return std::move( f);
                      }};
-    f.resume();
+    f = f.resume();
     std::cout << "returned first time: " << data.value << std::endl;
     data.value = 5;
-    f.resume();
+    f = f.resume();
     std::cout << "returned second time: " << data.value << std::endl;
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;

@@ -17,14 +17,14 @@ int main() {
             [&data](ctx::fiber && f){
                 std::cout << "entered first time: " << data << std::endl;
                 data += 2;
-                f.resume();
+                f = f.resume();
                 std::cout << "entered second time: " << data << std::endl;
                 return std::move( f);
             }};
-    f.resume();
+    f = f.resume();
     std::cout << "returned first time: " << data << std::endl;
     data += 2;
-    f.resume();
+    f = f.resume();
     if ( f) {
         std::cout << "returned second time: " << data << std::endl;
     } else {

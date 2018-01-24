@@ -275,29 +275,29 @@ public:
     fiber( fiber const& other) noexcept = delete;
     fiber & operator=( fiber const& other) noexcept = delete;
 
-    void resume() {
+    fiber resume() {
         BOOST_ASSERT( nullptr != fctx_);
-        fctx_ = detail::jump_fcontext(
+        return fiber{ detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
 #else
                     std::exchange( fctx_, nullptr),
 #endif
-                    nullptr).fctx;
+                    nullptr).fctx };
     }
 
     template< typename Fn >
-    void resume_with( Fn && fn) {
+    fiber resume_with( Fn && fn) {
         BOOST_ASSERT( nullptr != fctx_);
         auto p = std::make_tuple( std::forward< Fn >( fn) );
-        fctx_ =  detail::ontop_fcontext(
+        return fiber{ detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
 #else
                     std::exchange( fctx_, nullptr),
 #endif
                     & p,
-                    detail::context_ontop< fiber, Fn >).fctx;
+                    detail::context_ontop< fiber, Fn >).fctx };
     }
 
     explicit operator bool() const noexcept {
