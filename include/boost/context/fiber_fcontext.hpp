@@ -93,9 +93,8 @@ transfer_t context_ontop( transfer_t t) {
     BOOST_ASSERT( nullptr != p);
     typename std::decay< Fn >::type fn = std::get< 0 >( * p);
     t.data = nullptr;
-    Ctx c{ t.fctx };
     // execute function, pass fiber via reference
-    c = fn( std::move( c) );
+    Ctx c = fn( Ctx{ t.fctx } );
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
     return { exchange( c.fctx_, nullptr), nullptr };
 #else
@@ -135,12 +134,11 @@ public:
     }
 
     fcontext_t run( fcontext_t fctx) {
-        Ctx c{ fctx };
         // invoke context-function
 #if defined(BOOST_NO_CXX17_STD_INVOKE)
-        c = invoke( fn_, std::move( c) );
+        Ctx c = invoke( fn_, Ctx{ fctx } );
 #else
-        c = std::invoke( fn_, std::move( c) );
+        Ctx c = std::invoke( fn_, Ctx{ fctx } );
 #endif
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         return exchange( c.fctx_, nullptr);
