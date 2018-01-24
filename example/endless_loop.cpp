@@ -14,7 +14,7 @@ namespace ctx = boost::context;
 ctx::fiber bar( ctx::fiber && f) {
     do {
         std::cout << "bar\n";
-        f.resume();
+        f = f.resume();
     } while ( f);
     return std::move( f);
 }
@@ -23,7 +23,7 @@ int main() {
     ctx::fiber f{ bar };
     do {
         std::cout << "foo\n";
-        f.resume();
+        f = f.resume();
     } while ( f);
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;

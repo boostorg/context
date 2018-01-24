@@ -134,11 +134,11 @@ void test_move() {
     ctx::fiber f1{
         [&i](ctx::fiber && f) {
             value1 = i;
-            f.resume();
+            f = f.resume();
             value1 = i;
             return std::move( f);
         }};
-    f1.resume();
+    f1 = f1.resume();
     BOOST_CHECK_EQUAL( 1, value1);
     BOOST_CHECK( f1);
     ctx::fiber f2;
@@ -147,7 +147,7 @@ void test_move() {
     BOOST_CHECK( ! f1);
     BOOST_CHECK( f2);
     i = 3;
-    f2.resume();
+    f2 = f2.resume();
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK( ! f1);
     BOOST_CHECK( ! f2);
@@ -157,7 +157,7 @@ void test_bind() {
     value1 = 0;
     X x;
     ctx::fiber f{ std::bind( & X::foo, x, std::placeholders::_1, 7) };
-    f.resume();
+    f = f.resume();
     BOOST_CHECK_EQUAL( 7, value1);
 }
 
@@ -173,7 +173,7 @@ void test_exception() {
                 }
                 return std::move( f);
             }};
-        f.resume();
+        f = f.resume();
         BOOST_CHECK_EQUAL( std::string( what), value2);
         BOOST_CHECK( ! f);
     }
@@ -182,12 +182,12 @@ void test_exception() {
         bool catched = false;
         std::thread([&catched](){
                 ctx::fiber f{ [&catched](ctx::fiber && f){
-                            f.resume();
+                            f = f.resume();
                             seh( catched);
                             return std::move( f);
                         }};
             BOOST_CHECK( f);
-            f.resume();
+            f = f.resume();
         }).join();
         BOOST_CHECK( catched);
     }
@@ -203,7 +203,7 @@ void test_fp() {
             value3 = d;
             return std::move( f);
         }};
-    f.resume();
+    f = f.resume();
     BOOST_CHECK_EQUAL( 10.58, value3);
     BOOST_CHECK( ! f);
 }
@@ -218,11 +218,11 @@ void test_stacked() {
                     value1 = 3;
                     return std::move( f);
                 }};
-            f1.resume();
+            f1 = f1.resume();
             value3 = 3.14;
             return std::move( f);
         }};
-    f.resume();
+    f = f.resume();
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK_EQUAL( 3.14, value3);
     BOOST_CHECK( ! f);
@@ -241,7 +241,7 @@ void test_prealloc() {
             value1 = i;
             return std::move( f);
         }};
-    f.resume();
+    f = f.resume();
     BOOST_CHECK_EQUAL( 7, value1);
     BOOST_CHECK( ! f);
 }
@@ -252,12 +252,12 @@ void test_ontop() {
         ctx::fiber f{ [&i](ctx::fiber && f) {
                     for (;;) {
                         i *= 10;
-                        f.resume();
+                        f = f.resume();
                     }
                     return std::move( f);
                 }};
-        f.resume();
-        f.resume_with(
+        f = f.resume();
+        f = f.resume_with(
                [&i](ctx::fiber && f){
                    i -= 10;
                    return std::move( f);
@@ -268,12 +268,12 @@ void test_ontop() {
     {
         ctx::fiber f1;
         ctx::fiber f{ [&f1](ctx::fiber && f) {
-                    f.resume();
+                    f = f.resume();
                     BOOST_CHECK( ! f);
                     return std::move( f1);
                 }};
-        f.resume();
-        f.resume_with(
+        f = f.resume();
+        f = f.resume_with(
                [&f1](ctx::fiber && f){
                    f1 = std::move( f);
                    return std::move( f);
@@ -288,7 +288,7 @@ void test_ontop_exception() {
             for (;;) {
                 value1 = 3;
                 try {
-                    f.resume();
+                    f = f.resume();
                 } catch ( my_exception & ex) {
                     value2 = ex.what();
                     return std::move( ex.f); 
@@ -296,10 +296,10 @@ void test_ontop_exception() {
             }
             return std::move( f);
     }};
-    f.resume();
+    f = f.resume();
     BOOST_CHECK_EQUAL( 3, value1);
     const char * what = "hello world";
-    f.resume_with(
+    f = f.resume_with(
        [what](ctx::fiber && f){
             throw my_exception( std::move( f), what);
             return std::move( f);
@@ -314,10 +314,10 @@ void test_termination() {
         ctx::fiber f{
             [](ctx::fiber && f){
                 Y y;
-                f.resume();
+                f = f.resume();
                 return std::move(f);
             }};
-        f.resume();
+        f = f.resume();
         BOOST_CHECK_EQUAL( 3, value1);
     }
     BOOST_CHECK_EQUAL( 7, value1);
@@ -329,7 +329,7 @@ void test_termination() {
                 value1 = 3;
                 return std::move( f);
             }};
-        f.resume();
+        f = f.resume();
         BOOST_CHECK_EQUAL( 3, value1);
         BOOST_CHECK( ! f);
     }
@@ -340,16 +340,16 @@ void test_termination() {
         ctx::fiber f{
             [&i](ctx::fiber && f){
                 value1 = i;
-                f.resume();
+                f = f.resume();
                 value1 = i;
                 return std::move( f);
             }};
-        f.resume();
+        f = f.resume();
         BOOST_CHECK( f);
         BOOST_CHECK_EQUAL( i, value1);
         BOOST_CHECK( f);
         i = 7;
-        f.resume();
+        f = f.resume();
         BOOST_CHECK( ! f);
         BOOST_CHECK_EQUAL( i, value1);
     }

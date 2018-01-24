@@ -27,7 +27,7 @@ int main() {
         for (;;) {
             try {
                 std::cout << "entered" << std::endl;
-                f.resume();
+                f = f.resume();
             } catch ( my_exception & ex) {
                 std::cerr << "my_exception: " << ex.what() << std::endl;
                 return std::move( ex.f);
@@ -35,8 +35,8 @@ int main() {
         }
         return std::move( f);
     }};
-    f.resume();
-    f.resume_with([](ctx::fiber && f){
+    f = f.resume();
+    f = f.resume_with([](ctx::fiber && f){
         throw my_exception(std::move( f), "abc");
         return std::move( f);
     });
