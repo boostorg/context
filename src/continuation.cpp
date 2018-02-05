@@ -5,9 +5,11 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #if defined(BOOST_USE_UCONTEXT)
-#include "boost/context/fiber_ucontext.hpp"
+#include "boost/context/continuation_ucontext.hpp"
 #elif defined(BOOST_USE_WINFIB)
-#include "boost/context/fiber_winfib.hpp"
+#include "boost/context/continuation_winfib.hpp"
+#else
+#include "boost/context/execution_context.hpp"
 #endif
 
 #include <boost/config.hpp>
@@ -21,17 +23,17 @@ namespace context {
 namespace detail {
 
 // zero-initialization
-thread_local fiber_activation_record * current_rec;
+thread_local activation_record * current_rec;
 thread_local static std::size_t counter;
 
 // schwarz counter
-fiber_activation_record_initializer::fiber_activation_record_initializer() noexcept {
+activation_record_initializer::activation_record_initializer() noexcept {
     if ( 0 == counter++) {
-        current_rec = new fiber_activation_record();
+        current_rec = new activation_record();
     }
 }
 
-fiber_activation_record_initializer::~fiber_activation_record_initializer() {
+activation_record_initializer::~activation_record_initializer() {
     if ( 0 == --counter) {
         BOOST_ASSERT( current_rec->is_main_context() );
         delete current_rec;
@@ -42,10 +44,10 @@ fiber_activation_record_initializer::~fiber_activation_record_initializer() {
 
 namespace detail {
 
-fiber_activation_record *&
-fiber_activation_record::current() noexcept {
+activation_record *&
+activation_record::current() noexcept {
     // initialized the first time control passes; per thread
-    thread_local static fiber_activation_record_initializer initializer;
+    thread_local static activation_record_initializer initializer;
     return current_rec;
 }
 

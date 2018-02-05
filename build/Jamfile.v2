@@ -753,13 +753,15 @@ alias impl_sources
 
 # ucontext_t
 alias impl_sources
-    : fiber.cpp
+    : continuation.cpp
+      fiber.cpp
     : <context-impl>ucontext
     ;
 
 # WinFiber
 alias impl_sources
-    : fiber.cpp
+    : continuation.cpp
+      fiber.cpp
     : <context-impl>winfib
     ;
 

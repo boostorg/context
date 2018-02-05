@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CONTEXT_FIBER_H
-#define BOOST_CONTEXT_FIBER_H
+#ifndef BOOST_CONTEXT_CONTINUATION_H
+#define BOOST_CONTEXT_CONTINUATION_H
 
 #include <boost/predef.h>
 #if BOOST_OS_MACOS
@@ -61,19 +61,19 @@ namespace detail {
 // entered if the execution context
 // is resumed for the first time
 template< typename Record >
-static void fiber_entry_func( void * data) noexcept {
+static void entry_func( void * data) noexcept {
     Record * record = static_cast< Record * >( data);
     BOOST_ASSERT( nullptr != record);
     // start execution of toplevel context-function
     record->run();
 }
 
-struct BOOST_CONTEXT_DECL fiber_activation_record {
+struct BOOST_CONTEXT_DECL activation_record {
     ucontext_t                                                  uctx{};
     stack_context                                               sctx{};
     bool                                                        main_ctx{ true };
-	fiber_activation_record                                       *	from{ nullptr };
-    std::function< fiber_activation_record*(fiber_activation_record*&) >    ontop{};
+	activation_record                                       *	from{ nullptr };
+    std::function< activation_record*(activation_record*&) >    ontop{};
     bool                                                        terminated{ false };
     bool                                                        force_unwind{ false };
 #if defined(BOOST_USE_ASAN)
@@ -82,11 +82,11 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
     std::size_t                                                 stack_size{ 0 };
 #endif
 
-    static fiber_activation_record *& current() noexcept;
+    static activation_record *& current() noexcept;
 
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
-    fiber_activation_record() {
+    activation_record() {
         if ( BOOST_UNLIKELY( 0 != ::getcontext( & uctx) ) ) {
             throw std::system_error(
                     std::error_code( errno, std::system_category() ),
@@ -94,22 +94,22 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
         }
     }
 
-    fiber_activation_record( stack_context sctx_) noexcept :
+    activation_record( stack_context sctx_) noexcept :
         sctx( sctx_ ),
         main_ctx( false ) {
     } 
 
-    virtual ~fiber_activation_record() {
+    virtual ~activation_record() {
 	}
 
-    fiber_activation_record( fiber_activation_record const&) = delete;
-    fiber_activation_record & operator=( fiber_activation_record const&) = delete;
+    activation_record( activation_record const&) = delete;
+    activation_record & operator=( activation_record const&) = delete;
 
     bool is_main_context() const noexcept {
         return main_ctx;
     }
 
-    fiber_activation_record * resume() {
+    activation_record * resume() {
 		from = current();
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
@@ -141,15 +141,15 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
     }
 
     template< typename Ctx, typename Fn >
-    fiber_activation_record * resume_with( Fn && fn) {
+    activation_record * resume_with( Fn && fn) {
 		from = current();
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
-        // returned by fiber::current()
+        // returned by continuation::current()
         current() = this;
 #if defined(BOOST_NO_CXX14_GENERIC_LAMBDAS)
         current()->ontop = std::bind(
-                [](typename std::decay< Fn >::type & fn, fiber_activation_record *& ptr){
+                [](typename std::decay< Fn >::type & fn, activation_record *& ptr){
                     Ctx c{ ptr };
                     c = fn( std::move( c) );
                     if ( ! c) {
@@ -164,7 +164,7 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
                 std::forward< Fn >( fn),
                 std::placeholders::_1);
 #else
-        current()->ontop = [fn=std::forward<Fn>(fn)](fiber_activation_record *& ptr){
+        current()->ontop = [fn=std::forward<Fn>(fn)](activation_record *& ptr){
             Ctx c{ ptr };
             c = fn( std::move( c) );
             if ( ! c) {
@@ -203,37 +203,37 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
     }
 };
 
-struct BOOST_CONTEXT_DECL fiber_activation_record_initializer {
-    fiber_activation_record_initializer() noexcept;
-    ~fiber_activation_record_initializer();
+struct BOOST_CONTEXT_DECL activation_record_initializer {
+    activation_record_initializer() noexcept;
+    ~activation_record_initializer();
 };
 
 struct forced_unwind {
-    fiber_activation_record  *   from{ nullptr };
+    activation_record  *   from{ nullptr };
 
-    forced_unwind( fiber_activation_record * from_) noexcept :
+    forced_unwind( activation_record * from_) noexcept :
         from{ from_ } {
     }
 };
 
 template< typename Ctx, typename StackAlloc, typename Fn >
-class fiber_capture_record : public fiber_activation_record {
+class capture_record : public activation_record {
 private:
     typename std::decay< StackAlloc >::type             salloc_;
     typename std::decay< Fn >::type                     fn_;
 
-    static void destroy( fiber_capture_record * p) noexcept {
+    static void destroy( capture_record * p) noexcept {
         typename std::decay< StackAlloc >::type salloc = std::move( p->salloc_);
         stack_context sctx = p->sctx;
         // deallocate activation record
-        p->~fiber_capture_record();
+        p->~capture_record();
         // destroy stack with stack allocator
         salloc.deallocate( sctx);
     }
 
 public:
-    fiber_capture_record( stack_context sctx, StackAlloc && salloc, Fn && fn) noexcept :
-        fiber_activation_record{ sctx },
+    capture_record( stack_context sctx, StackAlloc && salloc, Fn && fn) noexcept :
+        activation_record{ sctx },
         salloc_{ std::forward< StackAlloc >( salloc) },
         fn_( std::forward< Fn >( fn) ) {
     }
@@ -266,13 +266,13 @@ public:
         terminated = true;
         force_unwind = false;
         c.resume();
-        BOOST_ASSERT_MSG( false, "fiber already terminated");
+        BOOST_ASSERT_MSG( false, "continuation already terminated");
     }
 };
 
 template< typename Ctx, typename StackAlloc, typename Fn >
-static fiber_activation_record * create_fiber1( StackAlloc && salloc, Fn && fn) {
-    typedef fiber_capture_record< Ctx, StackAlloc, Fn >  capture_t;
+static activation_record * create_context1( StackAlloc && salloc, Fn && fn) {
+    typedef capture_record< Ctx, StackAlloc, Fn >  capture_t;
 
     auto sctx = salloc.allocate();
     // reserve space for control structure
@@ -296,7 +296,7 @@ static fiber_activation_record * create_fiber1( StackAlloc && salloc, Fn && fn) 
     record->uctx.uc_stack.ss_size = reinterpret_cast< uintptr_t >( storage) -
             reinterpret_cast< uintptr_t >( stack_bottom) - static_cast< uintptr_t >( 64);
     record->uctx.uc_link = nullptr;
-    ::makecontext( & record->uctx, ( void (*)() ) & fiber_entry_func< capture_t >, 1, record);
+    ::makecontext( & record->uctx, ( void (*)() ) & entry_func< capture_t >, 1, record);
 #if defined(BOOST_USE_ASAN)
     record->stack_bottom = record->uctx.uc_stack.ss_sp;
     record->stack_size = record->uctx.uc_stack.ss_size;
@@ -305,8 +305,8 @@ static fiber_activation_record * create_fiber1( StackAlloc && salloc, Fn && fn) 
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn >
-static fiber_activation_record * create_fiber2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
-    typedef fiber_capture_record< Ctx, StackAlloc, Fn >  capture_t; 
+static activation_record * create_context2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
+    typedef capture_record< Ctx, StackAlloc, Fn >  capture_t; 
 
     // reserve space for control structure
     void * storage = reinterpret_cast< void * >(
@@ -329,7 +329,7 @@ static fiber_activation_record * create_fiber2( preallocated palloc, StackAlloc 
     record->uctx.uc_stack.ss_size = reinterpret_cast< uintptr_t >( storage) -
             reinterpret_cast< uintptr_t >( stack_bottom) - static_cast< uintptr_t >( 64);
     record->uctx.uc_link = nullptr;
-    ::makecontext( & record->uctx,  ( void (*)() ) & fiber_entry_func< capture_t >, 1, record);
+    ::makecontext( & record->uctx,  ( void (*)() ) & entry_func< capture_t >, 1, record);
 #if defined(BOOST_USE_ASAN)
     record->stack_bottom = record->uctx.uc_stack.ss_sp;
     record->stack_size = record->uctx.uc_stack.ss_size;
@@ -339,61 +339,37 @@ static fiber_activation_record * create_fiber2( preallocated palloc, StackAlloc 
 
 }
 
-class BOOST_CONTEXT_DECL fiber {
+class BOOST_CONTEXT_DECL continuation {
 private:
-    friend struct detail::fiber_activation_record;
+    friend struct detail::activation_record;
 
     template< typename Ctx, typename StackAlloc, typename Fn >
-    friend class detail::fiber_capture_record;
+    friend class detail::capture_record;
 
 	template< typename Ctx, typename StackAlloc, typename Fn >
-	friend detail::fiber_activation_record * detail::create_fiber1( StackAlloc &&, Fn &&);
+	friend detail::activation_record * detail::create_context1( StackAlloc &&, Fn &&);
 
 	template< typename Ctx, typename StackAlloc, typename Fn >
-	friend detail::fiber_activation_record * detail::create_fiber2( preallocated, StackAlloc &&, Fn &&);
+	friend detail::activation_record * detail::create_context2( preallocated, StackAlloc &&, Fn &&);
 
     template< typename StackAlloc, typename Fn >
-    friend fiber
+    friend continuation
     callcc( std::allocator_arg_t, StackAlloc &&, Fn &&);
 
     template< typename StackAlloc, typename Fn >
-    friend fiber
+    friend continuation
     callcc( std::allocator_arg_t, preallocated, StackAlloc &&, Fn &&);
 
-    detail::fiber_activation_record   *   ptr_{ nullptr };
+    detail::activation_record   *   ptr_{ nullptr };
 
-    fiber( detail::fiber_activation_record * ptr) noexcept :
+    continuation( detail::activation_record * ptr) noexcept :
         ptr_{ ptr } {
     }
 
 public:
-    fiber() = default;
+    continuation() = default;
 
-    template< typename Fn, typename = detail::disable_overload< fiber, Fn > >
-    fiber( Fn && fn) :
-        fiber{
-                std::allocator_arg,
-#if defined(BOOST_USE_SEGMENTED_STACKS)
-                segmented_stack(),
-#else
-                fixedsize_stack(),
-#endif
-                std::forward< Fn >( fn) } {
-    }
-
-    template< typename StackAlloc, typename Fn >
-    fiber( std::allocator_arg_t, StackAlloc && salloc, Fn && fn) :
-        ptr_{ detail::create_fiber1< fiber >(
-                std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) } {
-    }
-
-    template< typename StackAlloc, typename Fn >
-    fiber( std::allocator_arg_t, preallocated palloc, StackAlloc && salloc, Fn && fn) :
-        ptr_{ detail::create_fiber2< fiber >(
-                palloc, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) } {
-    }
-
-    ~fiber() {
+    ~continuation() {
         if ( BOOST_UNLIKELY( nullptr != ptr_) && ! ptr_->main_ctx) {
             if ( BOOST_LIKELY( ! ptr_->terminated) ) {
                 ptr_->force_unwind = true;
@@ -404,54 +380,52 @@ public:
         }
     }
 
-    fiber( fiber const&) = delete;
-    fiber & operator=( fiber const&) = delete;
+    continuation( continuation const&) = delete;
+    continuation & operator=( continuation const&) = delete;
 
-    fiber( fiber && other) noexcept {
+    continuation( continuation && other) noexcept {
         swap( other);
     }
 
-    fiber & operator=( fiber && other) noexcept {
+    continuation & operator=( continuation && other) noexcept {
         if ( BOOST_LIKELY( this != & other) ) {
-            fiber tmp = std::move( other);
+            continuation tmp = std::move( other);
             swap( tmp);
         }
         return * this;
     }
 
-    fiber resume() {
-        BOOST_ASSERT( nullptr != ptr_);
+    continuation resume() {
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        detail::fiber_activation_record * ptr = detail::exchange( ptr_, nullptr)->resume();
+        detail::activation_record * ptr = detail::exchange( ptr_, nullptr)->resume();
 #else
-        detail::fiber_activation_record * ptr = std::exchange( ptr_, nullptr)->resume();
+        detail::activation_record * ptr = std::exchange( ptr_, nullptr)->resume();
 #endif
-        if ( BOOST_UNLIKELY( detail::fiber_activation_record::current()->force_unwind) ) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
-        } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_activation_record::current()->ontop) ) {
-            ptr = detail::fiber_activation_record::current()->ontop( ptr);
-            detail::fiber_activation_record::current()->ontop = nullptr;
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
+            ptr = detail::activation_record::current()->ontop( ptr);
+            detail::activation_record::current()->ontop = nullptr;
         }
-        return fiber{ ptr };
+        return continuation{ ptr };
     }
 
     template< typename Fn >
-    fiber resume_with( Fn && fn) {
-        BOOST_ASSERT( nullptr != ptr_);
+    continuation resume_with( Fn && fn) {
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        detail::fiber_activation_record * ptr =
-            detail::exchange( ptr_, nullptr)->resume_with< fiber >( std::forward< Fn >( fn) );
+        detail::activation_record * ptr =
+            detail::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn) );
 #else
-        detail::fiber_activation_record * ptr =
-            std::exchange( ptr_, nullptr)->resume_with< fiber >( std::forward< Fn >( fn) );
+        detail::activation_record * ptr =
+            std::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn) );
 #endif
-        if ( BOOST_UNLIKELY( detail::fiber_activation_record::current()->force_unwind) ) {
+        if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
-        } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_activation_record::current()->ontop) ) {
-            ptr = detail::fiber_activation_record::current()->ontop( ptr);
-            detail::fiber_activation_record::current()->ontop = nullptr;
+        } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
+            ptr = detail::activation_record::current()->ontop( ptr);
+            detail::activation_record::current()->ontop = nullptr;
         }
-        return fiber{ ptr };
+        return continuation{ ptr };
     }
 
     explicit operator bool() const noexcept {
@@ -462,33 +436,33 @@ public:
         return nullptr == ptr_ || ptr_->terminated;
     }
 
-    bool operator==( fiber const& other) const noexcept {
+    bool operator==( continuation const& other) const noexcept {
         return ptr_ == other.ptr_;
     }
 
-    bool operator!=( fiber const& other) const noexcept {
+    bool operator!=( continuation const& other) const noexcept {
         return ptr_ != other.ptr_;
     }
 
-    bool operator<( fiber const& other) const noexcept {
+    bool operator<( continuation const& other) const noexcept {
         return ptr_ < other.ptr_;
     }
 
-    bool operator>( fiber const& other) const noexcept {
+    bool operator>( continuation const& other) const noexcept {
         return other.ptr_ < ptr_;
     }
 
-    bool operator<=( fiber const& other) const noexcept {
+    bool operator<=( continuation const& other) const noexcept {
         return ! ( * this > other);
     }
 
-    bool operator>=( fiber const& other) const noexcept {
+    bool operator>=( continuation const& other) const noexcept {
         return ! ( * this < other);
     }
 
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
-    operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other) {
+    operator<<( std::basic_ostream< charT, traitsT > & os, continuation const& other) {
         if ( nullptr != other.ptr_) {
             return os << other.ptr_;
         } else {
@@ -496,13 +470,45 @@ public:
         }
     }
 
-    void swap( fiber & other) noexcept {
+    void swap( continuation & other) noexcept {
         std::swap( ptr_, other.ptr_);
     }
 };
 
+template<
+    typename Fn,
+    typename = detail::disable_overload< continuation, Fn >
+>
+continuation
+callcc( Fn && fn) {
+	return callcc(
+			std::allocator_arg,
+#if defined(BOOST_USE_SEGMENTED_STACKS)
+			segmented_stack(),
+#else
+			fixedsize_stack(),
+#endif
+			std::forward< Fn >( fn) );
+}
+
+template< typename StackAlloc, typename Fn >
+continuation
+callcc( std::allocator_arg_t, StackAlloc && salloc, Fn && fn) {
+	return continuation{
+		detail::create_context1< continuation >(
+				std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) }.resume();
+}
+
+template< typename StackAlloc, typename Fn >
+continuation
+callcc( std::allocator_arg_t, preallocated palloc, StackAlloc && salloc, Fn && fn) {
+	return continuation{
+		detail::create_context2< continuation >(
+				palloc, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) }.resume();
+}
+
 inline
-void swap( fiber & l, fiber & r) noexcept {
+void swap( continuation & l, continuation & r) noexcept {
     l.swap( r);
 }
 
@@ -512,4 +518,4 @@ void swap( fiber & l, fiber & r) noexcept {
 # include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_CONTEXT_FIBER_H
+#endif // BOOST_CONTEXT_CONTINUATION_H
