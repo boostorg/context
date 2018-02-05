@@ -10,7 +10,7 @@
 #include <iostream>
 #include <emmintrin.h>
 
-#include <boost/context/continuation.hpp>
+#include <boost/context/fiber.hpp>
 
 namespace ctx = boost::context;
 
@@ -28,18 +28,18 @@ void echoSSE( int i) {
 
 int main( int argc, char * argv[]) {
     int i = 0;
-    ctx::continuation c = ctx::callcc(
-        [&i](ctx::continuation && c) {
+    ctx::fiber f{
+        [&i](ctx::fiber && f) {
             for (;;) {
                 std::cout << i;
                 echoSSE( i);
                 std::cout << " ";
-                c = c.resume();
+                f = f.resume();
             }
-            return std::move( c);
-        });
-    for (; i < 10; ++i) {
-        c = c.resume();
+            return std::move( f);
+        }};
+    for (; i < 11; ++i) {
+        f = f.resume();
     }
     std::cout << "\nmain: done" << std::endl;
     return EXIT_SUCCESS;

@@ -7,22 +7,24 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/context/continuation.hpp>
+#include <boost/context/fiber.hpp>
 
 namespace ctx = boost::context;
 
-ctx::continuation foo( ctx::continuation && c) {
+ctx::fiber bar( ctx::fiber && f) {
     do {
-        std::cout << "foo\n";
-    } while ( ( c = c.resume() ) );
-    return std::move( c);
+        std::cout << "bar\n";
+        f = f.resume();
+    } while ( f);
+    return std::move( f);
 }
 
 int main() {
-    ctx::continuation c = ctx::callcc( foo);
+    ctx::fiber f{ bar };
     do {
-        std::cout << "bar\n";
-    } while ( ( c = c.resume() ) );
+        std::cout << "foo\n";
+        f = f.resume();
+    } while ( f);
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;
 }

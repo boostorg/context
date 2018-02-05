@@ -395,7 +395,7 @@ void test_ontop_exception() {
                 for (;;) {
                     try {
                             std::tie( ctx, x, y) = ctx( x+y,x-y);
-                    } catch ( boost::context::ontop_error const& e) {
+                    } catch ( ctx::ontop_error const& e) {
                         try {
                             std::rethrow_if_nested( e);
                         } catch ( my_exception const& ex) {

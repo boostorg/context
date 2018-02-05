@@ -9,7 +9,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <boost/context/continuation.hpp>
+#include <boost/context/fiber.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/program_options.hpp>
 
@@ -21,21 +21,21 @@ boost::uint64_t jobs = 1000;
 
 namespace ctx = boost::context;
 
-static ctx::continuation foo( ctx::continuation && c) {
+static ctx::fiber foo( ctx::fiber && f) {
     while ( true) {
-        c = c.resume();
+        f = f.resume();
     }
-    return std::move( c);
+    return ctx::fiber{};
 }
 
 duration_type measure_time() {
     // cache warum-up
-    ctx::continuation c = ctx::callcc( foo);
-    c = c.resume();
+    ctx::fiber f{ foo };
+    f = f.resume();
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = c.resume();
+        f = f.resume();
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -49,12 +49,12 @@ duration_type measure_time() {
 cycle_type measure_cycles() {
     // cache warum-up
     ctx::fixedsize_stack alloc;
-    ctx::continuation c = ctx::callcc( std::allocator_arg, alloc, foo);
-    c = c.resume();
+    ctx::fiber f{ std::allocator_arg, alloc, foo };
+    f = f.resume();
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        c = c.resume();
+        f = f.resume();
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
@@ -89,10 +89,10 @@ int main( int argc, char * argv[]) {
         }
 
         boost::uint64_t res = measure_time().count();
-        std::cout << "continuation: average of " << res << " nano seconds" << std::endl;
+        std::cout << "fiber: average of " << res << " nano seconds" << std::endl;
 #ifdef BOOST_CONTEXT_CYCLE
         res = measure_cycles();
-        std::cout << "continuation: average of " << res << " cpu cycles" << std::endl;
+        std::cout << "fiber: average of " << res << " cpu cycles" << std::endl;
 #endif
 
         return EXIT_SUCCESS;

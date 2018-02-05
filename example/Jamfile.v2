@@ -70,6 +70,10 @@ exe segmented
     : segmented.cpp
     ;
 
+exe circle
+    : circle.cpp
+    ;
+
 #exe backtrace
 #    : backtrace.cpp
 #    ;

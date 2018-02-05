@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/context/continuation.hpp>
+#include <boost/context/fiber.hpp>
 
 namespace ctx = boost::context;
 
@@ -39,20 +39,20 @@ public:
 };
 
 int main() {
-    ctx::continuation c;
     moveable data{ 1 };
-    c = ctx::callcc( std::allocator_arg, ctx::fixedsize_stack{},
-                     [&data](ctx::continuation && c){
+    ctx::fiber f{ std::allocator_arg, ctx::fixedsize_stack{},
+                     [&data](ctx::fiber && f){
                         std::cout << "entered first time: " << data.value << std::endl;
                         data = std::move( moveable{ 3 });
-                        c = c.resume();
+                        f = f.resume();
                         std::cout << "entered second time: " << data.value << std::endl;
                         data = std::move( moveable{});
-                        return std::move( c);
-                     });
+                        return std::move( f);
+                     }};
+    f = f.resume();
     std::cout << "returned first time: " << data.value << std::endl;
     data.value = 5;
-    c = c.resume();
+    f = f.resume();
     std::cout << "returned second time: " << data.value << std::endl;
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;

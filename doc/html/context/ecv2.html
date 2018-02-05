@@ -27,13 +27,15 @@
 <a name="context.ecv2"></a><a name="ecv2"></a><a class="link" href="ecv2.html" title="Class execution_context (version 2)">Class execution_context
     (version 2)</a>
 </h2></div></div></div>
-<div class="warning"><table border="0" summary="Warning">
+<div class="note"><table border="0" summary="Note">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../../../../doc/src/images/warning.png"></td>
-<th align="left">Warning</th>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
+<th align="left">Note</th>
 </tr>
 <tr><td align="left" valign="top"><p>
-        <span class="emphasis"><em>execution_context</em></span> is deprecated.
+        <span class="emphasis"><em>execution_context</em></span> (v2) is the reference implementation
+        of C++ proposal <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0099r1.pdf" target="_top">P099R1:
+        A low-level API for stackful context switching</a>.
       </p></td></tr>
 </table></div>
 <div class="note"><table border="0" summary="Note">
@@ -42,11 +44,8 @@
 <th align="left">Note</th>
 </tr>
 <tr><td align="left" valign="top"><p>
-        Include <code class="computeroutput"><span class="identifier">execution_context</span><span class="special">.</span><span class="identifier">hpp</span></code> and
-        pass <code class="computeroutput"><span class="identifier">BOOST_EXECUTION_CONTEXT</span><span class="special">=</span><span class="number">2</span></code> and property
-        <code class="computeroutput"><span class="identifier">context</span><span class="special">-</span><span class="keyword">switch</span><span class="special">=</span><span class="identifier">ec</span></code>
-        to b2 command-line in order to use <span class="emphasis"><em>execution_context</em></span>
-        (v2).
+        <span class="emphasis"><em>execution_context</em></span> (v2) resides in the inlined sub-namespace
+        <code class="computeroutput"><span class="identifier">v2</span></code>.
       </p></td></tr>
 </table></div>
 <div class="note"><table border="0" summary="Note">
@@ -376,301 +375,8 @@
       front of <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>).
       <code class="computeroutput"><span class="identifier">f2</span><span class="special">()</span></code>
       returns argument <code class="computeroutput"><span class="special">-</span><span class="number">1</span></code>
-      that will returned by the second invocation of <code class="computeroutput"><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">)</span></code> in <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>. [/
-      Another option is to execute a function on top of the context that throws an
-      exception. The thrown exception is catched and re-thrown as nested exception
-      of <span class="emphasis"><em>ontop_error</em></span> from <span class="emphasis"><em>execution_context::operator()</em></span>.
-      <span class="emphasis"><em>ontop_error</em></span> gives access to the context that has resumed
-      the current context.
+      that will returned by the second invocation of <code class="computeroutput"><span class="identifier">ctx</span><span class="special">(</span><span class="identifier">data</span><span class="special">+</span><span class="number">1</span><span class="special">)</span></code> in <code class="computeroutput"><span class="identifier">f1</span><span class="special">()</span></code>.
     </p>
-<pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">my_exception</span> <span class="special">:</span> <span class="keyword">public</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">runtime_error</span> <span class="special">{</span>
-    <span class="identifier">my_exception</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">what</span><span class="special">)</span> <span class="special">:</span>
-        <span class="identifier">std</span><span class="special">::</span><span class="identifier">runtime_error</span><span class="special">{</span> <span class="identifier">what</span> <span class="special">}</span> <span class="special">{</span>
-    <span class="special">}</span>
-<span class="special">};</span>
-
-<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="identifier">ctx</span><span class="special">([](</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="special">&amp;&amp;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span>
-    <span class="keyword">for</span> <span class="special">(;;)</span> <span class="special">{</span>
-        <span class="keyword">try</span> <span class="special">{</span>
-                <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"entered"</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-                <span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">();</span>
-            <span class="special">}</span>
-        <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">ontop_error</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">e</span><span class="special">)</span> <span class="special">{</span>
-            <span class="keyword">try</span> <span class="special">{</span>
-                <span class="identifier">std</span><span class="special">::</span><span class="identifier">rethrow_if_nested</span><span class="special">(</span> <span class="identifier">e</span><span class="special">);</span>
-            <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(</span> <span class="identifier">my_exception</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">ex</span><span class="special">)</span> <span class="special">{</span>
-                <span class="identifier">std</span><span class="special">::</span><span class="identifier">cerr</span> <span class="special">&lt;&lt;</span> <span class="string">"my_exception: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">ex</span><span class="special">.</span><span class="identifier">what</span><span class="special">()</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-            <span class="special">}</span>
-            <span class="keyword">return</span> <span class="identifier">e</span><span class="special">.</span><span class="identifier">get_context</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;();</span>
-        <span class="special">}</span>
-    <span class="special">}</span>
-    <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span> <span class="identifier">ctx</span><span class="special">);</span>
-<span class="special">});</span>
-<span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">();</span>
-<span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">();</span>
-<span class="identifier">ctx</span> <span class="special">=</span> <span class="identifier">ctx</span><span class="special">(</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">exec_ontop_arg</span><span class="special">,[](){</span> <span class="keyword">throw</span> <span class="identifier">my_exception</span><span class="special">{</span> <span class="string">"abc"</span> <span class="special">};</span> <span class="special">});</span>
-
-<span class="identifier">output</span><span class="special">:</span>
-    <span class="identifier">entered</span>
-    <span class="identifier">entered</span>
-    <span class="identifier">my_exception</span><span class="special">:</span> <span class="identifier">abc</span>
-</pre>
-<p>
-      In this exception <code class="computeroutput"><span class="identifier">my_exception</span></code>
-      is throw from a function invoked ontop of context <code class="computeroutput"><span class="identifier">ctx</span></code>
-      and catched inside the <code class="computeroutput"><span class="keyword">for</span></code>-loop.
-    </p>
-<h4>
-<a name="context.ecv2.h4"></a>
-      <span><a name="context.ecv2.stack_unwinding"></a></span><a class="link" href="ecv2.html#context.ecv2.stack_unwinding">stack
-      unwinding</a>
-    </h4>
-<p>
-      On construction of <span class="emphasis"><em>execution_context</em></span> a stack is allocated.
-      If the <span class="emphasis"><em>context-function</em></span> returns the stack will be destructed.
-      If the <span class="emphasis"><em>context-function</em></span> has not yet returned and the destructor
-      of an valid <span class="emphasis"><em>execution_context</em></span> instance (e.g. <span class="emphasis"><em>execution_context::operator
-      bool()</em></span> returns <code class="computeroutput"><span class="keyword">true</span></code>)
-      is called, the stack will be destructed too.
-    </p>
-<div class="important"><table border="0" summary="Important">
-<tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Important]" src="../../../../../doc/src/images/important.png"></td>
-<th align="left">Important</th>
-</tr>
-<tr><td align="left" valign="top"><p>
-        Code executed by <span class="emphasis"><em>context-function</em></span> must not prevent the
-        propagation of the <span class="emphasis"><em>detail::forced_unwind</em></span> exception.
-        Absorbing that exception will cause stack unwinding to fail. Thus, any code
-        that catches all exceptions must re-throw any pending <span class="emphasis"><em>detail::forced_unwind</em></span>
-        exception.
-      </p></td></tr>
-</table></div>
-<a name="ecv2_prealloc"></a><h4>
-<a name="context.ecv2.h5"></a>
-      <span><a name="context.ecv2.allocating_control_structures_on_top_of_stack"></a></span><a class="link" href="ecv2.html#context.ecv2.allocating_control_structures_on_top_of_stack">allocating
-      control structures on top of stack</a>
-    </h4>
-<p>
-      Allocating control structures on top of the stack requires to allocated the
-      <span class="emphasis"><em>stack_context</em></span> and create the control structure with placement
-      new before <span class="emphasis"><em>execution_context</em></span> is created.
-    </p>
-<div class="note"><table border="0" summary="Note">
-<tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
-<th align="left">Note</th>
-</tr>
-<tr><td align="left" valign="top"><p>
-        The user is responsible for destructing the control structure at the top
-        of the stack.
-      </p></td></tr>
-</table></div>
-<pre class="programlisting"><span class="comment">// stack-allocator used for (de-)allocating stack</span>
-<span class="identifier">fixedsize_stack</span> <span class="identifier">salloc</span><span class="special">(</span><span class="number">4048</span><span class="special">);</span>
-<span class="comment">// allocate stack space</span>
-<span class="identifier">stack_context</span> <span class="identifier">sctx</span><span class="special">(</span><span class="identifier">salloc</span><span class="special">.</span><span class="identifier">allocate</span><span class="special">());</span>
-<span class="comment">// reserve space for control structure on top of the stack</span>
-<span class="keyword">void</span> <span class="special">*</span> <span class="identifier">sp</span><span class="special">=</span><span class="keyword">static_cast</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">*&gt;(</span><span class="identifier">sctx</span><span class="special">.</span><span class="identifier">sp</span><span class="special">)-</span><span class="keyword">sizeof</span><span class="special">(</span><span class="identifier">my_control_structure</span><span class="special">);</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span><span class="special">=</span><span class="identifier">sctx</span><span class="special">.</span><span class="identifier">size</span><span class="special">-</span><span class="keyword">sizeof</span><span class="special">(</span><span class="identifier">my_control_structure</span><span class="special">);</span>
-<span class="comment">// placement new creates control structure on reserved space</span>
-<span class="identifier">my_control_structure</span> <span class="special">*</span> <span class="identifier">cs</span><span class="special">=</span><span class="keyword">new</span><span class="special">(</span><span class="identifier">sp</span><span class="special">)</span><span class="identifier">my_control_structure</span><span class="special">(</span><span class="identifier">sp</span><span class="special">,</span><span class="identifier">size</span><span class="special">,</span><span class="identifier">sctx</span><span class="special">,</span><span class="identifier">salloc</span><span class="special">);</span>
-<span class="special">...</span>
-<span class="comment">// destructing the control structure</span>
-<span class="identifier">cs</span><span class="special">-&gt;~</span><span class="identifier">my_control_structure</span><span class="special">();</span>
-<span class="special">...</span>
-<span class="keyword">struct</span> <span class="identifier">my_control_structure</span>  <span class="special">{</span>
-    <span class="comment">// captured context</span>
-    <span class="identifier">execution_context</span> <span class="identifier">cctx</span><span class="special">;</span>
-
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAllocator</span> <span class="special">&gt;</span>
-    <span class="identifier">my_control_structure</span><span class="special">(</span><span class="keyword">void</span> <span class="special">*</span> <span class="identifier">sp</span><span class="special">,</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span><span class="special">,</span><span class="identifier">stack_context</span> <span class="identifier">sctx</span><span class="special">,</span><span class="identifier">StackAllocator</span> <span class="identifier">salloc</span><span class="special">)</span> <span class="special">:</span>
-        <span class="comment">// create captured context</span>
-        <span class="identifier">cctx</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg</span><span class="special">,</span><span class="identifier">preallocated</span><span class="special">(</span><span class="identifier">sp</span><span class="special">,</span><span class="identifier">size</span><span class="special">,</span><span class="identifier">sctx</span><span class="special">),</span><span class="identifier">salloc</span><span class="special">,</span><span class="identifier">entry_func</span><span class="special">)</span> <span class="special">{</span>
-    <span class="special">}</span>
-    <span class="special">...</span>
-<span class="special">};</span>
-</pre>
-<h4>
-<a name="context.ecv2.h6"></a>
-      <span><a name="context.ecv2.inverting_the_control_flow"></a></span><a class="link" href="ecv2.html#context.ecv2.inverting_the_control_flow">inverting
-      the control flow</a>
-    </h4>
-<pre class="programlisting"><span class="comment">/*
- * grammar:
- *   P ---&gt; E '\0'
- *   E ---&gt; T {('+'|'-') T}
- *   T ---&gt; S {('*'|'/') S}
- *   S ---&gt; digit | '(' E ')'
- */</span>
-<span class="keyword">class</span> <span class="identifier">Parser</span><span class="special">{</span>
-    <span class="comment">// implementation omitted; see examples directory</span>
-<span class="special">};</span>
-
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">istringstream</span> <span class="identifier">is</span><span class="special">(</span><span class="string">"1+1"</span><span class="special">);</span>
-<span class="keyword">bool</span> <span class="identifier">done</span><span class="special">=</span><span class="keyword">false</span><span class="special">;</span>
-<span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span> <span class="identifier">except</span><span class="special">;</span>
-
-<span class="comment">// execute parser in new execution context</span>
-<span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">&gt;</span> <span class="identifier">source</span><span class="special">(</span>
-        <span class="special">[&amp;</span><span class="identifier">is</span><span class="special">,&amp;</span><span class="identifier">done</span><span class="special">,&amp;</span><span class="identifier">except</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">execution_context</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">&gt;</span> <span class="special">&amp;&amp;</span> <span class="identifier">sink</span><span class="special">,</span><span class="keyword">char</span><span class="special">){</span>
-        <span class="comment">// create parser with callback function</span>
-        <span class="identifier">Parser</span> <span class="identifier">p</span><span class="special">(</span> <span class="identifier">is</span><span class="special">,</span>
-                  <span class="special">[&amp;</span><span class="identifier">sink</span><span class="special">](</span><span class="keyword">char</span> <span class="identifier">ch</span><span class="special">){</span>
-                        <span class="comment">// resume main execution context</span>
-                        <span class="keyword">auto</span> <span class="identifier">result</span><span class="special">=</span><span class="identifier">sink</span><span class="special">(</span><span class="identifier">ch</span><span class="special">);</span>
-                        <span class="identifier">sink</span><span class="special">=</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;(</span><span class="identifier">result</span><span class="special">));</span>
-                <span class="special">});</span>
-            <span class="keyword">try</span> <span class="special">{</span>
-                <span class="comment">// start recursive parsing</span>
-                <span class="identifier">p</span><span class="special">.</span><span class="identifier">run</span><span class="special">();</span>
-            <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(...)</span> <span class="special">{</span>
-                <span class="comment">// store other exceptions in exception-pointer</span>
-                <span class="identifier">except</span><span class="special">=</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">current_exception</span><span class="special">();</span>
-            <span class="special">}</span>
-            <span class="comment">// set termination flag</span>
-            <span class="identifier">done</span><span class="special">=</span><span class="keyword">true</span><span class="special">;</span>
-            <span class="comment">// resume main execution context</span>
-            <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">sink</span><span class="special">);</span>
-        <span class="special">});</span>
-
-<span class="comment">// user-code pulls parsed data from parser</span>
-<span class="comment">// invert control flow</span>
-<span class="keyword">auto</span> <span class="identifier">result</span><span class="special">=</span><span class="identifier">source</span><span class="special">(</span><span class="char">'\0'</span><span class="special">);</span>
-<span class="identifier">source</span><span class="special">=</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;(</span><span class="identifier">result</span><span class="special">));</span>
-<span class="keyword">char</span> <span class="identifier">c</span><span class="special">=</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">1</span><span class="special">&gt;(</span><span class="identifier">result</span><span class="special">);</span>
-<span class="keyword">if</span> <span class="special">(</span><span class="identifier">except</span><span class="special">)</span> <span class="special">{</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">rethrow_exception</span><span class="special">(</span><span class="identifier">except</span><span class="special">);</span>
-<span class="special">}</span>
-<span class="keyword">while</span><span class="special">(!</span><span class="identifier">done</span><span class="special">)</span> <span class="special">{</span>
-    <span class="identifier">printf</span><span class="special">(</span><span class="string">"Parsed: %c\n"</span><span class="special">,</span><span class="identifier">c</span><span class="special">);</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">source</span><span class="special">,</span><span class="identifier">c</span><span class="special">)=</span><span class="identifier">source</span><span class="special">(</span><span class="char">'\0'</span><span class="special">);</span>
-    <span class="keyword">if</span> <span class="special">(</span><span class="identifier">except</span><span class="special">)</span> <span class="special">{</span>
-        <span class="identifier">std</span><span class="special">::</span><span class="identifier">rethrow_exception</span><span class="special">(</span><span class="identifier">except</span><span class="special">);</span>
-    <span class="special">}</span>
-<span class="special">}</span>
-
-<span class="identifier">output</span><span class="special">:</span>
-    <span class="identifier">Parsed</span><span class="special">:</span> <span class="number">1</span>
-    <span class="identifier">Parsed</span><span class="special">:</span> <span class="special">+</span>
-    <span class="identifier">Parsed</span><span class="special">:</span> <span class="number">1</span>
-</pre>
-<p>
-      In this example a recursive descent parser uses a callback to emit a newly
-      passed symbol. Using <span class="emphasis"><em>execution_context</em></span> the control flow
-      can be inverted, e.g. the user-code pulls parsed symbols from the parser -
-      instead to get pushed from the parser (via callback).
-    </p>
-<p>
-      The data (character) is transferred between the two <span class="emphasis"><em>execution_context</em></span>.
-    </p>
-<p>
-      If the code executed by <span class="emphasis"><em>execution_context</em></span> emits an exception,
-      the application is terminated. <span class="emphasis"><em>std::exception_ptr</em></span> can
-      be used to transfer exceptions between different execution contexts.
-    </p>
-<p>
-      Sometimes it is necessary to unwind the stack of an unfinished context to destroy
-      local stack variables so they can release allocated resources (RAII pattern).
-      The user is responsible for this task.
-    </p>
-<h4>
-<a name="context.ecv2.h7"></a>
-      <span><a name="context.ecv2.class__code__phrase_role__identifier__execution_context__phrase___code_"></a></span><a class="link" href="ecv2.html#context.ecv2.class__code__phrase_role__identifier__execution_context__phrase___code_">Class
-      <code class="computeroutput"><span class="identifier">execution_context</span></code></a>
-    </h4>
-<pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">exec_ontop_arg_t</span> <span class="special">{};</span>
-<span class="keyword">const</span> <span class="identifier">exec_ontop_arg_t</span> <span class="identifier">exec_ontop_arg</span><span class="special">{};</span>
-
-<span class="keyword">class</span> <span class="identifier">ontop_error</span> <span class="special">{</span>
-<span class="keyword">public</span><span class="special">:</span>
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Args</span> <span class="special">&gt;</span>
-    <span class="identifier">execution_context</span><span class="special">&lt;</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="special">&gt;</span> <span class="identifier">get_context</span><span class="special">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
-<span class="special">}</span>
-
-<span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Args</span> <span class="special">&gt;</span>
-<span class="keyword">class</span> <span class="identifier">execution_context</span> <span class="special">{</span>
-<span class="keyword">public</span><span class="special">:</span>
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Params</span> <span class="special">&gt;</span>
-    <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Params</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">params</span><span class="special">);</span>
-
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Params</span> <span class="special">&gt;</span>
-    <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg_t</span><span class="special">,</span> <span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Params</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">params</span><span class="special">);</span>
-
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Params</span> <span class="special">&gt;</span>
-    <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg_t</span><span class="special">,</span> <span class="identifier">preallocated</span> <span class="identifier">palloc</span><span class="special">,</span> <span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Params</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">params</span><span class="special">);</span>
-
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Params</span> <span class="special">&gt;</span>
-    <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg_t</span><span class="special">,</span> <span class="identifier">segemented_stack</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Params</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">params</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">delete</span><span class="special">;</span>
-
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Params</span> <span class="special">&gt;</span>
-    <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg_t</span><span class="special">,</span> <span class="identifier">preallocated</span> <span class="identifier">palloc</span><span class="special">,</span> <span class="identifier">segmented</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Params</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">params</span><span class="special">)=</span> <span class="keyword">delete</span><span class="special">;</span>
-
-    <span class="special">~</span><span class="identifier">execution_context</span><span class="special">();</span>
-
-    <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">execution_context</span> <span class="special">&amp;&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">noexcept</span><span class="special">;</span>
-    <span class="identifier">execution_context</span> <span class="special">&amp;</span> <span class="keyword">operator</span><span class="special">=(</span> <span class="identifier">execution_context</span> <span class="special">&amp;&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">noexcept</span><span class="special">;</span>
-
-    <span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">noexcept</span> <span class="special">=</span> <span class="keyword">delete</span><span class="special">;</span>
-    <span class="identifier">execution_context</span> <span class="special">&amp;</span> <span class="keyword">operator</span><span class="special">=(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">noexcept</span> <span class="special">=</span> <span class="keyword">delete</span><span class="special">;</span>
-
-    <span class="keyword">explicit</span> <span class="keyword">operator</span> <span class="keyword">bool</span><span class="special">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
-    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">!()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
-
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span> <span class="identifier">execution_context</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="special">&gt;</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span>
-
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span> <span class="special">&gt;</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span> <span class="identifier">execution_context</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="special">&gt;</span> <span class="keyword">operator</span><span class="special">()(</span> <span class="identifier">exec_ontop_arg_t</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Args</span> <span class="special">...</span> <span class="identifier">args</span><span class="special">);</span>
-
-    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">==(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
-
-    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">!=(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
-
-    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&lt;(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
-
-    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&gt;(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
-
-    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&lt;=(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
-
-    <span class="keyword">bool</span> <span class="keyword">operator</span><span class="special">&gt;=(</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
-
-    <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">charT</span><span class="special">,</span> <span class="keyword">class</span> <span class="identifier">traitsT</span> <span class="special">&gt;</span>
-    <span class="keyword">friend</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">basic_ostream</span><span class="special">&lt;</span> <span class="identifier">charT</span><span class="special">,</span> <span class="identifier">traitsT</span> <span class="special">&gt;</span> <span class="special">&amp;</span>
-    <span class="keyword">operator</span><span class="special">&lt;&lt;(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">basic_ostream</span><span class="special">&lt;</span> <span class="identifier">charT</span><span class="special">,</span> <span class="identifier">traitsT</span> <span class="special">&gt;</span> <span class="special">&amp;</span> <span class="identifier">os</span><span class="special">,</span> <span class="identifier">execution_context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">);</span>
-<span class="special">};</span>
-</pre>
-<p>
-      </p>
-<h5>
-<a name="ecv2_constructor_bridgehead"></a>
-  <span><a name="ecv2_constructor"></a></span>
-  <a class="link" href="ecv2.html#ecv2_constructor">Constructor</a>
-</h5>
-<p>
-    </p>
-<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Params</span> <span class="special">&gt;</span>
-<span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Params</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">params</span><span class="special">);</span>
-
-<span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Params</span> <span class="special">&gt;</span>
-<span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg_t</span><span class="special">,</span> <span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Params</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">params</span><span class="special">);</span>
-
-<span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">typename</span> <span class="identifier">StackAlloc</span><span class="special">,</span> <span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">,</span> <span class="keyword">typename</span> <span class="special">...</span> <span class="identifier">Params</span> <span class="special">&gt;</span>
-<span class="identifier">execution_context</span><span class="special">(</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator_arg_t</span><span class="special">,</span> <span class="identifier">preallocated</span> <span class="identifier">palloc</span><span class="special">,</span> <span class="identifier">StackAlloc</span> <span class="identifier">salloc</span><span class="special">,</span> <span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">,</span> <span class="identifier">Params</span> <span class="special">&amp;&amp;</span> <span class="special">...</span> <span class="identifier">params</span><span class="special">);</span>
-</pre>
-<div class="variablelist">
-<p class="title"><b></b></p>
-<dl>
-<dt><span class="term">Effects:</span></dt>
-<dd><p>
-            Creates a new execution context and prepares the context to execute
-            <code class="computeroutput"><span class="identifier">fn</span></code>. <code class="computeroutput"><span class="identifier">fixedsize_stack</span></code>
-            is used as default stack allocator (stack size == fixedsize_stack::traits::default_size()).
-            The constructor with argument type <code class="computeroutput"><span class="identifier">preallocated</span></code>,
-            is used to create a user defined data <a class="link" href="ecv2.html#ecv2_prealloc">(for
-            instance additional control structures)</a> on top of the stack.
-          </p></dd>
-</dl>
-</div>
 <p>
       </p>
 <h5>

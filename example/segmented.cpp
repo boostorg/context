@@ -41,11 +41,11 @@ int main() {
     std::cout << "initial stack size = " << boost::context::fixedsize_stack::traits_type::default_size() / 1024 << "kB" << std::endl;
     std::cout << "application might fail" << std::endl;
 #endif
-    ctx::continuation c = ctx::callcc(
-        [count](ctx::continuation && c){
+    ctx::fiber{
+        [count](ctx::fiber && f){
             bar( count);
-            return std::move( c);
-        });
+            return std::move( f);
+        }}.resume();
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;
 }

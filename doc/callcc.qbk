@@ -8,6 +8,11 @@
 [#cc]
 [section:cc Context switching with call/cc]
 
+[note __callcc__ is the reference implementation of C++ proposal
+[@http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0534r3.pdf P0534R3:
+call/cc (call-with-current-continuation): A low-level API for stackful context
+switching].]
+
 __callcc__ (call with current continuation) is a universal control operator
 (well-known from the programming language Scheme) that captures the current
 continuation as a first-class object and pass it as an argument to another

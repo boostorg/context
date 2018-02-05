@@ -8,30 +8,31 @@
 #include <iostream>
 #include <tuple>
 
-#include <boost/context/continuation.hpp>
+#include <boost/context/fiber.hpp>
 
 namespace ctx = boost::context;
 
-ctx::continuation f1( ctx::continuation && c) {
+ctx::fiber f1( ctx::fiber && f) {
     std::cout << "f1: entered first time"  << std::endl;
-    c = c.resume();
+    f = f.resume();
     std::cout << "f1: entered second time" << std::endl;
-    c = c.resume();
+    f = f.resume();
     std::cout << "f1: entered third time" << std::endl;
-    return std::move( c);
+    return std::move( f);
 }
 
-ctx::continuation f2( ctx::continuation && c) {
+ctx::fiber f2( ctx::fiber && f) {
     std::cout << "f2: entered" << std::endl;
-    return std::move( c);
+    return std::move( f);
 }
 
 int main() {
-    ctx::continuation c = ctx::callcc( f1);
+    ctx::fiber f{ f1 };
+    f = f.resume();
     std::cout << "f1: returned first time" << std::endl;
-    c = c.resume();
+    f = f.resume();
     std::cout << "f1: returned second time" << std::endl;
-    c = c.resume_with( f2);
+    f = f.resume_with( f2);
     std::cout << "f1: returned third time" << std::endl;
 
     std::cout << "main: done" << std::endl;

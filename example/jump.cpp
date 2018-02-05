@@ -7,25 +7,25 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/context/continuation.hpp>
+#include <boost/context/fiber.hpp>
 
 namespace ctx = boost::context;
 
 int main() {
-    ctx::continuation c;
     int data = 1;
-    c = ctx::callcc(
-            [&data](ctx::continuation && c){
+    ctx::fiber f{
+            [&data](ctx::fiber && f){
                 std::cout << "entered first time: " << data << std::endl;
                 data += 2;
-                c = c.resume();
+                f = f.resume();
                 std::cout << "entered second time: " << data << std::endl;
-                return std::move( c);
-            });
+                return std::move( f);
+            }};
+    f = f.resume();
     std::cout << "returned first time: " << data << std::endl;
     data += 2;
-    c = c.resume();
-    if ( c) {
+    f = f.resume();
+    if ( f) {
         std::cout << "returned second time: " << data << std::endl;
     } else {
         std::cout << "returned second time: execution context terminated" << std::endl;

@@ -12,7 +12,7 @@
 #include <memory>
 #include <sstream>
 
-#include <boost/context/continuation.hpp>
+#include <boost/context/fiber.hpp>
 
 namespace ctx = boost::context;
 
@@ -93,31 +93,30 @@ private:
 int main() {
     try {
         std::istringstream is("1+1");
-        // execute parser in new execution context
-        ctx::continuation source;
         // user-code pulls parsed data from parser
         // invert control flow
         char c;
         bool done = false;
-        source=ctx::callcc(
-                [&is,&c,&done](ctx::continuation && sink){
-                    // create parser with callback function
-                    Parser p( is,
-                              [&sink,&c](char c_){
-                                    // resume main execution context
-                                    c = c_;
-                                    sink=sink.resume();
-                            });
-                    // start recursive parsing
-                    p.run();
-                    // signal termination
-                    done = true;
-                    // resume main execution context
-                    return std::move(sink);
-                });
+        // execute parser in new execution context
+        ctx::fiber source{[&is,&c,&done](ctx::fiber && sink){
+            // create parser with callback function
+            Parser p( is,
+                      [&sink,&c](char c_){
+                            // resume main execution context
+                            c = c_;
+                            sink = sink.resume();
+                    });
+            // start recursive parsing
+            p.run();
+            // signal termination
+            done = true;
+            // resume main execution context
+            return std::move(sink);
+        }};
+        source = source.resume();
         while(!done){
             printf("Parsed: %c\n",c);
-            source=source.resume();
+            source = source.resume();
         }
         std::cout << "main: done" << std::endl;
         return EXIT_SUCCESS;
