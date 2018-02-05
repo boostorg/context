@@ -98,22 +98,21 @@ int main() {
         char c;
         bool done = false;
         // execute parser in new execution context
-        ctx::fiber source{
-                [&is,&c,&done](ctx::fiber && sink){
-                    // create parser with callback function
-                    Parser p( is,
-                              [&sink,&c](char c_){
-                                    // resume main execution context
-                                    c = c_;
-                                    sink = sink.resume();
-                            });
-                    // start recursive parsing
-                    p.run();
-                    // signal termination
-                    done = true;
-                    // resume main execution context
-                    return std::move(sink);
-                }};
+        ctx::fiber source{[&is,&c,&done](ctx::fiber && sink){
+            // create parser with callback function
+            Parser p( is,
+                      [&sink,&c](char c_){
+                            // resume main execution context
+                            c = c_;
+                            sink = sink.resume();
+                    });
+            // start recursive parsing
+            p.run();
+            // signal termination
+            done = true;
+            // resume main execution context
+            return std::move(sink);
+        }};
         source = source.resume();
         while(!done){
             printf("Parsed: %c\n",c);

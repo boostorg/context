@@ -23,22 +23,20 @@ struct my_exception : public std::runtime_error {
 };
 
 int main() {
-    ctx::fiber f{ [](ctx::fiber && f) {
-        for (;;) {
-            try {
-                std::cout << "entered" << std::endl;
-                f = f.resume();
-            } catch ( my_exception & ex) {
-                std::cerr << "my_exception: " << ex.what() << std::endl;
-                return std::move( ex.f);
-            }
+    ctx::fiber f{[](ctx::fiber && f) ->ctx::fiber {
+        std::cout << "entered" << std::endl;
+        try {
+            f = f.resume();
+        } catch ( my_exception & ex) {
+            std::cerr << "my_exception: " << ex.what() << std::endl;
+            return std::move( ex.f);
         }
-        return std::move( f);
+        return {};
     }};
     f = f.resume();
-    f = f.resume_with([](ctx::fiber && f){
+    f = f.resume_with([](ctx::fiber && f) ->ctx::fiber {
         throw my_exception(std::move( f), "abc");
-        return std::move( f);
+        return {};
     });
 
     std::cout << "main: done" << std::endl;
