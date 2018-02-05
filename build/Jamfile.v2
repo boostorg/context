@@ -795,6 +795,7 @@ explicit stack_traits_sources ;
 
 lib boost_context
    : impl_sources
+     execution_context.cpp
      stack_traits_sources
    ;
 
