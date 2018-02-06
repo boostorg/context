@@ -15,7 +15,7 @@ import os ;
 import toolset ;
 import architecture ;
 
-project boost/context/example
+project boost/context/example/execution_context_v1
     : requirements
       <library>/boost/context//boost_context
       <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
@@ -26,58 +26,26 @@ project boost/context/example
       <threading>multi
     ;
 
-exe stack
-    : stack.cpp
-    ;
-
-exe jump_void
-    : jump_void.cpp
-    ;
-
 exe jump
     : jump.cpp
-    ;
-
-exe jump_mov
-    : jump_mov.cpp
-    ;
-
-exe ontop_void
-    : ontop_void.cpp
-    ;
-
-exe throw
-    : throw.cpp
-    ;
-
-exe fibonacci
-    : fibonacci.cpp
-    ;
-
-exe parser
-    : parser.cpp
-    ;
-
-exe ontop
-    : ontop.cpp
-    ;
-
-exe endless_loop
-    : endless_loop.cpp
     ;
 
 exe segmented
     : segmented.cpp
     ;
 
-exe circle
-    : circle.cpp
+exe parser
+    : parser.cpp
     ;
 
-#exe backtrace
-#    : backtrace.cpp
-#    ;
+exe fibonacci
+    : fibonacci.cpp
+    ;
 
-#exe echosse
-#    : echosse.cpp
-#    ;
+exe parameter
+    : parameter.cpp
+    ;
+
+exe ontop
+    : ontop.cpp
+    ;
