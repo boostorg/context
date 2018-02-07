@@ -418,7 +418,7 @@ void test_bug12215() {
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
-        BOOST_TEST_SUITE("Boost.Context: callcc test suite");
+        BOOST_TEST_SUITE("Boost.Context: fiber test suite");
 
     test->add( BOOST_TEST_CASE( & test_move) );
     test->add( BOOST_TEST_CASE( & test_bind) );

@@ -334,7 +334,7 @@ void test_snprintf() {
 
 boost::unit_test::test_suite * init_unit_test_suite( int, char* []) {
     boost::unit_test::test_suite * test =
-        BOOST_TEST_SUITE("Boost.Context: context test suite");
+        BOOST_TEST_SUITE("Boost.Context: fcontext test suite");
     test->add( BOOST_TEST_CASE( & test_setup) );
     test->add( BOOST_TEST_CASE( & test_start) );
     test->add( BOOST_TEST_CASE( & test_jump) );
