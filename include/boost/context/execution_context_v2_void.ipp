@@ -52,7 +52,7 @@ public:
         Ctx from{ t.fctx };
         // invoke context-function
 #if defined(BOOST_NO_CXX17_STD_APPLY)
-        Ctx cc = apply( fn_, std::tuple_cat( params_, std::forward_as_tuple( std::move( from) ) ) );
+        Ctx cc = boost::context::detail::apply( fn_, std::tuple_cat( params_, std::forward_as_tuple( std::move( from) ) ) );
 #else
         Ctx cc = std::apply( fn_, std::tuple_cat( params_, std::forward_as_tuple( std::move( from) ) ) );
 #endif

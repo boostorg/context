@@ -9,33 +9,32 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <boost/context/fiber.hpp>
+#include <boost/context/continuation.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/program_options.hpp>
 
-#include "bind_processor.hpp"
-#include "clock.hpp"
-#include "cycle.hpp"
+#include "../clock.hpp"
+#include "../cycle.hpp"
 
-boost::uint64_t jobs = 1000;
+boost::uint64_t jobs = 1000000;
 
 namespace ctx = boost::context;
 
-static ctx::fiber foo( ctx::fiber && f) {
+static ctx::continuation foo( ctx::continuation && c) {
     while ( true) {
-        f = f.resume();
+        c = c.resume();
     }
-    return ctx::fiber{};
+    return std::move( c);
 }
 
 duration_type measure_time() {
     // cache warum-up
-    ctx::fiber f{ foo };
-    f = f.resume();
+    ctx::continuation c = ctx::callcc( foo);
+    c = c.resume();
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        f = f.resume();
+        c = c.resume();
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -49,12 +48,12 @@ duration_type measure_time() {
 cycle_type measure_cycles() {
     // cache warum-up
     ctx::fixedsize_stack alloc;
-    ctx::fiber f{ std::allocator_arg, alloc, foo };
-    f = f.resume();
+    ctx::continuation c = ctx::callcc( std::allocator_arg, alloc, foo);
+    c = c.resume();
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        f = f.resume();
+        c = c.resume();
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
@@ -67,8 +66,6 @@ cycle_type measure_cycles() {
 
 int main( int argc, char * argv[]) {
     try {
-        bind_to_processor( 0);
-
         boost::program_options::options_description desc("allowed options");
         desc.add_options()
             ("help", "help message")
@@ -89,10 +86,10 @@ int main( int argc, char * argv[]) {
         }
 
         boost::uint64_t res = measure_time().count();
-        std::cout << "fiber: average of " << res << " nano seconds" << std::endl;
+        std::cout << "continuation: average of " << res << " nano seconds" << std::endl;
 #ifdef BOOST_CONTEXT_CYCLE
         res = measure_cycles();
-        std::cout << "fiber: average of " << res << " cpu cycles" << std::endl;
+        std::cout << "continuation: average of " << res << " cpu cycles" << std::endl;
 #endif
 
         return EXIT_SUCCESS;

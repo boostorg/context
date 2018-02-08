@@ -395,7 +395,11 @@ public:
         return * this;
     }
 
-    continuation resume() {
+    continuation resume() & {
+        return std::move( * this).resume();
+    }
+
+    continuation resume() && {
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         detail::activation_record * ptr = detail::exchange( ptr_, nullptr)->resume();
 #else
@@ -407,11 +411,16 @@ public:
             ptr = detail::activation_record::current()->ontop( ptr);
             detail::activation_record::current()->ontop = nullptr;
         }
-        return continuation{ ptr };
+        return { ptr };
     }
 
     template< typename Fn >
-    continuation resume_with( Fn && fn) {
+    continuation resume_with( Fn && fn) & {
+        return std::move( * this).resume_with( std::forward< Fn >( fn) );
+    }
+
+    template< typename Fn >
+    continuation resume_with( Fn && fn) && {
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         detail::activation_record * ptr =
             detail::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn) );
@@ -425,7 +434,7 @@ public:
             ptr = detail::activation_record::current()->ontop( ptr);
             detail::activation_record::current()->ontop = nullptr;
         }
-        return continuation{ ptr };
+        return { ptr };
     }
 
     explicit operator bool() const noexcept {

@@ -275,9 +275,13 @@ public:
     fiber( fiber const& other) noexcept = delete;
     fiber & operator=( fiber const& other) noexcept = delete;
 
-    fiber resume() {
+    fiber resume() & {
+        return std::move( * this).resume();
+    }
+
+    fiber resume() && {
         BOOST_ASSERT( nullptr != fctx_);
-        return fiber{ detail::jump_fcontext(
+        return { detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
 #else
@@ -287,10 +291,15 @@ public:
     }
 
     template< typename Fn >
-    fiber resume_with( Fn && fn) {
+    fiber resume_with( Fn && fn) & {
+        return std::move( * this).resume_with( std::forward< Fn >( fn) );
+    }
+
+    template< typename Fn >
+    fiber resume_with( Fn && fn) && {
         BOOST_ASSERT( nullptr != fctx_);
         auto p = std::make_tuple( std::forward< Fn >( fn) );
-        return fiber{ detail::ontop_fcontext(
+        return { detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
 #else

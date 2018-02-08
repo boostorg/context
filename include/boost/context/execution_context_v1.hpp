@@ -154,7 +154,7 @@ transfer_t ecv1_context_ontop( transfer_t t) {
     auto data = std::get< 0 >( * tpl);
     typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 1 >( * tpl) );
 #if defined(BOOST_NO_CXX17_STD_APPLY)
-    dp->data = apply( fn, std::tie( data) );
+    dp->data = boost::context::detail::apply( fn, std::tie( data) );
 #else
     dp->data = std::apply( fn, std::tie( data) );
 #endif
@@ -197,7 +197,7 @@ public:
     void run() {
         auto data = caller_->resume( nullptr);
 #if defined(BOOST_NO_CXX17_STD_APPLY)
-        apply( fn_, std::tuple_cat( args_, std::tie( data) ) );
+        boost::context::detail::apply( fn_, std::tuple_cat( args_, std::tie( data) ) );
 #else
         std::apply( fn_, std::tuple_cat( args_, std::tie( data) ) );
 #endif

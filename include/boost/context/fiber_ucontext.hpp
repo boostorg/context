@@ -419,7 +419,11 @@ public:
         return * this;
     }
 
-    fiber resume() {
+    fiber resume() & {
+        return std::move ( * this).resume();
+    }
+
+    fiber resume() && {
         BOOST_ASSERT( nullptr != ptr_);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         detail::fiber_activation_record * ptr = detail::exchange( ptr_, nullptr)->resume();
@@ -432,11 +436,16 @@ public:
             ptr = detail::fiber_activation_record::current()->ontop( ptr);
             detail::fiber_activation_record::current()->ontop = nullptr;
         }
-        return fiber{ ptr };
+        return { ptr };
     }
 
     template< typename Fn >
-    fiber resume_with( Fn && fn) {
+    fiber resume_with( Fn && fn) & {
+        return std::move( * this).resume_with( std::forward< Fn >( fn) );
+    }
+
+    template< typename Fn >
+    fiber resume_with( Fn && fn) && {
         BOOST_ASSERT( nullptr != ptr_);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         detail::fiber_activation_record * ptr =
@@ -451,7 +460,7 @@ public:
             ptr = detail::fiber_activation_record::current()->ontop( ptr);
             detail::fiber_activation_record::current()->ontop = nullptr;
         }
-        return fiber{ ptr };
+        return { ptr };
     }
 
     explicit operator bool() const noexcept {

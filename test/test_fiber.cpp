@@ -182,7 +182,6 @@ void test_exception() {
         bool catched = false;
         std::thread([&catched](){
                 ctx::fiber f{ [&catched](ctx::fiber && f){
-                            f = f.resume();
                             seh( catched);
                             return std::move( f);
                         }};
@@ -388,7 +387,7 @@ void test_snprintf() {
 		[]( ctx::fiber && f) {
             {
                 const char *fmt = "sqrt(2) = %f";
-                char buf[15];
+                char buf[19];
                 snprintf( buf, sizeof( buf), fmt, std::sqrt( 2) );
                 BOOST_CHECK( 0 < sizeof( buf) );
                 BOOST_ASSERT( std::string("sqrt(2) = 1.41") == std::string( buf, 14) );
@@ -418,7 +417,7 @@ void test_bug12215() {
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
-        BOOST_TEST_SUITE("Boost.Context: callcc test suite");
+        BOOST_TEST_SUITE("Boost.Context: fiber test suite");
 
     test->add( BOOST_TEST_CASE( & test_move) );
     test->add( BOOST_TEST_CASE( & test_bind) );

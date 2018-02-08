@@ -8,6 +8,8 @@
 [#ecv1]
 [section:ecv1 Class execution_context (version 1)]
 
+[warning __econtext__ (v1) is deprecated (does not prevent UB).]
+
 [note __econtext__ (v1) is the reference implementation of C++ proposal
 [@http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0099r0.pdf P099R0: A
 low-level API for stackful context switching].]
