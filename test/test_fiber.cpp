@@ -182,7 +182,6 @@ void test_exception() {
         bool catched = false;
         std::thread([&catched](){
                 ctx::fiber f{ [&catched](ctx::fiber && f){
-                            f = f.resume();
                             seh( catched);
                             return std::move( f);
                         }};
