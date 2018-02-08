@@ -252,29 +252,38 @@ public:
     continuation( continuation const& other) noexcept = delete;
     continuation & operator=( continuation const& other) noexcept = delete;
 
-    continuation resume() {
+    continuation resume() & {
+        return std::move( * this).resume();
+    }
+
+    continuation resume() && {
         BOOST_ASSERT( nullptr != fctx_);
-        return detail::jump_fcontext(
+        return { detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
 #else
                     std::exchange( fctx_, nullptr),
 #endif
-                    nullptr).fctx;
+                    nullptr).fctx };
     }
 
     template< typename Fn >
-    continuation resume_with( Fn && fn) {
+    continuation resume_with( Fn && fn) & {
+        return std::move( * this).resume_with( std::forward< Fn >( fn) );
+    }
+
+    template< typename Fn >
+    continuation resume_with( Fn && fn) && {
         BOOST_ASSERT( nullptr != fctx_);
         auto p = std::make_tuple( std::forward< Fn >( fn) );
-        return detail::ontop_fcontext(
+        return { detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
 #else
                     std::exchange( fctx_, nullptr),
 #endif
                     & p,
-                    detail::context_ontop< continuation, Fn >).fctx;
+                    detail::context_ontop< continuation, Fn >).fctx };
     }
 
     explicit operator bool() const noexcept {
