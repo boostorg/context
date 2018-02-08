@@ -175,7 +175,7 @@ void f13( ctx::transfer_t t) {
 void f14( ctx::transfer_t t) {
     {
         const char *fmt = "sqrt(2) = %f";
-        char buf[15];
+        char buf[19];
         snprintf( buf, sizeof( buf), fmt, std::sqrt( 2) );
         BOOST_CHECK( 0 < sizeof( buf) );
         BOOST_CHECK_EQUAL( std::string("sqrt(2) = 1.41"), std::string( buf, 14) );
