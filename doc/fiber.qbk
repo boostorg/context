@@ -447,10 +447,13 @@ by `ConvertThreadToFiber()` (e.g. after using boost.context). ]
         fiber(fiber const& other) noexcept = delete;
         fiber & operator=(fiber const& other) noexcept = delete;
 
-        fiber resume();
+        fiber resume() &;
+        fiber resume() &&;
 
         template<typename Fn>
-        fiber resume_with(Fn && fn);
+        fiber resume_with(Fn && fn) &;
+        template<typename Fn>
+        fiber resume_with(Fn && fn) &&;
 
         explicit operator bool() const noexcept;
 
@@ -531,10 +534,13 @@ e.g. ['fiber::operator bool()] returns `true`.]]
 
 [operator_heading ff..operator_call..operator()]
 
-        fiber resume();
+        fiber resume() &;
+        fiber resume() &&;
 
         template<typename Fn>
-        fiber resume_with(Fn && fn);
+        fiber resume_with(Fn && fn) &;
+        template<typename Fn>
+        fiber resume_with(Fn && fn) &&;
 
 [variablelist
 [[Effects:] [Captures current fiber and resumes `*this`.
