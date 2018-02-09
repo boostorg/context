@@ -460,13 +460,10 @@ by `ConvertThreadToFiber()` (e.g. after using boost.context). ]
         continuation(continuation const& other) noexcept = delete;
         continuation & operator=(continuation const& other) noexcept = delete;
 
-        continuation resume() &;
-        continuation resume() &&;
+        continuation resume();
 
         template<typename Fn>
-        continuation resume_with(Fn && fn) &;
-        template<typename Fn>
-        continuation resume_with(Fn && fn) &&;
+        continuation resume_with(Fn && fn);
 
         explicit operator bool() const noexcept;
 
@@ -530,13 +527,10 @@ e.g. ['continuation::operator bool()] returns `true`.]]
 
 [operator_heading cc..operator_call..operator()]
 
-        continuation resume() &;
-        continuation resume() &&;
+        continuation resume();
 
         template<typename Fn>
-        continuation resume_with(Fn && fn) &;
-        template<typename Fn>
-        continuation resume_with(Fn && fn) &&;
+        continuation resume_with(Fn && fn);
 
 [variablelist
 [[Effects:] [Captures current continuation and resumes `*this`.

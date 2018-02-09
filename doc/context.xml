@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2018/02/05 20:01:18 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2018/02/09 05:35:10 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -121,7 +121,7 @@
     <note>
       <para>
         <emphasis>fiber</emphasis> is the reference implementation of C++ proposal
-        <ulink url="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0534r3.pdf">P0876R0:
+        <ulink url="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0876r0.pdf">P0876R0:
         fibers without scheduler</ulink>.
       </para>
     </note>
@@ -3123,6 +3123,12 @@
   <section id="context.ecv1">
     <title><anchor id="ecv1"/><link linkend="context.ecv1">Class execution_context
     (version 1)</link></title>
+    <warning>
+      <para>
+        <emphasis>execution_context</emphasis> (v1) is deprecated (does not prevent
+        UB).
+      </para>
+    </warning>
     <note>
       <para>
         <emphasis>execution_context</emphasis> (v1) is the reference implementation
