@@ -236,7 +236,7 @@ public:
         ontop = nullptr;
         terminated = true;
         force_unwind = false;
-        c.resume();
+        std::move( c).resume();
         BOOST_ASSERT_MSG( false, "fiber already terminated");
     }
 };
@@ -353,10 +353,6 @@ public:
         return * this;
     }
 
-    fiber resume() & {
-        return std::move( * this).resume();
-    }
-
     fiber resume() && {
         BOOST_ASSERT( nullptr != ptr_);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
@@ -371,11 +367,6 @@ public:
             detail::fiber_activation_record::current()->ontop = nullptr;
         }
         return { ptr };
-    }
-
-    template< typename Fn >
-    fiber resume_with( Fn && fn) & {
-        return std::move( * this).resume_with( std::forward< Fn >( fn) );
     }
 
     template< typename Fn >

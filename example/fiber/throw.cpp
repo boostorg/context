@@ -26,15 +26,15 @@ int main() {
     ctx::fiber f{[](ctx::fiber && f) ->ctx::fiber {
         std::cout << "entered" << std::endl;
         try {
-            f = f.resume();
+            f = std::move( f).resume();
         } catch ( my_exception & ex) {
             std::cerr << "my_exception: " << ex.what() << std::endl;
             return std::move( ex.f);
         }
         return {};
     }};
-    f = f.resume();
-    f = f.resume_with([](ctx::fiber && f) ->ctx::fiber {
+    f = std::move( f).resume();
+    f = std::move( f).resume_with([](ctx::fiber && f) ->ctx::fiber {
         throw my_exception(std::move( f), "abc");
         return {};
     });

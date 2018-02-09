@@ -66,11 +66,11 @@ A fiber is continued by calling `resume()`/`resume_with()`.
 
         namespace ctx=boost::context;
         int a;
-        ctx::fiber source{[&a](ctx::fiber && sink){
+        ctx::fiber source{[&a](ctx::fiber&& sink){
             a=0;
             int b=1;
             for(;;){
-                sink=sink.resume();
+                sink=std::move(sink).resume();
                 int next=a+b;
                 a=b;
                 b=next;
@@ -78,7 +78,7 @@ A fiber is continued by calling `resume()`/`resume_with()`.
             return std::move(sink);
         }};
         for (int j=0;j<10;++j) {
-            source=source.resume();
+            source=std::move(source).resume();
             std::cout << a << " ";
         }
 
@@ -92,7 +92,10 @@ to the lambda.
 
 Because the state is invalidated (one-shot fiber) by each call of __resume__,
 the new state of the __fib__, returned by __resume__, needs to be assigned to
-`sink` after each call.
+`sink` after each call. In order to express the invalidation of the resumed fiber,
+the member functions `resume()` and `resume_with()` are rvalue-ref qualified.
+Both functions bind only to rvalues. Thus an lvalue fiber must be casted to an
+rvalue via `std::move()`.
 
 The lambda that calculates the Fibonacci numbers is executed inside the fiber
 represented by `source`. Calculated Fibonacci numbers are transferred between
@@ -110,12 +113,12 @@ Data can be transferred between two fibers via global pointers, calling wrappers
 
     namespace ctx=boost::context;
     int i=1;
-    ctx::fiber f1{[&i](ctx::fiber && f2){
+    ctx::fiber f1{[&i](ctx::fiber&& f2){
         std::printf("inside f1,i==%d\n",i);
         i+=1;
-        return f2.resume();
+        return std::move(f2).resume();
     }};
-    f1=f1.resume();
+    f1=std::move(f1).resume();
     std::printf("i==%d\n",i);
 
     output:
@@ -124,7 +127,7 @@ Data can be transferred between two fibers via global pointers, calling wrappers
 
 `f1.resume()` enters the lambda in fiber represented by `f1` with lambda capture
 reference `i=1`. The expression `f2.resume()` resumes the fiber `f2`. On return
-of `f1.esume()`, the variable `i` has the value of `i+1`.
+of `f1.resume()`, the variable `i` has the value of `i+1`.
 
 
 [heading Exception handling]
@@ -147,26 +150,26 @@ return `void`.
 
     namespace ctx=boost::context;
     int data=0;
-    ctx::fiber f1{[&data](ctx::fiber && f2) {
+    ctx::fiber f1{[&data](ctx::fiber&& f2) {
         std::cout << "f1: entered first time: " << data << std::endl;
         data+=1;
-        f2=f2.resume();
+        f2=std::move(f2).resume();
         std::cout << "f1: entered second time: " << data << std::endl;
         data+=1;
-        f2=f2.resume();
+        f2=std::move(f2).resume();
         std::cout << "f1: entered third time: " << data << std::endl;
         return std::move(f2);
     }};
-    f1=f1.resume();
+    f1=std::move(f1).resume();
     std::cout << "f1: returned first time: " << data << std::endl;
     data+=1;
-    f1=f1.resume();
+    f1=std::move(f1).resume();
     std::cout << "f1: returned second time: " << data << std::endl;
     data+=1;
-    f1=f1.resume_with([&data](ctx::fiber && f2){
+    f1=f1.resume_with([&data](ctx::fiber&& f2){
         std::cout << "f2: entered: " << data << std::endl;
         data=-1;
-        return std::move( f2);
+        return std::move(f2);
     });
     std::cout << "f1: returned third time" << std::endl;
 
@@ -191,24 +194,24 @@ an exception.
     namespace ctx=boost::context;
     struct my_exception : public std::runtime_error {
         ctx::fiber    f;
-        my_exception(ctx::fiber && f_,std::string const& what) :
+        my_exception(ctx::fiber&& f_,std::string const& what) :
             std::runtime_error{ what },
-            f{ std::move( f_) } {
+            f{ std::move(f_) } {
         }
     };
 
     ctx::fiber f{[](ctx::fiber && f) ->ctx::fiber {
         std::cout << "entered" << std::endl;
         try {
-            f=f.resume();
+            f=std::move(f).resume();
         } catch (my_exception & ex) {
             std::cerr << "my_exception: " << ex.what() << std::endl;
             return std::move(ex.f);
         }
         return {};
     });
-    f = f.resume();
-    f = f.resume_with([](ctx::fiber && f) ->ctx::fiber {
+    f=std::move(f).resume();
+    f=std::move(f).resume_with([](ctx::fiber && f) ->ctx::fiber {
         throw my_exception(std::move(f),"abc");
         return {};
     });
@@ -351,13 +354,13 @@ of the stack.]
     char c;
     bool done=false;
     // execute parser in new fiber
-    ctx::fiber source{[&is,&c,&done](ctx::fiber && sink){
+    ctx::fiber source{[&is,&c,&done](ctx::fiber&& sink){
         // create parser with callback function
         Parser p(is,
                  [&sink,&c](char c_){
                     // resume main fiber
                     c=c_;
-                    sink=sink.resume();
+                    sink=std::move(sink).resume();
                  });
             // start recursive parsing
             p.run();
@@ -366,10 +369,10 @@ of the stack.]
             // resume main fiber
             return std::move(sink);
     }};
-    source = source.resume();
+    source=std::move(source).resume();
     while(!done){
         printf("Parsed: %c\n",c);
-        source=source.resume();
+        source=std::Move(source).resume();
     }
 
     output:
@@ -447,10 +450,10 @@ by `ConvertThreadToFiber()` (e.g. after using boost.context). ]
         fiber(fiber const& other) noexcept = delete;
         fiber & operator=(fiber const& other) noexcept = delete;
 
-        fiber resume();
+        fiber resume() &&;
 
         template<typename Fn>
-        fiber resume_with(Fn && fn);
+        fiber resume_with(Fn && fn) &&;
 
         explicit operator bool() const noexcept;
 
@@ -531,10 +534,10 @@ e.g. ['fiber::operator bool()] returns `true`.]]
 
 [operator_heading ff..operator_call..operator()]
 
-        fiber resume();
+        fiber resume() &&;
 
         template<typename Fn>
-        fiber resume_with(Fn && fn);
+        fiber resume_with(Fn && fn) &&;
 
 [variablelist
 [[Effects:] [Captures current fiber and resumes `*this`.
@@ -542,6 +545,8 @@ The function `resume_with`, is used to execute function `fn` in the execution co
 `*this` (e.g. the stack frame of `fn` is allocated on stack of `*this`).]]
 [[Returns:] [The fiber representing the fiber that has been
 suspended.]]
+[[Note:] [Because `*this` gets invalidated, `resume()` and `resume_with()` are rvalue-ref
+qualified and bind only to rvalues.]]
 [[Note:] [Function `fn` needs to return `fiber`.]]
 [[Note:] [The returned fiber indicates if the suspended fiber has
 terminated (return from context-function) via `bool operator()`.]]
