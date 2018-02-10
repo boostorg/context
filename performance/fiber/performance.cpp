@@ -22,7 +22,7 @@ namespace ctx = boost::context;
 
 static ctx::fiber foo( ctx::fiber && f) {
     while ( true) {
-        f = f.resume();
+        f = std::move( f).resume();
     }
     return ctx::fiber{};
 }
@@ -30,11 +30,11 @@ static ctx::fiber foo( ctx::fiber && f) {
 duration_type measure_time() {
     // cache warum-up
     ctx::fiber f{ foo };
-    f = f.resume();
+    f = std::move( f).resume();
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        f = f.resume();
+        f = std::move( f).resume();
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -49,11 +49,11 @@ cycle_type measure_cycles() {
     // cache warum-up
     ctx::fixedsize_stack alloc;
     ctx::fiber f{ std::allocator_arg, alloc, foo };
-    f = f.resume();
+    f = std::move( f).resume();
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        f = f.resume();
+        f = std::move( f).resume();
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement

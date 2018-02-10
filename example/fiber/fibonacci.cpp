@@ -19,7 +19,7 @@ int main() {
             a=0;
             int b=1;
             for(;;){
-                f = f.resume();
+                f = std::move( f).resume();
                 int next=a+b;
                 a=b;
                 b=next;
@@ -27,7 +27,7 @@ int main() {
             return std::move( f);
         }};
     for ( int j = 0; j < 10; ++j) {
-        f = f.resume();
+        f = std::move( f).resume();
         std::cout << a << " ";
     }
     std::cout << std::endl;
