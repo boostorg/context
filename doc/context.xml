@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2018/02/09 05:35:10 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2018/02/15 16:18:27 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -72,6 +72,14 @@
         This library requires C++11!
       </para>
     </note>
+    <important>
+      <para>
+        Windows: turn off global program optimization (/GL) and change /EHsc (compiler
+        assumes that functions declared as extern &quot;C&quot; never throw a C++
+        exception) to /EHs (tells compiler assumes that functions declared as extern
+        &quot;C&quot; may throw an exception).
+      </para>
+    </important>
   </section>
   <section id="context.requirements">
     <title><link linkend="context.requirements">Requirements</link></title>
@@ -111,8 +119,16 @@
     </important>
     <important>
       <para>
-        For safe SEH the property 'asmflags=\safeseh' must be specified at bjam command
-        line.
+        Windows: for safe SEH the property 'asmflags=\safeseh' must be specified
+        at bjam command line.
+      </para>
+    </important>
+    <important>
+      <para>
+        Windows: turn off global program optimization (/GL) and change /EHsc (compiler
+        assumes that functions declared as extern &quot;C&quot; never throw a C++
+        exception) to /EHs (tells compiler assumes that functions declared as extern
+        &quot;C&quot; may throw an exception).
       </para>
     </important>
   </section>
@@ -202,11 +218,11 @@
     </bridgehead>
 <programlisting><phrase role="keyword">namespace</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">;</phrase>
 <phrase role="keyword">int</phrase> <phrase role="identifier">a</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="identifier">source</phrase><phrase role="special">{[&amp;</phrase><phrase role="identifier">a</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">sink</phrase><phrase role="special">){</phrase>
+<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="identifier">source</phrase><phrase role="special">{[&amp;</phrase><phrase role="identifier">a</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase><phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">sink</phrase><phrase role="special">){</phrase>
     <phrase role="identifier">a</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
     <phrase role="keyword">int</phrase> <phrase role="identifier">b</phrase><phrase role="special">=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
     <phrase role="keyword">for</phrase><phrase role="special">(;;){</phrase>
-        <phrase role="identifier">sink</phrase><phrase role="special">=</phrase><phrase role="identifier">sink</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+        <phrase role="identifier">sink</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">sink</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
         <phrase role="keyword">int</phrase> <phrase role="identifier">next</phrase><phrase role="special">=</phrase><phrase role="identifier">a</phrase><phrase role="special">+</phrase><phrase role="identifier">b</phrase><phrase role="special">;</phrase>
         <phrase role="identifier">a</phrase><phrase role="special">=</phrase><phrase role="identifier">b</phrase><phrase role="special">;</phrase>
         <phrase role="identifier">b</phrase><phrase role="special">=</phrase><phrase role="identifier">next</phrase><phrase role="special">;</phrase>
@@ -214,7 +230,7 @@
     <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">sink</phrase><phrase role="special">);</phrase>
 <phrase role="special">}};</phrase>
 <phrase role="keyword">for</phrase> <phrase role="special">(</phrase><phrase role="keyword">int</phrase> <phrase role="identifier">j</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase><phrase role="identifier">j</phrase><phrase role="special">&lt;</phrase><phrase role="number">10</phrase><phrase role="special">;++</phrase><phrase role="identifier">j</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-    <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">source</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+    <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">source</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">a</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot; &quot;</phrase><phrase role="special">;</phrase>
 <phrase role="special">}</phrase>
 
@@ -233,7 +249,13 @@
       Because the state is invalidated (one-shot fiber) by each call of <emphasis>continuation::resume()</emphasis>,
       the new state of the <link linkend="ff"><emphasis>fiber</emphasis></link>,
       returned by <emphasis>continuation::resume()</emphasis>, needs to be assigned
-      to <code><phrase role="identifier">sink</phrase></code> after each call.
+      to <code><phrase role="identifier">sink</phrase></code> after each call. In
+      order to express the invalidation of the resumed fiber, the member functions
+      <code><phrase role="identifier">resume</phrase><phrase role="special">()</phrase></code>
+      and <code><phrase role="identifier">resume_with</phrase><phrase role="special">()</phrase></code>
+      are rvalue-ref qualified. Both functions bind only to rvalues. Thus an lvalue
+      fiber must be casted to an rvalue via <code><phrase role="identifier">std</phrase><phrase
+      role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">()</phrase></code>.
     </para>
     <para>
       The lambda that calculates the Fibonacci numbers is executed inside the fiber
@@ -258,12 +280,12 @@
     </para>
 <programlisting><phrase role="keyword">namespace</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">;</phrase>
 <phrase role="keyword">int</phrase> <phrase role="identifier">i</phrase><phrase role="special">=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="identifier">f1</phrase><phrase role="special">{[&amp;</phrase><phrase role="identifier">i</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">){</phrase>
+<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="identifier">f1</phrase><phrase role="special">{[&amp;</phrase><phrase role="identifier">i</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase><phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">){</phrase>
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;inside f1,i==%d\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">);</phrase>
     <phrase role="identifier">i</phrase><phrase role="special">+=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
-    <phrase role="keyword">return</phrase> <phrase role="identifier">f2</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+    <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f2</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="special">}};</phrase>
-<phrase role="identifier">f1</phrase><phrase role="special">=</phrase><phrase role="identifier">f1</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+<phrase role="identifier">f1</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f1</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;i==%d\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">i</phrase><phrase role="special">);</phrase>
 
 <phrase role="identifier">output</phrase><phrase role="special">:</phrase>
@@ -280,7 +302,7 @@
       role="identifier">resume</phrase><phrase role="special">()</phrase></code>
       resumes the fiber <code><phrase role="identifier">f2</phrase></code>. On return
       of <code><phrase role="identifier">f1</phrase><phrase role="special">.</phrase><phrase
-      role="identifier">esume</phrase><phrase role="special">()</phrase></code>,
+      role="identifier">resume</phrase><phrase role="special">()</phrase></code>,
       the variable <code><phrase role="identifier">i</phrase></code> has the value
       of <code><phrase role="identifier">i</phrase><phrase role="special">+</phrase><phrase
       role="number">1</phrase></code>.
@@ -316,26 +338,26 @@
     </para>
 <programlisting><phrase role="keyword">namespace</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">;</phrase>
 <phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="identifier">f1</phrase><phrase role="special">{[&amp;</phrase><phrase role="identifier">data</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
+<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="identifier">f1</phrase><phrase role="special">{[&amp;</phrase><phrase role="identifier">data</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase><phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered first time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
     <phrase role="identifier">data</phrase><phrase role="special">+=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
-    <phrase role="identifier">f2</phrase><phrase role="special">=</phrase><phrase role="identifier">f2</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+    <phrase role="identifier">f2</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f2</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered second time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
     <phrase role="identifier">data</phrase><phrase role="special">+=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
-    <phrase role="identifier">f2</phrase><phrase role="special">=</phrase><phrase role="identifier">f2</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+    <phrase role="identifier">f2</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f2</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: entered third time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
     <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f2</phrase><phrase role="special">);</phrase>
 <phrase role="special">}};</phrase>
-<phrase role="identifier">f1</phrase><phrase role="special">=</phrase><phrase role="identifier">f1</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+<phrase role="identifier">f1</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f1</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned first time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
 <phrase role="identifier">data</phrase><phrase role="special">+=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">f1</phrase><phrase role="special">=</phrase><phrase role="identifier">f1</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+<phrase role="identifier">f1</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f1</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned second time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
 <phrase role="identifier">data</phrase><phrase role="special">+=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">f1</phrase><phrase role="special">=</phrase><phrase role="identifier">f1</phrase><phrase role="special">.</phrase><phrase role="identifier">resume_with</phrase><phrase role="special">([&amp;</phrase><phrase role="identifier">data</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">){</phrase>
+<phrase role="identifier">f1</phrase><phrase role="special">=</phrase><phrase role="identifier">f1</phrase><phrase role="special">.</phrase><phrase role="identifier">resume_with</phrase><phrase role="special">([&amp;</phrase><phrase role="identifier">data</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase><phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">){</phrase>
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f2: entered: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
     <phrase role="identifier">data</phrase><phrase role="special">=-</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
-    <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase> <phrase role="identifier">f2</phrase><phrase role="special">);</phrase>
+    <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f2</phrase><phrase role="special">);</phrase>
 <phrase role="special">});</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned third time&quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
 
@@ -365,24 +387,24 @@
 <programlisting><phrase role="keyword">namespace</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">;</phrase>
 <phrase role="keyword">struct</phrase> <phrase role="identifier">my_exception</phrase> <phrase role="special">:</phrase> <phrase role="keyword">public</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">runtime_error</phrase> <phrase role="special">{</phrase>
     <phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase>    <phrase role="identifier">f</phrase><phrase role="special">;</phrase>
-    <phrase role="identifier">my_exception</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f_</phrase><phrase role="special">,</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">what</phrase><phrase role="special">)</phrase> <phrase role="special">:</phrase>
+    <phrase role="identifier">my_exception</phrase><phrase role="special">(</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase><phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f_</phrase><phrase role="special">,</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">string</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">what</phrase><phrase role="special">)</phrase> <phrase role="special">:</phrase>
         <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">runtime_error</phrase><phrase role="special">{</phrase> <phrase role="identifier">what</phrase> <phrase role="special">},</phrase>
-        <phrase role="identifier">f</phrase><phrase role="special">{</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase> <phrase role="identifier">f_</phrase><phrase role="special">)</phrase> <phrase role="special">}</phrase> <phrase role="special">{</phrase>
+        <phrase role="identifier">f</phrase><phrase role="special">{</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f_</phrase><phrase role="special">)</phrase> <phrase role="special">}</phrase> <phrase role="special">{</phrase>
     <phrase role="special">}</phrase>
 <phrase role="special">};</phrase>
 
 <phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="identifier">f</phrase><phrase role="special">{[](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f</phrase><phrase role="special">)</phrase> <phrase role="special">-&gt;</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">{</phrase>
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;entered&quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
     <phrase role="keyword">try</phrase> <phrase role="special">{</phrase>
-        <phrase role="identifier">f</phrase><phrase role="special">=</phrase><phrase role="identifier">f</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+        <phrase role="identifier">f</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
     <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(</phrase><phrase role="identifier">my_exception</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">ex</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
         <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cerr</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;my_exception: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">ex</phrase><phrase role="special">.</phrase><phrase role="identifier">what</phrase><phrase role="special">()</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
         <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">ex</phrase><phrase role="special">.</phrase><phrase role="identifier">f</phrase><phrase role="special">);</phrase>
     <phrase role="special">}</phrase>
     <phrase role="keyword">return</phrase> <phrase role="special">{};</phrase>
 <phrase role="special">});</phrase>
-<phrase role="identifier">f</phrase> <phrase role="special">=</phrase> <phrase role="identifier">f</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
-<phrase role="identifier">f</phrase> <phrase role="special">=</phrase> <phrase role="identifier">f</phrase><phrase role="special">.</phrase><phrase role="identifier">resume_with</phrase><phrase role="special">([](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f</phrase><phrase role="special">)</phrase> <phrase role="special">-&gt;</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">{</phrase>
+<phrase role="identifier">f</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+<phrase role="identifier">f</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f</phrase><phrase role="special">).</phrase><phrase role="identifier">resume_with</phrase><phrase role="special">([](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f</phrase><phrase role="special">)</phrase> <phrase role="special">-&gt;</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">{</phrase>
     <phrase role="keyword">throw</phrase> <phrase role="identifier">my_exception</phrase><phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f</phrase><phrase role="special">),</phrase><phrase role="string">&quot;abc&quot;</phrase><phrase role="special">);</phrase>
     <phrase role="keyword">return</phrase> <phrase role="special">{};</phrase>
 <phrase role="special">});</phrase>
@@ -546,13 +568,13 @@
 <phrase role="keyword">char</phrase> <phrase role="identifier">c</phrase><phrase role="special">;</phrase>
 <phrase role="keyword">bool</phrase> <phrase role="identifier">done</phrase><phrase role="special">=</phrase><phrase role="keyword">false</phrase><phrase role="special">;</phrase>
 <phrase role="comment">// execute parser in new fiber</phrase>
-<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="identifier">source</phrase><phrase role="special">{[&amp;</phrase><phrase role="identifier">is</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">c</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">done</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">sink</phrase><phrase role="special">){</phrase>
+<phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase> <phrase role="identifier">source</phrase><phrase role="special">{[&amp;</phrase><phrase role="identifier">is</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">c</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">done</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase><phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">sink</phrase><phrase role="special">){</phrase>
     <phrase role="comment">// create parser with callback function</phrase>
     <phrase role="identifier">Parser</phrase> <phrase role="identifier">p</phrase><phrase role="special">(</phrase><phrase role="identifier">is</phrase><phrase role="special">,</phrase>
              <phrase role="special">[&amp;</phrase><phrase role="identifier">sink</phrase><phrase role="special">,&amp;</phrase><phrase role="identifier">c</phrase><phrase role="special">](</phrase><phrase role="keyword">char</phrase> <phrase role="identifier">c_</phrase><phrase role="special">){</phrase>
                 <phrase role="comment">// resume main fiber</phrase>
                 <phrase role="identifier">c</phrase><phrase role="special">=</phrase><phrase role="identifier">c_</phrase><phrase role="special">;</phrase>
-                <phrase role="identifier">sink</phrase><phrase role="special">=</phrase><phrase role="identifier">sink</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+                <phrase role="identifier">sink</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">sink</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
              <phrase role="special">});</phrase>
         <phrase role="comment">// start recursive parsing</phrase>
         <phrase role="identifier">p</phrase><phrase role="special">.</phrase><phrase role="identifier">run</phrase><phrase role="special">();</phrase>
@@ -561,10 +583,10 @@
         <phrase role="comment">// resume main fiber</phrase>
         <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">sink</phrase><phrase role="special">);</phrase>
 <phrase role="special">}};</phrase>
-<phrase role="identifier">source</phrase> <phrase role="special">=</phrase> <phrase role="identifier">source</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+<phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">source</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="keyword">while</phrase><phrase role="special">(!</phrase><phrase role="identifier">done</phrase><phrase role="special">){</phrase>
     <phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;Parsed: %c\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">c</phrase><phrase role="special">);</phrase>
-    <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">source</phrase><phrase role="special">.</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+    <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">Move</phrase><phrase role="special">(</phrase><phrase role="identifier">source</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="special">}</phrase>
 
 <phrase role="identifier">output</phrase><phrase role="special">:</phrase>
@@ -666,10 +688,10 @@
     <phrase role="identifier">fiber</phrase><phrase role="special">(</phrase><phrase role="identifier">fiber</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">noexcept</phrase> <phrase role="special">=</phrase> <phrase role="keyword">delete</phrase><phrase role="special">;</phrase>
     <phrase role="identifier">fiber</phrase> <phrase role="special">&amp;</phrase> <phrase role="keyword">operator</phrase><phrase role="special">=(</phrase><phrase role="identifier">fiber</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">other</phrase><phrase role="special">)</phrase> <phrase role="keyword">noexcept</phrase> <phrase role="special">=</phrase> <phrase role="keyword">delete</phrase><phrase role="special">;</phrase>
 
-    <phrase role="identifier">fiber</phrase> <phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+    <phrase role="identifier">fiber</phrase> <phrase role="identifier">resume</phrase><phrase role="special">()</phrase> <phrase role="special">&amp;&amp;;</phrase>
 
     <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">&gt;</phrase>
-    <phrase role="identifier">fiber</phrase> <phrase role="identifier">resume_with</phrase><phrase role="special">(</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">);</phrase>
+    <phrase role="identifier">fiber</phrase> <phrase role="identifier">resume_with</phrase><phrase role="special">(</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">)</phrase> <phrase role="special">&amp;&amp;;</phrase>
 
     <phrase role="keyword">explicit</phrase> <phrase role="keyword">operator</phrase> <phrase role="keyword">bool</phrase><phrase role="special">()</phrase> <phrase role="keyword">const</phrase> <phrase role="keyword">noexcept</phrase><phrase role="special">;</phrase>
 
@@ -845,10 +867,10 @@
         <code>operator()</code>()</link>
 </bridgehead>
       </para>
-<programlisting><phrase role="identifier">fiber</phrase> <phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+<programlisting><phrase role="identifier">fiber</phrase> <phrase role="identifier">resume</phrase><phrase role="special">()</phrase> <phrase role="special">&amp;&amp;;</phrase>
 
 <phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase><phrase role="keyword">typename</phrase> <phrase role="identifier">Fn</phrase><phrase role="special">&gt;</phrase>
-<phrase role="identifier">fiber</phrase> <phrase role="identifier">resume_with</phrase><phrase role="special">(</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">);</phrase>
+<phrase role="identifier">fiber</phrase> <phrase role="identifier">resume_with</phrase><phrase role="special">(</phrase><phrase role="identifier">Fn</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">)</phrase> <phrase role="special">&amp;&amp;;</phrase>
 </programlisting>
       <variablelist>
         <title></title>
@@ -871,6 +893,18 @@
           <listitem>
             <para>
               The fiber representing the fiber that has been suspended.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Note:</term>
+          <listitem>
+            <para>
+              Because <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
+              gets invalidated, <code><phrase role="identifier">resume</phrase><phrase
+              role="special">()</phrase></code> and <code><phrase role="identifier">resume_with</phrase><phrase
+              role="special">()</phrase></code> are rvalue-ref qualified and bind
+              only to rvalues.
             </para>
           </listitem>
         </varlistentry>
