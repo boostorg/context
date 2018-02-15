@@ -47,10 +47,10 @@
     <span class="identifier">fiber</span><span class="special">(</span><span class="identifier">fiber</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">noexcept</span> <span class="special">=</span> <span class="keyword">delete</span><span class="special">;</span>
     <span class="identifier">fiber</span> <span class="special">&amp;</span> <span class="keyword">operator</span><span class="special">=(</span><span class="identifier">fiber</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span> <span class="keyword">noexcept</span> <span class="special">=</span> <span class="keyword">delete</span><span class="special">;</span>
 
-    <span class="identifier">fiber</span> <span class="identifier">resume</span><span class="special">();</span>
+    <span class="identifier">fiber</span> <span class="identifier">resume</span><span class="special">()</span> <span class="special">&amp;&amp;;</span>
 
     <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">&gt;</span>
-    <span class="identifier">fiber</span> <span class="identifier">resume_with</span><span class="special">(</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">);</span>
+    <span class="identifier">fiber</span> <span class="identifier">resume_with</span><span class="special">(</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">)</span> <span class="special">&amp;&amp;;</span>
 
     <span class="keyword">explicit</span> <span class="keyword">operator</span> <span class="keyword">bool</span><span class="special">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
 
@@ -214,10 +214,10 @@
 </h5>
 <p>
       </p>
-<pre class="programlisting"><span class="identifier">fiber</span> <span class="identifier">resume</span><span class="special">();</span>
+<pre class="programlisting"><span class="identifier">fiber</span> <span class="identifier">resume</span><span class="special">()</span> <span class="special">&amp;&amp;;</span>
 
 <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">Fn</span><span class="special">&gt;</span>
-<span class="identifier">fiber</span> <span class="identifier">resume_with</span><span class="special">(</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">);</span>
+<span class="identifier">fiber</span> <span class="identifier">resume_with</span><span class="special">(</span><span class="identifier">Fn</span> <span class="special">&amp;&amp;</span> <span class="identifier">fn</span><span class="special">)</span> <span class="special">&amp;&amp;;</span>
 </pre>
 <div class="variablelist">
 <p class="title"><b></b></p>
@@ -231,6 +231,12 @@
 <dt><span class="term">Returns:</span></dt>
 <dd><p>
               The fiber representing the fiber that has been suspended.
+            </p></dd>
+<dt><span class="term">Note:</span></dt>
+<dd><p>
+              Because <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>
+              gets invalidated, <code class="computeroutput"><span class="identifier">resume</span><span class="special">()</span></code> and <code class="computeroutput"><span class="identifier">resume_with</span><span class="special">()</span></code> are rvalue-ref qualified and bind
+              only to rvalues.
             </p></dd>
 <dt><span class="term">Note:</span></dt>
 <dd><p>
