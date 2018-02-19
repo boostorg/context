@@ -27,7 +27,7 @@ project boost/context/test
     ;
 
 
-rule configure-impl ( properties * )
+rule native-impl ( properties * )
 {
     local result  ;
     if ( <target-os>darwin in $(properties) || <target-os>android in $(properties) )
@@ -98,7 +98,7 @@ test-suite minimal :
 
 [ run test_fiber.cpp :
     : :
-    <conditional>@configure-impl
+    <conditional>@native-impl
     [ requires cxx11_auto_declarations
                cxx11_constexpr
                cxx11_defaulted_functions
@@ -134,7 +134,7 @@ test-suite minimal :
 
 [ run test_callcc.cpp :
     : :
-    <conditional>@configure-impl
+    <conditional>@native-impl
     [ requires cxx11_auto_declarations
                cxx11_constexpr
                cxx11_defaulted_functions
