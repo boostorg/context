@@ -30,7 +30,7 @@ project boost/context/test
 rule configure-impl ( properties * )
 {
     local result  ;
-    if ( <target-os>darwin in $(properties) )
+    if ( <target-os>darwin in $(properties) || <target-os>android in $(properties) )
     {
         result = <build>no ;
     }
