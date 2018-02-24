@@ -57,7 +57,7 @@ struct ecv1_data_t {
 struct BOOST_CONTEXT_DECL ecv1_activation_record {
     typedef boost::intrusive_ptr< ecv1_activation_record >    ptr_t;
 
-    thread_local static ptr_t   current_rec;
+    static ptr_t & current() noexcept;
 
     std::atomic< std::size_t >  use_count{ 0 };
     fcontext_t                  fctx{ nullptr };
@@ -82,11 +82,11 @@ struct BOOST_CONTEXT_DECL ecv1_activation_record {
 
     void * resume( void * vp) {
         // store current activation record in local variable
-        auto from = current_rec.get();
+        auto from = current().get();
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
         // returned by execution_context::current()
-        current_rec = this;
+        current() = this;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
         // adjust segmented stack properties
         __splitstack_getcontext( from->sctx.segments_ctx);
@@ -104,11 +104,11 @@ struct BOOST_CONTEXT_DECL ecv1_activation_record {
     template< typename Fn >
     void * resume_ontop( void *  data, Fn && fn) {
         // store current activation record in local variable
-        ecv1_activation_record * from = current_rec.get();
+        ecv1_activation_record * from = current().get();
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
         // returned by execution_context::current()
-        current_rec = this;
+        current() = this;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
         // adjust segmented stack properties
         __splitstack_getcontext( from->sctx.segments_ctx);
@@ -297,7 +297,7 @@ private:
 
     execution_context() noexcept :
         // default constructed with current ecv1_activation_record
-        ptr_{ detail::ecv1_activation_record::current_rec } {
+        ptr_{ detail::ecv1_activation_record::current() } {
     }
 
 public:

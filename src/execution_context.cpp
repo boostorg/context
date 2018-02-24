@@ -17,9 +17,12 @@ namespace context {
 namespace detail {
 
 #if !defined(BOOST_NO_CXX11_THREAD_LOCAL)
-thread_local
-ecv1_activation_record::ptr_t
-ecv1_activation_record::current_rec;
+
+ecv1_activation_record::ptr_t &
+ecv1_activation_record::current() noexcept {
+    thread_local static ptr_t current;
+    return current;
+}
 
 // zero-initialization
 thread_local static std::size_t counter;
@@ -27,14 +30,14 @@ thread_local static std::size_t counter;
 // schwarz counter
 ecv1_activation_record_initializer::ecv1_activation_record_initializer() noexcept {
     if ( 0 == counter++) {
-        ecv1_activation_record::current_rec.reset( new ecv1_activation_record() );
+        ecv1_activation_record::current().reset( new ecv1_activation_record() );
     }
 }
 
 ecv1_activation_record_initializer::~ecv1_activation_record_initializer() {
     if ( 0 == --counter) {
-        BOOST_ASSERT( ecv1_activation_record::current_rec->is_main_context() );
-        delete ecv1_activation_record::current_rec.detach();
+        BOOST_ASSERT( ecv1_activation_record::current()->is_main_context() );
+        delete ecv1_activation_record::current().detach();
     }
 }
 
