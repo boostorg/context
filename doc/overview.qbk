@@ -42,4 +42,8 @@ All functions and classes are contained in the namespace __context_ns__.
 
 [note This library requires C++11!]
 
+[important Windows using fcontext_t: turn off global program optimization (/GL) and change /EHsc (compiler
+assumes that functions declared as extern "C" never throw a C++ exception) to /EHs (tells
+compiler assumes that functions declared as extern "C" may throw an exception).]
+
 [endsect]

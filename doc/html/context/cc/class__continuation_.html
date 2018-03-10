@@ -192,9 +192,7 @@
 <dd><p>
               Captures current continuation and resumes <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>. The function <code class="computeroutput"><span class="identifier">resume_with</span></code>,
               is used to execute function <code class="computeroutput"><span class="identifier">fn</span></code>
-              in continuation <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>
-              (e.g. the stack frame of <code class="computeroutput"><span class="identifier">fn</span></code>
-              is allocated on stack of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>).
+              in the execution context of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code> (e.g. the stack frame of <code class="computeroutput"><span class="identifier">fn</span></code> is allocated on stack of <code class="computeroutput"><span class="special">*</span><span class="keyword">this</span></code>).
             </p></dd>
 <dt><span class="term">Returns:</span></dt>
 <dd><p>
@@ -203,7 +201,7 @@
 <dt><span class="term">Note:</span></dt>
 <dd><p>
               Function <code class="computeroutput"><span class="identifier">fn</span></code> needs to
-              return void.
+              return <code class="computeroutput"><span class="identifier">continuation</span></code>.
             </p></dd>
 <dt><span class="term">Note:</span></dt>
 <dd><p>

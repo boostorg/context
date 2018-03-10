@@ -13,11 +13,10 @@
 #include <boost/cstdint.hpp>
 #include <boost/program_options.hpp>
 
-#include "bind_processor.hpp"
-#include "clock.hpp"
-#include "cycle.hpp"
+#include "../clock.hpp"
+#include "../cycle.hpp"
 
-boost::uint64_t jobs = 1000;
+boost::uint64_t jobs = 1000000;
 
 namespace ctx = boost::context;
 
@@ -67,8 +66,6 @@ cycle_type measure_cycles() {
 
 int main( int argc, char * argv[]) {
     try {
-        bind_to_processor( 0);
-
         boost::program_options::options_description desc("allowed options");
         desc.add_options()
             ("help", "help message")

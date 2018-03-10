@@ -7,33 +7,33 @@
 namespace detail {
 
 template< typename Ctx, typename Fn >
-transfer_t context_ontop_void( transfer_t);
+transfer_t ecv2_context_ontop_void( transfer_t);
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
-fcontext_t context_create_void( StackAlloc &&, Fn &&, Params && ...);
+fcontext_t ecv2_context_create_void( StackAlloc &&, Fn &&, Params && ...);
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
-fcontext_t context_create_void( preallocated, StackAlloc &&, Fn &&, Params && ...);
+fcontext_t ecv2_context_create_void( preallocated, StackAlloc &&, Fn &&, Params && ...);
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
-class record_void {
+class ecv2_record_void {
 private:
     typename std::decay< StackAlloc >::type             salloc_;
     stack_context                                       sctx_;
     typename std::decay< Fn >::type                     fn_;
     std::tuple< typename std::decay< Params >::type ... > params_;
 
-    static void destroy( record_void * p) noexcept {
+    static void destroy( ecv2_record_void * p) noexcept {
         typename std::decay< StackAlloc >::type salloc = std::move( p->salloc_);
         stack_context sctx = p->sctx_;
         // deallocate record
-        p->~record_void();
+        p->~ecv2_record_void();
         // destroy stack with stack allocator
         salloc.deallocate( sctx);
     }
 
 public:
-    record_void( stack_context sctx, StackAlloc && salloc,
+    ecv2_record_void( stack_context sctx, StackAlloc && salloc,
             Fn && fn, Params && ... params) noexcept :
         salloc_( std::forward< StackAlloc >( salloc) ),
         sctx_( sctx),
@@ -41,8 +41,8 @@ public:
         params_( std::forward< Params >( params) ... ) {
     }
 
-    record_void( record_void const&) = delete;
-    record_void & operator=( record_void const&) = delete;
+    ecv2_record_void( ecv2_record_void const&) = delete;
+    ecv2_record_void & operator=( ecv2_record_void const&) = delete;
 
     void deallocate() noexcept {
         destroy( this);
@@ -52,7 +52,7 @@ public:
         Ctx from{ t.fctx };
         // invoke context-function
 #if defined(BOOST_NO_CXX17_STD_APPLY)
-        Ctx cc = apply( fn_, std::tuple_cat( params_, std::forward_as_tuple( std::move( from) ) ) );
+        Ctx cc = boost::context::detail::apply( fn_, std::tuple_cat( params_, std::forward_as_tuple( std::move( from) ) ) );
 #else
         Ctx cc = std::apply( fn_, std::tuple_cat( params_, std::forward_as_tuple( std::move( from) ) ) );
 #endif
@@ -62,16 +62,18 @@ public:
 
 }
 
+inline namespace v2 {
+
 template<>
 class execution_context< void > {
 private:
     friend class ontop_error;
 
     template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
-    friend class detail::record_void;
+    friend class detail::ecv2_record_void;
 
     template< typename Ctx, typename Fn >
-    friend detail::transfer_t detail::context_ontop_void( detail::transfer_t);
+    friend detail::transfer_t detail::ecv2_context_ontop_void( detail::transfer_t);
 
     detail::fcontext_t  fctx_{ nullptr };
 
@@ -101,7 +103,7 @@ public:
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        fctx_( detail::context_create_void< execution_context >(
+        fctx_( detail::ecv2_context_create_void< execution_context >(
                     fixedsize_stack(),
                     std::forward< Fn >( fn),
                     std::forward< Params >( params) ... ) ) {
@@ -117,7 +119,7 @@ public:
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        fctx_( detail::context_create_void< execution_context >(
+        fctx_( detail::ecv2_context_create_void< execution_context >(
                     std::forward< StackAlloc >( salloc),
                     std::forward< Fn >( fn),
                     std::forward< Params >( params) ... ) ) {
@@ -133,7 +135,7 @@ public:
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        fctx_( detail::context_create_void< execution_context >(
+        fctx_( detail::ecv2_context_create_void< execution_context >(
                     palloc, std::forward< StackAlloc >( salloc),
                     std::forward< Fn >( fn),
                     std::forward< Params >( params) ... ) ) {
@@ -142,7 +144,7 @@ public:
 
     ~execution_context() {
         if ( nullptr != fctx_) {
-            detail::ontop_fcontext( detail::exchange( fctx_, nullptr), nullptr, detail::context_unwind);
+            detail::ontop_fcontext( detail::exchange( fctx_, nullptr), nullptr, detail::ecv2_context_unwind);
         }
     }
 
@@ -183,7 +185,7 @@ public:
         detail::transfer_t t = detail::ontop_fcontext(
                 detail::exchange( fctx_, nullptr),
                 & p,
-                detail::context_ontop_void< execution_context, Fn >);
+                detail::ecv2_context_ontop_void< execution_context, Fn >);
         if ( nullptr != t.data) {
             std::exception_ptr * eptr = static_cast< std::exception_ptr * >( t.data);
             try {
@@ -242,10 +244,12 @@ public:
     }
 };
 
+}
+
 namespace detail {
 
 template< typename Ctx, typename Fn >
-transfer_t context_ontop_void( transfer_t t) {
+transfer_t ecv2_context_ontop_void( transfer_t t) {
     auto p = static_cast< std::tuple< Fn, std::exception_ptr > * >( t.data);
     BOOST_ASSERT( nullptr != p);
     typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * p) );
@@ -260,8 +264,8 @@ transfer_t context_ontop_void( transfer_t t) {
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
-fcontext_t context_create_void( StackAlloc && salloc, Fn && fn, Params && ... params) {
-    typedef record_void< Ctx, StackAlloc, Fn, Params ... >  record_t;
+fcontext_t ecv2_context_create_void( StackAlloc && salloc, Fn && fn, Params && ... params) {
+    typedef ecv2_record_void< Ctx, StackAlloc, Fn, Params ... >  record_t;
 
     auto sctx = salloc.allocate();
     // reserve space for control structure
@@ -281,7 +285,7 @@ fcontext_t context_create_void( StackAlloc && salloc, Fn && fn, Params && ... pa
     const std::size_t size = sctx.size - ( static_cast< char * >( sctx.sp) - static_cast< char * >( sp) );
 #endif
     // create fast-context
-    const fcontext_t fctx = make_fcontext( sp, size, & context_entry< record_t >);
+    const fcontext_t fctx = make_fcontext( sp, size, & ecv2_context_etry< record_t >);
     BOOST_ASSERT( nullptr != fctx);
     // placment new for control structure on context-stack
     auto rec = ::new ( sp) record_t{
@@ -291,8 +295,8 @@ fcontext_t context_create_void( StackAlloc && salloc, Fn && fn, Params && ... pa
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn, typename ... Params >
-fcontext_t context_create_void( preallocated palloc, StackAlloc && salloc, Fn && fn, Params && ... params) {
-    typedef record_void< Ctx, StackAlloc, Fn, Params ... >  record_t;
+fcontext_t ecv2_context_create_void( preallocated palloc, StackAlloc && salloc, Fn && fn, Params && ... params) {
+    typedef ecv2_record_void< Ctx, StackAlloc, Fn, Params ... >  record_t;
 
     // reserve space for control structure
 #if defined(BOOST_NO_CXX11_CONSTEXPR) || defined(BOOST_NO_CXX11_STD_ALIGN)
@@ -311,7 +315,7 @@ fcontext_t context_create_void( preallocated palloc, StackAlloc && salloc, Fn &&
     const std::size_t size = palloc.size - ( static_cast< char * >( palloc.sp) - static_cast< char * >( sp) );
 #endif
     // create fast-context
-    const fcontext_t fctx = make_fcontext( sp, size, & context_entry< record_t >);
+    const fcontext_t fctx = make_fcontext( sp, size, & ecv2_context_etry< record_t >);
     BOOST_ASSERT( nullptr != fctx);
     // placment new for control structure on context-stack
     auto rec = ::new ( sp) record_t{

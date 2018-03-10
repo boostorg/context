@@ -111,6 +111,7 @@
 [def __coroutine__ ['coroutine]]
 [def __coroutines__ ['coroutines]]
 [def __coop_threads__ ['cooperative threads (userland threads)]]
+[def __fiber__ ['fiber]]
 [def __fls__ ['fiber-local storage]]
 [def __guard_page__ ['guard-page]]
 [def __not_a_context__ ['not-a-context]]
@@ -128,6 +129,7 @@
 [def __econtext__ ['execution_context]]
 [def __ecv1__ [link ecv1 ['execution_context] (v1)]]
 [def __ecv2__ [link ecv2 ['execution_context] (v2)]]
+[def __fib__ [link ff ['fiber]]]
 [def __fcontext__ ['fcontext_t]]
 [def __forced_unwind__ ['detail::forced_unwind]]
 [def __ucontext__ ['ucontext_t]]
@@ -162,6 +164,7 @@
 
 [include overview.qbk]
 [include requirements.qbk]
+[include fiber.qbk]
 [include callcc.qbk]
 [include execution_context_v2.qbk]
 [include execution_context_v1.qbk]

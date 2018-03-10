@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CONTEXT_EXECUTION_CONTEXT_H
-#define BOOST_CONTEXT_EXECUTION_CONTEXT_H
+#ifndef BOOST_CONTEXT_EXECUTION_CONTEXT_V1_H
+#define BOOST_CONTEXT_EXECUTION_CONTEXT_V1_H
 
 #include <boost/context/detail/config.hpp>
 
@@ -28,6 +28,7 @@
 #include <boost/context/detail/apply.hpp>
 #endif
 #include <boost/context/detail/disable_overload.hpp>
+#include <boost/context/detail/externc.hpp>
 #include <boost/context/detail/fcontext.hpp>
 #include <boost/context/fixedsize_stack.hpp>
 #include <boost/context/flags.hpp>
@@ -39,31 +40,24 @@
 # include BOOST_ABI_PREFIX
 #endif
 
-#if defined(BOOST_USE_SEGMENTED_STACKS)
-extern "C" {
-void __splitstack_getcontext( void * [BOOST_CONTEXT_SEGMENTS]);
-void __splitstack_setcontext( void * [BOOST_CONTEXT_SEGMENTS]);
-}
-#endif
-
 namespace boost {
 namespace context {
 namespace detail {
 
 template< typename Fn >
-transfer_t context_ontop( transfer_t);
+transfer_t ecv1_context_ontop( transfer_t);
 
-struct activation_record;
+struct ecv1_activation_record;
 
-struct data_t {
-    activation_record   *   from;
-    void                *   data;
+struct ecv1_data_t {
+    ecv1_activation_record  *   from;
+    void                    *   data;
 };
 
-struct BOOST_CONTEXT_DECL activation_record {
-    typedef boost::intrusive_ptr< activation_record >    ptr_t;
+struct BOOST_CONTEXT_DECL ecv1_activation_record {
+    typedef boost::intrusive_ptr< ecv1_activation_record >    ptr_t;
 
-    thread_local static ptr_t   current_rec;
+    static ptr_t & current() noexcept;
 
     std::atomic< std::size_t >  use_count{ 0 };
     fcontext_t                  fctx{ nullptr };
@@ -72,15 +66,15 @@ struct BOOST_CONTEXT_DECL activation_record {
 
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
-    activation_record() = default;
+    ecv1_activation_record() = default;
 
-    activation_record( fcontext_t fctx_, stack_context sctx_) noexcept :
+    ecv1_activation_record( fcontext_t fctx_, stack_context sctx_) noexcept :
         fctx{ fctx_ },
         sctx( sctx_ ), // sctx{ sctx_ } - clang-3.6: no viable conversion from 'boost::context::stack_context' to 'std::size_t'
         main_ctx{ false } {
     } 
 
-    virtual ~activation_record() = default;
+    virtual ~ecv1_activation_record() = default;
 
     bool is_main_context() const noexcept {
         return main_ctx;
@@ -88,20 +82,20 @@ struct BOOST_CONTEXT_DECL activation_record {
 
     void * resume( void * vp) {
         // store current activation record in local variable
-        auto from = current_rec.get();
+        auto from = current().get();
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
         // returned by execution_context::current()
-        current_rec = this;
+        current() = this;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
         // adjust segmented stack properties
         __splitstack_getcontext( from->sctx.segments_ctx);
         __splitstack_setcontext( sctx.segments_ctx);
 #endif
-        data_t d = { from, vp };
+        ecv1_data_t d = { from, vp };
         // context switch from parent context to `this`-context
         transfer_t t = jump_fcontext( fctx, & d);
-        data_t * dp = reinterpret_cast< data_t * >( t.data);
+        ecv1_data_t * dp = reinterpret_cast< ecv1_data_t * >( t.data);
         dp->from->fctx = t.fctx;
         // parent context resumed
         return dp->data;
@@ -110,22 +104,22 @@ struct BOOST_CONTEXT_DECL activation_record {
     template< typename Fn >
     void * resume_ontop( void *  data, Fn && fn) {
         // store current activation record in local variable
-        activation_record * from = current_rec.get();
+        ecv1_activation_record * from = current().get();
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
         // returned by execution_context::current()
-        current_rec = this;
+        current() = this;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
         // adjust segmented stack properties
         __splitstack_getcontext( from->sctx.segments_ctx);
         __splitstack_setcontext( sctx.segments_ctx);
 #endif
         std::tuple< void *, Fn > p = std::forward_as_tuple( data, fn);
-        data_t d = { from, & p };
+        ecv1_data_t d = { from, & p };
         // context switch from parent context to `this`-context
         // execute Fn( Tpl) on top of `this`
-        transfer_t t = ontop_fcontext( fctx, & d, context_ontop< Fn >);
-        data_t * dp = reinterpret_cast< data_t * >( t.data);
+        transfer_t t = ontop_fcontext( fctx, & d, ecv1_context_ontop< Fn >);
+        ecv1_data_t * dp = reinterpret_cast< ecv1_data_t * >( t.data);
         dp->from->fctx = t.fctx;
         // parent context resumed
         return dp->data;
@@ -134,11 +128,11 @@ struct BOOST_CONTEXT_DECL activation_record {
     virtual void deallocate() noexcept {
     }
 
-    friend void intrusive_ptr_add_ref( activation_record * ar) noexcept {
+    friend void intrusive_ptr_add_ref( ecv1_activation_record * ar) noexcept {
         ++ar->use_count;
     }
 
-    friend void intrusive_ptr_release( activation_record * ar) noexcept {
+    friend void intrusive_ptr_release( ecv1_activation_record * ar) noexcept {
         BOOST_ASSERT( nullptr != ar);
         if ( 0 == --ar->use_count) {
             ar->deallocate();
@@ -146,21 +140,21 @@ struct BOOST_CONTEXT_DECL activation_record {
     }
 };
 
-struct BOOST_CONTEXT_DECL activation_record_initializer {
-    activation_record_initializer() noexcept;
-    ~activation_record_initializer();
+struct BOOST_CONTEXT_DECL ecv1_activation_record_initializer {
+    ecv1_activation_record_initializer() noexcept;
+    ~ecv1_activation_record_initializer();
 };
 
 template< typename Fn >
-transfer_t context_ontop( transfer_t t) {
-    data_t * dp = reinterpret_cast< data_t * >( t.data);
+transfer_t ecv1_context_ontop( transfer_t t) {
+    ecv1_data_t * dp = reinterpret_cast< ecv1_data_t * >( t.data);
     dp->from->fctx = t.fctx;
     auto tpl = reinterpret_cast< std::tuple< void *, Fn > * >( dp->data);
     BOOST_ASSERT( nullptr != tpl);
     auto data = std::get< 0 >( * tpl);
     typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 1 >( * tpl) );
 #if defined(BOOST_NO_CXX17_STD_APPLY)
-    dp->data = apply( fn, std::tie( data) );
+    dp->data = boost::context::detail::apply( fn, std::tie( data) );
 #else
     dp->data = std::apply( fn, std::tie( data) );
 #endif
@@ -168,28 +162,28 @@ transfer_t context_ontop( transfer_t t) {
 }
 
 template< typename StackAlloc, typename Fn, typename ... Args >
-class capture_record : public activation_record {
+class ecv1_capture_record : public ecv1_activation_record {
 private:
     typename std::decay< StackAlloc >::type             salloc_;
     typename std::decay< Fn >::type                     fn_;
     std::tuple< typename std::decay< Args >::type ... > args_;
-    activation_record                               *   caller_;
+    ecv1_activation_record                               *   caller_;
 
-    static void destroy( capture_record * p) noexcept {
+    static void destroy( ecv1_capture_record * p) noexcept {
         typename std::decay< StackAlloc >::type salloc = std::move( p->salloc_);
         stack_context sctx = p->sctx;
         // deallocate activation record
-        p->~capture_record();
+        p->~ecv1_capture_record();
         // destroy stack with stack allocator
         salloc.deallocate( sctx);
     }
 
 public:
-    capture_record( stack_context sctx, StackAlloc && salloc,
+    ecv1_capture_record( stack_context sctx, StackAlloc && salloc,
                     fcontext_t fctx,
-                    activation_record * caller,
+                    ecv1_activation_record * caller,
                     Fn && fn, Args && ... args) noexcept :
-        activation_record{ fctx, sctx },
+        ecv1_activation_record{ fctx, sctx },
         salloc_{ std::forward< StackAlloc >( salloc) },
         fn_( std::forward< Fn >( fn) ),
         args_( std::forward< Args >( args) ... ),
@@ -203,7 +197,7 @@ public:
     void run() {
         auto data = caller_->resume( nullptr);
 #if defined(BOOST_NO_CXX17_STD_APPLY)
-        apply( fn_, std::tuple_cat( args_, std::tie( data) ) );
+        boost::context::detail::apply( fn_, std::tuple_cat( args_, std::tie( data) ) );
 #else
         std::apply( fn_, std::tuple_cat( args_, std::tie( data) ) );
 #endif
@@ -213,6 +207,8 @@ public:
 
 }
 
+namespace v1 {
+
 class BOOST_CONTEXT_DECL execution_context {
 private:
     // tampoline function
@@ -220,7 +216,7 @@ private:
     // is resumed for the first time
     template< typename AR >
     static void entry_func( detail::transfer_t t) noexcept {
-        detail::data_t * dp = reinterpret_cast< detail::data_t * >( t.data);
+        detail::ecv1_data_t * dp = reinterpret_cast< detail::ecv1_data_t * >( t.data);
         AR * ar = static_cast< AR * >( dp->data);
         BOOST_ASSERT( nullptr != ar);
         dp->from->fctx = t.fctx;
@@ -228,14 +224,14 @@ private:
         ar->run();
     }
 
-    typedef boost::intrusive_ptr< detail::activation_record >    ptr_t;
+    typedef boost::intrusive_ptr< detail::ecv1_activation_record >    ptr_t;
 
     ptr_t   ptr_;
 
     template< typename StackAlloc, typename Fn, typename ... Args >
-    static detail::activation_record * create_context( StackAlloc && salloc,
+    static detail::ecv1_activation_record * create_context( StackAlloc && salloc,
                                                        Fn && fn, Args && ... args) {
-        typedef detail::capture_record<
+        typedef detail::ecv1_capture_record<
             StackAlloc, Fn, Args ...
         >                                           capture_t;
 
@@ -267,9 +263,9 @@ private:
     }
 
     template< typename StackAlloc, typename Fn, typename ... Args >
-    static detail::activation_record * create_context( preallocated palloc, StackAlloc && salloc,
+    static detail::ecv1_activation_record * create_context( preallocated palloc, StackAlloc && salloc,
                                                        Fn && fn, Args && ... args) {
-        typedef detail::capture_record<
+        typedef detail::ecv1_capture_record<
             StackAlloc, Fn, Args ...
         >                                           capture_t;
 
@@ -300,8 +296,8 @@ private:
     }
 
     execution_context() noexcept :
-        // default constructed with current activation_record
-        ptr_{ detail::activation_record::current_rec } {
+        // default constructed with current ecv1_activation_record
+        ptr_{ detail::ecv1_activation_record::current() } {
     }
 
 public:
@@ -488,10 +484,10 @@ void swap( execution_context & l, execution_context & r) noexcept {
     l.swap( r);
 }
 
-}}
+}}}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_CONTEXT_EXECUTION_CONTEXT_H
+#endif // BOOST_CONTEXT_EXECUTION_CONTEXT_V1_H

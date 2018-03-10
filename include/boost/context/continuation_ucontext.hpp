@@ -37,6 +37,7 @@ extern "C" {
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
 #include <boost/context/detail/exchange.hpp>
 #endif
+#include <boost/context/detail/externc.hpp>
 #if defined(BOOST_NO_CXX17_STD_INVOKE)
 #include <boost/context/detail/invoke.hpp>
 #endif
@@ -50,20 +51,6 @@ extern "C" {
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_PREFIX
-#endif
-
-#if defined(BOOST_USE_ASAN)
-extern "C" {
-void __sanitizer_start_switch_fiber( void **, const void *, size_t);
-void __sanitizer_finish_switch_fiber( void *, const void **, size_t *);
-}
-#endif
-
-#if defined(BOOST_USE_SEGMENTED_STACKS)
-extern "C" {
-void __splitstack_getcontext( void * [BOOST_CONTEXT_SEGMENTS]);
-void __splitstack_setcontext( void * [BOOST_CONTEXT_SEGMENTS]);
-}
 #endif
 
 namespace boost {
@@ -408,7 +395,11 @@ public:
         return * this;
     }
 
-    continuation resume() {
+    continuation resume() & {
+        return std::move( * this).resume();
+    }
+
+    continuation resume() && {
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         detail::activation_record * ptr = detail::exchange( ptr_, nullptr)->resume();
 #else
@@ -420,11 +411,16 @@ public:
             ptr = detail::activation_record::current()->ontop( ptr);
             detail::activation_record::current()->ontop = nullptr;
         }
-        return continuation{ ptr };
+        return { ptr };
     }
 
     template< typename Fn >
-    continuation resume_with( Fn && fn) {
+    continuation resume_with( Fn && fn) & {
+        return std::move( * this).resume_with( std::forward< Fn >( fn) );
+    }
+
+    template< typename Fn >
+    continuation resume_with( Fn && fn) && {
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         detail::activation_record * ptr =
             detail::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn) );
@@ -438,7 +434,7 @@ public:
             ptr = detail::activation_record::current()->ontop( ptr);
             detail::activation_record::current()->ontop = nullptr;
         }
-        return continuation{ ptr };
+        return { ptr };
     }
 
     explicit operator bool() const noexcept {

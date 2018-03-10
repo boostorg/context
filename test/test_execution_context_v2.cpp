@@ -395,7 +395,7 @@ void test_ontop_exception() {
                 for (;;) {
                     try {
                             std::tie( ctx, x, y) = ctx( x+y,x-y);
-                    } catch ( boost::context::ontop_error const& e) {
+                    } catch ( ctx::ontop_error const& e) {
                         try {
                             std::rethrow_if_nested( e);
                         } catch ( my_exception const& ex) {
@@ -562,7 +562,6 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_memfn) );
     test->add( BOOST_TEST_CASE( & test_exception) );
     test->add( BOOST_TEST_CASE( & test_fp) );
-    test->add( BOOST_TEST_CASE( & test_stacked) );
     test->add( BOOST_TEST_CASE( & test_stacked) );
     test->add( BOOST_TEST_CASE( & test_prealloc) );
     test->add( BOOST_TEST_CASE( & test_ontop) );

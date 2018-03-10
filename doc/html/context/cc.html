@@ -6,7 +6,7 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
 <link rel="home" href="../index.html" title="Chapter&#160;1.&#160;Context">
 <link rel="up" href="../index.html" title="Chapter&#160;1.&#160;Context">
-<link rel="prev" href="requirements.html" title="Requirements">
+<link rel="prev" href="ff/class__fiber_.html" title="Class fiber">
 <link rel="next" href="cc/implementations__fcontext_t__ucontext_t_and_winfiber.html" title="Implementations: fcontext_t, ucontext_t and WinFiber">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -20,7 +20,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="requirements.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="cc/implementations__fcontext_t__ucontext_t_and_winfiber.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="ff/class__fiber_.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="cc/implementations__fcontext_t__ucontext_t_and_winfiber.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
@@ -31,6 +31,18 @@
       fcontext_t, ucontext_t and WinFiber</a></span></dt>
 <dt><span class="section"><a href="cc/class__continuation_.html">Class <code class="computeroutput"><span class="identifier">continuation</span></code></a></span></dt>
 </dl></div>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+        <span class="emphasis"><em>call/cc</em></span> is the reference implementation of C++ proposal
+        <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0534r3.pdf" target="_top">P0534R3:
+        call/cc (call-with-current-continuation): A low-level API for stackful context
+        switching</a>.
+      </p></td></tr>
+</table></div>
 <p>
       <span class="emphasis"><em>call/cc</em></span> (call with current continuation) is a universal
       control operator (well-known from the programming language Scheme) that captures
@@ -92,7 +104,7 @@
 <tr><td align="left" valign="top"><p>
         <a class="link" href="stack/segmented.html#segmented"><span class="emphasis"><em>Segmented stacks</em></span></a> are
         supported by <a class="link" href="cc.html#cc"><span class="emphasis"><em>callcc()</em></span></a> using
-        <a class="link" href="cc/implementations__fcontext_t__ucontext_t_and_winfiber.html#implementation"><span class="emphasis"><em>ucontext_t</em></span></a>.
+        <a class="link" href="ff/implementations__fcontext_t__ucontext_t_and_winfiber.html#implementation"><span class="emphasis"><em>ucontext_t</em></span></a>.
       </p></td></tr>
 </table></div>
 <h4>
@@ -252,6 +264,7 @@
 <span class="identifier">c</span><span class="special">=</span><span class="identifier">c</span><span class="special">.</span><span class="identifier">resume_with</span><span class="special">([&amp;</span><span class="identifier">data</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">c</span><span class="special">){</span>
                     <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f2: entered: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
                     <span class="identifier">data</span><span class="special">=-</span><span class="number">1</span><span class="special">;</span>
+                    <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span> <span class="identifier">c</span><span class="special">);</span>
                 <span class="special">});</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: returned third time"</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
 
@@ -300,6 +313,7 @@
 <span class="identifier">c</span> <span class="special">=</span> <span class="identifier">c</span><span class="special">.</span><span class="identifier">resume_with</span><span class="special">(</span>
        <span class="special">[](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">continuation</span> <span class="special">&amp;&amp;</span> <span class="identifier">c</span><span class="special">){</span>
            <span class="keyword">throw</span> <span class="identifier">my_exception</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">c</span><span class="special">),</span><span class="string">"abc"</span><span class="special">);</span>
+           <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span> <span class="identifier">c</span><span class="special">);</span>
        <span class="special">});</span>
 
 <span class="identifier">output</span><span class="special">:</span>
@@ -518,7 +532,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="requirements.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="cc/implementations__fcontext_t__ucontext_t_and_winfiber.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="ff/class__fiber_.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="cc/implementations__fcontext_t__ucontext_t_and_winfiber.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

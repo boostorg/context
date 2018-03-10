@@ -8,10 +8,11 @@
 [#ecv2]
 [section:ecv2 Class execution_context (version 2)]
 
-[warning __econtext__ is deprecated.]
+[note __econtext__ (v2) is the reference implementation of C++ proposal
+[@http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0099r1.pdf P099R1: A
+low-level API for stackful context switching].]
 
-[note Include `execution_context.hpp` and pass `BOOST_EXECUTION_CONTEXT=2`
-and property `context-switch=ec` to b2 command-line in order to use __econtext__ (v2).]
+[note __econtext__ (v2) resides in the inlined sub-namespace `v2`.]
 
 [note Segmented stacks (['segmented-stacks=on]), e.g. on demand growing stacks,
 are not supported by __econtext__ (v2).]
@@ -506,6 +507,7 @@ pattern). The user is responsible for this task.
 The constructor with argument type `preallocated`, is used to create a user
 defined data [link ecv2_prealloc (for instance additional control structures)] on
 top of the stack.]]
+]
 ]
 [destructor_heading ecv2..destructor destructor]
 

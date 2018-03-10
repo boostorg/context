@@ -375,7 +375,7 @@ void test_snprintf() {
 		[]( ctx::continuation && c) {
             {
                 const char *fmt = "sqrt(2) = %f";
-                char buf[15];
+                char buf[19];
                 snprintf( buf, sizeof( buf), fmt, std::sqrt( 2) );
                 BOOST_CHECK( 0 < sizeof( buf) );
                 BOOST_ASSERT( std::string("sqrt(2) = 1.41") == std::string( buf, 14) );
