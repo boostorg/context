@@ -14,9 +14,10 @@
 
 namespace boost {
 namespace context {
-namespace detail {
 
 #if !defined(BOOST_NO_CXX11_THREAD_LOCAL)
+
+namespace detail {
 
 ecv1_activation_record::ptr_t &
 ecv1_activation_record::current() noexcept {
