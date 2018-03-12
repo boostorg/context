@@ -347,7 +347,7 @@ void test_ontop() {
         BOOST_CHECK( ! m2.state);
         ctx::execution_context< moveable > ctx( fn11);
         std::tie( ctx, m2) = ctx( ctx::exec_ontop_arg,
-                []( moveable m){
+                []( moveable&& m){
                     return std::move( m);
                 },
                 std::move( m1) );
