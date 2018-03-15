@@ -12,6 +12,7 @@ import indirect ;
 import modules ;
 import os ;
 import toolset ;
+ import ../../config/checks/config : requires ;
 
 feature.feature segmented-stacks : on : optional propagated composite ;
 feature.compose <segmented-stacks>on : <define>BOOST_USE_SEGMENTED_STACKS ;
@@ -756,6 +757,19 @@ alias impl_sources
     : continuation.cpp
       fiber.cpp
     : <context-impl>ucontext
+    [ requires cxx11_auto_declarations
+               cxx11_constexpr
+               cxx11_defaulted_functions
+               cxx11_final
+               cxx11_hdr_thread
+               cxx11_hdr_tuple
+               cxx11_lambdas
+               cxx11_noexcept
+               cxx11_nullptr
+               cxx11_rvalue_references
+               cxx11_template_aliases
+               cxx11_thread_local
+               cxx11_variadic_templates ]
     ;
 
 # WinFiber
@@ -763,10 +777,22 @@ alias impl_sources
     : continuation.cpp
       fiber.cpp
     : <context-impl>winfib
+    [ requires cxx11_auto_declarations
+               cxx11_constexpr
+               cxx11_defaulted_functions
+               cxx11_final
+               cxx11_hdr_thread
+               cxx11_hdr_tuple
+               cxx11_lambdas
+               cxx11_noexcept
+               cxx11_nullptr
+               cxx11_rvalue_references
+               cxx11_template_aliases
+               cxx11_thread_local
+               cxx11_variadic_templates ]
     ;
 
 explicit impl_sources ;
-
 
 obj cxx11_hdr_mutex_check : ../build/cxx11_hdr_mutex.cpp ;
 explicit cxx11_hdr_mutex_check ;
@@ -791,7 +817,6 @@ alias stack_traits_sources
     ;
 
 explicit stack_traits_sources ;
-
 
 lib boost_context
    : impl_sources
