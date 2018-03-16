@@ -30,4 +30,12 @@ bjam command line.]
 assumes that functions declared as extern "C" never throw a C++ exception) to /EHs (tells
 compiler assumes that functions declared as extern "C" may throw an exception).]
 
+Because this library uses C++11 extensively, it requires a compatible compiler.
+Known minimum working versions are as follows: Microsoft Visual Studio 2015
+(msvc-14.0), GCC 4.8 (with -std=c++11), Clang 3.4 (with -std=c++11). Other
+compilers may work, if they support the following language features:  auto
+declarations, constexpr, defaulted functions, final, hdr thread, hdr tuple,
+lambdas, noexcept, nullptr, rvalue references, template aliases. thread local,
+variadic templates.
+
 [endsect]
