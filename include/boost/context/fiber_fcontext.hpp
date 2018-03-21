@@ -7,6 +7,8 @@
 #ifndef BOOST_CONTEXT_FIBER_H
 #define BOOST_CONTEXT_FIBER_H
 
+#define UNW_LOCAL_ONLY
+
 #include <boost/context/detail/config.hpp>
 
 #include <algorithm>
@@ -19,6 +21,8 @@
 #include <ostream>
 #include <tuple>
 #include <utility>
+
+#include <libunwind.h>
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
@@ -54,6 +58,22 @@ namespace context {
 namespace detail {
 
 inline
+bool fiber_uses_sidestack() {
+    unw_cursor_t cursor;
+    unw_context_t context;
+    unw_getcontext( & context);
+    unw_init_local( & cursor, & context);
+    while ( 0 < unw_step( & cursor) );
+    unw_word_t offset;
+    char sym[256];
+    int err = unw_get_proc_name( & cursor, sym, sizeof( sym), & offset);
+    if ( 0 != err) {
+        return false;
+    }
+    return std::string( sym) == "make_fcontext";
+}
+
+inline
 transfer_t fiber_unwind( transfer_t t) {
     throw forced_unwind( t.fctx);
     return { nullptr, nullptr };
@@ -74,8 +94,14 @@ void fiber_entry( transfer_t t) noexcept {
     BOOST_ASSERT( nullptr != t.fctx);
     BOOST_ASSERT( nullptr != rec);
     try {
+rep:
         // jump back to `create_context()`
         t = jump_fcontext( t.fctx, nullptr);
+        // test if stack walk was requested
+        if ( nullptr != t.data) {
+            * static_cast< bool * >( t.data) = fiber_uses_sidestack();
+            goto rep;
+        }
         // start executing
         t.fctx = rec->run( t.fctx);
     } catch ( forced_unwind const& e) {
@@ -277,27 +303,60 @@ public:
 
     fiber resume() && {
         BOOST_ASSERT( nullptr != fctx_);
-        return { detail::jump_fcontext(
+rep:
+        auto t = detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
 #else
                     std::exchange( fctx_, nullptr),
 #endif
-                    nullptr).fctx };
+                    nullptr);
+        if ( nullptr != t.data) {
+            * static_cast< bool * >( t.data) = detail::fiber_uses_sidestack();
+            fctx_ = t.fctx;
+            goto rep;
+        }
+        return { t.fctx };
     }
 
     template< typename Fn >
     fiber resume_with( Fn && fn) && {
         BOOST_ASSERT( nullptr != fctx_);
         auto p = std::make_tuple( std::forward< Fn >( fn) );
-        return { detail::ontop_fcontext(
+        auto t = detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
 #else
                     std::exchange( fctx_, nullptr),
 #endif
                     & p,
-                    detail::fiber_ontop< fiber, Fn >).fctx };
+                    detail::fiber_ontop< fiber, Fn >);
+        while ( nullptr != t.data) {
+            * static_cast< bool * >( t.data) = detail::fiber_uses_sidestack();
+            fctx_ = t.fctx;
+            t = detail::jump_fcontext(
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+                    detail::exchange( fctx_, nullptr),
+#else
+                    std::exchange( fctx_, nullptr),
+#endif
+                    nullptr);
+        }
+        return { t.fctx };
+    }
+
+    bool uses_system_stack() {
+        BOOST_ASSERT( * this);
+        bool sidestack = false;
+        auto t = detail::jump_fcontext(
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+                    detail::exchange( fctx_, nullptr),
+#else
+                    std::exchange( fctx_, nullptr),
+#endif
+                    & sidestack);
+        fctx_ = t.fctx;
+        return ! sidestack;
     }
 
     explicit operator bool() const noexcept {

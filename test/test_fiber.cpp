@@ -403,6 +403,55 @@ void test_snprintf() {
 	}}.resume();
 }
 
+void test_use_system_stack() {
+    {
+        ctx::fiber f{
+            []( ctx::fiber && m) {
+                BOOST_CHECK( m);
+                BOOST_CHECK( m.uses_system_stack() );
+                m = std::move( m).resume();
+                BOOST_CHECK( m.uses_system_stack() );
+                return std::move( m);
+        }};
+        BOOST_CHECK( f);
+        BOOST_CHECK( ! f.uses_system_stack() );
+        f = std::move( f).resume();
+        BOOST_CHECK( f);
+        BOOST_CHECK( ! f.uses_system_stack() );
+        f = std::move( f).resume();
+        BOOST_CHECK( ! f);
+    }
+    {
+        ctx::fiber f{
+            []( ctx::fiber && m) {
+                BOOST_CHECK( m);
+                BOOST_CHECK( m.uses_system_stack() );
+                m = std::move( m).resume();
+                BOOST_CHECK( m);
+                BOOST_CHECK( m.uses_system_stack() );
+                m = std::move( m).resume();
+                BOOST_CHECK( m);
+                BOOST_CHECK( m.uses_system_stack() );
+                return std::move( m);
+        }};
+        BOOST_CHECK( f);
+        BOOST_CHECK( ! f.uses_system_stack() );
+        f = std::move( f).resume();
+        BOOST_CHECK( f);
+        BOOST_CHECK( ! f.uses_system_stack() );
+        f = std::move( f).resume_with(
+            []( ctx::fiber && m) {
+                BOOST_CHECK( m);
+                BOOST_CHECK( m.uses_system_stack() );
+                return std::move( m);
+            });
+        BOOST_CHECK( f);
+        BOOST_CHECK( ! f.uses_system_stack() );
+        f = std::move( f).resume();
+        BOOST_CHECK( ! f);
+    }
+}
+
 #ifdef BOOST_WINDOWS
 void test_bug12215() {
         ctx::fiber{
@@ -430,6 +479,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_termination) );
     test->add( BOOST_TEST_CASE( & test_sscanf) );
     test->add( BOOST_TEST_CASE( & test_snprintf) );
+    test->add( BOOST_TEST_CASE( & test_use_system_stack) );
 #ifdef BOOST_WINDOWS
     test->add( BOOST_TEST_CASE( & test_bug12215) );
 #endif

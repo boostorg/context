@@ -37,6 +37,7 @@ project boost/context
       <toolset>msvc,<link>shared:<define>BOOST_CONTEXT_EXPORT=EXPORT
       <toolset>msvc,<link>static:<define>BOOST_CONTEXT_EXPORT=
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
+      <linkflags>"-lunwind"
       <define>BOOST_CONTEXT_SOURCE
       <threading>multi
     : usage-requirements

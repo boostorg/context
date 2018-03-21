@@ -24,6 +24,7 @@ project boost/context/test
       <toolset>clang,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <link>static
       <threading>multi
+      <linkflags>"-lunwind"
     ;
 
 
@@ -93,26 +94,7 @@ test-suite minimal :
                cxx11_rvalue_references
                cxx11_template_aliases
                cxx11_thread_local
-               cxx11_variadic_templates ]
-    : test_fiber_asm ]
-
-[ run test_fiber.cpp :
-    : :
-    <conditional>@native-impl
-    [ requires cxx11_auto_declarations
-               cxx11_constexpr
-               cxx11_defaulted_functions
-               cxx11_final
-               cxx11_hdr_thread
-               cxx11_hdr_tuple
-               cxx11_lambdas
-               cxx11_noexcept
-               cxx11_nullptr
-               cxx11_rvalue_references
-               cxx11_template_aliases
-               cxx11_thread_local
-               cxx11_variadic_templates ]
-    : test_fiber_native ]
+               cxx11_variadic_templates ] ]
 
 [ run test_callcc.cpp :
     : :
