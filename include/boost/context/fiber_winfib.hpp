@@ -396,28 +396,8 @@ public:
         return nullptr == ptr_ || ptr_->terminated;
     }
 
-    bool operator==( fiber const& other) const noexcept {
-        return ptr_ == other.ptr_;
-    }
-
-    bool operator!=( fiber const& other) const noexcept {
-        return ptr_ != other.ptr_;
-    }
-
     bool operator<( fiber const& other) const noexcept {
         return ptr_ < other.ptr_;
-    }
-
-    bool operator>( fiber const& other) const noexcept {
-        return other.ptr_ < ptr_;
-    }
-
-    bool operator<=( fiber const& other) const noexcept {
-        return ! ( * this > other);
-    }
-
-    bool operator>=( fiber const& other) const noexcept {
-        return ! ( * this < other);
     }
 
     template< typename charT, class traitsT >
@@ -439,6 +419,8 @@ inline
 void swap( fiber & l, fiber & r) noexcept {
     l.swap( r);
 }
+
+typedef fiber fiber_context;
 
 }}
 
