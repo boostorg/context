@@ -440,28 +440,8 @@ public:
         return nullptr == ptr_.get();
     }
 
-    bool operator==( execution_context const& other) const noexcept {
-        return ptr_ == other.ptr_;
-    }
-
-    bool operator!=( execution_context const& other) const noexcept {
-        return ptr_ != other.ptr_;
-    }
-
     bool operator<( execution_context const& other) const noexcept {
         return ptr_ < other.ptr_;
-    }
-
-    bool operator>( execution_context const& other) const noexcept {
-        return other.ptr_ < ptr_;
-    }
-
-    bool operator<=( execution_context const& other) const noexcept {
-        return ! ( * this > other);
-    }
-
-    bool operator>=( execution_context const& other) const noexcept {
-        return ! ( * this < other);
     }
 
     template< typename charT, class traitsT >
