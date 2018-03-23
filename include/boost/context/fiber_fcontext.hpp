@@ -21,6 +21,7 @@
 #include <ostream>
 #include <tuple>
 #include <utility>
+#include <variant>
 
 #include <libunwind.h>
 
@@ -57,8 +58,17 @@ namespace boost {
 namespace context {
 namespace detail {
 
+struct data {
+    enum flag_t {
+        flag_side_stack = 0
+    };
+
+    flag_t                  f;
+    std::variant< bool >    v;
+};
+
 inline
-bool fiber_uses_sidestack() {
+bool fiber_uses_side_stack() {
     unw_cursor_t cursor;
     unw_context_t context;
     unw_getcontext( & context);
@@ -99,7 +109,10 @@ rep:
         t = jump_fcontext( t.fctx, nullptr);
         // test if stack walk was requested
         if ( nullptr != t.data) {
-            * static_cast< bool * >( t.data) = fiber_uses_sidestack();
+            data * d = static_cast< data * >( t.data);
+            if ( data::flag_side_stack == d->f) {
+                d->v = fiber_uses_side_stack();
+            }
             goto rep;
         }
         // start executing
@@ -312,7 +325,10 @@ rep:
 #endif
                     nullptr);
         if ( nullptr != t.data) {
-            * static_cast< bool * >( t.data) = detail::fiber_uses_sidestack();
+            detail::data * d = static_cast< detail::data * >( t.data);
+            if ( detail::data::flag_side_stack == d->f) {
+                d->v = detail::fiber_uses_side_stack();
+            }
             fctx_ = t.fctx;
             goto rep;
         }
@@ -332,7 +348,10 @@ rep:
                     & p,
                     detail::fiber_ontop< fiber, Fn >);
         while ( nullptr != t.data) {
-            * static_cast< bool * >( t.data) = detail::fiber_uses_sidestack();
+            detail::data * d = static_cast< detail::data * >( t.data);
+            if ( detail::data::flag_side_stack == d->f) {
+                d->v = detail::fiber_uses_side_stack();
+            }
             fctx_ = t.fctx;
             t = detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
@@ -347,16 +366,16 @@ rep:
 
     bool uses_system_stack() {
         BOOST_ASSERT( * this);
-        bool sidestack = false;
+        detail::data d = { detail::data::flag_side_stack };
         auto t = detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
 #else
                     std::exchange( fctx_, nullptr),
 #endif
-                    & sidestack);
+                    & d);
         fctx_ = t.fctx;
-        return ! sidestack;
+        return ! std::get< bool >( d.v);
     }
 
     explicit operator bool() const noexcept {
