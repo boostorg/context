@@ -79,6 +79,10 @@ exe migrateable
     : migrateable.cpp
     ;
 
+exe hosting_thread
+    : hosting_thread.cpp
+    ;
+
 #exe backtrace
 #    : backtrace.cpp
 #    ;

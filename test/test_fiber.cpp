@@ -452,6 +452,19 @@ void test_use_system_stack() {
     }
 }
 
+void test_hosting_thread() {
+    ctx::fiber f{
+            [](ctx::fiber && m){
+                m = std::move( m).resume();
+                return std::move( m);
+            }};
+    BOOST_CHECK( f);
+    BOOST_CHECK_EQUAL( std::thread::id{}, f.previous_thread() );
+    f = std::move( f).resume();
+    BOOST_CHECK_EQUAL( std::this_thread::get_id(), f.previous_thread() );
+
+}
+
 #ifdef BOOST_WINDOWS
 void test_bug12215() {
         ctx::fiber{
@@ -480,6 +493,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_sscanf) );
     test->add( BOOST_TEST_CASE( & test_snprintf) );
     test->add( BOOST_TEST_CASE( & test_use_system_stack) );
+    test->add( BOOST_TEST_CASE( & test_hosting_thread) );
 #ifdef BOOST_WINDOWS
     test->add( BOOST_TEST_CASE( & test_bug12215) );
 #endif

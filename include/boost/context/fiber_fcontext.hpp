@@ -19,6 +19,7 @@
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <thread>
 #include <tuple>
 #include <utility>
 #include <variant>
@@ -60,11 +61,12 @@ namespace detail {
 
 struct data {
     enum flag_t {
-        flag_side_stack = 0
+        flag_side_stack = 0,
+        flag_hosting_thread
     };
 
-    flag_t                  f;
-    std::variant< bool >    v;
+    flag_t                                  f;
+    std::variant< bool, std::thread::id >   v;
 };
 
 inline
@@ -112,6 +114,8 @@ rep:
             data * d = static_cast< data * >( t.data);
             if ( data::flag_side_stack == d->f) {
                 d->v = fiber_uses_side_stack();
+            } else if ( data::flag_hosting_thread == d->f) {
+                d->v = std::thread::id{};
             }
             goto rep;
         }
@@ -316,6 +320,7 @@ public:
 
     fiber resume() && {
         BOOST_ASSERT( nullptr != fctx_);
+        auto tid = std::this_thread::get_id();
 rep:
         auto t = detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
@@ -328,6 +333,8 @@ rep:
             detail::data * d = static_cast< detail::data * >( t.data);
             if ( detail::data::flag_side_stack == d->f) {
                 d->v = detail::fiber_uses_side_stack();
+            } else if ( detail::data::flag_hosting_thread == d->f) {
+                d->v = tid;
             }
             fctx_ = t.fctx;
             goto rep;
@@ -338,6 +345,7 @@ rep:
     template< typename Fn >
     fiber resume_with( Fn && fn) && {
         BOOST_ASSERT( nullptr != fctx_);
+        auto tid = std::this_thread::get_id();
         auto p = std::make_tuple( std::forward< Fn >( fn) );
         auto t = detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
@@ -351,6 +359,8 @@ rep:
             detail::data * d = static_cast< detail::data * >( t.data);
             if ( detail::data::flag_side_stack == d->f) {
                 d->v = detail::fiber_uses_side_stack();
+            } else if ( detail::data::flag_hosting_thread == d->f) {
+                d->v = tid;
             }
             fctx_ = t.fctx;
             t = detail::jump_fcontext(
@@ -376,6 +386,20 @@ rep:
                     & d);
         fctx_ = t.fctx;
         return ! std::get< bool >( d.v);
+    }
+
+    std::thread::id previous_thread() {
+        BOOST_ASSERT( * this);
+        detail::data d = { detail::data::flag_hosting_thread };
+        auto t = detail::jump_fcontext(
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+                    detail::exchange( fctx_, nullptr),
+#else
+                    std::exchange( fctx_, nullptr),
+#endif
+                    & d);
+        fctx_ = t.fctx;
+        return std::get< std::thread::id >( d.v);
     }
 
     explicit operator bool() const noexcept {
