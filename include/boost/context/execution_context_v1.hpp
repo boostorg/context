@@ -329,7 +329,7 @@ public:
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        ptr_{ create_context( std::forward< StackAlloc >( salloc),
+        ptr_{ create_context( std::forward< segmented_stack >( salloc),
                               std::forward< Fn >( fn),
                               std::forward< Args >( args) ...) } {
         ptr_->resume( ptr_.get() );
@@ -344,7 +344,7 @@ public:
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        ptr_{ create_context( palloc, std::forward< StackAlloc >( salloc),
+        ptr_{ create_context( palloc, std::forward< segmented_stack >( salloc),
                               std::forward< Fn >( fn),
                               std::forward< Args >( args) ...) } {
         ptr_->resume( ptr_.get() );
