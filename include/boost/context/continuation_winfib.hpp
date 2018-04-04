@@ -184,10 +184,10 @@ struct BOOST_CONTEXT_DECL activation_record_initializer {
     ~activation_record_initializer();
 };
 
-struct forced_unwind {
+struct forced_unwind__ {
     activation_record  *   from{ nullptr };
 
-    explicit forced_unwind( activation_record * from_) :
+    explicit forced_unwind__( activation_record * from_) :
         from{ from_ } {
     }
 };
@@ -228,7 +228,7 @@ public:
 #else
             c = std::invoke( fn_, std::move( c) );
 #endif  
-        } catch ( forced_unwind const& ex) {
+        } catch ( forced_unwind__ const& ex) {
             c = Ctx{ ex.from };
         }
         // this context has finished its task
@@ -345,7 +345,7 @@ public:
         detail::activation_record * ptr = std::exchange( ptr_, nullptr)->resume();
 #endif
         if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
-            throw detail::forced_unwind{ ptr};
+            throw detail::forced_unwind__{ ptr};
         } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             ptr = detail::activation_record::current()->ontop( ptr);
             detail::activation_record::current()->ontop = nullptr;
@@ -368,7 +368,7 @@ public:
             std::exchange( ptr_, nullptr)->resume_with< continuation >( std::forward< Fn >( fn) );
 #endif
         if ( BOOST_UNLIKELY( detail::activation_record::current()->force_unwind) ) {
-            throw detail::forced_unwind{ ptr};
+            throw detail::forced_unwind__{ ptr};
         } else if ( BOOST_UNLIKELY( nullptr != detail::activation_record::current()->ontop) ) {
             ptr = detail::activation_record::current()->ontop( ptr);
             detail::activation_record::current()->ontop = nullptr;
