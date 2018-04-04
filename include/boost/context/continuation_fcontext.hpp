@@ -138,7 +138,7 @@ public:
         Ctx c{ fctx };
         // invoke context-function
 #if defined(BOOST_NO_CXX17_STD_INVOKE)
-        c = invoke( fn_, std::move( c) );
+        c = boost::context::detail::invoke( fn_, std::move( c) );
 #else
         c = std::invoke( fn_, std::move( c) );
 #endif

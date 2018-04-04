@@ -136,7 +136,7 @@ public:
     fcontext_t run( fcontext_t fctx) {
         // invoke context-function
 #if defined(BOOST_NO_CXX17_STD_INVOKE)
-        Ctx c = invoke( fn_, Ctx{ fctx } );
+        Ctx c = boost::context::detail::invoke( fn_, Ctx{ fctx } );
 #else
         Ctx c = std::invoke( fn_, Ctx{ fctx } );
 #endif
