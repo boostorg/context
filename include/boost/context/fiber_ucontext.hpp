@@ -208,10 +208,10 @@ struct BOOST_CONTEXT_DECL fiber_activation_record_initializer {
     ~fiber_activation_record_initializer();
 };
 
-struct forced_unwind {
+struct forced_unwind_ {
     fiber_activation_record  *   from{ nullptr };
 
-    forced_unwind( fiber_activation_record * from_) noexcept :
+    forced_unwind_( fiber_activation_record * from_) noexcept :
         from{ from_ } {
     }
 };
@@ -253,11 +253,11 @@ public:
         try {
             // invoke context-function
 #if defined(BOOST_NO_CXX17_STD_INVOKE)
-            c = invoke( fn_, std::move( c) );
+            c = boost::context::detail::invoke( fn_, std::move( c) );
 #else
             c = std::invoke( fn_, std::move( c) );
 #endif  
-        } catch ( forced_unwind const& ex) {
+        } catch ( forced_unwind_ const& ex) {
             c = Ctx{ ex.from };
         }
         // this context has finished its task
@@ -427,7 +427,7 @@ public:
         detail::fiber_activation_record * ptr = std::exchange( ptr_, nullptr)->resume();
 #endif
         if ( BOOST_UNLIKELY( detail::fiber_activation_record::current()->force_unwind) ) {
-            throw detail::forced_unwind{ ptr};
+            throw detail::forced_unwind_{ ptr};
         } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_activation_record::current()->ontop) ) {
             ptr = detail::fiber_activation_record::current()->ontop( ptr);
             detail::fiber_activation_record::current()->ontop = nullptr;
@@ -446,7 +446,7 @@ public:
             std::exchange( ptr_, nullptr)->resume_with< fiber >( std::forward< Fn >( fn) );
 #endif
         if ( BOOST_UNLIKELY( detail::fiber_activation_record::current()->force_unwind) ) {
-            throw detail::forced_unwind{ ptr};
+            throw detail::forced_unwind_{ ptr};
         } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_activation_record::current()->ontop) ) {
             ptr = detail::fiber_activation_record::current()->ontop( ptr);
             detail::fiber_activation_record::current()->ontop = nullptr;
@@ -462,28 +462,8 @@ public:
         return nullptr == ptr_ || ptr_->terminated;
     }
 
-    bool operator==( fiber const& other) const noexcept {
-        return ptr_ == other.ptr_;
-    }
-
-    bool operator!=( fiber const& other) const noexcept {
-        return ptr_ != other.ptr_;
-    }
-
     bool operator<( fiber const& other) const noexcept {
         return ptr_ < other.ptr_;
-    }
-
-    bool operator>( fiber const& other) const noexcept {
-        return other.ptr_ < ptr_;
-    }
-
-    bool operator<=( fiber const& other) const noexcept {
-        return ! ( * this > other);
-    }
-
-    bool operator>=( fiber const& other) const noexcept {
-        return ! ( * this < other);
     }
 
     template< typename charT, class traitsT >
@@ -505,6 +485,8 @@ inline
 void swap( fiber & l, fiber & r) noexcept {
     l.swap( r);
 }
+
+typedef fiber fiber_context;
 
 }}
 

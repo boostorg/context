@@ -138,7 +138,7 @@ public:
         Ctx c{ fctx };
         // invoke context-function
 #if defined(BOOST_NO_CXX17_STD_INVOKE)
-        c = invoke( fn_, std::move( c) );
+        c = boost::context::detail::invoke( fn_, std::move( c) );
 #else
         c = std::invoke( fn_, std::move( c) );
 #endif
@@ -294,28 +294,8 @@ public:
         return nullptr == fctx_;
     }
 
-    bool operator==( continuation const& other) const noexcept {
-        return fctx_ == other.fctx_;
-    }
-
-    bool operator!=( continuation const& other) const noexcept {
-        return fctx_ != other.fctx_;
-    }
-
     bool operator<( continuation const& other) const noexcept {
         return fctx_ < other.fctx_;
-    }
-
-    bool operator>( continuation const& other) const noexcept {
-        return other.fctx_ < fctx_;
-    }
-
-    bool operator<=( continuation const& other) const noexcept {
-        return ! ( * this > other);
-    }
-
-    bool operator>=( continuation const& other) const noexcept {
-        return ! ( * this < other);
     }
 
     template< typename charT, class traitsT >

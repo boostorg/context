@@ -329,7 +329,7 @@ public:
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        ptr_{ create_context( std::forward< StackAlloc >( salloc),
+        ptr_{ create_context( salloc,
                               std::forward< Fn >( fn),
                               std::forward< Args >( args) ...) } {
         ptr_->resume( ptr_.get() );
@@ -344,7 +344,7 @@ public:
         // non-type template parameter pack via std::index_sequence_for<>
         // preserves the number of arguments
         // used to extract the function arguments from std::tuple<>
-        ptr_{ create_context( palloc, std::forward< StackAlloc >( salloc),
+        ptr_{ create_context( palloc, salloc,
                               std::forward< Fn >( fn),
                               std::forward< Args >( args) ...) } {
         ptr_->resume( ptr_.get() );
@@ -440,28 +440,8 @@ public:
         return nullptr == ptr_.get();
     }
 
-    bool operator==( execution_context const& other) const noexcept {
-        return ptr_ == other.ptr_;
-    }
-
-    bool operator!=( execution_context const& other) const noexcept {
-        return ptr_ != other.ptr_;
-    }
-
     bool operator<( execution_context const& other) const noexcept {
         return ptr_ < other.ptr_;
-    }
-
-    bool operator>( execution_context const& other) const noexcept {
-        return other.ptr_ < ptr_;
-    }
-
-    bool operator<=( execution_context const& other) const noexcept {
-        return ! ( * this > other);
-    }
-
-    bool operator>=( execution_context const& other) const noexcept {
-        return ! ( * this < other);
     }
 
     template< typename charT, class traitsT >
