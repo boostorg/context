@@ -9,7 +9,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <boost/context/all.hpp>
+#include <boost/context/detail/fcontext.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/program_options.hpp>
 
