@@ -30,14 +30,6 @@ thousand CPU cycles on x86 CPUs. By contrast, transferring control vias
 __cc__/__con__ requires only few CPU cycles because it does not involve system
 calls as it is done within a single thread.
 
-In order to use the classes and functions described here, you can either include
-the specific headers specified by the descriptions of each class or function, or
-include the master library header:
-
-    #include <boost/context/all.hpp>
-
-which includes all the other headers in turn.
-
 All functions and classes are contained in the namespace __context_ns__.
 
 [note This library requires C++11!]
