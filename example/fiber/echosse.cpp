@@ -28,8 +28,8 @@ void echoSSE( int i) {
 
 int main( int argc, char * argv[]) {
     int i = 0;
-    ctx::fiber f{
-        [&i](ctx::fiber && f) {
+    ctx::fiber_handle f{
+        [&i](ctx::fiber_handle && f) {
             for (;;) {
                 std::cout << i;
                 echoSSE( i);

@@ -13,8 +13,8 @@
 namespace ctx = boost::context;
 
 int main() {
-    ctx::fiber f1, f2, f3;
-    f3 = ctx::fiber{[&](ctx::fiber && f)->ctx::fiber{
+    ctx::fiber_handle f1, f2, f3;
+    f3 = ctx::fiber_handle{[&](ctx::fiber_handle && f)->ctx::fiber_handle{
         f2 = std::move( f);
         for (;;) {
             std::cout << "f3\n";
@@ -22,7 +22,7 @@ int main() {
         }
         return {};
     }};
-    f2 = ctx::fiber{[&](ctx::fiber && f)->ctx::fiber{
+    f2 = ctx::fiber_handle{[&](ctx::fiber_handle && f)->ctx::fiber_handle{
         f1 = std::move( f);
         for (;;) {
             std::cout << "f2\n";
@@ -30,7 +30,7 @@ int main() {
         }
         return {};
     }};
-    f1 = ctx::fiber{[&](ctx::fiber && /*main*/)->ctx::fiber{
+    f1 = ctx::fiber_handle{[&](ctx::fiber_handle && /*main*/)->ctx::fiber_handle{
         for (;;) {
             std::cout << "f1\n";
             f3 = std::move( f2).resume();

@@ -12,7 +12,7 @@ import indirect ;
 import modules ;
 import os ;
 import toolset ;
- import ../../config/checks/config : requires ;
+import ../../config/checks/config : requires ;
 
 feature.feature segmented-stacks : on : optional propagated composite ;
 feature.compose <segmented-stacks>on : <define>BOOST_USE_SEGMENTED_STACKS ;

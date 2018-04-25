@@ -45,13 +45,13 @@ void foo() {
 	bar();
 }
 
-ctx::fiber f1( ctx::fiber && c) {
+ctx::fiber_handle f1( ctx::fiber_handle && c) {
     foo();
     return std::move( c);
 }
 
 int main() {
-    ctx::fiber{ f1 }.resume();
+    ctx::fiber_handle{ f1 }.resume();
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;
 }

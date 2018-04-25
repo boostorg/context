@@ -11,7 +11,7 @@
 
 namespace ctx = boost::context;
 
-ctx::fiber bar( ctx::fiber && f) {
+ctx::fiber_handle bar( ctx::fiber_handle && f) {
     do {
         std::cout << "bar\n";
         f = std::move( f).resume();
@@ -20,7 +20,7 @@ ctx::fiber bar( ctx::fiber && f) {
 }
 
 int main() {
-    ctx::fiber f{ bar };
+    ctx::fiber_handle f{ bar };
     do {
         std::cout << "foo\n";
         f = std::move( f).resume();

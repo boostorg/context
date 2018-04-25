@@ -98,7 +98,7 @@ int main() {
         char c;
         bool done = false;
         // execute parser in new execution context
-        ctx::fiber source{[&is,&c,&done](ctx::fiber && sink){
+        ctx::fiber_handle source{[&is,&c,&done](ctx::fiber_handle && sink){
             // create parser with callback function
             Parser p( is,
                       [&sink,&c](char c_){

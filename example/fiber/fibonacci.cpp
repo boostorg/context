@@ -12,23 +12,37 @@
 
 namespace ctx = boost::context;
 
-int main() {
+class F {
+private:
     int a;
-    ctx::fiber f{
-        [&a](ctx::fiber && f){
-            a=0;
-            int b=1;
-            for(;;){
-                f = std::move( f).resume();
-                int next=a+b;
-                a=b;
-                b=next;
-            }
-            return std::move( f);
-        }};
-    for ( int j = 0; j < 10; ++j) {
+    ctx::fiber_handle f;
+    
+public:
+    F() :
+        a{ 0 },
+        f{ [this](ctx::fiber_handle && f){
+                a=0;
+                int b=1;
+                for(;;){
+                    f = std::move( f).resume();
+                    int next=a+b;
+                    a=b;
+                    b=next;
+                }
+                return std::move( f);
+            }} {
+    }
+
+    int call() {
         f = std::move( f).resume();
-        std::cout << a << " ";
+        return a;
+    }
+};
+
+int main() {
+    F f;
+    for ( int j = 0; j < 10; ++j) {
+        std::cout << f.call() << " ";
     }
     std::cout << std::endl;
     std::cout << "main: done" << std::endl;

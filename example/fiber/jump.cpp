@@ -13,8 +13,8 @@ namespace ctx = boost::context;
 
 int main() {
     int data = 1;
-    ctx::fiber f{
-            [&data](ctx::fiber && f){
+    ctx::fiber_handle f{
+            [&data](ctx::fiber_handle && f){
                 std::cout << "entered first time: " << data << std::endl;
                 data += 2;
                 f = std::move( f).resume();

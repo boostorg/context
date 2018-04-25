@@ -40,8 +40,7 @@ public:
 
 int main() {
     moveable data{ 1 };
-    ctx::fiber f{ std::allocator_arg, ctx::fixedsize_stack{},
-                     [&data](ctx::fiber && f){
+    ctx::fiber_handle f{ [&data](ctx::fiber_handle && f){
                         std::cout << "entered first time: " << data.value << std::endl;
                         data = std::move( moveable{ 3 });
                         f = std::move( f).resume();

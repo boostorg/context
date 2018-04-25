@@ -11,7 +11,7 @@
 
 namespace ctx = boost::context;
 
-ctx::fiber f1( ctx::fiber && f) {
+ctx::fiber_handle f1( ctx::fiber_handle && f) {
     std::cout << "f1: entered first time" << std::endl;
     f = std::move( f).resume();
     std::cout << "f1: entered second time" << std::endl;
@@ -19,7 +19,7 @@ ctx::fiber f1( ctx::fiber && f) {
 }
 
 int main() {
-    ctx::fiber f{ f1 };
+    ctx::fiber_handle f{ f1 };
     f = std::move( f).resume();
     std::cout << "f1: returned first time" << std::endl;
     f = std::move( f).resume();

@@ -15,15 +15,17 @@
 namespace ctx = boost::context;
 
 int main() {
-    std::cout << "main-thread: " << std::this_thread::get_id() << std::endl;
-    ctx::fiber f{
-            [](ctx::fiber && m){
+    ctx::fiber_handle f{
+            [](ctx::fiber_handle && m){
+                std::cout << "m in main thread: " << std::boolalpha << m.can_resume() << std::endl;
+                ctx::fiber_handle * pm = & m;
+                std::thread{ [pm]{ std::cout << "m in other thread: " << std::boolalpha << pm->can_resume() << std::endl; }}.join();
                 m = std::move( m).resume();
                 return std::move( m);
             }};
-    std::cout << "hosting thread ID before resumption: " << f.previous_thread() << std::endl;
+    std::cout << "f: before resumption: " << std::boolalpha << f.can_resume() << std::endl;
     f = std::move( f).resume();
-    std::cout << "hosting thread ID after resumption: " << f.previous_thread() << std::endl;
+    std::cout << "f: after resumption: " << std::boolalpha << f.can_resume() << std::endl;
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;
 }

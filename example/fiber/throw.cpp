@@ -15,15 +15,15 @@
 namespace ctx = boost::context;
 
 struct my_exception : public std::runtime_error {
-    ctx::fiber    f;
-    my_exception( ctx::fiber && f_, std::string const& what) :
+    ctx::fiber_handle    f;
+    my_exception( ctx::fiber_handle && f_, std::string const& what) :
         std::runtime_error{ what },
         f{ std::move( f_) } {
     }
 };
 
 int main() {
-    ctx::fiber f{[](ctx::fiber && f) ->ctx::fiber {
+    ctx::fiber_handle f{[](ctx::fiber_handle && f) ->ctx::fiber_handle {
         std::cout << "entered" << std::endl;
         try {
             f = std::move( f).resume();
@@ -34,7 +34,7 @@ int main() {
         return {};
     }};
     f = std::move( f).resume();
-    f = std::move( f).resume_with([](ctx::fiber && f) ->ctx::fiber {
+    f = std::move( f).resume_with([](ctx::fiber_handle && f) ->ctx::fiber_handle {
         throw my_exception(std::move( f), "abc");
         return {};
     });
