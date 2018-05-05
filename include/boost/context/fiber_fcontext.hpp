@@ -374,7 +374,7 @@ rep:
         return { t.fctx };
     }
 
-    bool uses_system_stack() {
+    bool uses_system_stack() noexcept {
         BOOST_ASSERT( * this);
         detail::data d = { detail::data::flag_side_stack };
         auto t = detail::jump_fcontext(
@@ -388,7 +388,7 @@ rep:
         return ! std::get< bool >( d.v);
     }
 
-    std::thread::id previous_thread() {
+    std::thread::id previous_thread() noexcept {
         BOOST_ASSERT( * this);
         detail::data d = { detail::data::flag_hosting_thread };
         auto t = detail::jump_fcontext(
