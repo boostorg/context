@@ -85,8 +85,7 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
 #else
         fiber = ::ConvertThreadToFiber( nullptr);
         if ( BOOST_UNLIKELY( nullptr == fiber) ) {
-            DWORD err = ::GetLastError();
-            BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
+            BOOST_ASSERT( ERROR_ALREADY_FIBER == ::GetLastError());
             fiber = ::GetCurrentFiber(); 
             BOOST_ASSERT( nullptr != fiber);
             BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != fiber);
