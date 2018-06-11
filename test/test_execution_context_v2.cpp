@@ -151,10 +151,13 @@ ctx::execution_context< void > fn4( ctx::execution_context< void > && ctx) {
 }
 
 ctx::execution_context< void > fn6( ctx::execution_context< void > && ctx) {
+    Y y;
     try {
         value1 = 3;
+        value3 = 4.;
         ctx = ctx();
         value1 = 7;
+        value2 = 8.;
         ctx = ctx();
     } catch ( my_exception & e) {
         value2 = e.what();
@@ -221,6 +224,34 @@ ctx::execution_context< int > fn16( ctx::execution_context< int > && ctx, int i)
 ctx::execution_context< int, int > fn17( ctx::execution_context< int, int > && ctx, int i, int j) {
     for (;;) {
         std::tie( ctx, i, j) = ctx( i, j);
+    }
+    return std::move( ctx);
+}
+
+ctx::execution_context< void > fn18( ctx::execution_context< void > && ctx) {
+    Y y;
+    value3 = 2.;
+    ctx = ctx();
+    try {
+        value3 = 3.;
+        ctx = ctx();
+    } catch ( boost::context::detail::forced_unwind const&) {
+        value3 = 4.;
+        throw;
+    } catch (...) {
+        value3 = 5.;
+    }
+    value3 = 6.;
+    return std::move( ctx);
+}
+
+ctx::execution_context< void > fn19( ctx::execution_context< void > && ctx) {
+    Y y;
+    try {
+        value3 = 3.;
+        ctx = ctx();
+    } catch (...) {
+        value3 = 5.;
     }
     return std::move( ctx);
 }
@@ -423,7 +454,7 @@ void test_ontop_exception() {
     }
 }
 
-void test_termination() {
+void test_termination1() {
     {
         value1 = 0;
         ctx::execution_context< void > ctx( fn7);
@@ -457,6 +488,21 @@ void test_termination() {
         BOOST_CHECK( ! ctx);
         BOOST_CHECK_EQUAL( i, j);
     }
+}
+
+void test_termination2() {
+    {
+        value1 = 0;
+        value3 = 0.;
+        ctx::execution_context< void > ctx( fn6);
+        BOOST_CHECK_EQUAL( 0, value1);
+        BOOST_CHECK_EQUAL( 0., value3);
+        ctx = ctx();
+        BOOST_CHECK_EQUAL( 3, value1);
+        BOOST_CHECK_EQUAL( 4., value3);
+    }
+    BOOST_CHECK_EQUAL( 7, value1);
+    BOOST_CHECK_EQUAL( 4., value3);
 }
 
 void test_one_arg() {
@@ -553,6 +599,46 @@ void test_bug12215() {
 }
 #endif
 
+void test_goodcatch() {
+    value1 = 0;
+    value3 = 0.;
+    {
+        ctx::execution_context< void > ctx( fn18);
+        BOOST_CHECK_EQUAL( 0, value1);
+        BOOST_CHECK_EQUAL( 0., value3);
+        ctx = ctx();
+        BOOST_CHECK_EQUAL( 3, value1);
+        BOOST_CHECK_EQUAL( 2., value3);
+        ctx = ctx();
+        BOOST_CHECK_EQUAL( 3, value1);
+        BOOST_CHECK_EQUAL( 3., value3);
+    }
+    BOOST_CHECK_EQUAL( 7, value1);
+    BOOST_CHECK_EQUAL( 4., value3);
+}
+
+void test_badcatch() {
+#if 0
+    value1 = 0;
+    value3 = 0.;
+    {
+        ctx::execution_context< void > * ctx = new ctx::execution_context< void >( fn19);
+        BOOST_CHECK_EQUAL( 0, value1);
+        BOOST_CHECK_EQUAL( 0., value3);
+        (*ctx) = (*ctx)();
+        BOOST_CHECK_EQUAL( 3, value1);
+        BOOST_CHECK_EQUAL( 3., value3);
+        // the destruction of ctx here will cause a forced_unwind to be thrown that is not caught
+        // in fn19.  That will trigger the "not caught" assertion in ~forced_unwind.  Getting that 
+        // assertion to propogate bak here cleanly is non-trivial, and there seems to not be a good
+        // way to hook directly into the assertion when it happens on an alternate stack.
+        delete ctx;
+    }
+    BOOST_CHECK_EQUAL( 7, value1);
+    BOOST_CHECK_EQUAL( 4., value3);
+#endif
+}
+
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
@@ -566,13 +652,16 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_prealloc) );
     test->add( BOOST_TEST_CASE( & test_ontop) );
     test->add( BOOST_TEST_CASE( & test_ontop_exception) );
-    test->add( BOOST_TEST_CASE( & test_termination) );
+    test->add( BOOST_TEST_CASE( & test_termination1) );
+    test->add( BOOST_TEST_CASE( & test_termination2) );
     test->add( BOOST_TEST_CASE( & test_one_arg) );
     test->add( BOOST_TEST_CASE( & test_two_args) );
     test->add( BOOST_TEST_CASE( & test_variant) );
 #ifdef BOOST_WINDOWS
     test->add( BOOST_TEST_CASE( & test_bug12215) );
 #endif
+    test->add( BOOST_TEST_CASE( & test_goodcatch) );
+    test->add( BOOST_TEST_CASE( & test_badcatch) );
 
     return test;
 }
