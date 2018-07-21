@@ -353,7 +353,7 @@ void test_termination2() {
                 value3 = 4.;
                 c = c.resume();
                 value1 = 7;
-                value2 = 8.;
+                value3 = 8.;
                 c = c.resume();
                 return std::move( c);
             });
@@ -362,7 +362,7 @@ void test_termination2() {
         c = c.resume();
     }
     BOOST_CHECK_EQUAL( 7, value1);
-    BOOST_CHECK_EQUAL( 4., value3);
+    BOOST_CHECK_EQUAL( 8., value3);
 }
 
 void test_sscanf() {
