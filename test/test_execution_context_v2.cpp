@@ -157,7 +157,7 @@ ctx::execution_context< void > fn6( ctx::execution_context< void > && ctx) {
         value3 = 4.;
         ctx = ctx();
         value1 = 7;
-        value2 = 8.;
+        value3 = 8.;
         ctx = ctx();
     } catch ( my_exception & e) {
         value2 = e.what();
