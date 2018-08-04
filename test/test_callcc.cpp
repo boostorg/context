@@ -299,7 +299,7 @@ void test_ontop_exception() {
     BOOST_CHECK_EQUAL( std::string( what), value2);
 }
 
-void test_termination() {
+void test_termination1() {
     {
         value1 = 0;
         ctx::continuation c = ctx::callcc(
@@ -340,6 +340,29 @@ void test_termination() {
         BOOST_CHECK( ! c);
         BOOST_CHECK_EQUAL( i, value1);
     }
+}
+
+void test_termination2() {
+    {
+        value1 = 0;
+        value3 = 0.0;
+        ctx::continuation c = ctx::callcc(
+            [](ctx::continuation && c){
+                Y y;
+                value1 = 3;
+                value3 = 4.;
+                c = c.resume();
+                value1 = 7;
+                value3 = 8.;
+                c = c.resume();
+                return std::move( c);
+            });
+        BOOST_CHECK_EQUAL( 3, value1);
+        BOOST_CHECK_EQUAL( 4., value3);
+        c = c.resume();
+    }
+    BOOST_CHECK_EQUAL( 7, value1);
+    BOOST_CHECK_EQUAL( 8., value3);
 }
 
 void test_sscanf() {
@@ -402,6 +425,66 @@ void test_bug12215() {
 }
 #endif
 
+void test_goodcatch() {
+    value1 = 0;
+    value3 = 0.0;
+    {
+        ctx::continuation c = ctx::callcc(
+            [](ctx::continuation && c) {
+                Y y;
+                value3 = 2.;
+                c = c.resume();
+                try {
+                    value3 = 3.;
+                    c = c.resume();
+                } catch ( boost::context::detail::forced_unwind const&) {
+                    value3 = 4.;
+                    throw;
+                } catch (...) {
+                    value3 = 5.;
+                }
+                value3 = 6.;
+                return std::move( c);
+            });
+        BOOST_CHECK_EQUAL( 3, value1);
+        BOOST_CHECK_EQUAL( 2., value3);
+        c = c.resume();
+        BOOST_CHECK_EQUAL( 3, value1);
+        BOOST_CHECK_EQUAL( 3., value3);
+    }
+    BOOST_CHECK_EQUAL( 7, value1);
+    BOOST_CHECK_EQUAL( 4., value3);
+}
+
+void test_badcatch() {
+#if 0
+    value1 = 0;
+    value3 = 0.;
+    {
+        ctx::continuation c = ctx::callcc(
+            [](ctx::continuation && c) {
+                Y y;
+                try {
+                    value3 = 3.;
+                    c = c.resume();
+                } catch (...) {
+                    value3 = 5.;
+                }
+                return std::move( c);
+            });
+        BOOST_CHECK_EQUAL( 3, value1);
+        BOOST_CHECK_EQUAL( 3., value3);
+        // the destruction of ctx here will cause a forced_unwind to be thrown that is not caught
+        // in fn19.  That will trigger the "not caught" assertion in ~forced_unwind.  Getting that 
+        // assertion to propogate bak here cleanly is non-trivial, and there seems to not be a good
+        // way to hook directly into the assertion when it happens on an alternate stack.
+        std::move( c);
+    }
+    BOOST_CHECK_EQUAL( 7, value1);
+    BOOST_CHECK_EQUAL( 4., value3);
+#endif
+}
+
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
@@ -415,12 +498,15 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_prealloc) );
     test->add( BOOST_TEST_CASE( & test_ontop) );
     test->add( BOOST_TEST_CASE( & test_ontop_exception) );
-    test->add( BOOST_TEST_CASE( & test_termination) );
+    test->add( BOOST_TEST_CASE( & test_termination1) );
+    test->add( BOOST_TEST_CASE( & test_termination2) );
     test->add( BOOST_TEST_CASE( & test_sscanf) );
     test->add( BOOST_TEST_CASE( & test_snprintf) );
 #ifdef BOOST_WINDOWS
     test->add( BOOST_TEST_CASE( & test_bug12215) );
 #endif
+    test->add( BOOST_TEST_CASE( & test_goodcatch) );
+    test->add( BOOST_TEST_CASE( & test_badcatch) );
 
     return test;
 }

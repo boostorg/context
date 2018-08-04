@@ -85,8 +85,7 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
 #else
         fiber = ::ConvertThreadToFiber( nullptr);
         if ( BOOST_UNLIKELY( nullptr == fiber) ) {
-            DWORD err = ::GetLastError();
-            BOOST_ASSERT( ERROR_ALREADY_FIBER == err);
+            BOOST_ASSERT( ERROR_ALREADY_FIBER == ::GetLastError());
             fiber = ::GetCurrentFiber(); 
             BOOST_ASSERT( nullptr != fiber);
             BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != fiber);
@@ -185,11 +184,20 @@ struct BOOST_CONTEXT_DECL fiber_activation_record_initializer {
 };
 
 struct forced_unwind {
-    fiber_activation_record  *   from{ nullptr };
+    fiber_activation_record  *  from{ nullptr };
+#ifndef BOOST_ASSERT_IS_VOID
+    bool                        caught{ false };
+#endif
 
     explicit forced_unwind( fiber_activation_record * from_) :
         from{ from_ } {
     }
+
+#ifndef BOOST_ASSERT_IS_VOID
+    ~forced_unwind() {
+        BOOST_ASSERT( caught);
+    }
+#endif
 };
 
 template< typename Ctx, typename StackAlloc, typename Fn >
@@ -224,12 +232,15 @@ public:
         try {
             // invoke context-function
 #if defined(BOOST_NO_CXX17_STD_INVOKE)
-            c = invoke( fn_, std::move( c) );
+            c = boost::context::detail::invoke( fn_, std::move( c) );
 #else
             c = std::invoke( fn_, std::move( c) );
 #endif  
         } catch ( forced_unwind const& ex) {
             c = Ctx{ ex.from };
+#ifndef BOOST_ASSERT_IS_VOID
+            const_cast< forced_unwind & >( ex).caught = true;
+#endif
         }
         // this context has finished its task
         from = nullptr;
@@ -396,28 +407,8 @@ public:
         return nullptr == ptr_ || ptr_->terminated;
     }
 
-    bool operator==( fiber const& other) const noexcept {
-        return ptr_ == other.ptr_;
-    }
-
-    bool operator!=( fiber const& other) const noexcept {
-        return ptr_ != other.ptr_;
-    }
-
     bool operator<( fiber const& other) const noexcept {
         return ptr_ < other.ptr_;
-    }
-
-    bool operator>( fiber const& other) const noexcept {
-        return other.ptr_ < ptr_;
-    }
-
-    bool operator<=( fiber const& other) const noexcept {
-        return ! ( * this > other);
-    }
-
-    bool operator>=( fiber const& other) const noexcept {
-        return ! ( * this < other);
     }
 
     template< typename charT, class traitsT >
@@ -439,6 +430,8 @@ inline
 void swap( fiber & l, fiber & r) noexcept {
     l.swap( r);
 }
+
+typedef fiber fiber_context;
 
 }}
 

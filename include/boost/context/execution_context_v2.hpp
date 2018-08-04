@@ -238,28 +238,8 @@ public:
         return nullptr == fctx_;
     }
 
-    bool operator==( execution_context const& other) const noexcept {
-        return fctx_ == other.fctx_;
-    }
-
-    bool operator!=( execution_context const& other) const noexcept {
-        return fctx_ != other.fctx_;
-    }
-
     bool operator<( execution_context const& other) const noexcept {
         return fctx_ < other.fctx_;
-    }
-
-    bool operator>( execution_context const& other) const noexcept {
-        return other.fctx_ < fctx_;
-    }
-
-    bool operator<=( execution_context const& other) const noexcept {
-        return ! ( * this > other);
-    }
-
-    bool operator>=( execution_context const& other) const noexcept {
-        return ! ( * this < other);
     }
 
     template< typename charT, class traitsT >
@@ -385,8 +365,11 @@ void ecv2_context_etry( transfer_t t_) noexcept {
         t = jump_fcontext( t_.fctx, nullptr);
         // start executing
         t = rec->run( t);
-    } catch ( forced_unwind const& e) {
-        t = { e.fctx, nullptr };
+    } catch ( forced_unwind const& ex) {
+        t = { ex.fctx, nullptr };
+#ifndef BOOST_ASSERT_IS_VOID
+        const_cast< forced_unwind & >( ex).caught = true;
+#endif
     }
     BOOST_ASSERT( nullptr != t.fctx);
     // destroy context-stack of `this`context on next context
