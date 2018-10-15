@@ -318,7 +318,7 @@ alias asm_sources
      <address-model>32
      <architecture>power
      <binary-format>elf
-     <toolset>clang
+     <toolset>gcc
    ;
 
 alias asm_sources
