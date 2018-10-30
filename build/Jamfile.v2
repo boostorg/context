@@ -36,6 +36,8 @@ project boost/context
       <toolset>intel,<link>static:<define>BOOST_CONTEXT_EXPORT=
       <toolset>msvc,<link>shared:<define>BOOST_CONTEXT_EXPORT=EXPORT
       <toolset>msvc,<link>static:<define>BOOST_CONTEXT_EXPORT=
+      <toolset>clang-win,<link>shared:<define>BOOST_CONTEXT_EXPORT=EXPORT
+      <toolset>clang-win,<link>static:<define>BOOST_CONTEXT_EXPORT=
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
       <define>BOOST_CONTEXT_SOURCE
       <threading>multi
@@ -511,9 +513,9 @@ alias asm_sources
    ;
 
 alias asm_sources
-   : asm/make_i386_ms_pe_gas.asm
-     asm/jump_i386_ms_pe_gas.asm
-     asm/ontop_i386_ms_pe_gas.asm
+   : asm/make_i386_ms_pe_masm.asm
+     asm/jump_i386_ms_pe_masm.asm
+     asm/ontop_i386_ms_pe_masm.asm
      dummy.cpp
    : <abi>ms
      <address-model>32
@@ -641,9 +643,9 @@ alias asm_sources
    ;
 
 alias asm_sources
-   : asm/make_x86_64_ms_pe_gas.asm
-     asm/jump_x86_64_ms_pe_gas.asm
-     asm/ontop_x86_64_ms_pe_gas.asm
+   : asm/make_x86_64_ms_pe_masm.asm
+     asm/jump_x86_64_ms_pe_masm.asm
+     asm/ontop_x86_64_ms_pe_masm.asm
      dummy.cpp
    : <abi>ms
      <address-model>64
