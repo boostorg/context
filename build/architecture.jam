@@ -59,6 +59,10 @@ rule deduce-architecture ( properties * )
         {
             return <architecture>mips1 ;
         }
+        else if [ configure.builds /boost/architecture//mips3 : $(properties) : mips3 ]
+        {
+            return <architecture>mips3 ;
+        }
         else if [ configure.builds /boost/architecture//power : $(properties) : power ]
         {
             return <architecture>power ;
