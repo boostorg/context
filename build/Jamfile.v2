@@ -105,58 +105,6 @@ feature.set-default context-impl : fcontext ;
 feature.compose <context-impl>ucontext : <define>BOOST_USE_UCONTEXT ;
 feature.compose <context-impl>winfib : <define>BOOST_USE_WINFIB ;
 
-
-actions gas32
-{
-    cpp -x assembler-with-cpp "$(>)" | as --32 -o "$(<)"
-}
-
-actions gas64
-{
-    cpp -x assembler-with-cpp "$(>)" | as --64 -o "$(<)"
-}
-
-actions gasx32
-{
-    cpp -x assembler-with-cpp "$(>)" | as --x32 -o "$(<)"
-}
-
-actions gas
-{
-    cpp -x assembler-with-cpp "$(>)" | as -o "$(<)"
-}
-
-actions armasm
-{
-    armasm "$(>)" "$(<)"
-}
-
-actions masm
-{
-    ml /c /Fo"$(<)" "$(>)"
-}
-
-actions masm64
-{
-    ml64 /c /Fo"$(<)" "$(>)"
-}
-
-
-rule configure ( properties * )
-{
-    local result  ;
-
-#   if ( ! ( <toolset>gcc in $(properties)
-#           || <toolset>intel in $(properties)
-#           || <toolset>msvc in $(properties) ) )
-#   {
-#       result = <build>no ;
-#       ECHO "toolset not supported" ;
-#   }
-
-    return $(result) ;
-}
-
 # ARM
 # ARM/AAPCS/ELF
 alias asm_sources
