@@ -66,6 +66,7 @@
  *                                                     *
  *******************************************************/
 
+.file "jump_ppc64_sysv_elf_gas.S"
 .globl jump_fcontext
 #if _CALL_ELF == 2
 	.text

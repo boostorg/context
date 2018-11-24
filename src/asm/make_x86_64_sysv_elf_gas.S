@@ -24,6 +24,7 @@
  *                                                                                      *
  ****************************************************************************************/
 
+.file "make_x86_64_sysv_elf_gas.S"
 .text
 .globl make_fcontext
 .type make_fcontext,@function

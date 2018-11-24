@@ -38,6 +38,7 @@
  *                                                     *
  * *****************************************************/
 
+.file "make_mips32_o32_elf_gas.S"
 .text
 .globl make_fcontext
 .align 2
