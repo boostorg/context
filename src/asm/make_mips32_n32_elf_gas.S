@@ -19,21 +19,35 @@
  *  -------------------------------------------------  *
  *  |  32 |  36 |  40 |  44 |  48 |  52 |  56 |  60 |  *
  *  -------------------------------------------------  *
- *  |    F28    |    F30    |  S0 |  S1 |  S2 |  S3 |  *
+ *  |    F28    |    F30    |     S0    |     S1    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  16 |  17 |  18 |  19 |  20 |  21 |  22 |  23 |  *
  *  -------------------------------------------------  *
  *  |  64 |  68 |  72 |  76 |  80 |  84 |  88 |  92 |  *
  *  -------------------------------------------------  *
- *  |  S4 |  S5 |  S6 |  S7 |  FP |hiddn|  RA |  PC |  *
+ *  |     S2    |     S3    |     S4    |     S5    |  *
  *  -------------------------------------------------  *
  *  -------------------------------------------------  *
  *  |  24 |  25 |  26 |  27 |  28 |  29 |  30 |  31 |  *
  *  -------------------------------------------------  *
  *  |  96 | 100 | 104 | 108 | 112 | 116 | 120 | 124 |  *
  *  -------------------------------------------------  *
- *  |       ABI ARGS        |  GP | FCTX| DATA|     |  *
+ *  |     S6    |     S7    |     FP    |     GP    |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  32 |  33 |  34 |  35 |  36 |  37 |  38 |  39 |  *
+ *  -------------------------------------------------  *
+ *  | 128 | 132 | 136 | 140 | 144 | 148 | 152 | 156 |  *
+ *  -------------------------------------------------  *
+ *  |   hiddn   |     RA    |     PC    |    FCTX   |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  40 |  41 |  42 |  43 |  44 |  45 |  46 |  47 |  *
+ *  -------------------------------------------------  *
+ *  | 160 | 164 | 168 | 172 | 176 | 180 | 184 | 188 |  *
+ *  -------------------------------------------------  *
+ *  |    DATA   |                                   |  *
  *  -------------------------------------------------  *
  *                                                     *
  * *****************************************************/
@@ -54,34 +68,30 @@ make_fcontext:
     and $v0, $v1, $a0
 
     # reserve space for context-data on context-stack
-    #  includes an extra 32 bytes for:
-    #  - 16-byte incoming argument area required by mips ABI used when
-    #    jump_context calls the initial function
-    #  - 4 bytes to save our GP register used in finish
-    #  - 8 bytes to as space for transfer_t returned to finish
-    #  - 4 bytes for alignment
-    addiu $v0, $v0, -128
+    #  includes an extra 16 bytes for:
+    #  - 16 bytes to as space for transfer_t returned to finish
+    addiu $v0, $v0, -168
 
     # third arg of make_fcontext() == address of context-function
-    sw  $a2, 92($v0)
+    s.d  $a2, 152($v0)
     # save global pointer in context-data
-    sw  $gp, 112($v0)
+    s.d  $gp, 120($v0)
 
     # compute address of returned transfer_t
-    addiu $t0, $v0, 116
-    sw  $t0, 84($v0)
+    addiu $t0, $v0, 152
+    s.d  $t0, 128($v0)
 
     # compute abs address of label finish
     la  $t9, finish
     # save address of finish as return-address for context-function
     # will be entered after context-function returns
-    sw  $t9, 88($v0)
+    s.d  $t9, 136($v0)
 
     jr  $ra # return pointer to context-data
 
 finish:
     # reload our gp register (needed for la)
-    lw $gp, 16($sp)
+    l.d $gp, -32($sp)
 
     # call _exit(0)
     #  the previous function should have left the 16 bytes incoming argument
