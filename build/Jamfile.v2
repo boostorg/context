@@ -247,7 +247,6 @@ alias asm_sources
      <toolset>gcc
    ;
 
-<<<<<<< HEAD
 # MIPS
 # MIPS/N32/ELF
 alias asm_sources
@@ -257,7 +256,21 @@ alias asm_sources
    : <abi>n32
      <address-model>32
      <architecture>mips3
-=======
+     <binary-format>elf
+     <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_mips32_n32_elf_gas.S
+     asm/jump_mips32_n32_elf_gas.S
+     asm/ontop_mips32_n32_elf_gas.S
+   : <abi>n32
+     <address-model>32
+     <architecture>mips3
+     <binary-format>elf
+     <toolset>gcc
+   ;
+
 # MIPS64/N64/ELF
 alias asm_sources
    : asm/make_mips64_n64_elf_gas.S
@@ -266,27 +279,17 @@ alias asm_sources
    : <abi>n64
      <address-model>64
      <architecture>mips1
->>>>>>> 7601e2a975647c1081dcd6144711910ddbdb54cc
      <binary-format>elf
      <toolset>clang
    ;
 
 alias asm_sources
-<<<<<<< HEAD
-   : asm/make_mips32_n32_elf_gas.S
-     asm/jump_mips32_n32_elf_gas.S
-     asm/ontop_mips32_n32_elf_gas.S
-   : <abi>n32
-     <address-model>32
-     <architecture>mips3
-=======
    : asm/make_mips64_n64_elf_gas.S
      asm/jump_mips64_n64_elf_gas.S
      asm/ontop_mips64_n64_elf_gas.S
    : <abi>n64
      <address-model>64
      <architecture>mips1
->>>>>>> 7601e2a975647c1081dcd6144711910ddbdb54cc
      <binary-format>elf
      <toolset>gcc
    ;
