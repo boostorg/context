@@ -105,58 +105,6 @@ feature.set-default context-impl : fcontext ;
 feature.compose <context-impl>ucontext : <define>BOOST_USE_UCONTEXT ;
 feature.compose <context-impl>winfib : <define>BOOST_USE_WINFIB ;
 
-
-actions gas32
-{
-    cpp -x assembler-with-cpp "$(>)" | as --32 -o "$(<)"
-}
-
-actions gas64
-{
-    cpp -x assembler-with-cpp "$(>)" | as --64 -o "$(<)"
-}
-
-actions gasx32
-{
-    cpp -x assembler-with-cpp "$(>)" | as --x32 -o "$(<)"
-}
-
-actions gas
-{
-    cpp -x assembler-with-cpp "$(>)" | as -o "$(<)"
-}
-
-actions armasm
-{
-    armasm "$(>)" "$(<)"
-}
-
-actions masm
-{
-    ml /c /Fo"$(<)" "$(>)"
-}
-
-actions masm64
-{
-    ml64 /c /Fo"$(<)" "$(>)"
-}
-
-
-rule configure ( properties * )
-{
-    local result  ;
-
-#   if ( ! ( <toolset>gcc in $(properties)
-#           || <toolset>intel in $(properties)
-#           || <toolset>msvc in $(properties) ) )
-#   {
-#       result = <build>no ;
-#       ECHO "toolset not supported" ;
-#   }
-
-    return $(result) ;
-}
-
 # ARM
 # ARM/AAPCS/ELF
 alias asm_sources
@@ -276,7 +224,7 @@ alias asm_sources
    ;
 
 # MIPS
-# MIPS/O32/ELF
+# MIPS32/O32/ELF
 alias asm_sources
    : asm/make_mips32_o32_elf_gas.S
      asm/jump_mips32_o32_elf_gas.S
@@ -299,6 +247,7 @@ alias asm_sources
      <toolset>gcc
    ;
 
+<<<<<<< HEAD
 # MIPS
 # MIPS/N32/ELF
 alias asm_sources
@@ -308,17 +257,36 @@ alias asm_sources
    : <abi>n32
      <address-model>32
      <architecture>mips3
+=======
+# MIPS64/N64/ELF
+alias asm_sources
+   : asm/make_mips64_n64_elf_gas.S
+     asm/jump_mips64_n64_elf_gas.S
+     asm/ontop_mips64_n64_elf_gas.S
+   : <abi>n64
+     <address-model>64
+     <architecture>mips1
+>>>>>>> 7601e2a975647c1081dcd6144711910ddbdb54cc
      <binary-format>elf
      <toolset>clang
    ;
 
 alias asm_sources
+<<<<<<< HEAD
    : asm/make_mips32_n32_elf_gas.S
      asm/jump_mips32_n32_elf_gas.S
      asm/ontop_mips32_n32_elf_gas.S
    : <abi>n32
      <address-model>32
      <architecture>mips3
+=======
+   : asm/make_mips64_n64_elf_gas.S
+     asm/jump_mips64_n64_elf_gas.S
+     asm/ontop_mips64_n64_elf_gas.S
+   : <abi>n64
+     <address-model>64
+     <architecture>mips1
+>>>>>>> 7601e2a975647c1081dcd6144711910ddbdb54cc
      <binary-format>elf
      <toolset>gcc
    ;
