@@ -73,6 +73,7 @@
  *                                                     *
  *******************************************************/
 
+.file "jump_ppc32_sysv_elf_gas.S"
 .text
 .globl jump_fcontext
 .align 2

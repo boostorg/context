@@ -38,10 +38,12 @@
  *                                                     *
  *******************************************************/
 
+.file "make_arm_aapcs_elf_gas.S"
 .text
 .globl make_fcontext
 .align 2
 .type make_fcontext,%function
+.syntax unified
 make_fcontext:
     @ shift address in A1 to lower 16 byte boundary
     bic  a1, a1, #15
