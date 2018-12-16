@@ -92,12 +92,11 @@ void fiber_entry( transfer_t t) noexcept {
 
 template< typename Ctx, typename Fn >
 transfer_t fiber_ontop( transfer_t t) {
-    auto p = static_cast< std::tuple< Fn > * >( t.data);
-    BOOST_ASSERT( nullptr != p);
-    typename std::decay< Fn >::type fn = std::get< 0 >( * p);
+    BOOST_ASSERT( nullptr != t.data);
+    auto p = *static_cast< Fn * >( t.data);
     t.data = nullptr;
     // execute function, pass fiber via reference
-    Ctx c = fn( Ctx{ t.fctx } );
+    Ctx c = p( Ctx{ t.fctx } );
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
     return { exchange( c.fctx_, nullptr), nullptr };
 #else
@@ -292,7 +291,7 @@ public:
     template< typename Fn >
     fiber resume_with( Fn && fn) && {
         BOOST_ASSERT( nullptr != fctx_);
-        auto p = std::make_tuple( std::forward< Fn >( fn) );
+        auto p = std::forward< Fn >( fn);
         return { detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
@@ -300,7 +299,7 @@ public:
                     std::exchange( fctx_, nullptr),
 #endif
                     & p,
-                    detail::fiber_ontop< fiber, Fn >).fctx };
+                    detail::fiber_ontop< fiber, decltype(p) >).fctx };
     }
 
     explicit operator bool() const noexcept {
