@@ -30,6 +30,7 @@
 .type jump_fcontext,@function
 .align 16
 jump_fcontext:
+	.cfi_startproc
     leaq  -0x38(%rsp), %rsp /* prepare stack */
 
 #if !defined(BOOST_USE_TSX)
@@ -75,6 +76,7 @@ jump_fcontext:
 
     /* indirect jump to context */
     jmp  *%r8
+	.cfi_endproc
 .size jump_fcontext,.-jump_fcontext
 
 /* Mark that we don't need executable stack.  */

@@ -1,0 +1,36 @@
+diff -pur a/libstdc++-v3/libsupc++/eh_personality.cc b/libstdc++-v3/libsupc++/eh_personality.cc
+--- a/libstdc++-v3/libsupc++/eh_personality.cc	2018-01-03 11:03:58.000000000 +0100
++++ b/libstdc++-v3/libsupc++/eh_personality.cc	2019-04-08 13:59:37.637143970 +0200
+@@ -28,7 +28,6 @@
+ #include <cxxabi.h>
+ #include "unwind-cxx.h"
+ 
+-
+ using namespace __cxxabiv1;
+ 
+ #include "unwind-pe.h"
+@@ -590,14 +589,16 @@ PERSONALITY_FUNCTION (int version,
+ 
+ 	      // Null catch type is a catch-all handler; we can catch foreign
+ 	      // exceptions with this.  Otherwise we must match types.
+-	      if (! catch_type
+-		  || (throw_type
+-		      && get_adjusted_ptr (catch_type, throw_type,
+-					   &thrown_ptr)))
+-		{
+-		  saw_handler = true;
+-		  break;
+-		}
++	      if (-1 != xh->unwindHeader.exception_class)
++          {
++              if (! catch_type || (throw_type
++                  && get_adjusted_ptr (catch_type, throw_type,
++                           &thrown_ptr)))
++            {
++              saw_handler = true;
++              break;
++            }
++          }
+ 	    }
+ 	  else
+ 	    {

@@ -30,6 +30,7 @@
 .type ontop_fcontext,@function
 .align 16
 ontop_fcontext:
+	.cfi_startproc
     /* preserve ontop-function in R8 */
     movq  %rdx, %r8
 
@@ -78,6 +79,7 @@ ontop_fcontext:
 
     /* indirect jump to context */
     jmp  *%r8
+	.cfi_endproc
 .size ontop_fcontext,.-ontop_fcontext
 
 /* Mark that we don't need executable stack.  */

@@ -30,6 +30,7 @@
 .type make_fcontext,@function
 .align 16
 make_fcontext:
+	.cfi_startproc
     /* first arg of make_fcontext() == top of context-stack */
     movq  %rdi, %rax
 
@@ -76,6 +77,7 @@ finish:
     /* exit application */
     call  _exit@PLT
     hlt
+	.cfi_endproc
 .size make_fcontext,.-make_fcontext
 
 /* Mark that we don't need executable stack. */
