@@ -412,6 +412,19 @@ alias asm_sources
      <binary-format>mach-o
    ;
 
+# RISCV64
+# RISCV64/SYSV/ELF
+alias asm_sources
+   : asm/make_riscv64_sysv_elf_gas.S
+     asm/jump_riscv64_sysv_elf_gas.S
+     asm/ontop_riscv64_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>riscv
+     <binary-format>elf
+     <toolset>gcc
+   ;
+
 # X86
 # X86/SYSV/ELF
 alias asm_sources
