@@ -26,7 +26,7 @@
 #include <boost/utility.hpp>
 #include <boost/variant.hpp>
 
-#include <boost/context/fiber.hpp>
+#include <boost/context/fiber_context.hpp>
 #include <boost/context/detail/config.hpp>
 
 #ifdef BOOST_WINDOWS
@@ -47,22 +47,24 @@ std::string value2;
 double value3 = 0.;
 
 struct X {
-    ctx::fiber_handle foo( ctx::fiber_handle && f, int i) {
+    ctx::fiber_context foo( ctx::fiber_context && f, int i) {
         value1 = i;
         return std::move( f);
     }
 };
 
 struct Y {
-    Y() {
-        value1 = 3;
+    int &   value;
+    Y( int & v) :
+        value{ v } {
+        value = 3;
     }
 
     Y( Y const&) = delete;
     Y & operator=( Y const&) = delete;
 
     ~Y() {
-        value1 = 7;
+        value = 7;
     }
 };
 
@@ -106,8 +108,8 @@ public:
 };
 
 struct my_exception : public std::runtime_error {
-    ctx::fiber_handle   f;
-    my_exception( ctx::fiber_handle && f_, char const* what) :
+    ctx::fiber_context   f;
+    my_exception( ctx::fiber_context && f_, char const* what) :
         std::runtime_error( what),
         f{ std::move( f_) } {
     }
@@ -131,8 +133,8 @@ void test_move() {
     value1 = 0;
     int i = 1;
     BOOST_CHECK_EQUAL( 0, value1);
-    ctx::fiber_handle f1{
-        [&i](ctx::fiber_handle && f) {
+    ctx::fiber_context f1{
+        [&i](ctx::fiber_context && f) {
             value1 = i;
             f = std::move( f).resume();
             value1 = i;
@@ -141,7 +143,7 @@ void test_move() {
     f1 = std::move( f1).resume();
     BOOST_CHECK_EQUAL( 1, value1);
     BOOST_CHECK( f1);
-    ctx::fiber_handle f2;
+    ctx::fiber_context f2;
     BOOST_CHECK( ! f2);
     f2 = std::move( f1);
     BOOST_CHECK( ! f1);
@@ -156,7 +158,7 @@ void test_move() {
 void test_bind() {
     value1 = 0;
     X x;
-    ctx::fiber_handle f{ std::bind( & X::foo, x, std::placeholders::_1, 7) };
+    ctx::fiber_context f{ std::bind( & X::foo, x, std::placeholders::_1, 7) };
     f = std::move( f).resume();
     BOOST_CHECK_EQUAL( 7, value1);
 }
@@ -164,8 +166,8 @@ void test_bind() {
 void test_exception() {
     {
         const char * what = "hello world";
-        ctx::fiber_handle f{
-            [&what](ctx::fiber_handle && f) {
+        ctx::fiber_context f{
+            [&what](ctx::fiber_context && f) {
                 try {
                     throw std::runtime_error( what);
                 } catch ( std::runtime_error const& e) {
@@ -181,7 +183,7 @@ void test_exception() {
     {
         bool catched = false;
         std::thread([&catched](){
-                ctx::fiber_handle f{ [&catched](ctx::fiber_handle && f){
+                ctx::fiber_context f{ [&catched](ctx::fiber_context && f){
                             seh( catched);
                             return std::move( f);
                         }};
@@ -196,8 +198,8 @@ void test_exception() {
 void test_fp() {
     value3 = 0.;
     double d = 7.13;
-    ctx::fiber_handle f{
-        [&d]( ctx::fiber_handle && f) {
+    ctx::fiber_context f{
+        [&d]( ctx::fiber_context && f) {
             d += 3.45;
             value3 = d;
             return std::move( f);
@@ -210,10 +212,10 @@ void test_fp() {
 void test_stacked() {
     value1 = 0;
     value3 = 0.;
-    ctx::fiber_handle f{
-        [](ctx::fiber_handle && f) {
-            ctx::fiber_handle f1{
-                [](ctx::fiber_handle && f) {
+    ctx::fiber_context f{
+        [](ctx::fiber_context && f) {
+            ctx::fiber_context f1{
+                [](ctx::fiber_context && f) {
                     value1 = 3;
                     return std::move( f);
                 }};
@@ -230,7 +232,7 @@ void test_stacked() {
 void test_ontop() {
     {
         int i = 3;
-        ctx::fiber_handle f{ [&i](ctx::fiber_handle && f) {
+        ctx::fiber_context f{ [&i](ctx::fiber_context && f) {
                     for (;;) {
                         i *= 10;
                         f = std::move( f).resume();
@@ -239,33 +241,36 @@ void test_ontop() {
                 }};
         f = std::move( f).resume();
         f = std::move( f).resume_with(
-               [&i](ctx::fiber_handle && f){
+               [&i](ctx::fiber_context && f){
                    i -= 10;
                    return std::move( f);
                });
         BOOST_CHECK( f);
         BOOST_CHECK_EQUAL( i, 200);
+        f = std::move( f).resume_with( ctx::unwind_fiber);
+        BOOST_CHECK( ! f);
     }
     {
-        ctx::fiber_handle f1;
-        ctx::fiber_handle f{ [&f1](ctx::fiber_handle && f) {
+        ctx::fiber_context f1;
+        ctx::fiber_context f{ [&f1](ctx::fiber_context && f) {
                     f = std::move( f).resume();
                     BOOST_CHECK( ! f);
                     return std::move( f1);
                 }};
         f = std::move( f).resume();
         f = std::move( f).resume_with(
-               [&f1](ctx::fiber_handle && f){
+               [&f1](ctx::fiber_context && f){
                    f1 = std::move( f);
                    return std::move( f);
                });
+        BOOST_CHECK( ! f);
     }
 }
 
 void test_ontop_exception() {
     value1 = 0;
     value2 = "";
-    ctx::fiber_handle f{ [](ctx::fiber_handle && f){
+    ctx::fiber_context f{ [](ctx::fiber_context && f){
             for (;;) {
                 value1 = 3;
                 try {
@@ -281,7 +286,7 @@ void test_ontop_exception() {
     BOOST_CHECK_EQUAL( 3, value1);
     const char * what = "hello world";
     f = std::move( f).resume_with(
-       [what](ctx::fiber_handle && f){
+       [what](ctx::fiber_context && f){
             throw my_exception( std::move( f), what);
             return std::move( f);
        });
@@ -291,22 +296,24 @@ void test_ontop_exception() {
 
 void test_termination() {
     {
-        value1 = 0;
-        ctx::fiber_handle f{
-            [](ctx::fiber_handle && f){
-                Y y;
+        int value = 0;
+        ctx::fiber_context f{
+            [&value](ctx::fiber_context && f){
+                Y y{ value };
+                BOOST_CHECK_EQUAL( 3, value);
                 f = std::move( f).resume();
                 return std::move(f);
             }};
         f = std::move( f).resume();
-        BOOST_CHECK_EQUAL( 3, value1);
+        f = std::move( f).resume_with( ctx::unwind_fiber);
+        BOOST_CHECK( ! f);
+        BOOST_CHECK_EQUAL( 7, value);
     }
-    BOOST_CHECK_EQUAL( 7, value1);
     {
         value1 = 0;
         BOOST_CHECK_EQUAL( 0, value1);
-        ctx::fiber_handle f{
-            [](ctx::fiber_handle && f) {
+        ctx::fiber_context f{
+            [](ctx::fiber_context && f) {
                 value1 = 3;
                 return std::move( f);
             }};
@@ -318,8 +325,8 @@ void test_termination() {
         value1 = 0;
         BOOST_CHECK_EQUAL( 0, value1);
         int i = 3;
-        ctx::fiber_handle f{
-            [&i](ctx::fiber_handle && f){
+        ctx::fiber_context f{
+            [&i](ctx::fiber_context && f){
                 value1 = i;
                 f = std::move( f).resume();
                 value1 = i;
@@ -337,8 +344,8 @@ void test_termination() {
 }
 
 void test_sscanf() {
-    ctx::fiber_handle{
-		[]( ctx::fiber_handle && f) {
+    ctx::fiber_context{
+		[]( ctx::fiber_context && f) {
 			{
 				double n1 = 0;
 				double n2 = 0;
@@ -365,8 +372,8 @@ void test_sscanf() {
 }
 
 void test_snprintf() {
-    ctx::fiber_handle{
-		[]( ctx::fiber_handle && f) {
+    ctx::fiber_context{
+		[]( ctx::fiber_context && f) {
             {
                 const char *fmt = "sqrt(2) = %f";
                 char buf[19];
@@ -387,8 +394,8 @@ void test_snprintf() {
 
 void test_can_resume_from_any_thread() {
     {
-        ctx::fiber_handle f{
-            []( ctx::fiber_handle && m) {
+        ctx::fiber_context f{
+            []( ctx::fiber_context && m) {
                 BOOST_CHECK( m);
                 BOOST_CHECK( ! m.can_resume_from_any_thread() );
                 m = std::move( m).resume();
@@ -404,8 +411,8 @@ void test_can_resume_from_any_thread() {
         BOOST_CHECK( ! f);
     }
     {
-        ctx::fiber_handle f{
-            []( ctx::fiber_handle && m) {
+        ctx::fiber_context f{
+            []( ctx::fiber_context && m) {
                 BOOST_CHECK( m);
                 BOOST_CHECK( ! m.can_resume_from_any_thread() );
                 m = std::move( m).resume();
@@ -422,7 +429,7 @@ void test_can_resume_from_any_thread() {
         BOOST_CHECK( f);
         BOOST_CHECK( f.can_resume_from_any_thread() );
         f = std::move( f).resume_with(
-            []( ctx::fiber_handle && m) {
+            []( ctx::fiber_context && m) {
                 BOOST_CHECK( m);
                 BOOST_CHECK( ! m.can_resume_from_any_thread() );
                 return std::move( m);
@@ -435,10 +442,10 @@ void test_can_resume_from_any_thread() {
 }
 
 void test_hosting_thread() {
-    ctx::fiber_handle f{
-            [](ctx::fiber_handle && m){
+    ctx::fiber_context f{
+            [](ctx::fiber_context && m){
                 BOOST_CHECK( m.can_resume() );
-                ctx::fiber_handle * pm = & m;
+                ctx::fiber_context * pm = & m;
                 std::thread{ [pm]{ BOOST_CHECK( ! pm->can_resume() ); }}.join();
                 m = std::move( m).resume();
                 return std::move( m);
@@ -447,13 +454,14 @@ void test_hosting_thread() {
     BOOST_CHECK( f.can_resume() );
     f = std::move( f).resume();
     BOOST_CHECK( f.can_resume() );
-
+    f = std::move( f).resume_with( ctx::unwind_fiber);
+    BOOST_CHECK( ! f);
 }
 
 #ifdef BOOST_WINDOWS
 void test_bug12215() {
-        ctx::fiber_handle{
-            [](ctx::fiber_handle && f) {
+        ctx::fiber_context{
+            [](ctx::fiber_context && f) {
                 char buffer[MAX_PATH];
                 GetModuleFileName( nullptr, buffer, MAX_PATH);
                 return std::move( f);
