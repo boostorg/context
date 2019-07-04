@@ -115,4 +115,13 @@ static constexpr std::size_t cacheline_length{ 64 };
 static constexpr std::size_t prefetch_stride{ 4 * cacheline_length };
 #endif
 
+#if defined(__GLIBCPP__) || defined(__GLIBCXX__)
+// GNU libstdc++ 3
+#  define BOOST_CONTEXT_HAS_CXXABI_H
+#endif
+
+#if defined( BOOST_CONTEXT_HAS_CXXABI_H )
+# include <cxxabi.h>
+#endif
+
 #endif // BOOST_CONTEXT_DETAIL_CONFIG_H

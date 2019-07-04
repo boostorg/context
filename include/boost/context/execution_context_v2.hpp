@@ -390,6 +390,10 @@ transfer_t ecv2_context_ontop( transfer_t t) {
 #else
         std::get< 1 >( std::get< 1 >( * p) ) = helper< sizeof ... (Args) >::convert( std::apply( fn, std::move( args) ) );
 #endif
+#if defined( BOOST_CONTEXT_HAS_CXXABI_H )
+    } catch ( abi::__forced_unwind const&) {
+        throw;
+#endif
     } catch (...) {
         std::get< 0 >( std::get< 1 >( * p) ) = std::current_exception();
     }

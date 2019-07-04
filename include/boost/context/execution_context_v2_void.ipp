@@ -236,6 +236,10 @@ transfer_t ecv2_context_ontop_void( transfer_t t) {
     try {
         // execute function
         fn();
+#if defined( BOOST_CONTEXT_HAS_CXXABI_H )
+    } catch ( abi::__forced_unwind const&) {
+        throw;
+#endif
     } catch (...) {
         std::get< 1 >( * p) = std::current_exception();
         return { t.fctx, & std::get< 1 >( * p ) };

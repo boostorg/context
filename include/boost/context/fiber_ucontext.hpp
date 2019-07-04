@@ -299,6 +299,8 @@ static fiber_activation_record * create_fiber1( StackAlloc && salloc, Fn && fn) 
             reinterpret_cast< uintptr_t >( sctx.sp) - static_cast< uintptr_t >( sctx.size) );
     // create user-context
     if ( BOOST_UNLIKELY( 0 != ::getcontext( & record->uctx) ) ) {
+        record->~capture_t();
+        salloc.deallocate( sctx);
         throw std::system_error(
                 std::error_code( errno, std::system_category() ),
                 "getcontext() failed");
@@ -332,6 +334,8 @@ static fiber_activation_record * create_fiber2( preallocated palloc, StackAlloc 
             reinterpret_cast< uintptr_t >( palloc.sctx.sp) - static_cast< uintptr_t >( palloc.sctx.size) );
     // create user-context
     if ( BOOST_UNLIKELY( 0 != ::getcontext( & record->uctx) ) ) {
+        record->~capture_t();
+        salloc.deallocate( palloc.sctx);
         throw std::system_error(
                 std::error_code( errno, std::system_category() ),
                 "getcontext() failed");
