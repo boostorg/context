@@ -90,6 +90,26 @@ exe unwind_main
     : unwind_main.cpp
     ;
 
+exe unwind_return1
+    : unwind_return1.cpp
+    ;
+
+exe unwind_return2
+    : unwind_return2.cpp
+    ;
+
+exe unwind_throw1
+    : unwind_throw1.cpp
+    ;
+
+exe unwind_throw2
+    : unwind_throw2.cpp
+    ;
+
+exe unwind_default
+    : unwind_default.cpp
+    ;
+
 #exe backtrace
 #    : backtrace.cpp
 #    ;
