@@ -110,6 +110,10 @@ exe unwind_default
     : unwind_default.cpp
     ;
 
+exe filament
+    : filament.cpp
+    ;
+
 #exe backtrace
 #    : backtrace.cpp
 #    ;
