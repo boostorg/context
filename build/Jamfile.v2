@@ -434,7 +434,7 @@ alias asm_sources
    : <abi>sysv
      <address-model>64
      <architecture>s390x
-     <binary_format>elf
+     <binary-format>elf
      <toolset>gcc
    ;
 
