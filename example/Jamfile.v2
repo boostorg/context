@@ -114,6 +114,10 @@ exe filament
     : filament.cpp
     ;
 
+exe cancellable
+    : cancellable.cpp
+    ;
+
 #exe backtrace
 #    : backtrace.cpp
 #    ;
