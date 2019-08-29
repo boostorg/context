@@ -126,9 +126,6 @@
 
 [def __cc__ [link cc ['callcc()]]]
 [def __con__ [link cc ['continuation]]]
-[def __econtext__ ['execution_context]]
-[def __ecv1__ [link ecv1 ['execution_context] (v1)]]
-[def __ecv2__ [link ecv2 ['execution_context] (v2)]]
 [def __fib__ [link ff ['fiber]]]
 [def __fcontext__ ['fcontext_t]]
 [def __forced_unwind__ ['detail::forced_unwind]]
@@ -166,8 +163,6 @@
 [include requirements.qbk]
 [include fiber.qbk]
 [include callcc.qbk]
-[include execution_context_v2.qbk]
-[include execution_context_v1.qbk]
 [include stack.qbk]
 [include preallocated.qbk]
 [include performance.qbk]

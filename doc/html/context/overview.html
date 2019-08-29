@@ -56,16 +56,6 @@
       is done within a single thread.
     </p>
 <p>
-      In order to use the classes and functions described here, you can either include
-      the specific headers specified by the descriptions of each class or function,
-      or include the master library header:
-    </p>
-<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">context</span><span class="special">/</span><span class="identifier">all</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
-</pre>
-<p>
-      which includes all the other headers in turn.
-    </p>
-<p>
       All functions and classes are contained in the namespace <span class="emphasis"><em>boost::context</em></span>.
     </p>
 <div class="note"><table border="0" summary="Note">
@@ -83,10 +73,10 @@
 <th align="left">Important</th>
 </tr>
 <tr><td align="left" valign="top"><p>
-        Windows: turn off global program optimization (/GL) and change /EHsc (compiler
-        assumes that functions declared as extern "C" never throw a C++
-        exception) to /EHs (tells compiler assumes that functions declared as extern
-        "C" may throw an exception).
+        Windows using fcontext_t: turn off global program optimization (/GL) and
+        change /EHsc (compiler assumes that functions declared as extern "C"
+        never throw a C++ exception) to /EHs (tells compiler assumes that functions
+        declared as extern "C" may throw an exception).
       </p></td></tr>
 </table></div>
 </div>
