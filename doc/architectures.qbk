@@ -19,6 +19,7 @@ architectures:
     [[ppc32]         [SYSV|ELF,XCOFF] [-]        [SYSV|MACH-O] [-]]
     [[ppc64]         [SYSV|ELF,XCOFF] [-]        [SYSV|MACH-O] [-]]
     [[riscv64]       [SYSV|ELF]       [-]        [SYSV]        [-]]
+    [[s390x]         [SYSV|ELF]       [-]        [-]           [-]]
     [[sparc]         [-]              [-]        [-]           [-]]
     [[x86_64]        [SYSV,X32|ELF]   [MS|PE]    [SYSV|MACH-O] [-]]
 ]
