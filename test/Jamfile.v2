@@ -201,23 +201,7 @@ test-suite minimal :
                cxx11_template_aliases
                cxx11_thread_local
                cxx11_variadic_templates ]
-    : test_callcc_segmented ]
-
-[ run test_execution_context_v2.cpp :
-    : :
-    [ requires cxx11_auto_declarations
-               cxx11_constexpr
-               cxx11_defaulted_functions
-               cxx11_final
-               cxx11_hdr_thread
-               cxx11_hdr_tuple
-               cxx11_lambdas
-               cxx11_noexcept
-               cxx11_nullptr
-               cxx11_rvalue_references
-               cxx11_template_aliases
-               cxx11_thread_local
-               cxx11_variadic_templates ] ] ;
+    : test_callcc_segmented ] ;
 
 
 test-suite full :
