@@ -36,6 +36,14 @@
 .global make_fcontext
 .type 	 make_fcontext, @function
 
+#define GR_OFFSET	0
+#define LR_OFFSET	64
+#define SP_OFFSET	72
+#define FP_OFFSET	80
+#define PC_OFFSET	112
+#define L_CTX		120
+#define L_STACKFRAME	120
+
 make_fcontext:
 
 		# make_fcontext takes in 3 arguments
@@ -56,40 +64,39 @@ make_fcontext:
 		# address is zero or not. If not AND it with `-8`. 
 
 		# Here we AND the lower 16 bits of the memory address present in the 
-		# R2 with the bits 1111 1111 1111 1000 which when converted into
-		# decimal is 65528
-		nill    2,65528
+		# R2 with the bits 1111 1111 1111 1000 
+		nill    %r2,0xfff0
 
 		# Reserve space for context-data on context-stack.
 		# This is done by shifting the SP/address by 112 bytes.
-		lay 2,-120(2)
+		aghi	%r2,-L_CTX
 
 		# third arg of make_fcontext() == address of the context-function
 		# Store the address as a PC to jump in, whenever we call the 
 		# make_fcontext.
-		stg 4,112(2)
+		stg 	%r4,PC_OFFSET(%r2)
 
 		# Save the address of finish as return-address for context-function
 		# This will be entered after context-function return
 		# The address of finish will be saved in Link register, this register
 		# specifies where we need to jump after the function executes
 		# completely.
-		larl 1,finish
-		stg  1,64(2)
+		larl 	%r1,finish
+		stg  	%r1,LR_OFFSET(%r2)
 
 		# Return pointer to context data
 		# R14 acts as the link register
 		# R2 holds the address of the context stack. When we return from the
 		# make_fcontext, R2 is passed back.
-		br 14 
+		br 	%r14 
 
 	finish:
 
 		# In finish tasks, you load the exit code and exit the make_fcontext
 		# This is called when the context-function is entirely executed
 
-		lghi 2,0
-		brasl 14,_exit
+		lghi 	%r2,0
+		brasl 	%r14,_exit@PLT
 
 .size   make_fcontext,.-make_fcontext
 # Mark that we don't need executable stack.
