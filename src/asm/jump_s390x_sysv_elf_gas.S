@@ -36,47 +36,34 @@
 .global jump_fcontext
 .type   jump_fcontext, @function
 
+#define GR_OFFSET	0
+#define LR_OFFSET	64
+#define SP_OFFSET	72
+#define FP_OFFSET	80
+#define PC_OFFSET	112
+#define L_CTX		120
+#define L_STACKFRAME	120
+
 jump_fcontext:
     
     # Reserved the space for stack to store the data of current context
     # before we jump to the new context.
-    lay 15,-120(15)
+    aghi %r15,-L_STACKFRAME
 
     # save the registers to the stack
-    stg 6,  0(15)       # save R6     
-    stg 7,  8(15)       # save R7     
-    stg 8,  16(15)      # save R8
-    stg 9,  24(15)      # save R9
-    stg 10, 32(15)      # save R10
-    stg 11, 40(15)      # save R11
-    stg 12, 48(15)      # save R12
-    stg 13, 56(15)      # save R13
-    stg 14, 64(15)      # save R14
-    stg 15, 72(15)      # save R15
+    stmg %r6, %r15, GR_OFFSET(%r15)
 
     # save the floating point registers
-    # Load the FPR into R0 then save it to the stack
-    # Load F1 into R0
-    lgdr 0,1 
-    stg  0,80(15)       # save F1
-
-    # Load F3 into R0
-    lgdr 0,3
-    stg  0,88(15)       # save F3
-
-    # Load F5 into R0
-    lgdr 0,5
-    stg  0,96(15)       # save F5
-
-    # Load F7 into R0
-    lgdr 0,7
-    stg  0,104(15)      # save F7
+    std  %f0,FP_OFFSET(%r15)
+    std  %f3,FP_OFFSET+8(%r15)
+    std  %f5,FP_OFFSET+16(%r15)
+    std  %f7,FP_OFFSET+24(%r15)
 
     # Save LR as PC
-    stg 14,112(15)
+    stg  %r14,PC_OFFSET(%r15)
 
     # Store the SP pointing to the old context-data into R0
-    lgr 0,15
+    lgr	 %r0,%r15
 
     # Get the SP pointing to the new context-data
     # Note: Since the return type of the jump_fcontext is struct whose
@@ -88,46 +75,31 @@ jump_fcontext:
     # R2 --> Address of the return transfer_t struct
     # R3 --> Context we want to switch to
     # R4 --> Data
-    lgr 15,3
+    lgr	%r15,%r3
 
     # Load the registers with the data present in context-data of the
     # context we are going to switch to
-    lg 6,  0(15)       # restore R6     
-    lg 7,  8(15)       # restore R7     
-    lg 8,  16(15)      # restore R8
-    lg 9,  24(15)      # restore R9
-    lg 10, 32(15)      # restore R10
-    lg 11, 40(15)      # restore R11
-    lg 12, 48(15)      # restore R12
-    lg 13, 56(15)      # restore R13
-    lg 14, 64(15)      # restore R14
+    lmg	%r6, %r14, GR_OFFSET(%r15)
 
     # Restore Floating point registers
-    lg   1,80(15)
-    ldgr 1,1            # restore F1
-
-    lg   1,88(15)
-    ldgr 1,3            # restore F3
-
-    lg   1,96(15)
-    ldgr 1,5            # restore F5
-
-    lg   1,104(15)
-    ldgr 1,7            # restore F7
+    ld	 %f1,FP_OFFSET(%r15)
+    ld	 %f3,FP_OFFSET+8(%r15)
+    ld	 %f5,FP_OFFSET+16(%r15)
+    ld	 %f7,FP_OFFSET+24(%r15)
 
     # Load PC
-    lg  1,112(15)
+    lg   %r1,PC_OFFSET(%r15)
 
-    # Adjust the stack
-    lay 15, 120(15)
+    # Adjust the stack 
+    aghi %r15,120
 
     # R2 --> Address where the return transfer_t is stored
     # R0 --> FCTX
     # R4 --> DATA
 
     # Store the elements to return transfer_t
-    stg 15, 0(2)
-    stg 4, 8(2)
+    stg %r15, 0(%r2)
+    stg %r4, 8(%r2)
 
     # Note: The address in R2 points to the place where the return
     # transfer_t is stored. Since context_function take transfer_t
@@ -135,7 +107,7 @@ jump_fcontext:
     # first parameter value.
 
     #jump to context
-    br 1
+    br  %r1
 
 .size   jump_fcontext,.-jump_fcontext
 # Mark that we don't need executable stack.
