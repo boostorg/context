@@ -15,6 +15,7 @@ context/stack/segmented.html
 context/stack/stack_traits.html
 context/stack/stack_context.html
 context/stack/valgrind.html
+context/stack/sanitizers.html
 context/struct__preallocated_.html
 context/performance.html
 context/architectures.html
