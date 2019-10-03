@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2019/08/29 11:39:38 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2019/10/02 06:15:27 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -3166,6 +3166,17 @@
         role="identifier">on</phrase></code>.
       </para>
     </section>
+    <section id="context.stack.sanitizers">
+      <title><link linkend="context.stack.sanitizers">Support for sanitizers</link></title>
+      <para>
+        Sanitizers (GCC/Clang) are confused by the stack switches. The library is
+        required to be compiled with property (b2 command-line) <code><phrase role="identifier">context</phrase><phrase
+        role="special">-</phrase><phrase role="identifier">impl</phrase><phrase role="special">=</phrase><phrase
+        role="identifier">ucontext</phrase></code> and compilers santizer options.
+        Users must define <code><phrase role="identifier">BOOST_USE_ASAN</phrase></code>
+        before including any Boost.Context headers when linking against Boost binaries.
+      </para>
+    </section>
   </section>
   <section id="context.struct__preallocated_">
     <title><link linkend="context.struct__preallocated_">Struct <code><phrase role="identifier">preallocated</phrase></code></link></title>
@@ -3468,6 +3479,33 @@
             <entry>
               <para>
                 SYSV
+              </para>
+            </entry>
+            <entry>
+              <para>
+                -
+              </para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>
+                s390x
+              </para>
+            </entry>
+            <entry>
+              <para>
+                SYSV|ELF
+              </para>
+            </entry>
+            <entry>
+              <para>
+                -
+              </para>
+            </entry>
+            <entry>
+              <para>
+                -
               </para>
             </entry>
             <entry>
