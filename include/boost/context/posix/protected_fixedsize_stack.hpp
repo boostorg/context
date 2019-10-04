@@ -57,8 +57,9 @@ public:
         // add one page at bottom that will be used as guard-page
         const std::size_t size__ = ( pages + 1) * traits_type::page_size();
 
-        // conform to POSIX.4 (POSIX.1b-1993, _POSIX_C_SOURCE=199309L)
-#if defined(MAP_ANON)
+#if defined(BOOST_CONTEXT_USE_MAP_STACK)
+        void * vp = ::mmap( 0, size__, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_STACK, -1, 0);
+#elif defined(MAP_ANON)
         void * vp = ::mmap( 0, size__, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
 #else
         void * vp = ::mmap( 0, size__, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);

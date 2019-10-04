@@ -31,7 +31,9 @@ project boost/context/test
 rule native-impl ( properties * )
 {
     local result  ;
-    if ( <target-os>darwin in $(properties) || <target-os>android in $(properties) )
+    if ( <target-os>android in $(properties) ||
+         <target-os>darwin in $(properties) ||
+         <target-os>openbsd in $(properties) )
     {
         result = <build>no ;
     }
