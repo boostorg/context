@@ -276,6 +276,7 @@ alias asm_sources
    : asm/make_ppc32_sysv_elf_gas.S
      asm/jump_ppc32_sysv_elf_gas.S
      asm/ontop_ppc32_sysv_elf_gas.S
+     asm/tail_ppc32_sysv_elf_gas.cpp
    : <abi>sysv
      <address-model>32
      <architecture>power
@@ -287,6 +288,7 @@ alias asm_sources
    : asm/make_ppc32_sysv_elf_gas.S
      asm/jump_ppc32_sysv_elf_gas.S
      asm/ontop_ppc32_sysv_elf_gas.S
+     asm/tail_ppc32_sysv_elf_gas.cpp
    : <abi>sysv
      <address-model>32
      <architecture>power
