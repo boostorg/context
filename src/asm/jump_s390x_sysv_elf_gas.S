@@ -1,117 +1,156 @@
 /*******************************************************
-*                                                     *
-*  -------------------------------------------------  *
-*  |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  *
-*  -------------------------------------------------  *
-*  |     0     |     8     |    16     |     24    |  *
-*  -------------------------------------------------  *
-*  |    R6     |    R7     |    R8     |    R9     |  *
-*  -------------------------------------------------  *
-*  -------------------------------------------------  *
-*  |  8  |  9  |  10 |  11 |  12 |  13 |  14 |  15 |  *
-*  -------------------------------------------------  *
-*  |     32    |    40     |     48    |     56    |  *
-*  -------------------------------------------------  *
-*  |    R10    |    R11    |     R12   |     R13   |  *
-*  -------------------------------------------------  *
-*  -------------------------------------------------  *
-*  |  16 |  17 |  18 |  19 |  20 |  21 |  22 |  23 |  *
-*  -------------------------------------------------  *
-*  |     64    |    72     |     80    |     88    |  *
-*  -------------------------------------------------  *
-*  |   R14/LR  |    R15    |     F1    |     F3    |  *
-*  -------------------------------------------------  *
-*  -------------------------------------------------  *
-*  |  24 |  25 |  26 |  27 |  28 | 29  |           |  *
-*  -------------------------------------------------  *
-*  |     96    |    104    |    112    |    120    |  *
-*  -------------------------------------------------  *
-*  |    F5     |    F7     |     PC    |           |  *
-*  -------------------------------------------------  *
-* *****************************************************/
+ *  -------------------------------------------------  *
+ *  |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  *
+ *  -------------------------------------------------  *
+ *  |     0     |     8     |    16     |    24     |  *
+ *  -------------------------------------------------  *
+ *  |   t.fctx  |   t.data  |    r2     |    r6     |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  8  |  9  |  10 |  11 |  12 |  13 |  14 |  15 |  *
+ *  -------------------------------------------------  *
+ *  |     32    |    40     |     48    |     56    |  *
+ *  -------------------------------------------------  *
+ *  |     r7    |     r8    |     r9    |    r10    |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  16 |  17 |  18 |  19 |  20 |  21 |  22 |  23 |  *
+ *  -------------------------------------------------  *
+ *  |     64    |     72    |     80    |     88    |  *
+ *  -------------------------------------------------  *
+ *  |    r11    |    r12    |    r13    |    r14    |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  24 |  25 |  26 |  27 |  28 | 29  |  30 |  31 |  *
+ *  -------------------------------------------------  *
+ *  |     96    |    104    |    112    |    120    |  *
+ *  -------------------------------------------------  *
+ *  |     f8    |     f9    |    f10    |    f11    |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  32 |  33 |  34 |  35 |  36 |  37 |  38 |  39 |  *
+ *  -------------------------------------------------  *
+ *  |    128    |    136    |    144    |    152    |  *
+ *  -------------------------------------------------  *
+ *  |    f12    |    f13    |    f14    |    f15    |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  40 |  41 |  42 |  43 |  44 |  45 |  46 |  47 |  *
+ *  -------------------------------------------------  *
+ *  |    160    |    168    |    176    |           |  *
+ *  -------------------------------------------------  *
+ *  |    fpc    |     pc    |           |           |  *
+ *  -------------------------------------------------  *
+ *******************************************************/
 
-.file  "jump_s390x_sysv_elf_gas.S"
 .text
-.align  4 # According to the sample code in the ELF ABI docs
-.global jump_fcontext
-.type   jump_fcontext, @function
+.align	8
+.global	jump_fcontext
+.type	jump_fcontext, @function
 
-#define GR_OFFSET	0
-#define LR_OFFSET	64
-#define SP_OFFSET	72
-#define FP_OFFSET	80
-#define PC_OFFSET	112
-#define L_CTX		120
-#define L_STACKFRAME	120
+#define ARG_OFFSET         0
+#define GR_OFFSET	   16
+#define FP_OFFSET	   96
+#define FPC_OFFSET	   160
+#define PC_OFFSET	   168
+#define CONTEXT_SIZE	   176
+
+#define REG_SAVE_AREA_SIZE 160
+
+/*
+
+typedef void*   fcontext_t;
+
+struct transfer_t {
+   fcontext_t  fctx;
+   void    *   data;
+};
+
+transfer_t jump_fcontext( fcontext_t const to,
+			  void * data);
+
+Incoming args
+r2 - Hidden argument to the location where the return transfer_t needs to be returned
+r3 - Context we want to switch to
+r4 - Data pointer
+
+*/
 
 jump_fcontext:
-    
-    # Reserved the space for stack to store the data of current context
-    # before we jump to the new context.
-    aghi %r15,-L_STACKFRAME
+	.machine "z10"
+	/* Reserve stack space to store the current context.  */
+	aghi	%r15,-CONTEXT_SIZE
 
-    # save the registers to the stack
-    stmg %r6, %r15, GR_OFFSET(%r15)
+	/* Save the argument register holding the location of the return value.  */
+	stg	%r2,GR_OFFSET(%r15)
 
-    # save the floating point registers
-    std  %f0,FP_OFFSET(%r15)
-    std  %f3,FP_OFFSET+8(%r15)
-    std  %f5,FP_OFFSET+16(%r15)
-    std  %f7,FP_OFFSET+24(%r15)
+	/* Save the call-saved general purpose registers.  */
+	stmg	%r6,%r14,GR_OFFSET+8(%r15)
 
-    # Save LR as PC
-    stg  %r14,PC_OFFSET(%r15)
+	/* Save call-saved floating point registers.  */
+	std	%f8,FP_OFFSET(%r15)
+	std	%f9,FP_OFFSET+8(%r15)
+	std	%f10,FP_OFFSET+16(%r15)
+	std	%f11,FP_OFFSET+24(%r15)
+	std	%f12,FP_OFFSET+32(%r15)
+	std	%f13,FP_OFFSET+40(%r15)
+	std	%f14,FP_OFFSET+48(%r15)
+	std	%f15,FP_OFFSET+56(%r15)
 
-    # Store the SP pointing to the old context-data into R0
-    lgr	 %r0,%r15
+	/* Save the return address as current pc.  */
+	stg	%r14,PC_OFFSET(%r15)
 
-    # Get the SP pointing to the new context-data
-    # Note: Since the return type of the jump_fcontext is struct whose
-    # size is more than 8. The compiler automatically passes the 
-    # address of the transfer_t where the data needs to store into R2.
+	/* Save the floating point control register.  */
+	stfpc	FPC_OFFSET(%r15)
 
-    # Hence the first param passed to the jump_fcontext which represent
-    # the fctx we want to switch to is present in R3
-    # R2 --> Address of the return transfer_t struct
-    # R3 --> Context we want to switch to
-    # R4 --> Data
-    lgr	%r15,%r3
+	/* Backup the stack pointer pointing to the old context-data into r1.  */
+	lgr	 %r1,%r15
 
-    # Load the registers with the data present in context-data of the
-    # context we are going to switch to
-    lmg	%r6, %r14, GR_OFFSET(%r15)
+	/* Load the new context pointer as stack pointer.  */
+	lgr	%r15,%r3
 
-    # Restore Floating point registers
-    ld	 %f1,FP_OFFSET(%r15)
-    ld	 %f3,FP_OFFSET+8(%r15)
-    ld	 %f5,FP_OFFSET+16(%r15)
-    ld	 %f7,FP_OFFSET+24(%r15)
+	/* Restore the call-saved GPRs from the new context.  */
+	lmg	%r6,%r14,GR_OFFSET+8(%r15)
 
-    # Load PC
-    lg   %r1,PC_OFFSET(%r15)
+	/* Restore call-saved floating point registers.  */
+	ld	%f8,FP_OFFSET(%r15)
+	ld	%f9,FP_OFFSET+8(%r15)
+	ld	%f10,FP_OFFSET+16(%r15)
+	ld	%f11,FP_OFFSET+24(%r15)
+	ld	%f12,FP_OFFSET+32(%r15)
+	ld	%f13,FP_OFFSET+40(%r15)
+	ld	%f14,FP_OFFSET+48(%r15)
+	ld	%f15,FP_OFFSET+56(%r15)
 
-    # Adjust the stack 
-    aghi %r15,120
+	/* Load the floating point control register.  */
+	lfpc	FPC_OFFSET(%r15)
 
-    # R2 --> Address where the return transfer_t is stored
-    # R0 --> FCTX
-    # R4 --> DATA
+	/* Restore PC - the location where we will jump to at the end.  */
+	lg	%r5,PC_OFFSET(%r15)
 
-    # Store the elements to return transfer_t
-    stg %r15, 0(%r2)
-    stg %r4, 8(%r2)
+	ltg	%r2,GR_OFFSET(%r15)
+	jnz	use_return_slot
 
-    # Note: The address in R2 points to the place where the return
-    # transfer_t is stored. Since context_function take transfer_t
-    # as first parameter. And R2 is the register which holds the
-    # first parameter value.
+	/* We restore a make_fcontext context.  Use the function
+	   argument slot in the context we just saved and allocate the
+	   register save area for the target function.  */
+	la	%r2,ARG_OFFSET(%r1)
+	aghi	%r15,-REG_SAVE_AREA_SIZE
 
-    #jump to context
-    br  %r1
+use_return_slot:
+	/* Save the two fields in transfer_t.  When calling a
+	   make_fcontext function this becomes the function argument of
+	   the target function, otherwise it will be the return value of
+	   jump_fcontext.  */
+	stg	%r1,0(%r2)
+	stg	%r4,8(%r2)
+
+	/* Free the restored context.  */
+	aghi	%r15,CONTEXT_SIZE
+
+	/* Jump to the PC loaded from the new context.  */
+	br	%r5
+
 
 .size   jump_fcontext,.-jump_fcontext
-# Mark that we don't need executable stack.
 .section .note.GNU-stack,"",%progbits
-
-
-
