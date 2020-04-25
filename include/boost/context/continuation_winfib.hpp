@@ -428,7 +428,7 @@ public:
 #if defined(BOOST_EMBTC)
 
     template< typename charT, class traitsT >
-    inline friend std::basic_ostream< charT, traitsT > &
+    inline std::basic_ostream< charT, traitsT > &
     operator<<( std::basic_ostream< charT, traitsT > & os, continuation const& other) {
         if ( nullptr != other.ptr_) {
             return os << other.ptr_;
