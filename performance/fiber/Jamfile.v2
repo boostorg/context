@@ -18,8 +18,8 @@ project boost/context/performance/fiber
       <library>/boost/chrono//boost_chrono
       <library>/boost/context//boost_context
       <library>/boost/program_options//boost_program_options
-      <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
+      <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <toolset>clang,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <toolset>clang,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <link>static
