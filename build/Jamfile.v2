@@ -38,6 +38,10 @@ project boost/context
       <toolset>msvc,<link>static:<define>BOOST_CONTEXT_EXPORT=
       <toolset>clang-win,<link>shared:<define>BOOST_CONTEXT_EXPORT=EXPORT
       <toolset>clang-win,<link>static:<define>BOOST_CONTEXT_EXPORT=
+      <toolset>embarcadero,<address-model>32,<link>shared:<define>BOOST_CONTEXT_EXPORT=EXPORT
+      <toolset>embarcadero,<address-model>32,<link>static:<define>BOOST_CONTEXT_EXPORT=
+      <toolset>borland,<link>shared:<define>BOOST_CONTEXT_EXPORT=EXPORT
+      <toolset>borland,<link>static:<define>BOOST_CONTEXT_EXPORT=
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
       <define>BOOST_CONTEXT_SOURCE
       <threading>multi
@@ -560,6 +564,40 @@ alias asm_sources
      <toolset>msvc
    ;
 
+# Embarcadero on Windows for 32-bits, bcc32x, uses tasm32,
+# which is masm compatible
+# This is configured in the embarcadero toolset as using
+# 'tasm32 /ml'
+
+alias asm_sources
+   : asm/make_i386_ms_pe_masm.asm
+     asm/jump_i386_ms_pe_masm.asm
+     asm/ontop_i386_ms_pe_masm.asm
+     dummy.cpp
+   : <abi>ms
+     <address-model>32
+     <architecture>x86
+     <binary-format>pe
+     <toolset>embarcadero
+   ;
+
+# Borland on Windows for 32-bits, bcc32c, uses tasm32,
+# which is masm compatible
+# This is configured in the borland toolset as using
+# 'tasm32 /ml'
+
+alias asm_sources
+   : asm/make_i386_ms_pe_masm.asm
+     asm/jump_i386_ms_pe_masm.asm
+     asm/ontop_i386_ms_pe_masm.asm
+     dummy.cpp
+   : <abi>ms
+     <address-model>32
+     <architecture>x86
+     <binary-format>pe
+     <toolset>borland
+   ;
+
 # X86_64
 # X86_64/SYSV/ELF
 alias asm_sources
@@ -688,6 +726,21 @@ alias asm_sources
      <architecture>x86
      <binary-format>pe
      <toolset>msvc
+   ;
+   
+# Embarcadero on Windows, bcc64, uses the sysv-elf format for 64-bits
+# This is configured in the embarcadero toolset as using bcc64 with the
+# command line option '-x assembler-with-cpp'.
+
+alias asm_sources
+   : asm/make_x86_64_sysv_elf_gas.S
+     asm/jump_x86_64_sysv_elf_gas.S
+     asm/ontop_x86_64_sysv_elf_gas.S
+   : <abi>ms
+     <address-model>64
+     <architecture>x86
+     <binary-format>pe
+     <toolset>embarcadero
    ;
 
 # X86_64/SYSV/X32

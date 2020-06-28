@@ -482,6 +482,8 @@ public:
         return ptr_ < other.ptr_;
     }
 
+    #if !defined(BOOST_EMBTC)
+    
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
     operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other) {
@@ -492,11 +494,33 @@ public:
         }
     }
 
+    #else
+    
+    template< typename charT, class traitsT >
+    friend std::basic_ostream< charT, traitsT > &
+    operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other);
+
+    #endif
+
     void swap( fiber & other) noexcept {
         std::swap( ptr_, other.ptr_);
     }
 };
 
+#if defined(BOOST_EMBTC)
+
+    template< typename charT, class traitsT >
+    inline std::basic_ostream< charT, traitsT > &
+    operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other) {
+        if ( nullptr != other.ptr_) {
+            return os << other.ptr_;
+        } else {
+            return os << "{not-a-context}";
+        }
+    }
+
+#endif
+    
 inline
 void swap( fiber & l, fiber & r) noexcept {
     l.swap( r);
