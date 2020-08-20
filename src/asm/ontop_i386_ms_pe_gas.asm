@@ -128,4 +128,4 @@ _ontop_fcontext:
     jmp  *%ecx
 
 .section .drectve
-.ascii " -export:\"_ontop_fcontext\""
+.ascii " -export:\"ontop_fcontext\""
