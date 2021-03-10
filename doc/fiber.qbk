@@ -132,7 +132,7 @@ of `f1.resume()`, the variable `i` has the value of `i+1`.
 
 [heading Exception handling]
 
-If the function executed inside a __context_fn__ emits ans exception, the
+If the function executed inside a __context_fn__ emits an exception, the
 application is terminated by calling `std::terminate()`. `std::exception_ptr`
 can be used to transfer exceptions between different fibers.
 

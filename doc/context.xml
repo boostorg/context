@@ -311,7 +311,7 @@
     </bridgehead>
     <para>
       If the function executed inside a <emphasis>context-function</emphasis> emits
-      ans exception, the application is terminated by calling <code><phrase role="identifier">std</phrase><phrase
+      an exception, the application is terminated by calling <code><phrase role="identifier">std</phrase><phrase
       role="special">::</phrase><phrase role="identifier">terminate</phrase><phrase
       role="special">()</phrase></code>. <code><phrase role="identifier">std</phrase><phrase
       role="special">::</phrase><phrase role="identifier">exception_ptr</phrase></code>
