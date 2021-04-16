@@ -45,6 +45,7 @@ project boost/context
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
       <define>BOOST_CONTEXT_SOURCE
       <threading>multi
+      <toolset>msvc,<address-model>32:<asmflags>/safeseh
     : usage-requirements
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
       <optimization>speed:<define>BOOST_DISABLE_ASSERTS
