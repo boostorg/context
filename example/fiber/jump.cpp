@@ -13,8 +13,8 @@ namespace ctx = boost::context;
 
 int main() {
     int data = 1;
-    ctx::fiber f{
-            [&data](ctx::fiber && f){
+    ctx::fiber f {
+            [&data](ctx::fiber && f) {
                 std::cout << "entered first time: " << data << std::endl;
                 data += 2;
                 f = std::move( f).resume();
@@ -25,11 +25,11 @@ int main() {
     std::cout << "returned first time: " << data << std::endl;
     data += 2;
     f = std::move( f).resume();
-    if ( f) {
+    if (f)
         std::cout << "returned second time: " << data << std::endl;
-    } else {
+    else
         std::cout << "returned second time: execution context terminated" << std::endl;
-    }
+
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;
 }

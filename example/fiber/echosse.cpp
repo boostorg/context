@@ -14,7 +14,7 @@
 
 namespace ctx = boost::context;
 
-void echoSSE( int i) {
+void echoSSE(int i) {
     __m128i xmm;
     xmm = _mm_set_epi32( i, i + 1, i + 2, i + 3);
     uint32_t v32[4];
@@ -26,9 +26,9 @@ void echoSSE( int i) {
 }
 
 
-int main( int argc, char * argv[]) {
+int main(int argc, char *argv[]) {
     int i = 0;
-    ctx::fiber f{
+    ctx::fiber f {
         [&i](ctx::fiber && f) {
             for (;;) {
                 std::cout << i;
@@ -38,9 +38,9 @@ int main( int argc, char * argv[]) {
             }
             return std::move( f);
         }};
-    for (; i < 11; ++i) {
+    for (; i < 11; ++i)
         f = std::move( f).resume();
-    }
+
     std::cout << "\nmain: done" << std::endl;
     return EXIT_SUCCESS;
 }

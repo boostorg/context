@@ -77,11 +77,10 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
     // (e.g. main context, thread-entry context)
     fiber_activation_record() noexcept {
 #if ( _WIN32_WINNT > 0x0600)
-        if ( ::IsThreadAFiber() ) {
+        if ( ::IsThreadAFiber() )
             fiber = ::GetCurrentFiber();
-        } else {
+        else
             fiber = ::ConvertThreadToFiber( nullptr);
-        }
 #else
         fiber = ::ConvertThreadToFiber( nullptr);
         if ( BOOST_UNLIKELY( nullptr == fiber) ) {
@@ -99,11 +98,10 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
     } 
 
     virtual ~fiber_activation_record() {
-        if ( BOOST_UNLIKELY( main_ctx) ) {
+        if (BOOST_UNLIKELY(main_ctx))
             ::ConvertFiberToThread();
-        } else {
-            ::DeleteFiber( fiber);
-        }
+        else
+            ::DeleteFiber(fiber);
     }
 
     fiber_activation_record( fiber_activation_record const&) = delete;
@@ -140,9 +138,8 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
                 [](typename std::decay< Fn >::type & fn, fiber_activation_record *& ptr){
                     Ctx c{ ptr };
                     c = fn( std::move( c) );
-                    if ( ! c) {
+                    if (!c)
                         ptr = nullptr;
-                    }
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     return exchange( c.ptr_, nullptr);
 #else
@@ -155,9 +152,8 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
         current()->ontop = [fn=std::forward<Fn>(fn)](fiber_activation_record *& ptr){
             Ctx c{ ptr };
             c = fn( std::move( c) );
-            if ( ! c) {
+            if (!c)
                 ptr = nullptr;
-            }
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
             return exchange( c.ptr_, nullptr);
 #else
@@ -371,9 +367,9 @@ public:
 #else
         detail::fiber_activation_record * ptr = std::exchange( ptr_, nullptr)->resume();
 #endif
-        if ( BOOST_UNLIKELY( detail::fiber_activation_record::current()->force_unwind) ) {
+        if ( BOOST_UNLIKELY( detail::fiber_activation_record::current()->force_unwind) )
             throw detail::forced_unwind{ ptr};
-        } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_activation_record::current()->ontop) ) {
+        else if ( BOOST_UNLIKELY( nullptr != detail::fiber_activation_record::current()->ontop) ) {
             ptr = detail::fiber_activation_record::current()->ontop( ptr);
             detail::fiber_activation_record::current()->ontop = nullptr;
         }
@@ -390,9 +386,9 @@ public:
         detail::fiber_activation_record * ptr =
             std::exchange( ptr_, nullptr)->resume_with< fiber >( std::forward< Fn >( fn) );
 #endif
-        if ( BOOST_UNLIKELY( detail::fiber_activation_record::current()->force_unwind) ) {
+        if ( BOOST_UNLIKELY( detail::fiber_activation_record::current()->force_unwind) )
             throw detail::forced_unwind{ ptr};
-        } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_activation_record::current()->ontop) ) {
+        else if ( BOOST_UNLIKELY( nullptr != detail::fiber_activation_record::current()->ontop) ) {
             ptr = detail::fiber_activation_record::current()->ontop( ptr);
             detail::fiber_activation_record::current()->ontop = nullptr;
         }
@@ -416,11 +412,10 @@ public:
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
     operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other) {
-        if ( nullptr != other.ptr_) {
+        if ( nullptr != other.ptr_)
             return os << other.ptr_;
-        } else {
+        else
             return os << "{not-a-context}";
-        }
     }
 
     #else
@@ -441,11 +436,10 @@ public:
     template< typename charT, class traitsT >
     inline std::basic_ostream< charT, traitsT > &
     operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other) {
-        if ( nullptr != other.ptr_) {
+        if ( nullptr != other.ptr_)
             return os << other.ptr_;
-        } else {
+        else
             return os << "{not-a-context}";
-        }
     }
 
 #endif

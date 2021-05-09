@@ -28,9 +28,8 @@ thread_local static std::size_t counter;
 
 // schwarz counter
 activation_record_initializer::activation_record_initializer() noexcept {
-    if ( 0 == counter++) {
+    if ( 0 == counter++)
         current_rec = new activation_record();
-    }
 }
 
 activation_record_initializer::~activation_record_initializer() {

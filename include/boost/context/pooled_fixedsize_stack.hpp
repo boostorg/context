@@ -48,9 +48,8 @@ struct map_stack_allocator {
 
     static char * malloc( const size_type bytes) {
         void * block;
-        if ( ::posix_memalign( &block, traitsT::page_size(), bytes) != 0) {
+        if ( ::posix_memalign( &block, traitsT::page_size(), bytes) != 0)
             return 0;
-        }
         if ( mmap( block, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_STACK, -1, 0) == MAP_FAILED) {
             std::free( block);
             return 0;
@@ -87,9 +86,8 @@ private:
 
         stack_context allocate() {
             void * vp = storage_.malloc();
-            if ( ! vp) {
+            if (!vp)
                 throw std::bad_alloc();
-            }
             stack_context sctx;
             sctx.size = stack_size_;
             sctx.sp = static_cast< char * >( vp) + sctx.size;
@@ -115,9 +113,8 @@ private:
         }
 
         friend void intrusive_ptr_release( storage * s) noexcept {
-            if ( 0 == --s->use_count_) {
+            if ( 0 == --s->use_count_)
                 delete s;
-            }
         }
     };
 

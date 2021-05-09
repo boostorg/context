@@ -21,9 +21,8 @@ boost::uint64_t jobs = 1000000;
 namespace ctx = boost::context;
 
 static ctx::fiber foo( ctx::fiber && f) {
-    while ( true) {
+    while (true)
         f = std::move( f).resume();
-    }
     return ctx::fiber{};
 }
 
@@ -33,9 +32,8 @@ duration_type measure_time() {
     f = std::move( f).resume();
 
     time_point_type start( clock_type::now() );
-    for ( std::size_t i = 0; i < jobs; ++i) {
+    for ( std::size_t i = 0; i < jobs; ++i)
         f = std::move( f).resume();
-    }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
     total /= jobs;  // loops
@@ -52,9 +50,8 @@ cycle_type measure_cycles() {
     f = std::move( f).resume();
 
     cycle_type start( cycles() );
-    for ( std::size_t i = 0; i < jobs; ++i) {
+    for (std::size_t i = 0; i < jobs; ++i)
         f = std::move( f).resume();
-    }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
     total /= jobs;  // loops

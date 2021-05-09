@@ -50,14 +50,12 @@ public:
     stack_context allocate() {
 #if defined(BOOST_CONTEXT_USE_MAP_STACK)
         void * vp = ::mmap( 0, size_, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_STACK, -1, 0);
-        if ( vp == MAP_FAILED) {
+        if (vp == MAP_FAILED)
             throw std::bad_alloc();
-        }
 #else
         void * vp = std::malloc( size_);
-        if ( ! vp) {
+        if (!vp)
             throw std::bad_alloc();
-        }
 #endif
         stack_context sctx;
         sctx.size = size_;

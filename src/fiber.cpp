@@ -26,9 +26,8 @@ thread_local static std::size_t counter;
 
 // schwarz counter
 fiber_activation_record_initializer::fiber_activation_record_initializer() noexcept {
-    if ( 0 == counter++) {
+    if ( 0 == counter++)
         fib_current_rec = new fiber_activation_record();
-    }
 }
 
 fiber_activation_record_initializer::~fiber_activation_record_initializer() {
