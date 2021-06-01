@@ -85,7 +85,13 @@ unset(_default_ext)
 set(BOOST_CONTEXT_IMPLEMENTATION "fcontext" CACHE STRING "Boost.Context implementation (fcontext, ucontext, winfib)")
 set_property(CACHE BOOST_CONTEXT_IMPLEMENTATION PROPERTY STRINGS fcontext ucontext winfib)
 
-message(STATUS "Boost.Context: binary format ${BOOST_CONTEXT_BINARY_FORMAT}, ABI ${BOOST_CONTEXT_ABI}, assembler ${BOOST_CONTEXT_ASSEMBLER}, asm suffix ${BOOST_CONTEXT_ASM_SUFFIX}, implementation ${BOOST_CONTEXT_IMPLEMENTATION}")
+message(STATUS "Boost.Context: "
+  "architecture ${BOOST_CONTEXT_ARCHITECTURE}, "
+  "binary format ${BOOST_CONTEXT_BINARY_FORMAT}, "
+  "ABI ${BOOST_CONTEXT_ABI}, "
+  "assembler ${BOOST_CONTEXT_ASSEMBLER}, "
+  "asm suffix ${BOOST_CONTEXT_ASM_SUFFIX}, "
+  "implementation ${BOOST_CONTEXT_IMPLEMENTATION}")
 
 # Enable the right assembler
 
@@ -116,7 +122,13 @@ unset(_asm_suffix)
 #
 
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
+
   set(IMPL_SOURCES ${ASM_SOURCES})
+
+  if(BOOST_CONTEXT_ASSEMBLER STREQUAL masm AND BOOST_CONTEXT_ARCHITECTURE STREQUAL i386)
+    set_source_files_properties(${ASM_SOURCES} PROPERTIES COMPILE_FLAGS "/safeseh")
+  endif()
+
 else()
   set(IMPL_SOURCES
     src/continuation.cpp
