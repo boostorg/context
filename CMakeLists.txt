@@ -18,7 +18,7 @@ else()
   set(_default_binfmt elf)
 endif()
 
-set(BOOST_CONTEXT_BINARY_FORMAT "${_default_binfmt}" CACHE STRING "Boost.context binary format (elf, mach-o, pe, xcoff)")
+set(BOOST_CONTEXT_BINARY_FORMAT "${_default_binfmt}" CACHE STRING "Boost.Context binary format (elf, mach-o, pe, xcoff)")
 set_property(CACHE BOOST_CONTEXT_BINARY_FORMAT PROPERTY STRINGS elf mach-o pe xcoff)
 
 unset(_default_binfmt)
@@ -31,7 +31,7 @@ else()
   set(_default_abi sysv)
 endif()
 
-set(BOOST_CONTEXT_ABI "${_default_abi}" CACHE STRING "Boost.context ABI (aapcs, eabi, ms, n32, n64, o32, o64, sysv, x32)")
+set(BOOST_CONTEXT_ABI "${_default_abi}" CACHE STRING "Boost.Context ABI (aapcs, eabi, ms, n32, n64, o32, o64, sysv, x32)")
 set_property(CACHE BOOST_CONTEXT_ABI PROPERTY STRINGS aapcs eabi ms n32 n64 o32 o64 sysv x32)
 
 unset(_default_abi)
@@ -46,7 +46,7 @@ else()
   set(_default_arch x86_64)
 endif()
 
-set(BOOST_CONTEXT_ARCHITECTURE "${_default_arch}" CACHE STRING "Boost.context architecture (arm, arm64, mips32, mips64, ppc32, ppc64, riscv64, s390x, i386, x86_64, combined)")
+set(BOOST_CONTEXT_ARCHITECTURE "${_default_arch}" CACHE STRING "Boost.Context architecture (arm, arm64, mips32, mips64, ppc32, ppc64, riscv64, s390x, i386, x86_64, combined)")
 set_property(CACHE BOOST_CONTEXT_ARCHITECTURE PROPERTY STRINGS arm arm64 mips32 mips64 ppc32 ppc64 riscv64 s390x i386 x86_64 combined)
 
 unset(_bits)
@@ -60,7 +60,7 @@ else()
   set(_default_asm gas)
 endif()
 
-set(BOOST_CONTEXT_ASSEMBLER "${_default_asm}" CACHE STRING "Boost.context assembler (masm, gas, armasm)")
+set(BOOST_CONTEXT_ASSEMBLER "${_default_asm}" CACHE STRING "Boost.Context assembler (masm, gas, armasm)")
 set_property(CACHE BOOST_CONTEXT_ASSEMBLER PROPERTY STRINGS masm gas armasm)
 
 unset(_default_asm)
@@ -75,14 +75,14 @@ else()
   set(_default_ext .asm)
 endif()
 
-set(BOOST_CONTEXT_ASM_SUFFIX "${_default_ext}" CACHE STRING "Boost.context assembler source suffix (.asm, .S)")
+set(BOOST_CONTEXT_ASM_SUFFIX "${_default_ext}" CACHE STRING "Boost.Context assembler source suffix (.asm, .S)")
 set_property(CACHE BOOST_CONTEXT_ASM_SUFFIX PROPERTY STRINGS .asm .S)
 
 unset(_default_ext)
 
 ## Implementation
 
-set(BOOST_CONTEXT_IMPLEMENTATION "fcontext" CACHE STRING "Boost.context implementation (fcontext, ucontext, winfib)")
+set(BOOST_CONTEXT_IMPLEMENTATION "fcontext" CACHE STRING "Boost.Context implementation (fcontext, ucontext, winfib)")
 set_property(CACHE BOOST_CONTEXT_IMPLEMENTATION PROPERTY STRINGS fcontext ucontext winfib)
 
 message(STATUS "Boost.Context: binary format ${BOOST_CONTEXT_BINARY_FORMAT}, ABI ${BOOST_CONTEXT_ABI}, assembler ${BOOST_CONTEXT_ASSEMBLER}, asm suffix ${BOOST_CONTEXT_ASM_SUFFIX}, implementation ${BOOST_CONTEXT_IMPLEMENTATION}")
