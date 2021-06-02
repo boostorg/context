@@ -97,7 +97,11 @@ message(STATUS "Boost.Context: "
 
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
   if(BOOST_CONTEXT_ASSEMBLER STREQUAL gas)
-    enable_language(ASM-ATT)
+    if(CMAKE_CXX_PLATFORM_ID MATCHES "Cygwin")
+      enable_language(ASM-ATT)
+    else()
+      enable_language(ASM)
+    endif()
   else()
     enable_language(ASM_MASM)
   endif()
@@ -125,13 +129,8 @@ if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
 
   set(IMPL_SOURCES ${ASM_SOURCES})
 
-  if(BOOST_CONTEXT_ASSEMBLER STREQUAL masm)
-    set_source_files_properties(${ASM_SOURCES} PROPERTIES LANGUAGE "ASM_MASM")
-    if(BOOST_CONTEXT_ARCHITECTURE STREQUAL i386)
+  if(BOOST_CONTEXT_ASSEMBLER STREQUAL masm AND BOOST_CONTEXT_ARCHITECTURE STREQUAL i386)
       set_source_files_properties(${ASM_SOURCES} PROPERTIES COMPILE_FLAGS "/safeseh")
-    endif()
-  elseif(BOOST_CONTEXT_ASSEMBLER STREQUAL gas)
-    set_source_files_properties(${ASM_SOURCES} PROPERTIES LANGUAGE "ASM-ATT")
   endif()
 
 else()
