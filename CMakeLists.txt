@@ -82,8 +82,14 @@ unset(_default_ext)
 
 ## Implementation
 
-set(BOOST_CONTEXT_IMPLEMENTATION "fcontext" CACHE STRING "Boost.Context implementation (fcontext, ucontext, winfib)")
+set(_default_impl fcontext)
+
+set(BOOST_CONTEXT_IMPLEMENTATION "${_default_impl}" CACHE STRING "Boost.Context implementation (fcontext, ucontext, winfib)")
 set_property(CACHE BOOST_CONTEXT_IMPLEMENTATION PROPERTY STRINGS fcontext ucontext winfib)
+
+unset(_default_impl)
+
+#
 
 message(STATUS "Boost.Context: "
   "architecture ${BOOST_CONTEXT_ARCHITECTURE}, "
@@ -140,7 +146,7 @@ else()
   )
 endif()
 
-if(WIN32)
+if(WIN32 AND NOT CMAKE_CXX_PLATFORM_ID MATCHES "Cygwin")
   set(STACK_TRAITS_SOURCES
     src/windows/stack_traits.cpp
   )
@@ -183,11 +189,11 @@ else()
 endif()
 
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "ucontext")
-  target_compile_definitions(boost_context PRIVATE BOOST_USE_UCONTEXT)
+  target_compile_definitions(boost_context PUBLIC BOOST_USE_UCONTEXT)
 endif()
 
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "winfib")
-  target_compile_definitions(boost_context PRIVATE BOOST_USE_WINFIB)
+  target_compile_definitions(boost_context PUBLIC BOOST_USE_WINFIB)
 endif()
 
 if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
