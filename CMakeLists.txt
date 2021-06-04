@@ -96,7 +96,7 @@ message(STATUS "Boost.Context: "
   "binary format ${BOOST_CONTEXT_BINARY_FORMAT}, "
   "ABI ${BOOST_CONTEXT_ABI}, "
   "assembler ${BOOST_CONTEXT_ASSEMBLER}, "
-  "asm suffix ${BOOST_CONTEXT_ASM_SUFFIX}, "
+  "suffix ${BOOST_CONTEXT_ASM_SUFFIX}, "
   "implementation ${BOOST_CONTEXT_IMPLEMENTATION}")
 
 # Enable the right assembler
@@ -170,6 +170,7 @@ target_link_libraries(boost_context
     Boost::assert
     Boost::config
     Boost::core
+    Boost::mp11
     Boost::pool
     Boost::predef
     Boost::smart_ptr
