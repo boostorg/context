@@ -33,6 +33,7 @@
 #include <boost/context/detail/disable_overload.hpp>
 #include <boost/context/detail/exception.hpp>
 #include <boost/context/detail/fcontext.hpp>
+#include <boost/context/detail/tuple.hpp>
 #include <boost/context/fixedsize_stack.hpp>
 #include <boost/context/flags.hpp>
 #include <boost/context/preallocated.hpp>
