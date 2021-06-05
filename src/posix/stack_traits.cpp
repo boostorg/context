@@ -114,7 +114,7 @@ stack_traits::maximum_size() BOOST_NOEXCEPT_OR_NOTHROW {
 #endif
 
 #ifdef UDEF_SIGSTKSZ
-# undef SIGSTKSZ;
+# undef SIGSTKSZ
 #endif
 
 #ifdef UDEF_MINSIGSTKSZ
