@@ -136,8 +136,7 @@ If the function executed inside a __context_fn__ emits an exception, the
 application is terminated by calling `std::terminate()`. `std::exception_ptr`
 can be used to transfer exceptions between different fibers.
 
-[important Do not jump from inside a catch block and then re-throw the exception
-in another fiber.]
+[important Do not jump from inside a catch block.]
 
 
 [#ff_ontop]
@@ -146,7 +145,7 @@ in another fiber.]
 Sometimes it is useful to execute a new function on top of a resumed fiber. For
 this purpose __resume_with__ has to be used.
 The function passed as argument must accept a rvalue reference to __fib__ and
-return `void`.
+return __fib__.
 
     namespace ctx=boost::context;
     int data=0;
