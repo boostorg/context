@@ -654,6 +654,17 @@ alias asm_sources
      <address-model>64
      <architecture>x86
      <binary-format>mach-o
+     <toolset>gcc
+   ;
+
+alias asm_sources
+   : asm/make_x86_64_sysv_macho_gas.S
+     asm/jump_x86_64_sysv_macho_gas.S
+     asm/ontop_x86_64_sysv_macho_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>x86
+     <binary-format>mach-o
      <toolset>darwin
    ;
 
