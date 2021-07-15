@@ -850,26 +850,13 @@ alias impl_sources
 
 explicit impl_sources ;
 
-obj cxx11_hdr_mutex_check : ../build/cxx11_hdr_mutex.cpp ;
-explicit cxx11_hdr_mutex_check ;
-local cxx11_mutex = [ check-target-builds
-      cxx11_hdr_mutex_check "C++11 mutex"
-    :
-    : <library>/boost/thread//boost_thread
-  ] ;
-
 alias stack_traits_sources
     : windows/stack_traits.cpp
     : <target-os>windows
-    :
-    : $(cxx11_mutex)
     ;
 
 alias stack_traits_sources
     : posix/stack_traits.cpp
-    :
-    :
-    : $(cxx11_mutex)
     ;
 
 explicit stack_traits_sources ;

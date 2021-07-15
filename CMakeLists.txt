@@ -174,8 +174,6 @@ target_link_libraries(boost_context
     Boost::pool
     Boost::predef
     Boost::smart_ptr
-  PRIVATE
-    Boost::thread
 )
 
 target_compile_definitions(boost_context
