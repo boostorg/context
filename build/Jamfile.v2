@@ -253,6 +253,30 @@ alias asm_sources
      <toolset>gcc
    ;
 
+# MIPS
+# MIPS/N32/ELF
+alias asm_sources
+   : asm/make_mips32_n32_elf_gas.S
+     asm/jump_mips32_n32_elf_gas.S
+     asm/ontop_mips32_n32_elf_gas.S
+   : <abi>n32
+     <address-model>32
+     <architecture>mips3
+     <binary-format>elf
+     <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_mips32_n32_elf_gas.S
+     asm/jump_mips32_n32_elf_gas.S
+     asm/ontop_mips32_n32_elf_gas.S
+   : <abi>n32
+     <address-model>32
+     <architecture>mips3
+     <binary-format>elf
+     <toolset>gcc
+   ;
+
 # MIPS64/N64/ELF
 alias asm_sources
    : asm/make_mips64_n64_elf_gas.S
