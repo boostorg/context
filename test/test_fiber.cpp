@@ -256,11 +256,12 @@ void test_ontop() {
                     return std::move( f);
                 }};
         f = std::move( f).resume();
-        f = std::move( f).resume_with(
-               [&i](ctx::fiber && f){
+        // Pass fn by reference to see if the types are properly decayed.
+        auto fn = [&i](ctx::fiber && f){
                    i -= 10;
                    return std::move( f);
-               });
+        };
+        f = std::move( f).resume_with(fn);
         BOOST_CHECK( f);
         BOOST_CHECK_EQUAL( i, 200);
     }
@@ -290,7 +291,7 @@ void test_ontop_exception() {
                     f = std::move( f).resume();
                 } catch ( my_exception & ex) {
                     value2 = ex.what();
-                    return std::move( ex.f); 
+                    return std::move( ex.f);
                 }
             }
             return std::move( f);
@@ -496,7 +497,7 @@ void test_badcatch() {
         BOOST_CHECK_EQUAL( 3, value1);
         BOOST_CHECK_EQUAL( 3., value3);
         // the destruction of ctx here will cause a forced_unwind to be thrown that is not caught
-        // in fn19.  That will trigger the "not caught" assertion in ~forced_unwind.  Getting that 
+        // in fn19.  That will trigger the "not caught" assertion in ~forced_unwind.  Getting that
         // assertion to propogate bak here cleanly is non-trivial, and there seems to not be a good
         // way to hook directly into the assertion when it happens on an alternate stack.
         std::move( f);

@@ -18,8 +18,8 @@ project boost/context/test
     : requirements
       <library>../../test/build//boost_unit_test_framework
       <library>/boost/context//boost_context
-      <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
+      <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <toolset>clang,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <toolset>clang,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <link>static
@@ -31,7 +31,9 @@ project boost/context/test
 rule native-impl ( properties * )
 {
     local result  ;
-    if ( <target-os>darwin in $(properties) || <target-os>android in $(properties) )
+    if ( <target-os>android in $(properties) ||
+         <target-os>darwin in $(properties) ||
+         <target-os>openbsd in $(properties) )
     {
         result = <build>no ;
     }
@@ -201,23 +203,7 @@ test-suite minimal :
                cxx11_template_aliases
                cxx11_thread_local
                cxx11_variadic_templates ]
-    : test_callcc_segmented ]
-
-[ run test_execution_context_v2.cpp :
-    : :
-    [ requires cxx11_auto_declarations
-               cxx11_constexpr
-               cxx11_defaulted_functions
-               cxx11_final
-               cxx11_hdr_thread
-               cxx11_hdr_tuple
-               cxx11_lambdas
-               cxx11_noexcept
-               cxx11_nullptr
-               cxx11_rvalue_references
-               cxx11_template_aliases
-               cxx11_thread_local
-               cxx11_variadic_templates ] ] ;
+    : test_callcc_segmented ] ;
 
 
 test-suite full :

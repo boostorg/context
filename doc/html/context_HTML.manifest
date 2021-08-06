@@ -7,8 +7,6 @@ context/ff/class__fiber_.html
 context/cc.html
 context/cc/implementations__fcontext_t__ucontext_t_and_winfiber.html
 context/cc/class__continuation_.html
-context/ecv2.html
-context/ecv1.html
 context/stack.html
 context/stack/protected_fixedsize.html
 context/stack/pooled_fixedsize.html
@@ -17,6 +15,7 @@ context/stack/segmented.html
 context/stack/stack_traits.html
 context/stack/stack_context.html
 context/stack/valgrind.html
+context/stack/sanitizers.html
 context/struct__preallocated_.html
 context/performance.html
 context/architectures.html

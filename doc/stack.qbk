@@ -43,9 +43,6 @@ undefined behaviour.]
 [important Calling `deallocate()` with a `stack_context` not set by `allocate()`
 results in undefined behaviour.]
 
-[note The stack is not required to be aligned; alignment takes place inside
-__econtext__.]
-
 [note Depending on the architecture `allocate()` stores an address from the
 top of the stack (growing downwards) or the bottom of the stack (growing
 upwards).]
@@ -216,7 +213,7 @@ property `segmented-stacks`, e.g. [*toolset=gcc segmented-stacks=on] and
 applying `BOOST_USE_SEGMENTED_STACKS` at b2/bjam command line.]
 
 [note Segmented stacks can only be used with __cc__ (using
-[link implementation __ucontext__]) and __econtext__ (v1)].
+[link implementation __ucontext__])].
 
         #include <boost/context/segmented_stack.hpp>
 
@@ -352,6 +349,17 @@ Property (b2 command-line) `valgrind=on` let valgrind treat the memory regions
 as stack space which suppresses the errors. Users must define `BOOST_USE_VALGRIND`
 before including any Boost.Context headers when linking against Boost binaries
 compiled with `valgrind=on`.
+
+[endsect]
+
+
+[section:sanitizers Support for sanitizers]
+
+Sanitizers (GCC/Clang) are confused by the stack switches.
+The library is required to be compiled with property (b2 command-line)
+`context-impl=ucontext` and compilers santizer options.
+Users must define `BOOST_USE_ASAN` before including any Boost.Context headers
+when linking against Boost binaries.
 
 [endsect]
 

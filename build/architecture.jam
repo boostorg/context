@@ -63,6 +63,14 @@ rule deduce-architecture ( properties * )
         {
             return <architecture>power ;
         }
+        else if [ configure.builds /boost/architecture//riscv : $(properties) : riscv ]
+        {
+            return <architecture>riscv ;
+        }
+        else if [ configure.builds /boost/architecture//s390x : $(properties) : s390x ]
+        {
+            return <architecture>s390x ;
+        }
         else if [ configure.builds /boost/architecture//sparc : $(properties) : sparc ]
         {
             return <architecture>sparc ;

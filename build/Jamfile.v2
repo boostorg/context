@@ -26,8 +26,8 @@ feature.compose <valgrind>on : <define>BOOST_USE_VALGRIND ;
 project boost/context
     : requirements
       <target-os>windows:<define>_WIN32_WINNT=0x0601
-      <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
+      <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <toolset>gcc,<segmented-stacks>on:<linkflags>"-static-libgcc"
       <toolset>clang,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <toolset>clang,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
@@ -38,9 +38,14 @@ project boost/context
       <toolset>msvc,<link>static:<define>BOOST_CONTEXT_EXPORT=
       <toolset>clang-win,<link>shared:<define>BOOST_CONTEXT_EXPORT=EXPORT
       <toolset>clang-win,<link>static:<define>BOOST_CONTEXT_EXPORT=
+      <toolset>embarcadero,<address-model>32,<link>shared:<define>BOOST_CONTEXT_EXPORT=EXPORT
+      <toolset>embarcadero,<address-model>32,<link>static:<define>BOOST_CONTEXT_EXPORT=
+      <toolset>borland,<link>shared:<define>BOOST_CONTEXT_EXPORT=EXPORT
+      <toolset>borland,<link>static:<define>BOOST_CONTEXT_EXPORT=
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
       <define>BOOST_CONTEXT_SOURCE
       <threading>multi
+      <toolset>msvc,<address-model>32:<asmflags>/safeseh
     : usage-requirements
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
       <optimization>speed:<define>BOOST_DISABLE_ASSERTS
@@ -75,7 +80,8 @@ local rule default_abi ( )
     if [ os.name ] = "NT" { tmp = ms ; }
     else if [ os.name ] = "CYGWIN" { tmp = ms ; }
     else if [ os.platform ] = "ARM" { tmp = aapcs ; }
-    else if [ os.platform ] = "MIPS" { tmp = o32 ; }
+    else if [ os.platform ] = "MIPS32" { tmp = o32 ; }
+    else if [ os.platform ] = "MIPS64" { tmp = n64 ; }
     return $(tmp) ;
 }
 
@@ -276,6 +282,7 @@ alias asm_sources
    : asm/make_ppc32_sysv_elf_gas.S
      asm/jump_ppc32_sysv_elf_gas.S
      asm/ontop_ppc32_sysv_elf_gas.S
+     asm/tail_ppc32_sysv_elf_gas.cpp
    : <abi>sysv
      <address-model>32
      <architecture>power
@@ -287,6 +294,7 @@ alias asm_sources
    : asm/make_ppc32_sysv_elf_gas.S
      asm/jump_ppc32_sysv_elf_gas.S
      asm/ontop_ppc32_sysv_elf_gas.S
+     asm/tail_ppc32_sysv_elf_gas.cpp
    : <abi>sysv
      <address-model>32
      <architecture>power
@@ -412,6 +420,32 @@ alias asm_sources
      <binary-format>mach-o
    ;
 
+# RISCV64
+# RISCV64/SYSV/ELF
+alias asm_sources
+   : asm/make_riscv64_sysv_elf_gas.S
+     asm/jump_riscv64_sysv_elf_gas.S
+     asm/ontop_riscv64_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>riscv
+     <binary-format>elf
+     <toolset>gcc
+   ;
+
+# S390X
+# S390X/SYSV/ELF
+alias asm_sources
+   : asm/make_s390x_sysv_elf_gas.S
+     asm/jump_s390x_sysv_elf_gas.S
+     asm/ontop_s390x_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>s390x
+     <binary-format>elf
+     <toolset>gcc
+   ;
+
 # X86
 # X86/SYSV/ELF
 alias asm_sources
@@ -531,6 +565,40 @@ alias asm_sources
      <toolset>msvc
    ;
 
+# Embarcadero on Windows for 32-bits, bcc32x, uses tasm32,
+# which is masm compatible
+# This is configured in the embarcadero toolset as using
+# 'tasm32 /ml'
+
+alias asm_sources
+   : asm/make_i386_ms_pe_masm.asm
+     asm/jump_i386_ms_pe_masm.asm
+     asm/ontop_i386_ms_pe_masm.asm
+     dummy.cpp
+   : <abi>ms
+     <address-model>32
+     <architecture>x86
+     <binary-format>pe
+     <toolset>embarcadero
+   ;
+
+# Borland on Windows for 32-bits, bcc32c, uses tasm32,
+# which is masm compatible
+# This is configured in the borland toolset as using
+# 'tasm32 /ml'
+
+alias asm_sources
+   : asm/make_i386_ms_pe_masm.asm
+     asm/jump_i386_ms_pe_masm.asm
+     asm/ontop_i386_ms_pe_masm.asm
+     dummy.cpp
+   : <abi>ms
+     <address-model>32
+     <architecture>x86
+     <binary-format>pe
+     <toolset>borland
+   ;
+
 # X86_64
 # X86_64/SYSV/ELF
 alias asm_sources
@@ -576,6 +644,17 @@ alias asm_sources
      <architecture>x86
      <binary-format>mach-o
      <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_x86_64_sysv_macho_gas.S
+     asm/jump_x86_64_sysv_macho_gas.S
+     asm/ontop_x86_64_sysv_macho_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>x86
+     <binary-format>mach-o
+     <toolset>gcc
    ;
 
 alias asm_sources
@@ -659,6 +738,21 @@ alias asm_sources
      <architecture>x86
      <binary-format>pe
      <toolset>msvc
+   ;
+   
+# Embarcadero on Windows, bcc64, uses the sysv-elf format for 64-bits
+# This is configured in the embarcadero toolset as using bcc64 with the
+# command line option '-x assembler-with-cpp'.
+
+alias asm_sources
+   : asm/make_x86_64_sysv_elf_gas.S
+     asm/jump_x86_64_sysv_elf_gas.S
+     asm/ontop_x86_64_sysv_elf_gas.S
+   : <abi>ms
+     <address-model>64
+     <architecture>x86
+     <binary-format>pe
+     <toolset>embarcadero
    ;
 
 # X86_64/SYSV/X32
@@ -767,33 +861,19 @@ alias impl_sources
 
 explicit impl_sources ;
 
-obj cxx11_hdr_mutex_check : ../build/cxx11_hdr_mutex.cpp ;
-explicit cxx11_hdr_mutex_check ;
-local cxx11_mutex = [ check-target-builds
-      cxx11_hdr_mutex_check "C++11 mutex"
-    :
-    : <library>/boost/thread//boost_thread
-  ] ;
-
 alias stack_traits_sources
     : windows/stack_traits.cpp
     : <target-os>windows
-    :
-    : $(cxx11_mutex)
     ;
 
 alias stack_traits_sources
     : posix/stack_traits.cpp
-    :
-    :
-    : $(cxx11_mutex)
     ;
 
 explicit stack_traits_sources ;
 
 lib boost_context
    : impl_sources
-     execution_context.cpp
      stack_traits_sources
    ;
 
