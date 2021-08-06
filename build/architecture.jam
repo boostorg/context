@@ -55,9 +55,9 @@ rule deduce-architecture ( properties * )
         {
             return <architecture>arm ;
         }
-        else if [ configure.builds /boost/architecture//mips1 : $(properties) : mips1 ]
+        else if [ configure.builds /boost/architecture//mips : $(properties) : mips ]
         {
-            return <architecture>mips1 ;
+            return <architecture>mips ;
         }
         else if [ configure.builds /boost/architecture//power : $(properties) : power ]
         {

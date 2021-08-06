@@ -3382,12 +3382,12 @@
           <row>
             <entry>
               <para>
-                mips1
+                mips
               </para>
             </entry>
             <entry>
               <para>
-                O32|ELF
+                O32,N64|ELF
               </para>
             </entry>
             <entry>

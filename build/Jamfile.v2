@@ -237,7 +237,7 @@ alias asm_sources
      asm/ontop_mips32_o32_elf_gas.S
    : <abi>o32
      <address-model>32
-     <architecture>mips1
+     <architecture>mips
      <binary-format>elf
      <toolset>clang
    ;
@@ -248,7 +248,7 @@ alias asm_sources
      asm/ontop_mips32_o32_elf_gas.S
    : <abi>o32
      <address-model>32
-     <architecture>mips1
+     <architecture>mips
      <binary-format>elf
      <toolset>gcc
    ;
@@ -260,7 +260,7 @@ alias asm_sources
      asm/ontop_mips64_n64_elf_gas.S
    : <abi>n64
      <address-model>64
-     <architecture>mips1
+     <architecture>mips
      <binary-format>elf
      <toolset>clang
    ;
@@ -271,7 +271,7 @@ alias asm_sources
      asm/ontop_mips64_n64_elf_gas.S
    : <abi>n64
      <address-model>64
-     <architecture>mips1
+     <architecture>mips
      <binary-format>elf
      <toolset>gcc
    ;
