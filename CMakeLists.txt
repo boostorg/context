@@ -158,6 +158,9 @@ if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
       set_source_files_properties(${ASM_SOURCES} PROPERTIES COMPILE_FLAGS "/safeseh")
   endif()
 
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
+  endif()
 else()
   set(IMPL_SOURCES
     src/continuation.cpp
