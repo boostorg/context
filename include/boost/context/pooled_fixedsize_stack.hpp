@@ -4,15 +4,20 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_CONTEXT_POOLED_pooled_fixedsize_H
-#define BOOST_CONTEXT_POOLED_pooled_fixedsize_H
+#ifndef BOOST_CONTEXT_POOLED_POOLED_FIXEDSIZE_H
+#define BOOST_CONTEXT_POOLED_POOLED_FIXEDSIZE_H
 
+#if ! defined(BOOST_NO_CXX11_HDR_ATOMIC)
 #include <atomic>
+#endif
 #include <cstddef>
 #include <cstdlib>
 #include <new>
 
 #include <boost/assert.hpp>
+#if defined(BOOST_NO_CXX11_HDR_ATOMIC)
+#include <boost/atomic.hpp>
+#endif
 #include <boost/config.hpp>
 #include <boost/intrusive_ptr.hpp>
 #include <boost/pool/pool.hpp>
@@ -43,20 +48,21 @@ namespace context {
 namespace detail {
 template< typename traitsT >
 struct map_stack_allocator {
-    typedef std::size_t size_type;
-    typedef std::ptrdiff_t difference_type;
+    typedef std::size_t     size_type;
+    typedef std::ptrdiff_t  difference_type;
 
-    static char * malloc( const size_type bytes) {
-        void * block;
-        if ( ::posix_memalign( &block, traitsT::page_size(), bytes) != 0) {
+    static char * malloc( size_type bytes) {
+        void * block = BOOST_CONTEXT_NULLPTR;
+        if ( 0 != ::posix_memalign( &block, traitsT::page_size(), bytes) ) {
             return 0;
         }
-        if ( mmap( block, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_STACK, -1, 0) == MAP_FAILED) {
+        if ( MAP_FAILED == ::mmap( block, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_STACK, -1, 0) ) {
             std::free( block);
-            return 0;
+            return BOOST_CONTEXT_NULLPTR;
         }
         return reinterpret_cast< char * >( block);
     }
+
     static void free( char * const block) {
         std::free( block);
     }
@@ -69,7 +75,11 @@ class basic_pooled_fixedsize_stack {
 private:
     class storage {
     private:
+#if ! defined(BOOST_NO_CXX11_HDR_ATOMIC)
         std::atomic< std::size_t >                                  use_count_;
+#else
+        boost::atomic< std::size_t >                                use_count_;
+#endif
         std::size_t                                                 stack_size_;
 #if defined(BOOST_CONTEXT_USE_MAP_STACK)
         boost::pool< detail::map_stack_allocator< traitsT > >       storage_;
@@ -149,4 +159,4 @@ typedef basic_pooled_fixedsize_stack< stack_traits >  pooled_fixedsize_stack;
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_CONTEXT_POOLED_pooled_fixedsize_H
+#endif // BOOST_CONTEXT_POOLED_POOLED_FIXEDSIZE_H

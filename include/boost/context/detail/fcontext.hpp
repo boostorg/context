@@ -25,6 +25,16 @@ typedef void*   fcontext_t;
 struct transfer_t {
     fcontext_t  fctx;
     void    *   data;
+
+    transfer_t() BOOST_NOEXCEPT :
+        fctx( BOOST_CONTEXT_NULLPTR),
+        data( BOOST_CONTEXT_NULLPTR) {
+     }
+
+    transfer_t( fcontext_t fctx_, void * data_) BOOST_NOEXCEPT :
+        fctx( fctx_),
+        data( data_) {
+     }
 };
 
 extern "C" BOOST_CONTEXT_DECL

@@ -133,4 +133,10 @@ static constexpr std::size_t prefetch_stride{ 4 * cacheline_length };
 # define BOOST_CONTEXT_USE_MAP_STACK
 #endif
 
+#if defined(BOOST_NO_CXX11_NULLPTR)
+# define BOOST_CONTEXT_NULLPTR  0
+#else
+# define BOOST_CONTEXT_NULLPTR  nullptr
+#endif
+
 #endif // BOOST_CONTEXT_DETAIL_CONFIG_H

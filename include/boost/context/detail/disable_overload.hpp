@@ -7,9 +7,14 @@
 #ifndef BOOST_CONTEXT_DETAIL_DISABLE_OVERLOAD_H
 #define BOOST_CONTEXT_DETAIL_DISABLE_OVERLOAD_H
 
+#if ! defined(BOOST_NO_CXX11_HDR_TYPE_TRAITS)
 #include <type_traits>
+#endif
 
 #include <boost/config.hpp>
+#if defined(BOOST_NO_CXX11_HDR_TYPE_TRAITS)
+#include <boost/type_traits.hpp>
+#endif
 
 #include <boost/context/detail/config.hpp>
 
@@ -21,15 +26,15 @@ namespace boost {
 namespace context {
 namespace detail {
 
-// http://ericniebler.com/2013/08/07/universal-references-and-the-copy-constructo/
 template< typename X, typename Y >
-using disable_overload =
-    typename std::enable_if<
-        ! std::is_base_of<
+struct disable_overload : public
+    boost::enable_if<
+        ! boost::is_base_of<
             X,
-            typename std::decay< Y >::type
-        >::value
-    >::type;
+            typename boost::decay< Y >::type
+        >
+    >
+{};
 
 }}}
 

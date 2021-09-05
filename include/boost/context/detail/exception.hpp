@@ -21,9 +21,11 @@ namespace context {
 namespace detail {
 
 struct forced_unwind {
-    fcontext_t  fctx{ nullptr };
+    fcontext_t  fctx;
 
-    forced_unwind() = default;
+    forced_unwind() BOOST_NOEXCEPT_OR_NOTHROW :
+        fctx( BOOST_CONTEXT_NULLPTR) {
+    }
 
     forced_unwind( fcontext_t fctx_) :
         fctx( fctx_) {

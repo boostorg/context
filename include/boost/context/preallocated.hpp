@@ -25,7 +25,7 @@ struct preallocated {
     std::size_t     size;
     stack_context   sctx;
 
-    preallocated( void * sp_, std::size_t size_, stack_context sctx_) noexcept :
+    preallocated( void * sp_, std::size_t size_, stack_context sctx_) BOOST_NOEXCEPT_OR_NOTHROW :
         sp( sp_), size( size_), sctx( sctx_) {
     }
 };
