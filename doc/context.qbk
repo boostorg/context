@@ -20,6 +20,7 @@
 ]
 
 
+[def __boost_asio__ [*Boost.Asio]]
 [def __boost_build__ [*Boost.Build]]
 [def __boost_context__ [*Boost.Context]]
 
@@ -137,6 +138,7 @@
 [def __resume_with__ ['continuation::resume_with()]]
 [def __segmented__ [link segmented ['segmented_stack]]]
 [def __segmented_stack__ ['segmented_stack]]
+[def __spawn__ [link spawn ['spawn()]]]
 [def __stack_context__ ['stack_context]]
 [def __winfib__ ['WinFiber]]
 
@@ -165,6 +167,7 @@
 [include callcc.qbk]
 [include stack.qbk]
 [include preallocated.qbk]
+[include spawn.qbk]
 [include performance.qbk]
 [include architectures.qbk]
 [include rationale.qbk]
