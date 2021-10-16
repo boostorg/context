@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="context" name="Context" dirname="context" last-revision="$Date: 2021/09/19 06:17:32 $"
+<library id="context" name="Context" dirname="context" last-revision="$Date: 2019/10/02 06:15:27 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -319,7 +319,8 @@
     </para>
     <important>
       <para>
-        Do not jump from inside a catch block.
+        Do not jump from inside a catch block and then re-throw the exception in
+        another fiber.
       </para>
     </important>
     <anchor id="ff_ontop"/>
@@ -331,7 +332,7 @@
       Sometimes it is useful to execute a new function on top of a resumed fiber.
       For this purpose <emphasis>continuation::resume_with()</emphasis> has to be
       used. The function passed as argument must accept a rvalue reference to <link
-      linkend="ff"><emphasis>fiber</emphasis></link> and return <link linkend="ff"><emphasis>fiber</emphasis></link>.
+      linkend="ff"><emphasis>fiber</emphasis></link> and return <code><phrase role="keyword">void</phrase></code>.
     </para>
 <programlisting><phrase role="keyword">namespace</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">;</phrase>
 <phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
@@ -351,7 +352,7 @@
 <phrase role="identifier">f1</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f1</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f1: returned second time: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
 <phrase role="identifier">data</phrase><phrase role="special">+=</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
-<phrase role="identifier">f1</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f1</phrase><phrase role="special">).</phrase><phrase role="identifier">resume_with</phrase><phrase role="special">([&amp;</phrase><phrase role="identifier">data</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase><phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">){</phrase>
+<phrase role="identifier">f1</phrase><phrase role="special">=</phrase><phrase role="identifier">f1</phrase><phrase role="special">.</phrase><phrase role="identifier">resume_with</phrase><phrase role="special">([&amp;</phrase><phrase role="identifier">data</phrase><phrase role="special">](</phrase><phrase role="identifier">ctx</phrase><phrase role="special">::</phrase><phrase role="identifier">fiber</phrase><phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">f2</phrase><phrase role="special">){</phrase>
     <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">cout</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="string">&quot;f2: entered: &quot;</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">data</phrase> <phrase role="special">&lt;&lt;</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">endl</phrase><phrase role="special">;</phrase>
     <phrase role="identifier">data</phrase><phrase role="special">=-</phrase><phrase role="number">1</phrase><phrase role="special">;</phrase>
     <phrase role="keyword">return</phrase> <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">f2</phrase><phrase role="special">);</phrase>
@@ -583,7 +584,7 @@
 <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">source</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="keyword">while</phrase><phrase role="special">(!</phrase><phrase role="identifier">done</phrase><phrase role="special">){</phrase>
     <phrase role="identifier">printf</phrase><phrase role="special">(</phrase><phrase role="string">&quot;Parsed: %c\n&quot;</phrase><phrase role="special">,</phrase><phrase role="identifier">c</phrase><phrase role="special">);</phrase>
-    <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">move</phrase><phrase role="special">(</phrase><phrase role="identifier">source</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
+    <phrase role="identifier">source</phrase><phrase role="special">=</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">Move</phrase><phrase role="special">(</phrase><phrase role="identifier">source</phrase><phrase role="special">).</phrase><phrase role="identifier">resume</phrase><phrase role="special">();</phrase>
 <phrase role="special">}</phrase>
 
 <phrase role="identifier">output</phrase><phrase role="special">:</phrase>
@@ -1401,7 +1402,8 @@
     </para>
     <important>
       <para>
-        Do not jump from inside a catch block.
+        Do not jump from inside a catch block and then re-throw the exception in
+        another continuation.
       </para>
     </important>
     <anchor id="cc_ontop"/>
@@ -1414,7 +1416,8 @@
       Sometimes it is useful to execute a new function on top of a resumed continuation.
       For this purpose <emphasis>continuation::resume_with()</emphasis> has to be
       used. The function passed as argument must accept a rvalue reference to <link
-      linkend="cc"><emphasis>continuation</emphasis></link> and return <link linkend="cc"><emphasis>continuation</emphasis></link>.
+      linkend="cc"><emphasis>continuation</emphasis></link> and return <code><phrase
+      role="keyword">void</phrase></code>.
     </para>
 <programlisting><phrase role="keyword">namespace</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">=</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">;</phrase>
 <phrase role="keyword">int</phrase> <phrase role="identifier">data</phrase><phrase role="special">=</phrase><phrase role="number">0</phrase><phrase role="special">;</phrase>
@@ -3202,188 +3205,6 @@
       </varlistentry>
     </variablelist>
   </section>
-  <section id="context.spawn">
-    <title><anchor id="spawn"/><link linkend="context.spawn">Using fibers in Boost.Asio
-    with spawn()</link></title>
-    <para>
-      <link linkend="spawn"><emphasis>spawn()</emphasis></link> creates a new <emphasis>fiber</emphasis>
-      and starts new stackful thread of execution. The <link linkend="spawn"><emphasis>spawn()</emphasis></link>
-      function is a high-level wrapper over the <emphasis role="bold">Boost.Context</emphasis>
-      library. This function enables programs to implement asynchronous logic in
-      a synchronous manner. Suspending/resuming of the spawned <emphasis>fiber</emphasis>
-      is controlled by <emphasis role="bold">Boost.Asio</emphasis>.
-    </para>
-    <note>
-      <para>
-        In contrast to <emphasis role="bold">Boost.Asio</emphasis> this implementation
-        of <link linkend="spawn"><emphasis>spawn()</emphasis></link> is based only
-        on <link linkend="ff"><emphasis>fiber</emphasis></link>.
-      </para>
-    </note>
-    <bridgehead renderas="sect3" id="context.spawn.h0">
-      <phrase id="context.spawn.usage"/><link linkend="context.spawn.usage">Usage</link>
-    </bridgehead>
-<programlisting><phrase role="keyword">void</phrase> <phrase role="identifier">do_echo</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">yield_context</phrase> <phrase role="identifier">yield</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-    <phrase role="keyword">try</phrase> <phrase role="special">{</phrase>
-        <phrase role="keyword">char</phrase> <phrase role="identifier">data</phrase><phrase role="special">[</phrase><phrase role="number">128</phrase><phrase role="special">];</phrase>
-        <phrase role="keyword">for</phrase> <phrase role="special">(;;)</phrase> <phrase role="special">{</phrase>
-            <phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase role="identifier">length</phrase> <phrase role="special">=</phrase> <phrase role="identifier">my_socket</phrase><phrase role="special">.</phrase><phrase role="identifier">async_read_some</phrase><phrase role="special">(</phrase><phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">asio</phrase><phrase role="special">::</phrase><phrase role="identifier">buffer</phrase><phrase role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">),</phrase> <phrase role="identifier">yield</phrase><phrase role="special">);</phrase>
-            <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">asio</phrase><phrase role="special">::</phrase><phrase role="identifier">async_write</phrase><phrase role="special">(</phrase><phrase role="identifier">my_socket</phrase><phrase role="special">,</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">asio</phrase><phrase role="special">::</phrase><phrase role="identifier">buffer</phrase><phrase role="special">(</phrase><phrase role="identifier">data</phrase><phrase role="special">,</phrase> <phrase role="identifier">length</phrase><phrase role="special">),</phrase> <phrase role="identifier">yield</phrase><phrase role="special">);</phrase>
-        <phrase role="special">}</phrase>
-    <phrase role="special">}</phrase> <phrase role="keyword">catch</phrase> <phrase role="special">(</phrase><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase role="identifier">exception</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">e</phrase><phrase role="special">)</phrase> <phrase role="special">{</phrase>
-        <phrase role="comment">// ...</phrase>
-    <phrase role="special">}</phrase>
-<phrase role="special">}</phrase>
-<phrase role="comment">// ...</phrase>
-<phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">spawn</phrase><phrase role="special">(</phrase><phrase role="identifier">my_strand</phrase><phrase role="special">,</phrase> <phrase role="identifier">do_echo</phrase><phrase role="special">);</phrase>
-</programlisting>
-    <para>
-      This simple example demonstrates the basic usage of <link linkend="spawn"><emphasis>spawn()</emphasis></link>.
-      Function <code><phrase role="identifier">do_echo</phrase></code> is executed
-      by a new <emphasis>fiber</emphasis> that has been created by <link linkend="spawn"><emphasis>spawn()</emphasis></link>.
-    </para>
-    <para>
-      <code><phrase role="identifier">do_echo</phrase></code> gets suspended while
-      asynchronous operations like <code><phrase role="identifier">async_read_some</phrase></code>
-      and <code><phrase role="identifier">async_write</phrase></code> are started
-      and resumed after the asynchronous operation completed. Therefore <code><phrase
-      role="identifier">do_echo</phrase></code> does not require callbacks (the code
-      looks like synchronous).
-    </para>
-    <bridgehead renderas="sect3" id="context.spawn.h1">
-      <phrase id="context.spawn.call_with_current_continuation"/><link linkend="context.spawn.call_with_current_continuation">Call
-      with current continuation</link>
-    </bridgehead>
-<programlisting><phrase role="preprocessor">#include</phrase> <phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">/</phrase><phrase role="identifier">context</phrase><phrase role="special">/</phrase><phrase role="identifier">spawn</phrase><phrase role="special">.</phrase><phrase role="identifier">hpp</phrase><phrase role="special">&gt;</phrase>
-
-<phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Function</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">=</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">default_stack</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">auto</phrase> <phrase role="identifier">spawn</phrase><phrase role="special">(</phrase> <phrase role="identifier">Function</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">salloc</phrase> <phrase role="special">=</phrase> <phrase role="identifier">StackAllocator</phrase><phrase role="special">()</phrase> <phrase role="special">);</phrase>
-</programlisting>
-    <variablelist>
-      <title></title>
-      <varlistentry>
-        <term>Effects:</term>
-        <listitem>
-          <para>
-            This function is used to launch a new execution context on behalf of
-            spawned context. Parameter <code><phrase role="identifier">fn</phrase></code>
-            is the fiber function and must have signature <code><phrase role="keyword">void</phrase><phrase
-            role="special">(</phrase><phrase role="identifier">basic_yield_context</phrase><phrase
-            role="special">&lt;</phrase><phrase role="identifier">Handler</phrase><phrase
-            role="special">&gt;)</phrase></code>.
-          </para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Handler</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Function</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">=</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">default_stack</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">auto</phrase> <phrase role="identifier">spawn</phrase><phrase role="special">(</phrase> <phrase role="identifier">Handler</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">hndlr</phrase><phrase role="special">,</phrase> <phrase role="identifier">Function</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">fn</phrase><phrase role="special">,</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">salloc</phrase> <phrase role="special">=</phrase> <phrase role="identifier">StackAllocator</phrase><phrase role="special">()</phrase> <phrase role="special">);</phrase>
-</programlisting>
-    <variablelist>
-      <title></title>
-      <varlistentry>
-        <term>Effects:</term>
-        <listitem>
-          <para>
-            This function is used to launch a new execution context on behalf of
-            spawned context, calling the specified handler <code><phrase role="identifier">hndlr</phrase></code>
-            when the fiber completes. <code><phrase role="identifier">hndlr</phrase></code>
-            provides an execution context (via the the handler invocation hook) for
-            the fiber. The handler must have the signature <code><phrase role="keyword">void</phrase><phrase
-            role="special">()</phrase></code>. Parameter <code><phrase role="identifier">fn</phrase></code>
-            is the fiber function and must have signature <code><phrase role="keyword">void</phrase><phrase
-            role="special">(</phrase><phrase role="identifier">basic_yield_context</phrase><phrase
-            role="special">&lt;</phrase><phrase role="identifier">Handler</phrase><phrase
-            role="special">&gt;)</phrase></code>.
-          </para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Handler</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Function</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">=</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">default_stack</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">auto</phrase> <phrase role="identifier">spawn</phrase><phrase role="special">(</phrase> <phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">basic_yield_context</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">Handler</phrase> <phrase role="special">&gt;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">,</phrase> <phrase role="identifier">Function</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">function</phrase><phrase role="special">,</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">salloc</phrase> <phrase role="special">=</phrase> <phrase role="identifier">StackAllocator</phrase><phrase role="special">()</phrase> <phrase role="special">)</phrase>
-</programlisting>
-    <variablelist>
-      <title></title>
-      <varlistentry>
-        <term>Effects:</term>
-        <listitem>
-          <para>
-            This function is used to launch a new execution context on behalf of
-            spawned context. Parameter <code><phrase role="identifier">fn</phrase></code>
-            is the fiber function and must have signature <code><phrase role="keyword">void</phrase><phrase
-            role="special">(</phrase><phrase role="identifier">basic_yield_context</phrase><phrase
-            role="special">&lt;</phrase><phrase role="identifier">Handler</phrase><phrase
-            role="special">&gt;)</phrase></code>. <code><phrase role="identifier">ctx</phrase></code>
-            identifies the current execution context as a parent of the new fiber.
-            This specifies that the new fiber should inherit the execution context
-            of the parent. For example, if the parent fiber is executing in a particular
-            strand, then the new fiber will execute in the same strand.
-          </para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Function</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Executor</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">=</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">default_stack</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">auto</phrase> <phrase role="identifier">spawn</phrase><phrase role="special">(</phrase> <phrase role="identifier">Executor</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">ex</phrase><phrase role="special">,</phrase> <phrase role="identifier">Function</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">function</phrase><phrase role="special">,</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">salloc</phrase> <phrase role="special">=</phrase> <phrase role="identifier">StackAllocator</phrase><phrase role="special">()</phrase> <phrase role="special">)</phrase>
-</programlisting>
-    <variablelist>
-      <title></title>
-      <varlistentry>
-        <term>Effects:</term>
-        <listitem>
-          <para>
-            This function is used to launch a new execution context on behalf of
-            spawned context. Parameter <code><phrase role="identifier">fn</phrase></code>
-            is the fiber function and must have signature <code><phrase role="keyword">void</phrase><phrase
-            role="special">(</phrase><phrase role="identifier">basic_yield_context</phrase><phrase
-            role="special">&lt;</phrase><phrase role="identifier">Handler</phrase><phrase
-            role="special">&gt;)</phrase></code>. <code><phrase role="identifier">ex</phrase></code>
-            identifies the executor that will run the fiber. The new fiber is implicitly
-            given its own strand within this executor.
-          </para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Function</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Executor</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">=</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">default_stack</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">auto</phrase> <phrase role="identifier">spawn</phrase><phrase role="special">(</phrase> <phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">detail</phrase><phrase role="special">::</phrase><phrase role="identifier">net</phrase><phrase role="special">::</phrase><phrase role="identifier">strand</phrase><phrase role="special">&lt;</phrase> <phrase role="identifier">Executor</phrase> <phrase role="special">&gt;</phrase> <phrase role="keyword">const</phrase><phrase role="special">&amp;</phrase> <phrase role="identifier">ex</phrase><phrase role="special">,</phrase> <phrase role="identifier">Function</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">function</phrase><phrase role="special">,</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">salloc</phrase> <phrase role="special">=</phrase> <phrase role="identifier">StackAllocator</phrase><phrase role="special">()</phrase> <phrase role="special">)</phrase>
-</programlisting>
-    <variablelist>
-      <title></title>
-      <varlistentry>
-        <term>Effects:</term>
-        <listitem>
-          <para>
-            This function is used to launch a new execution context on behalf of
-            spawned context. Parameter <code><phrase role="identifier">fn</phrase></code>
-            is the fiber function and must have signature <code><phrase role="keyword">void</phrase><phrase
-            role="special">(</phrase><phrase role="identifier">basic_yield_context</phrase><phrase
-            role="special">&lt;</phrase><phrase role="identifier">Handler</phrase><phrase
-            role="special">&gt;)</phrase></code>. <code><phrase role="identifier">ex</phrase></code>
-            identifies the strand that will run the fiber.
-          </para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-<programlisting><phrase role="keyword">template</phrase><phrase role="special">&lt;</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">Function</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">ExecutionContext</phrase><phrase role="special">,</phrase> <phrase role="keyword">typename</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">=</phrase> <phrase role="identifier">boost</phrase><phrase role="special">::</phrase><phrase role="identifier">context</phrase><phrase role="special">::</phrase><phrase role="identifier">default_stack</phrase> <phrase role="special">&gt;</phrase>
-<phrase role="keyword">auto</phrase> <phrase role="identifier">spawn</phrase><phrase role="special">(</phrase> <phrase role="identifier">ExecutionContext</phrase> <phrase role="special">&amp;</phrase> <phrase role="identifier">ctx</phrase><phrase role="special">,</phrase> <phrase role="identifier">Function</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">function</phrase><phrase role="special">,</phrase> <phrase role="identifier">StackAllocator</phrase> <phrase role="special">&amp;&amp;</phrase> <phrase role="identifier">salloc</phrase> <phrase role="special">=</phrase> <phrase role="identifier">StackAllocator</phrase><phrase role="special">()</phrase> <phrase role="special">)</phrase>
-</programlisting>
-    <variablelist>
-      <title></title>
-      <varlistentry>
-        <term>Effects:</term>
-        <listitem>
-          <para>
-            This function is used to launch a new execution context on behalf of
-            spawned context. Parameter <code><phrase role="identifier">fn</phrase></code>
-            is the fiber function and must have signature <code><phrase role="keyword">void</phrase><phrase
-            role="special">(</phrase><phrase role="identifier">basic_yield_context</phrase><phrase
-            role="special">&lt;</phrase><phrase role="identifier">Handler</phrase><phrase
-            role="special">&gt;)</phrase></code>. <code><phrase role="identifier">ctx</phrase></code>
-            identifies the execution context that will run the fiber. The new fiber
-            is implicitly given its own strand within this execution context.
-          </para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </section>
   <section id="context.performance">
     <title><anchor id="performance"/><link linkend="context.performance">Performance</link></title>
     <para>
@@ -3522,7 +3343,7 @@
             </entry>
             <entry>
               <para>
-                AAPCS|MACH-O
+                -
               </para>
             </entry>
             <entry>
@@ -3566,7 +3387,7 @@
             </entry>
             <entry>
               <para>
-                O32|N64|ELF
+                O32,N64|ELF
               </para>
             </entry>
             <entry>
@@ -3593,7 +3414,7 @@
             </entry>
             <entry>
               <para>
-                SYSV|ELF|XCOFF
+                SYSV|ELF,XCOFF
               </para>
             </entry>
             <entry>
@@ -3620,7 +3441,7 @@
             </entry>
             <entry>
               <para>
-                SYSV|ELF|XCOFF
+                SYSV|ELF,XCOFF
               </para>
             </entry>
             <entry>
@@ -4055,11 +3876,11 @@
   <section id="context.acknowledgements">
     <title><link linkend="context.acknowledgements">Acknowledgments</link></title>
     <para>
-      I'd like to thank Adreas Fett, Artyom Beilis, Casey Bodley, Daniel Larimer,
-      David Deakins, Evgeny Shapovalov, Fernando Pelliccioni, Giovanni Piero Deretta,
-      Gordon Woodhull, Helge Bahmann, Holger Grund, Jeffrey Lee Hellrung (Jr.), Keith
-      Jeffery, Martin Husemann, Phil Endecott, Robert Stewart, Sergey Cheban, Steven
-      Watanabe, Vicente J. Botet Escriba, Wayne Piekarski.
+      I'd like to thank Adreas Fett, Artyom Beilis, Daniel Larimer, David Deakins,
+      Evgeny Shapovalov, Fernando Pelliccioni, Giovanni Piero Deretta, Gordon Woodhull,
+      Helge Bahmann, Holger Grund, Jeffrey Lee Hellrung (Jr.), Keith Jeffery, Martin
+      Husemann, Phil Endecott, Robert Stewart, Sergey Cheban, Steven Watanabe, Vicente
+      J. Botet Escriba, Wayne Piekarski.
     </para>
   </section>
 </library>
