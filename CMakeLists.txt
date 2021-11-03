@@ -25,8 +25,18 @@ unset(_default_binfmt)
 
 ## ABI
 
+math(EXPR _bits "${CMAKE_SIZEOF_VOID_P}*8")
+
 if(WIN32)
   set(_default_abi ms)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+  set(_default_abi aapcs)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^mips")
+  if(_bits EQUAL 32)
+    set(_default_abi o32)
+  else()
+    set(_default_abi n64)
+  endif()
 else()
   set(_default_abi sysv)
 endif()
@@ -37,8 +47,6 @@ set_property(CACHE BOOST_CONTEXT_ABI PROPERTY STRINGS aapcs eabi ms n32 n64 o32 
 unset(_default_abi)
 
 ## Arch-and-model
-
-math(EXPR _bits "${CMAKE_SIZEOF_VOID_P}*8")
 
 set(_all_archs arm arm64 mips32 mips64 ppc32 ppc64 riscv64 s390x i386 x86_64 combined)
 
