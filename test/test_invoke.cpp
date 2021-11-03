@@ -12,9 +12,11 @@
 #include <tuple>
 #include <utility>
 
+#include <boost/config.hpp>
 #include <boost/assert.hpp>
 #include <boost/test/unit_test.hpp>
 
+#if defined(BOOST_NO_CXX17_STD_INVOKE)
 #include <boost/context/detail/invoke.hpp>
 #include <boost/context/detail/config.hpp>
 
@@ -214,12 +216,16 @@ void test8() {
         BOOST_CHECK_EQUAL( m.k, -1);
     }
 }
+#else
+void dummy() {}
+#endif
 
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
         BOOST_TEST_SUITE("Boost.Context: invoke test suite");
 
+#if defined(BOOST_NO_CXX17_STD_INVOKE)
     test->add( BOOST_TEST_CASE( & test1) );
     test->add( BOOST_TEST_CASE( & test2) );
     test->add( BOOST_TEST_CASE( & test3) );
@@ -228,6 +234,9 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test6) );
     test->add( BOOST_TEST_CASE( & test7) );
     test->add( BOOST_TEST_CASE( & test8) );
+#else
+    test->add( BOOST_TEST_CASE( & dummy) );
+#endif
 
     return test;
 }
