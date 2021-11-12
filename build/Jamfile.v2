@@ -430,6 +430,17 @@ alias asm_sources
      <address-model>64
      <architecture>riscv
      <binary-format>elf
+     <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_riscv64_sysv_elf_gas.S
+     asm/jump_riscv64_sysv_elf_gas.S
+     asm/ontop_riscv64_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>riscv
+     <binary-format>elf
      <toolset>gcc
    ;
 
