@@ -3382,6 +3382,33 @@
           <row>
             <entry>
               <para>
+                loongarch64
+              </para>
+            </entry>
+            <entry>
+              <para>
+                SYSV|ELF
+              </para>
+            </entry>
+            <entry>
+              <para>
+                -
+              </para>
+            </entry>
+            <entry>
+              <para>
+                -
+              </para>
+            </entry>
+            <entry>
+              <para>
+                -
+              </para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>
                 mips
               </para>
             </entry>

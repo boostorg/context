@@ -15,6 +15,7 @@ architectures:
     [[arm (aarch32)] [AAPCS|ELF]      [AAPCS|PE] [-]            [AAPCS|MACH-O]]
     [[arm (aarch64)] [AAPCS|ELF]      [-]        [AAPCS|MACH-O] [AAPCS|MACH-O]]
     [[i386]          [SYSV|ELF]       [MS|PE]    [SYSV|MACH-O]  [-]]
+    [[loongarch64]   [SYSV|ELF]       [-]        [-]            [-]]
     [[mips]          [O32|N64|ELF]    [-]        [-]            [-]]
     [[ppc32]         [SYSV|ELF|XCOFF] [-]        [SYSV|MACH-O]  [-]]
     [[ppc64]         [SYSV|ELF|XCOFF] [-]        [SYSV|MACH-O]  [-]]

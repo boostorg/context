@@ -55,6 +55,10 @@ rule deduce-architecture ( properties * )
         {
             return <architecture>arm ;
         }
+        else if [ configure.builds /boost/architecture//loongarch : $(properties) : loongarch ]
+        {
+            return <architecture>loongarch ;
+        }
         else if [ configure.builds /boost/architecture//mips : $(properties) : mips ]
         {
             return <architecture>mips ;

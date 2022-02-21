@@ -48,7 +48,7 @@ unset(_default_abi)
 
 ## Arch-and-model
 
-set(_all_archs arm arm64 mips32 mips64 ppc32 ppc64 riscv64 s390x i386 x86_64 combined)
+set(_all_archs arm arm64 loongarch64 mips32 mips64 ppc32 ppc64 riscv64 s390x i386 x86_64 combined)
 
 # Try at start to auto determine arch from CMake.
 if(CMAKE_SYSTEM_PROCESSOR IN_LIST _all_archs)
@@ -72,7 +72,7 @@ else()
   endif()
 endif()
 
-set(BOOST_CONTEXT_ARCHITECTURE "${_default_arch}" CACHE STRING "Boost.Context architecture (arm, arm64, mips32, mips64, ppc32, ppc64, riscv64, s390x, i386, x86_64, combined)")
+set(BOOST_CONTEXT_ARCHITECTURE "${_default_arch}" CACHE STRING "Boost.Context architecture (arm, arm64, loongarch64, mips32, mips64, ppc32, ppc64, riscv64, s390x, i386, x86_64, combined)")
 set_property(CACHE BOOST_CONTEXT_ARCHITECTURE PROPERTY STRINGS ${_all_archs})
 
 unset(_all_archs)
