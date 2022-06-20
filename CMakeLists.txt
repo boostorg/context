@@ -6,6 +6,8 @@ cmake_minimum_required(VERSION 3.5...3.16)
 
 project(boost_context VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 
+list(APPEND CMAKE_MODULE_PATH ${boost_context_SOURCE_DIR}/cmake)
+
 # Build features
 
 ## Binary format
@@ -27,10 +29,10 @@ unset(_default_binfmt)
 
 math(EXPR _bits "${CMAKE_SIZEOF_VOID_P}*8")
 
-if(WIN32)
-  set(_default_abi ms)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^[Aa][Rr][Mm]" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
   set(_default_abi aapcs)
+elseif(WIN32)
+  set(_default_abi ms)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^mips")
   if(_bits EQUAL 32)
     set(_default_abi o32)
@@ -54,7 +56,7 @@ set(_all_archs arm arm64 loongarch64 mips32 mips64 ppc32 ppc64 riscv64 s390x i38
 if(CMAKE_SYSTEM_PROCESSOR IN_LIST _all_archs)
   set(_default_arch ${CMAKE_SYSTEM_PROCESSOR})
 elseif(_bits EQUAL 32)
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^[Aa][Rr][Mm]")
     set(_default_arch arm)
   elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^mips")
     set(_default_arch mips32)
@@ -63,7 +65,7 @@ elseif(_bits EQUAL 32)
   endif()
 else()
   if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR
-    CMAKE_SYSTEM_PROCESSOR MATCHES "^arm") # armv8
+    CMAKE_SYSTEM_PROCESSOR MATCHES "^[Aa][Rr][Mm]") # armv8
     set(_default_arch arm64)
   elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^mips")
     set(_default_arch mips64)
@@ -82,7 +84,11 @@ unset(_default_arch)
 ## Assembler type
 
 if(MSVC)
-  set(_default_asm masm)
+  if(BOOST_CONTEXT_ARCHITECTURE STREQUAL arm64 OR BOOST_CONTEXT_ARCHITECTURE STREQUAL arm)
+    set(_default_asm armasm)
+  else()
+    set(_default_asm masm)
+  endif()
 else()
   set(_default_asm gas)
 endif()
@@ -135,6 +141,8 @@ if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
     else()
       enable_language(ASM)
     endif()
+  elseif(BOOST_CONTEXT_ASSEMBLER STREQUAL armasm)
+    enable_language(ASM_ARMASM)
   else()
     enable_language(ASM_MASM)
   endif()
