@@ -41,9 +41,16 @@
 ;*  |    x27    |    x28    |    FP     |     LR    |  *
 ;*  -------------------------------------------------  *
 ;*  -------------------------------------------------  *
-;*  |  40 |  41 |  42 | 43  |           |           |  *
+;*  |  40 |  41 |  42 |  43 |  44 |  45 |  46 |  47 |  *
 ;*  -------------------------------------------------  *
-;*  | 0xa0| 0xa4| 0xa8| 0xac|           |           |  *
+;*  | 0xa0| 0xa4| 0xa8| 0xac| 0xb0| 0xb4| 0xb8| 0xbc|  *
+;*  -------------------------------------------------  *
+;*  |   base    |   limit   |  dealloc  | fiber data|  *
+;*  -------------------------------------------------  *
+;*  -------------------------------------------------  *
+;*  |  48 |  49 |  50 | 51  |           |           |  *
+;*  -------------------------------------------------  *
+;*  | 0xc0| 0xc4| 0xc8| 0xcc|           |           |  *
 ;*  -------------------------------------------------  *
 ;*  |     PC    |   align   |           |           |  *
 ;*  -------------------------------------------------  *
@@ -55,15 +62,29 @@
     IMPORT _exit
 
 make_fcontext proc
+    ; save stack top address to x3
+    mov x3, x0
+
     ; shift address in x0 (allocated stack) to lower 16 byte boundary
     and x0, x0, ~0xF
 
     ; reserve space for context-data on context-stack
-    sub  x0, x0, #0xb0
+    sub  x0, x0, #0xd0
+
+    ; save top address of context_stack as 'base'
+    str  x3, [x0, #0xa0]
+    ; save bottom address of context-stack as 'limit' and 'dealloction stack'
+    sub  x3, x3, x1
+    stp  x3, x3, [x0, #0xa8]
+    ; save 0 as 'fiber data'
+    str  xzr, [x0, #0xb8]
 
     ; third arg of make_fcontext() == address of context-function
-    ; store address as a PC to jump in
-    str  x2, [x0, #0xa0]
+    ; store address as x19 for trampoline
+    str  x2, [x0, #0x40]
+    ; store trampoline address as pc
+    adr  x2, trampoline
+    str  x2, [x0, #0xc0]
 
     ; save address of finish as return-address for context-function
     ; will be entered after context-function returns (LR register)
@@ -71,6 +92,11 @@ make_fcontext proc
     str  x1, [x0, #0x98]
 
     ret  x30 ; return pointer to context-data (x0)
+
+trampoline
+    stp  fp, lr, [sp, #-0x10]!
+    mov  fp, sp
+    blr x19
 
 finish
     ; exit code is zero

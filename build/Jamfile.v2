@@ -229,12 +229,11 @@ alias asm_sources
      <toolset>darwin
    ;
 
-# ARM/AAPCS/PE
+# ARM64/AAPCS/PE
 alias asm_sources
    : asm/make_arm64_aapcs_pe_armasm.asm
      asm/jump_arm64_aapcs_pe_armasm.asm
      asm/ontop_arm64_aapcs_pe_armasm.asm
-     untested.cpp
    : <abi>aapcs
      <address-model>64
      <architecture>arm

@@ -41,9 +41,16 @@
 ;*  |    x27    |    x28    |    FP     |     LR    |  *
 ;*  -------------------------------------------------  *
 ;*  -------------------------------------------------  *
-;*  |  40 |  41 |  42 | 43  |           |           |  *
+;*  |  40 |  41 |  42 |  43 |  44 |  45 |  46 |  47 |  *
 ;*  -------------------------------------------------  *
-;*  | 0xa0| 0xa4| 0xa8| 0xac|           |           |  *
+;*  | 0xa0| 0xa4| 0xa8| 0xac| 0xb0| 0xb4| 0xb8| 0xbc|  *
+;*  -------------------------------------------------  *
+;*  | fiber data|   base    |   limit   |  dealloc  |  *
+;*  -------------------------------------------------  *
+;*  -------------------------------------------------  *
+;*  |  48 |  49 |  50 | 51  |           |           |  *
+;*  -------------------------------------------------  *
+;*  | 0xc0| 0xc4| 0xc8| 0xcc|           |           |  *
 ;*  -------------------------------------------------  *
 ;*  |     PC    |   align   |           |           |  *
 ;*  -------------------------------------------------  *
@@ -55,7 +62,7 @@
 
 ontop_fcontext proc BOOST_CONTEXT_EXPORT
     ; prepare stack for GP + FPU
-    sub  sp, sp, #0xb0
+    sub  sp, sp, #0xd0
 
     ; save d8 - d15
     stp  d8,  d9,  [sp, #0x00]
@@ -72,13 +79,29 @@ ontop_fcontext proc BOOST_CONTEXT_EXPORT
     stp  x29, x30, [sp, #0x90]
 
     ; save LR as PC
-    str  x30, [sp, #0xa0]
+    str  x30, [sp, #0xc0]
+
+    ; save current stack base and limit
+    ldp  x5,  x6,  [x18, #0x08] ; TeStackBase and TeStackLimit at ksarm64.h
+    stp  x5,  x6,  [sp, #0xa0]
+    ; save current fiber data and deallocation stack
+    ldr  x5, [x18, #0x1478] ; TeDeallocationStack at ksarm64.h
+    ldr  x6, [x18, #0x20] ; TeFiberData at ksarm64.h
+    stp  x5,  x6,  [sp, #0xb0]
 
     ; store RSP (pointing to context-data) in X5
     mov  x4, sp
 
     ; restore RSP (pointing to context-data) from X1
     mov  sp, x0
+
+    ; restore stack base and limit
+    ldp  x5,  x6,  [sp, #0xa0]
+    stp  x5,  x6,  [x18, #0x08] ; TeStackBase and TeStackLimit at ksarm64.h
+    ; restore fiber data and deallocation stack
+    ldp  x5,  x6,  [sp, #0xb0]
+    str  x5, [x18, #0x1478] ; TeDeallocationStack at ksarm64.h
+    str  x6, [x18, #0x20] ; TeFiberData at ksarm64.h
 
     ; load d8 - d15
     ldp  d8,  d9,  [sp, #0x00]
@@ -101,7 +124,7 @@ ontop_fcontext proc BOOST_CONTEXT_EXPORT
 
     ; skip pc
     ; restore stack from GP + FPU
-    add  sp, sp, #0xb0
+    add  sp, sp, #0xc0
 
     ; jump to ontop-function
     ret x2
