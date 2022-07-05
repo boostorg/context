@@ -229,6 +229,18 @@ alias asm_sources
      <toolset>darwin
    ;
 
+# ARM64/AAPCS/PE
+alias asm_sources
+   : asm/make_arm64_aapcs_pe_armasm.asm
+     asm/jump_arm64_aapcs_pe_armasm.asm
+     asm/ontop_arm64_aapcs_pe_armasm.asm
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>pe
+     <toolset>msvc
+   ;
+
 # LOONGARCH64
 # LOONGARCH64/SYSV/ELF
 alias asm_sources
