@@ -134,4 +134,4 @@ finish:
     ; exit code is zero
     li  r3, 0
     ; exit application
-    bl  _exit@plt
+    bl  _exit

@@ -83,13 +83,13 @@ _make_fcontext:
     stw  r5, 176(r3)
 
     ; set back-chain to zero
-    li   %r0, 0
-    std  %r0, 184(%r3)
+    li   r0, 0
+    std  r0, 184(r3)
 
     ; compute address of returned transfer_t
-    addi %r0, %r3, 232
-    mr   %r4, %r0
-    std  %r4, 152(%r3)
+    addi r0, r3, 232
+    mr   r4, r0
+    std  r4, 152(r3)
 
     ; load LR
     mflr  r0
