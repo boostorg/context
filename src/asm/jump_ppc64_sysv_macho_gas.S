@@ -138,27 +138,27 @@ _jump_fcontext:
 
     ; load PC
     ld  r12, 176(r1)
-    # restore CTR
+    ; restore CTR
     mtctr  r12
 
-    # adjust stack
+    ; adjust stack
     addi  r1, r1, 184
 
-    # zero in r3 indicates first jump to context-function
+    ; zero in r3 indicates first jump to context-function
     cmpdi r3, 0
     beq use_entry_arg
 
-    # return transfer_t
+    ; return transfer_t
     std  r6, 0(r3)
     std  r5, 8(r3)
 
-    # jump to context
+    ; jump to context
     bctr
 
 use_entry_arg:
-    # copy transfer_t into transfer_fn arg registers
+    ; copy transfer_t into transfer_fn arg registers
     mr  r3, r6
     mr  r4, r5
 
-    # jump to context
+    ; jump to context
     bctr
