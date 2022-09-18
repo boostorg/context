@@ -42,7 +42,7 @@
 .align 16
 jump_fcontext:
     _CET_ENDBR
-    leaq  -0x38(%rsp), %rsp /* prepare stack */
+    leaq  -0x40(%rsp), %rsp /* prepare stack */
 
 #if !defined(BOOST_USE_TSX)
     stmxcsr  (%rsp)     /* save MMX control- and status-word */
