@@ -797,7 +797,7 @@ alias asm_sources
      asm/jump_x86_64_sysv_elf_gas.S
      asm/ontop_x86_64_sysv_elf_gas.S
    : <abi>x32
-     <address-model>64
+     <address-model>32
      <architecture>x86
      <binary-format>elf
      <toolset>clang
@@ -808,7 +808,7 @@ alias asm_sources
      asm/jump_x86_64_sysv_elf_gas.S
      asm/ontop_x86_64_sysv_elf_gas.S
    : <abi>x32
-     <address-model>64
+     <address-model>32
      <architecture>x86
      <binary-format>elf
      <toolset>gcc
@@ -819,7 +819,7 @@ alias asm_sources
      asm/jump_x86_64_sysv_elf_gas.S
      asm/ontop_x86_64_sysv_elf_gas.S
    : <abi>x32
-     <address-model>64
+     <address-model>32
      <architecture>x86
      <binary-format>elf
      <toolset>intel
