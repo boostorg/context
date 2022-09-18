@@ -49,12 +49,17 @@ jump_fcontext:
     fnstcw   0x4(%rsp)  /* save x87 control-word */
 #endif
 
-    movq  %r12, 0x8(%rsp)  /* save R12 */
-    movq  %r13, 0x10(%rsp)  /* save R13 */
-    movq  %r14, 0x18(%rsp)  /* save R14 */
-    movq  %r15, 0x20(%rsp)  /* save R15 */
-    movq  %rbx, 0x28(%rsp)  /* save RBX */
-    movq  %rbp, 0x30(%rsp)  /* save RBP */
+#if defined(BOOST_CONTEXT_TLS_STACK_PROTECTOR)
+    movq  %fs:0x28, %rcx    /* read stack guard from TLS record */
+    movq  %rcx, 0x8(%rsp)   /* save stack guard */
+#endif
+
+    movq  %r12, 0x10(%rsp)  /* save R12 */
+    movq  %r13, 0x18(%rsp)  /* save R13 */
+    movq  %r14, 0x20(%rsp)  /* save R14 */
+    movq  %r15, 0x28(%rsp)  /* save R15 */
+    movq  %rbx, 0x30(%rsp)  /* save RBX */
+    movq  %rbp, 0x38(%rsp)  /* save RBP */
 
     /* store RSP (pointing to context-data) in RAX */
     movq  %rsp, %rax
