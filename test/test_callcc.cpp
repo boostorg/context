@@ -21,8 +21,8 @@
 
 #include <boost/array.hpp>
 #include <boost/assert.hpp>
+#include <boost/core/lightweight_test.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/test/unit_test.hpp>
 #include <boost/utility.hpp>
 #include <boost/variant.hpp>
 
@@ -32,6 +32,9 @@
 #ifdef BOOST_WINDOWS
 #include <windows.h>
 #endif
+
+#define BOOST_CHECK(x) BOOST_TEST(x)
+#define BOOST_CHECK_EQUAL(a, b) BOOST_TEST_EQ(a, b)
 
 #if defined(BOOST_MSVC)
 # pragma warning(push)
@@ -485,30 +488,27 @@ void test_badcatch() {
 #endif
 }
 
-boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
+int main()
 {
-    boost::unit_test::test_suite * test =
-        BOOST_TEST_SUITE("Boost.Context: callcc test suite");
-
-    test->add( BOOST_TEST_CASE( & test_move) );
-    test->add( BOOST_TEST_CASE( & test_bind) );
-    test->add( BOOST_TEST_CASE( & test_exception) );
-    test->add( BOOST_TEST_CASE( & test_fp) );
-    test->add( BOOST_TEST_CASE( & test_stacked) );
-    test->add( BOOST_TEST_CASE( & test_prealloc) );
-    test->add( BOOST_TEST_CASE( & test_ontop) );
-    test->add( BOOST_TEST_CASE( & test_ontop_exception) );
-    test->add( BOOST_TEST_CASE( & test_termination1) );
-    test->add( BOOST_TEST_CASE( & test_termination2) );
-    test->add( BOOST_TEST_CASE( & test_sscanf) );
-    test->add( BOOST_TEST_CASE( & test_snprintf) );
+    test_move();
+    test_bind();
+    test_exception();
+    test_fp();
+    test_stacked();
+    test_prealloc();
+    test_ontop();
+    test_ontop_exception();
+    test_termination1();
+    test_termination2();
+    test_sscanf();
+    test_snprintf();
 #ifdef BOOST_WINDOWS
-    test->add( BOOST_TEST_CASE( & test_bug12215) );
+    test_bug12215();
 #endif
-    test->add( BOOST_TEST_CASE( & test_goodcatch) );
-    test->add( BOOST_TEST_CASE( & test_badcatch) );
+    test_goodcatch();
+    test_badcatch();
 
-    return test;
+    return boost::report_errors();
 }
 
 #if defined(BOOST_MSVC)

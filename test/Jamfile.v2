@@ -17,7 +17,6 @@ using flags ;
 
 project boost/context/test
     : requirements
-      <library>../../test/build//boost_unit_test_framework
       <library>/boost/context//boost_context
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
