@@ -204,14 +204,6 @@ private:
     friend detail::transfer_t
     detail::fiber_ontop( detail::transfer_t);
 
-    template< typename StackAlloc, typename Fn >
-    friend fiber
-    callcc( std::allocator_arg_t, StackAlloc &&, Fn &&);
-
-    template< typename StackAlloc, typename Fn >
-    friend fiber
-    callcc( std::allocator_arg_t, preallocated, StackAlloc &&, Fn &&);
-
     detail::fcontext_t  fctx_{ nullptr };
 
     fiber( detail::fcontext_t fctx) noexcept :
