@@ -364,4 +364,13 @@ when linking against Boost binaries.
 [endsect]
 
 
+[section:stack_protect Support for stack protection]
+
+Compiler switch `-fstack-protector` changes the default context switching logic.
+Users must define `BOOST_CONTEXT_TLS_STACK_PROTECTOR` before including any
+Boost.Context headers if stack protection is enabled.
+
+[endsect]
+
+
 [endsect]
