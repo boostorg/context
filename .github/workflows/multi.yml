@@ -1,0 +1,142 @@
+#==============================================================================
+#   Copyright (c) 2022 Nikita Kniazev
+#
+#   Use, modification and distribution is subject to the Boost Software
+#   License, Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+#   http://www.boost.org/LICENSE_1_0.txt)
+#==============================================================================
+
+name: Multiarch CI
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  emulated:
+    name: ${{ matrix.arch || 'native' }} ${{ matrix.os || matrix.distro || 'bullseye' }} ${{ matrix.toolset }}
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - arm64
+          - armel
+          - armhf
+          - i386
+          - mipsel
+          - mips64el
+          - ppc64el
+          - s390x
+        include:
+          - { arch: mips, distro: buster }
+
+    steps:
+      - name: Checkout Boost super-repo
+        env:
+          REF: ${{ github.base_ref || github.ref_name }}
+          BRANCH: ${{ env.REF != 'develop' && env.REF != 'master' && 'develop' || env.REF }}
+        shell: bash
+        run: git clone -j10 --depth=1 --branch=${{ env.BRANCH }} --no-tags
+             https://github.com/boostorg/boost.git '${{ github.workspace }}'
+
+      - name: Checkout minimal Boost
+        run: git submodule update --init --depth 1 --jobs 10 --single-branch --
+          tools/build
+          libs/config
+          tools/boostdep
+
+      - name: Checkout the commit
+        uses: actions/checkout@v3
+        with:
+          path: libs/context
+
+      - name: Checkout library dependencies
+        run: python tools/boostdep/depinst/depinst.py --git_args "--jobs 10" context
+
+      - name: "Setup QEMU and Docker"
+        if: matrix.arch
+        run: |
+          set -eu
+          sudo apt-get -o Acquire::Retries=3 update
+          sudo apt-get -o Acquire::Retries=3 -y install qemu-user-static
+          docker pull multiarch/debian-debootstrap:${{ matrix.arch }}-${{ matrix.distro || 'bullseye' }}
+
+      - name: "Building and testing on ${{ matrix.arch }}"
+        uses: addnab/docker-run-action@v3
+        if: matrix.arch
+        with:
+          image: multiarch/debian-debootstrap:${{ matrix.arch }}-${{ matrix.distro || 'bullseye' }}
+          options: -v ${{ github.workspace }}:/boost-root -w /boost-root
+          run: |
+            set -eu
+            echo "::group::Install GCC"
+              apt-get -o Acquire::Retries=3 update
+              apt-get -o Acquire::Retries=3 -yq --no-install-suggests --no-install-recommends install g++
+            echo "::endgroup::"
+            echo "::group::GCC info"
+              g++ -v
+            echo "::endgroup::"
+            echo "::group::Build B2"
+              ./bootstrap.sh
+            echo "::endgroup::"
+            echo "::group::Toolset info"
+              ./b2 libs/config/test//print_config_info
+            echo "::endgroup::"
+
+            echo "::group::Run tests"
+              ./b2 libs/context/test
+            echo "::endgroup::"
+
+  native:
+    name: native ${{ matrix.os }} ${{ matrix.toolset }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ 'ubuntu' ]
+        toolset: [ 'gcc', 'clang' ]
+        include:
+          - { os: macos, toolset: darwin, options: cxxstd=17 }
+          - { os: macos, toolset: clang, options: cxxstd=17 }
+          - { os: windows, toolset: gcc }
+          - { os: windows, toolset: clang-win, options: embed-manifest-via=linker }
+
+    steps:
+      - name: Checkout Boost super-repo
+        env:
+          REF: ${{ github.base_ref || github.ref_name }}
+          BRANCH: ${{ env.REF != 'develop' && env.REF != 'master' && 'develop' || env.REF }}
+        shell: bash
+        run: git clone -j10 --depth=1 --branch=${{ env.BRANCH }} --no-tags
+             https://github.com/boostorg/boost.git '${{ github.workspace }}'
+
+      - name: Checkout minimal Boost
+        run: git submodule update --init --depth 1 --jobs 10 --single-branch --
+          tools/build
+          libs/config
+          tools/boostdep
+
+      - name: Checkout the commit
+        uses: actions/checkout@v3
+        with:
+          path: libs/context
+
+      - name: Checkout library dependencies
+        run: python tools/boostdep/depinst/depinst.py --git_args "--jobs 10" context
+
+      - name: Bootstrap via bash
+        shell: bash
+        if: ${{ runner.os != 'Windows' }}
+        run: ./bootstrap.sh && echo "`pwd`" >> $GITHUB_PATH
+      - name: Bootstrap via bat
+        shell: pwsh
+        if: ${{ runner.os == 'Windows' }}
+        run: .\bootstrap.bat && echo "$pwd" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Dump toolset info
+        run: b2 libs/config/test//print_config_info toolset=${{ matrix.toolset }} ${{ matrix.options }}
+
+      - name: Build and test
+        run: b2 libs/context/test toolset=${{ matrix.toolset }} ${{ matrix.options }}

@@ -13,10 +13,10 @@ import os ;
 import testing ;
 import toolset ;
 import ../../config/checks/config : requires ;
+using flags ;
 
 project boost/context/test
     : requirements
-      <library>../../test/build//boost_unit_test_framework
       <library>/boost/context//boost_context
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
@@ -48,19 +48,13 @@ rule native-impl ( properties * )
     return $(result) ;
 }
 
-rule segmented-stack ( properties * )
-{
-    local result  ;
-    if ( <toolset>gcc in $(properties) )
-    {
-        result = <segmented-stacks>on ;
-    }
-    else
-    {
-        result = <build>no ;
-    }
-    return $(result) ;
-}
+obj is_libstdcxx : is_libstdcxx.cpp ;
+explicit is_libstdcxx ;
+
+local only-when-segmented-stack-is-available =
+    [ check-has-flag <cxxflags>-fsplit-stack : <segmented-stacks>on : <build>no ]
+    [ check-target-builds is_libstdcxx "is libstdc++" : : <build>no ]
+  ;
 
 test-suite minimal :
 [ run test_invoke.cpp :
@@ -134,7 +128,7 @@ test-suite minimal :
 [ run test_fiber.cpp :
     : :
     <context-impl>ucontext
-    <conditional>@segmented-stack
+    $(only-when-segmented-stack-is-available)
     [ requires cxx11_auto_declarations
                cxx11_constexpr
                cxx11_defaulted_functions
@@ -189,7 +183,7 @@ test-suite minimal :
 [ run test_callcc.cpp :
     : :
     <context-impl>ucontext
-    <conditional>@segmented-stack
+    $(only-when-segmented-stack-is-available)
     [ requires cxx11_auto_declarations
                cxx11_constexpr
                cxx11_defaulted_functions
