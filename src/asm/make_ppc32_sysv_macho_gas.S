@@ -106,12 +106,12 @@ _make_fcontext:
     ; load LR
     mflr  r0
     ; jump to label 1
-    bl  1f
-1:
+    bl  l1
+l1:
     ; load LR into R4
     mflr  r4
     ; compute abs address of label finish
-    addi  r4, r4, finish - 1b
+    addi  r4, r4, lo16((finish - .) + 4)
     ; restore LR
     mtlr  r0
     ; save address of finish as return-address for context-function
