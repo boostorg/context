@@ -83,9 +83,9 @@ rule deduce-architecture ( properties * )
         {
             return <architecture>x86 ;
         }
-        else if [ configure.builds /boost/architecture//combined : $(properties) : combined ]
+        else if [ configure.builds /boost/architecture//arm+x86 : $(properties) : arm+x86 ]
         {
-            return <architecture>combined ;
+            return <architecture>arm+x86 ;
         }
     }
 }

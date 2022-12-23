@@ -853,7 +853,7 @@ alias asm_sources
      asm/jump_combined_sysv_macho_gas.S
      asm/ontop_combined_sysv_macho_gas.S
    : <abi>sysv
-     <architecture>combined
+     <architecture>arm+x86
      <binary-format>mach-o
    ;
 
