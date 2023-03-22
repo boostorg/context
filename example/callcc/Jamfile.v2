@@ -13,7 +13,6 @@ import indirect ;
 import modules ;
 import os ;
 import toolset ;
-import architecture ;
 
 project boost/context/example/callcc
     : requirements
