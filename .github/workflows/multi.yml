@@ -81,8 +81,11 @@ jobs:
             echo "::group::Build B2"
               ./bootstrap.sh
             echo "::endgroup::"
-            echo "::group::Toolset info"
+            echo "::group::Boost.Config info"
               ./b2 libs/config/test//print_config_info
+            echo "::endgroup::"
+            echo "::group::Boost.Predef info"
+              ./b2 libs/predef/test//info_as_c -a --verbose-test
             echo "::endgroup::"
 
             echo "::group::Run tests"
@@ -135,8 +138,11 @@ jobs:
         if: ${{ runner.os == 'Windows' }}
         run: .\bootstrap.bat && echo "$pwd" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Dump toolset info
+      - name: Boost.Config info
         run: b2 libs/config/test//print_config_info toolset=${{ matrix.toolset }} ${{ matrix.options }}
+
+      - name: Boost.Predef info
+        run: b2 libs/predef/test//info_as_c -a --verbose-test toolset=${{ matrix.toolset }} ${{ matrix.options }}
 
       - name: Build and test
         run: b2 libs/context/test toolset=${{ matrix.toolset }} ${{ matrix.options }}
