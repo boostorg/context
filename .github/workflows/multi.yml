@@ -30,6 +30,7 @@ jobs:
           - ppc64el
           - s390x
         include:
+          - { arch: powerpc, distro: jessie, archived: true }
           - { arch: mips, distro: buster }
 
     steps:
@@ -74,8 +75,15 @@ jobs:
             echo "::group::lscpu"
               lscpu
             echo "::endgroup::"
-            echo "::group::Install GCC"
+            echo "::group::/etc/apt/sources.list"
+              ${{ ! matrix.archived }} || sed -i 's/deb.debian/archive.debian/' /etc/apt/sources.list
+              cat /etc/apt/sources.list
+            echo "::endgroup::"
+            echo "::group::Update repository"
+              ${{ ! matrix.archived }} || echo 'APT::Get::AllowUnauthenticated "true";' >> /etc/apt/apt.conf
               apt-get -o Acquire::Retries=3 update
+            echo "::endgroup::"
+            echo "::group::Install GCC"
               apt-get -o Acquire::Retries=3 -yq --no-install-suggests --no-install-recommends install g++
             echo "::endgroup::"
             echo "::group::GCC info"
