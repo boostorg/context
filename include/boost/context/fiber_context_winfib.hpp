@@ -20,19 +20,12 @@
 #include <memory>
 #include <ostream>
 #include <system_error>
-#include <tuple>
 #include <utility>
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 
 #include <boost/context/detail/disable_overload.hpp>
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-#include <boost/context/detail/exchange.hpp>
-#endif
-#if defined(BOOST_NO_CXX17_STD_INVOKE)
-#include <boost/context/detail/invoke.hpp>
-#endif
 #include <boost/context/fixedsize_stack.hpp>
 #include <boost/context/flags.hpp>
 #include <boost/context/preallocated.hpp>
@@ -47,8 +40,7 @@
 # pragma warning(disable: 4702)
 #endif
 
-namespace boost {
-namespace context {
+namespace std {
 namespace detail {
 
 // tampoline function
@@ -121,11 +113,7 @@ struct BOOST_CONTEXT_DECL fiber_context_activation_record {
         // context switch from parent context to `this`-context
         // context switch
         ::SwitchToFiber( fiber_context);
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        return detail::exchange( current()->from, nullptr);
-#else
         return std::exchange( current()->from, nullptr);
-#endif
     }
 
     template< typename Ctx, typename Fn >
@@ -135,43 +123,17 @@ struct BOOST_CONTEXT_DECL fiber_context_activation_record {
         // `this` will become the active (running) context
         // returned by fiber_context::current()
         current() = this;
-#if defined(BOOST_NO_CXX14_GENERIC_LAMBDAS)
-        current()->ontop = std::bind(
-                [](typename std::decay< Fn >::type & fn, fiber_context_activation_record *& ptr){
-                    Ctx c{ ptr };
-                    c = fn( std::move( c) );
-                    if ( ! c) {
-                        ptr = nullptr;
-                    }
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                    return exchange( c.ptr_, nullptr);
-#else
-                    return std::exchange( c.ptr_, nullptr);
-#endif
-                },
-                std::forward< Fn >( fn),
-                std::placeholders::_1);
-#else
         current()->ontop = [fn=std::forward<Fn>(fn)](fiber_context_activation_record *& ptr){
             Ctx c{ ptr };
             c = fn( std::move( c) );
             if ( ! c) {
                 ptr = nullptr;
             }
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-            return exchange( c.ptr_, nullptr);
-#else
             return std::exchange( c.ptr_, nullptr);
-#endif
         };
-#endif
         // context switch
         ::SwitchToFiber( fiber_context);
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        return detail::exchange( current()->from, nullptr);
-#else
         return std::exchange( current()->from, nullptr);
-#endif
     }
 
     virtual void deallocate() noexcept {
@@ -222,11 +184,7 @@ public:
         Ctx c{ from };
         try {
             // invoke context-function
-#if defined(BOOST_NO_CXX17_STD_INVOKE)
-            c = boost::context::detail::invoke( fn_, std::move( c) );
-#else
             c = std::invoke( fn_, std::move( c) );
-#endif  
         } catch ( forced_unwind const& ex) {
             c = Ctx{ ex.from };
         }
@@ -346,11 +304,7 @@ public:
 
     fiber_context resume() && {
         BOOST_ASSERT( nullptr != ptr_);
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        detail::fiber_context_activation_record * ptr = detail::exchange( ptr_, nullptr)->resume();
-#else
         detail::fiber_context_activation_record * ptr = std::exchange( ptr_, nullptr)->resume();
-#endif
         if ( BOOST_UNLIKELY( detail::fiber_context_activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
         } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_context_activation_record::current()->ontop) ) {
@@ -363,13 +317,8 @@ public:
     template< typename Fn >
     fiber_context resume_with( Fn && fn) && {
         BOOST_ASSERT( nullptr != ptr_);
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        detail::fiber_context_activation_record * ptr =
-            detail::exchange( ptr_, nullptr)->resume_with< fiber_context >( std::forward< Fn >( fn) );
-#else
         detail::fiber_context_activation_record * ptr =
             std::exchange( ptr_, nullptr)->resume_with< fiber_context >( std::forward< Fn >( fn) );
-#endif
         if ( BOOST_UNLIKELY( detail::fiber_context_activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
         } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_context_activation_record::current()->ontop) ) {
@@ -441,7 +390,7 @@ void swap( fiber_context & l, fiber_context & r) noexcept {
     l.swap( r);
 }
 
-}}
+}
 
 #if defined(BOOST_MSVC)
 # pragma warning(pop)

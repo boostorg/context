@@ -11,9 +11,7 @@
 
 #include <libunwind.h>
 
-#include <boost/context/fiber_context.hpp>
-
-namespace ctx = boost::context;
+#include <boost/context/fiber_context>
 
 void backtrace() {
 	unw_cursor_t cursor;
@@ -45,13 +43,13 @@ void foo() {
 	bar();
 }
 
-ctx::fiber_context f1( ctx::fiber_context && c) {
+std::fiber_context f1( std::fiber_context && c) {
     foo();
     return std::move( c);
 }
 
 int main() {
-    ctx::fiber_context{ f1 }.resume();
+    std::fiber_context{ f1 }.resume();
     std::cout << "main: done" << std::endl;
     return EXIT_SUCCESS;
 }

@@ -20,7 +20,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/utility.hpp>
 
-#include <boost/context/detail/config.hpp>
 #include <boost/context/detail/fcontext.hpp>
 
 #define BOOST_CHECK(x) BOOST_TEST(x)
@@ -65,7 +64,7 @@ typedef simple_stack_allocator<
             8 * 1024 * 1024, 64 * 1024, 8 * 1024
         >                                       stack_allocator;
 
-namespace ctx = boost::context::detail;
+namespace ctx = std::detail;
 
 typedef simple_stack_allocator<
     8 * 1024 * 1024, // 8MB

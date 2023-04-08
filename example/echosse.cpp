@@ -10,9 +10,7 @@
 #include <iostream>
 #include <emmintrin.h>
 
-#include <boost/context/fiber_context.hpp>
-
-namespace ctx = boost::context;
+#include <boost/context/fiber_context>
 
 void echoSSE( int i) {
     __m128i xmm;
@@ -28,8 +26,8 @@ void echoSSE( int i) {
 
 int main( int argc, char * argv[]) {
     int i = 0;
-    ctx::fiber_context f{
-        [&i](ctx::fiber_context && f) {
+    std::fiber_context f{
+        [&i](std::fiber_context && f) {
             for (;;) {
                 std::cout << i;
                 echoSSE( i);

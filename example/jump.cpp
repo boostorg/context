@@ -7,14 +7,12 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/context/fiber_context.hpp>
-
-namespace ctx = boost::context;
+#include <boost/context/fiber_context>
 
 int main() {
     int data = 1;
-    ctx::fiber_context f{
-            [&data](ctx::fiber_context && f){
+    std::fiber_context f{
+            [&data](std::fiber_context && f){
                 std::cout << "entered first time: " << data << std::endl;
                 data += 2;
                 f = std::move( f).resume();

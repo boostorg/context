@@ -26,8 +26,7 @@
 #  include BOOST_ABI_PREFIX
 #endif
 
-namespace boost {
-namespace context {
+namespace std {
 namespace detail {
 
 #if BOOST_COMP_GNUC || BOOST_COMP_CLANG
@@ -69,7 +68,7 @@ void prefetch_range( void * addr, std::size_t len) {
 
 #undef BOOST_HAS_PREFETCH
 
-}}}
+}}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX

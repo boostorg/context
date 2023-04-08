@@ -16,8 +16,7 @@
 # include BOOST_ABI_PREFIX
 #endif
 
-namespace boost {
-namespace context {
+namespace std {
 namespace detail {
 
 typedef void*   fcontext_t;
@@ -36,7 +35,7 @@ fcontext_t BOOST_CONTEXT_CALLDECL make_fcontext( void * sp, std::size_t size, vo
 extern "C" BOOST_CONTEXT_DECL
 transfer_t BOOST_CONTEXT_CALLDECL ontop_fcontext( fcontext_t const to, void * vp, transfer_t (* fn)( transfer_t) );
 
-}}}
+}}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX

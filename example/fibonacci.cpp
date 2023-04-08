@@ -8,14 +8,12 @@
 #include <iostream>
 #include <memory>
 
-#include <boost/context/fiber_context.hpp>
-
-namespace ctx = boost::context;
+#include <boost/context/fiber_context>
 
 int main() {
     int a;
-    ctx::fiber_context f{
-        [&a](ctx::fiber_context && f){
+    std::fiber_context f{
+        [&a](std::fiber_context && f){
             a=0;
             int b=1;
             for(;;){

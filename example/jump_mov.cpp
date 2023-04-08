@@ -7,9 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/context/fiber_context.hpp>
-
-namespace ctx = boost::context;
+#include <boost/context/fiber_context>
 
 class moveable {
 public:
@@ -40,8 +38,8 @@ public:
 
 int main() {
     moveable data{ 1 };
-    ctx::fiber_context f{ std::allocator_arg, ctx::fixedsize_stack{},
-                     [&data](ctx::fiber_context && f){
+    std::fiber_context f{ std::allocator_arg, std::fixedsize_stack{},
+                     [&data](std::fiber_context && f){
                         std::cout << "entered first time: " << data.value << std::endl;
                         data = std::move( moveable{ 3 });
                         f = std::move( f).resume();

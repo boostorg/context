@@ -8,9 +8,7 @@
 #include <iostream>
 #include <memory>
 
-#include <boost/context/fiber_context.hpp>
-
-namespace ctx = boost::context;
+#include <boost/context/fiber_context>
 
 #ifdef BOOST_MSVC //MS VisualStudio
 __declspec(noinline) void access( char *buf);
@@ -34,15 +32,15 @@ int main() {
     int count = 100*1024;
 #if defined(BOOST_USE_SEGMENTED_STACKS)
     std::cout << "using segmented_stack stacks: allocates " << count << " * 4kB == " << 4 * count << "kB on stack, ";
-    std::cout << "initial stack size = " << ctx::segmented_stack::traits_type::default_size() / 1024 << "kB" << std::endl;
+    std::cout << "initial stack size = " << std::segmented_stack::traits_type::default_size() / 1024 << "kB" << std::endl;
     std::cout << "application should not fail" << std::endl;
 #else
     std::cout << "using standard stacks: allocates " << count << " * 4kB == " << 4 * count << "kB on stack, ";
-    std::cout << "initial stack size = " << ctx::fixedsize_stack::traits_type::default_size() / 1024 << "kB" << std::endl;
+    std::cout << "initial stack size = " << std::fixedsize_stack::traits_type::default_size() / 1024 << "kB" << std::endl;
     std::cout << "application might fail" << std::endl;
 #endif
-    ctx::fiber_context{
-        [count](ctx::fiber_context && f){
+    std::fiber_context{
+        [count](std::fiber_context && f){
             bar( count);
             return std::move( f);
         }}.resume();

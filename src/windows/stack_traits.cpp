@@ -51,8 +51,7 @@ std::size_t pagesize() BOOST_NOEXCEPT_OR_NOTHROW {
 
 }
 
-namespace boost {
-namespace context {
+namespace std {
 
 // Windows seams not to provide a limit for the stacksize
 // libcoco uses 32k+4k bytes as minimum
@@ -91,7 +90,7 @@ stack_traits::maximum_size() BOOST_NOEXCEPT_OR_NOTHROW {
     return  1 * 1024 * 1024 * 1024; // 1GB
 }
 
-}}
+}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX

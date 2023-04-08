@@ -10,20 +10,18 @@
 #include <stdexcept>
 #include <string>
 
-#include <boost/context/fiber_context.hpp>
-
-namespace ctx = boost::context;
+#include <boost/context/fiber_context>
 
 struct my_exception : public std::runtime_error {
-    ctx::fiber_context    f;
-    my_exception( ctx::fiber_context && f_, std::string const& what) :
+    std::fiber_context    f;
+    my_exception( std::fiber_context && f_, std::string const& what) :
         std::runtime_error{ what },
         f{ std::move( f_) } {
     }
 };
 
 int main() {
-    ctx::fiber_context f{[](ctx::fiber_context && f) ->ctx::fiber_context {
+    std::fiber_context f{[](std::fiber_context && f) ->std::fiber_context {
         std::cout << "entered" << std::endl;
         try {
             f = std::move( f).resume();
@@ -34,7 +32,7 @@ int main() {
         return {};
     }};
     f = std::move( f).resume();
-    f = std::move( f).resume_with([](ctx::fiber_context && f) ->ctx::fiber_context {
+    f = std::move( f).resume_with([](std::fiber_context && f) ->std::fiber_context {
         throw my_exception(std::move( f), "abc");
         return {};
     });

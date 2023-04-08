@@ -16,8 +16,7 @@
 # include BOOST_ABI_PREFIX
 #endif
 
-namespace boost {
-namespace context {
+namespace std {
 namespace detail {
 
 // zero-initialization
@@ -51,7 +50,7 @@ fiber_context_activation_record::current() noexcept {
 
 }
 
-}}
+}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 # include BOOST_ABI_SUFFIX

@@ -34,8 +34,7 @@ void __splitstack_block_signals_context( void * [BOOST_CONTEXT_SEGMENTS],
                                          int * new_value, int * old_value);
 }
 
-namespace boost {
-namespace context {
+namespace std {
 
 template< typename traitsT >
 class basic_segmented_stack {
@@ -73,7 +72,7 @@ typedef basic_segmented_stack< stack_traits > segmented_stack;
 typedef segmented_stack default_stack;
 # endif
 
-}}
+}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX

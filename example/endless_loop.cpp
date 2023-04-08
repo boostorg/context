@@ -7,11 +7,9 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/context/fiber_context.hpp>
+#include <boost/context/fiber_context>
 
-namespace ctx = boost::context;
-
-ctx::fiber_context bar( ctx::fiber_context && f) {
+std::fiber_context bar( std::fiber_context && f) {
     do {
         std::cout << "bar\n";
         f = std::move( f).resume();
@@ -20,7 +18,7 @@ ctx::fiber_context bar( ctx::fiber_context && f) {
 }
 
 int main() {
-    ctx::fiber_context f{ bar };
+    std::fiber_context f{ bar };
     do {
         std::cout << "foo\n";
         f = std::move( f).resume();

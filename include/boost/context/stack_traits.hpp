@@ -17,8 +17,7 @@
 #  include BOOST_ABI_PREFIX
 #endif
 
-namespace boost {
-namespace context {
+namespace std {
 
 struct BOOST_CONTEXT_DECL stack_traits
 {
@@ -33,7 +32,7 @@ struct BOOST_CONTEXT_DECL stack_traits
     static std::size_t maximum_size() BOOST_NOEXCEPT_OR_NOTHROW;
 };
 
-}}
+}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX

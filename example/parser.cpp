@@ -12,9 +12,7 @@
 #include <memory>
 #include <sstream>
 
-#include <boost/context/fiber_context.hpp>
-
-namespace ctx = boost::context;
+#include <boost/context/fiber_context>
 
 /*
  * grammar:
@@ -98,7 +96,7 @@ int main() {
         char c;
         bool done = false;
         // execute parser in new execution context
-        ctx::fiber_context source{[&is,&c,&done](ctx::fiber_context && sink){
+        std::fiber_context source{[&is,&c,&done](std::fiber_context && sink){
             // create parser with callback function
             Parser p( is,
                       [&sink,&c](char c_){

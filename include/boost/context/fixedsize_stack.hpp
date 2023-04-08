@@ -32,8 +32,7 @@ extern "C" {
 #  include BOOST_ABI_PREFIX
 #endif
 
-namespace boost {
-namespace context {
+namespace std {
 
 template< typename traitsT >
 class basic_fixedsize_stack {
@@ -88,7 +87,7 @@ typedef basic_fixedsize_stack< stack_traits >  fixedsize_stack;
 typedef fixedsize_stack default_stack;
 # endif
 
-}}
+}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX

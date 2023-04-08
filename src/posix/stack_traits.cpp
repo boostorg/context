@@ -56,8 +56,7 @@ rlim_t stacksize_limit() BOOST_NOEXCEPT_OR_NOTHROW {
 
 }
 
-namespace boost {
-namespace context {
+namespace std {
 
 bool
 stack_traits::is_unbounded() BOOST_NOEXCEPT_OR_NOTHROW {
@@ -86,7 +85,7 @@ stack_traits::maximum_size() BOOST_NOEXCEPT_OR_NOTHROW {
     return static_cast< std::size_t >( stacksize_limit() );
 }
 
-}}
+}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX

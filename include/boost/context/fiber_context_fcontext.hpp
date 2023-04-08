@@ -17,23 +17,15 @@
 #include <functional>
 #include <memory>
 #include <ostream>
-#include <tuple>
 #include <utility>
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/intrusive_ptr.hpp>
 
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-#include <boost/context/detail/exchange.hpp>
-#endif
-#if defined(BOOST_NO_CXX17_STD_INVOKE)
-#include <boost/context/detail/invoke.hpp>
-#endif
 #include <boost/context/detail/disable_overload.hpp>
 #include <boost/context/detail/exception.hpp>
 #include <boost/context/detail/fcontext.hpp>
-#include <boost/context/detail/tuple.hpp>
 #include <boost/context/fixedsize_stack.hpp>
 #include <boost/context/flags.hpp>
 #include <boost/context/preallocated.hpp>
@@ -60,8 +52,7 @@
 # pragma warning(disable: 4702)
 #endif
 
-namespace boost {
-namespace context {
+namespace std {
 namespace detail {
 
 inline
@@ -111,11 +102,7 @@ transfer_t fiber_context_ontop( transfer_t t) {
     t.data = nullptr;
     // execute function, pass fiber_context via reference
     Ctx c = p( Ctx{ t.fctx } );
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-    return { exchange( c.fctx_, nullptr), nullptr };
-#else
     return { std::exchange( c.fctx_, nullptr), nullptr };
-#endif
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn >
@@ -151,16 +138,8 @@ public:
 
     fcontext_t run( fcontext_t fctx) {
         // invoke context-function
-#if defined(BOOST_NO_CXX17_STD_INVOKE)
-        Ctx c = boost::context::detail::invoke( fn_, Ctx{ fctx } );
-#else
         Ctx c = std::invoke( fn_, Ctx{ fctx } );
-#endif
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        return exchange( c.fctx_, nullptr);
-#else
         return std::exchange( c.fctx_, nullptr);
-#endif
     }
 };
 
@@ -296,11 +275,7 @@ public:
     ~fiber_context() {
         if ( BOOST_UNLIKELY( nullptr != fctx_) ) {
             detail::ontop_fcontext(
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                    detail::exchange( fctx_, nullptr),
-#else
                     std::exchange( fctx_, nullptr),
-#endif
                    nullptr,
                    detail::fiber_context_unwind);
         }
@@ -324,11 +299,7 @@ public:
     fiber_context resume() && {
         BOOST_ASSERT( nullptr != fctx_);
         return { detail::jump_fcontext(
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                    detail::exchange( fctx_, nullptr),
-#else
                     std::exchange( fctx_, nullptr),
-#endif
                     nullptr).fctx };
     }
 
@@ -337,11 +308,7 @@ public:
         BOOST_ASSERT( nullptr != fctx_);
         auto p = std::forward< Fn >( fn);
         return { detail::ontop_fcontext(
-#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-                    detail::exchange( fctx_, nullptr),
-#else
                     std::exchange( fctx_, nullptr),
-#endif
                     & p,
                     detail::fiber_context_ontop< fiber_context, decltype(p) >).fctx };
     }
@@ -369,7 +336,7 @@ public:
     }
 
     #if !defined(BOOST_EMBTC)
-    
+
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
     operator<<( std::basic_ostream< charT, traitsT > & os, fiber_context const& other) {
@@ -381,7 +348,7 @@ public:
     }
 
     #else
-    
+
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
     operator<<( std::basic_ostream< charT, traitsT > & os, fiber_context const& other);
@@ -402,13 +369,13 @@ public:
     }
 
 #endif
-    
+
 inline
 void swap( fiber_context & l, fiber_context & r) noexcept {
     l.swap( r);
 }
 
-}}
+}
 
 #if defined(BOOST_MSVC)
 # pragma warning(pop)

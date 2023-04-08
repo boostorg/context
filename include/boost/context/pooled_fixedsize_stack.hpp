@@ -36,8 +36,7 @@ extern "C" {
 #  include BOOST_ABI_PREFIX
 #endif
 
-namespace boost {
-namespace context {
+namespace std {
 
 #if defined(BOOST_CONTEXT_USE_MAP_STACK)
 namespace detail {
@@ -143,7 +142,7 @@ public:
 
 typedef basic_pooled_fixedsize_stack< stack_traits >  pooled_fixedsize_stack;
 
-}}
+}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX

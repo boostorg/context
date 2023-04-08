@@ -7,11 +7,9 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/context/fiber_context.hpp>
+#include <boost/context/fiber_context>
 
-namespace ctx = boost::context;
-
-ctx::fiber_context f1( ctx::fiber_context && f) {
+std::fiber_context f1( std::fiber_context && f) {
     std::cout << "f1: entered first time" << std::endl;
     f = std::move( f).resume();
     std::cout << "f1: entered second time" << std::endl;
@@ -19,7 +17,7 @@ ctx::fiber_context f1( ctx::fiber_context && f) {
 }
 
 int main() {
-    ctx::fiber_context f{ f1 };
+    std::fiber_context f{ f1 };
     f = std::move( f).resume();
     std::cout << "f1: returned first time" << std::endl;
     f = std::move( f).resume();
