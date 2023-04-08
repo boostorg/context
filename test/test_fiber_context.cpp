@@ -141,19 +141,29 @@ void test_move() {
             value1 = i;
             return std::move( f);
         }};
+    BOOST_CHECK( ! f1.empty() );
+    BOOST_CHECK( f1.can_resume() );
     f1 = std::move( f1).resume();
     BOOST_CHECK_EQUAL( 1, value1);
     BOOST_CHECK( f1);
+    BOOST_CHECK( ! f1.empty() );
+    BOOST_CHECK( f1.can_resume() );
     ctx::fiber_context f2;
-    BOOST_CHECK( ! f2);
+    BOOST_CHECK( f2.empty() );
+    BOOST_CHECK( ! f2.can_resume() );
     f2 = std::move( f1);
-    BOOST_CHECK( ! f1);
+    BOOST_CHECK( f1.empty() );
+    BOOST_CHECK( ! f1.can_resume() );
     BOOST_CHECK( f2);
+    BOOST_CHECK( ! f2.empty() );
+    BOOST_CHECK( f2.can_resume() );
     i = 3;
     f2 = std::move( f2).resume();
     BOOST_CHECK_EQUAL( 3, value1);
-    BOOST_CHECK( ! f1);
-    BOOST_CHECK( ! f2);
+    BOOST_CHECK( f1.empty() );
+    BOOST_CHECK( ! f1.can_resume() );
+    BOOST_CHECK( f2.empty() );
+    BOOST_CHECK( ! f2.can_resume() );
 }
 
 void test_bind() {
@@ -178,7 +188,8 @@ void test_exception() {
             }};
         f = std::move( f).resume();
         BOOST_CHECK_EQUAL( std::string( what), value2);
-        BOOST_CHECK( ! f);
+        BOOST_CHECK( f.empty() );
+        BOOST_CHECK( ! f.can_resume() );
     }
 #ifdef BOOST_MSVC
     {
@@ -207,7 +218,8 @@ void test_fp() {
         }};
     f = std::move( f).resume();
     BOOST_CHECK_EQUAL( 10.58, value3);
-    BOOST_CHECK( ! f);
+    BOOST_CHECK( f.empty() );
+    BOOST_CHECK( ! f.can_resume() );
 }
 
 void test_stacked() {
@@ -227,7 +239,8 @@ void test_stacked() {
     f = std::move( f).resume();
     BOOST_CHECK_EQUAL( 3, value1);
     BOOST_CHECK_EQUAL( 3.14, value3);
-    BOOST_CHECK( ! f);
+    BOOST_CHECK( f.empty() );
+    BOOST_CHECK( ! f.can_resume() );
 }
 
 void test_prealloc() {
@@ -245,7 +258,8 @@ void test_prealloc() {
         }};
     f = std::move( f).resume();
     BOOST_CHECK_EQUAL( 7, value1);
-    BOOST_CHECK( ! f);
+    BOOST_CHECK( f.empty() );
+    BOOST_CHECK( ! f.can_resume() );
 }
 
 void test_ontop() {
@@ -272,7 +286,8 @@ void test_ontop() {
         ctx::fiber_context f1;
         ctx::fiber_context f{ [&f1](ctx::fiber_context && f) {
                     f = std::move( f).resume();
-                    BOOST_CHECK( ! f);
+                    BOOST_CHECK( f.empty() );
+                    BOOST_CHECK( ! f.can_resume() );
                     return std::move( f1);
                 }};
         f = std::move( f).resume();
@@ -334,7 +349,8 @@ void test_termination1() {
             }};
         f = std::move( f).resume();
         BOOST_CHECK_EQUAL( 3, value1);
-        BOOST_CHECK( ! f);
+        BOOST_CHECK( f.empty() );
+        BOOST_CHECK( ! f.can_resume() );
     }
     {
         value1 = 0;
@@ -353,7 +369,8 @@ void test_termination1() {
         BOOST_CHECK( f);
         i = 7;
         f = std::move( f).resume();
-        BOOST_CHECK( ! f);
+        BOOST_CHECK( f.empty() );
+        BOOST_CHECK( ! f.can_resume() );
         BOOST_CHECK_EQUAL( i, value1);
     }
 }

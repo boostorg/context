@@ -346,16 +346,26 @@ public:
                     detail::fiber_context_ontop< fiber_context, decltype(p) >).fctx };
     }
 
-    explicit operator bool() const noexcept {
-        return nullptr != fctx_;
+    bool can_resume() noexcept {
+        if ( ! empty() ) {
+            // TODO:
+            // *this has no owning thread
+            // calling thread is the owning thread represented by *this
+            return true;
+        }
+        return false;
     }
 
-    bool operator!() const noexcept {
+    explicit operator bool() const noexcept {
+        return ! empty();
+    }
+
+    bool empty() const noexcept {
         return nullptr == fctx_;
     }
 
-    bool operator<( fiber_context const& other) const noexcept {
-        return fctx_ < other.fctx_;
+    void swap( fiber_context & other) noexcept {
+        std::swap( fctx_, other.fctx_);
     }
 
     #if !defined(BOOST_EMBTC)
@@ -377,10 +387,6 @@ public:
     operator<<( std::basic_ostream< charT, traitsT > & os, fiber_context const& other);
 
     #endif
-
-    void swap( fiber_context & other) noexcept {
-        std::swap( fctx_, other.fctx_);
-    }
 };
 
 #if defined(BOOST_EMBTC)
