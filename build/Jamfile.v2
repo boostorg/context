@@ -869,8 +869,7 @@ alias impl_sources
 
 # ucontext_t
 alias impl_sources
-    : continuation.cpp
-      fiber.cpp
+    : fiber.cpp
     : <context-impl>ucontext
     [ requires cxx11_auto_declarations
                cxx11_constexpr
@@ -889,8 +888,7 @@ alias impl_sources
 
 # WinFiber
 alias impl_sources
-    : continuation.cpp
-      fiber.cpp
+    : fiber.cpp
     : <context-impl>winfib
     [ requires cxx11_auto_declarations
                cxx11_constexpr
