@@ -81,3 +81,7 @@ exe circle
 #exe echosse
 #    : echosse.cpp
 #    ;
+
+exe wait_on_sender
+    : wait_on_sender.cpp
+    ;
