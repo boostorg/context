@@ -8,7 +8,7 @@
 #include <iostream>
 #include <memory>
 
-#include <boost/context/fiber.hpp>
+#include <boost/context/fiber_context.hpp>
 
 namespace ctx = boost::context;
 
@@ -41,8 +41,8 @@ int main() {
     std::cout << "initial stack size = " << ctx::fixedsize_stack::traits_type::default_size() / 1024 << "kB" << std::endl;
     std::cout << "application might fail" << std::endl;
 #endif
-    ctx::fiber{
-        [count](ctx::fiber && f){
+    ctx::fiber_context{
+        [count](ctx::fiber_context && f){
             bar( count);
             return std::move( f);
         }}.resume();

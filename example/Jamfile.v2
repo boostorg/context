@@ -15,7 +15,7 @@ import os ;
 import toolset ;
 import architecture ;
 
-project boost/context/example/fiber
+project boost/context/example/fiber_context
     : requirements
       <library>/boost/context//boost_context
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack

@@ -110,7 +110,7 @@ ENDIF
 
     ; load NT_TIB
     mov  r10,  gs:[030h]
-    ; save fiber local storage
+    ; save fiber_context local storage
     mov  rax, [r10+020h]
     mov  [rsp+0b0h], rax
     ; save current deallocation stack
@@ -160,7 +160,7 @@ ENDIF
 
     ; load NT_TIB
     mov  r10,  gs:[030h]
-    ; restore fiber local storage
+    ; restore fiber_context local storage
     mov  rax, [rsp+0b0h]
     mov  [r10+020h], rax
     ; restore current deallocation stack

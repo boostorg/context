@@ -8,13 +8,13 @@
 #include <iostream>
 #include <list>
 
-#include <boost/context/fiber.hpp>
+#include <boost/context/fiber_context.hpp>
 
 namespace ctx = boost::context;
 
 int main() {
-    ctx::fiber f1, f2, f3;
-    f3 = ctx::fiber{[&](ctx::fiber && f)->ctx::fiber{
+    ctx::fiber_context f1, f2, f3;
+    f3 = ctx::fiber_context{[&](ctx::fiber_context && f)->ctx::fiber_context{
         f2 = std::move( f);
         for (;;) {
             std::cout << "f3\n";
@@ -22,7 +22,7 @@ int main() {
         }
         return {};
     }};
-    f2 = ctx::fiber{[&](ctx::fiber && f)->ctx::fiber{
+    f2 = ctx::fiber_context{[&](ctx::fiber_context && f)->ctx::fiber_context{
         f1 = std::move( f);
         for (;;) {
             std::cout << "f2\n";
@@ -30,7 +30,7 @@ int main() {
         }
         return {};
     }};
-    f1 = ctx::fiber{[&](ctx::fiber && /*main*/)->ctx::fiber{
+    f1 = ctx::fiber_context{[&](ctx::fiber_context && /*main*/)->ctx::fiber_context{
         for (;;) {
             std::cout << "f1\n";
             f3 = std::move( f2).resume();

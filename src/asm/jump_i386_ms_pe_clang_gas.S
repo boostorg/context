@@ -47,7 +47,7 @@ _jump_fcontext:
 
     /* load NT_TIB */
     movl  %fs:(0x18), %edx
-    /* load fiber local storage */
+    /* load fiber_context local storage */
     movl  0x10(%edx), %eax
     movl  %eax, 0x8(%esp)
     /* load current dealloction stack */
@@ -86,7 +86,7 @@ _jump_fcontext:
 
     /* restore NT_TIB into EDX */
     movl  %fs:(0x18), %edx
-    /* restore fiber local storage */
+    /* restore fiber_context local storage */
     movl  0x8(%esp), %ecx
     movl  %ecx, 0x10(%edx)
     /* restore current deallocation stack */

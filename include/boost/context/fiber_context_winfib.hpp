@@ -55,72 +55,72 @@ namespace detail {
 // entered if the execution context
 // is resumed for the first time
 template< typename Record >
-static VOID WINAPI fiber_entry_func( LPVOID data) noexcept {
+static VOID WINAPI fiber_context_entry_func( LPVOID data) noexcept {
     Record * record = static_cast< Record * >( data);
     BOOST_ASSERT( nullptr != record);
     // start execution of toplevel context-function
     record->run();
 }
 
-struct BOOST_CONTEXT_DECL fiber_activation_record {
-    LPVOID                                                      fiber{ nullptr };
+struct BOOST_CONTEXT_DECL fiber_context_activation_record {
+    LPVOID                                                      fiber_context{ nullptr };
     stack_context                                               sctx{};
     bool                                                        main_ctx{ true };
-    fiber_activation_record                                       *   from{ nullptr };
-    std::function< fiber_activation_record*(fiber_activation_record*&) >    ontop{};
+    fiber_context_activation_record                                       *   from{ nullptr };
+    std::function< fiber_context_activation_record*(fiber_context_activation_record*&) >    ontop{};
     bool                                                        terminated{ false };
     bool                                                        force_unwind{ false };
 
-    static fiber_activation_record *& current() noexcept;
+    static fiber_context_activation_record *& current() noexcept;
 
     // used for toplevel-context
     // (e.g. main context, thread-entry context)
-    fiber_activation_record() noexcept {
+    fiber_context_activation_record() noexcept {
 #if ( _WIN32_WINNT > 0x0600)
         if ( ::IsThreadAFiber() ) {
-            fiber = ::GetCurrentFiber();
+            fiber_context = ::GetCurrentFiber();
         } else {
-            fiber = ::ConvertThreadToFiber( nullptr);
+            fiber_context = ::ConvertThreadToFiber( nullptr);
         }
 #else
-        fiber = ::ConvertThreadToFiber( nullptr);
-        if ( BOOST_UNLIKELY( nullptr == fiber) ) {
+        fiber_context = ::ConvertThreadToFiber( nullptr);
+        if ( BOOST_UNLIKELY( nullptr == fiber_context) ) {
             BOOST_ASSERT( ERROR_ALREADY_FIBER == ::GetLastError());
-            fiber = ::GetCurrentFiber(); 
-            BOOST_ASSERT( nullptr != fiber);
-            BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != fiber);
+            fiber_context = ::GetCurrentFiber(); 
+            BOOST_ASSERT( nullptr != fiber_context);
+            BOOST_ASSERT( reinterpret_cast< LPVOID >( 0x1E00) != fiber_context);
         }
 #endif
     }
 
-    fiber_activation_record( stack_context sctx_) noexcept :
+    fiber_context_activation_record( stack_context sctx_) noexcept :
         sctx{ sctx_ },
         main_ctx{ false } {
     } 
 
-    virtual ~fiber_activation_record() {
+    virtual ~fiber_context_activation_record() {
         if ( BOOST_UNLIKELY( main_ctx) ) {
             ::ConvertFiberToThread();
         } else {
-            ::DeleteFiber( fiber);
+            ::DeleteFiber( fiber_context);
         }
     }
 
-    fiber_activation_record( fiber_activation_record const&) = delete;
-    fiber_activation_record & operator=( fiber_activation_record const&) = delete;
+    fiber_context_activation_record( fiber_context_activation_record const&) = delete;
+    fiber_context_activation_record & operator=( fiber_context_activation_record const&) = delete;
 
     bool is_main_context() const noexcept {
         return main_ctx;
     }
 
-    fiber_activation_record * resume() {
+    fiber_context_activation_record * resume() {
         from = current();
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
         current() = this;
         // context switch from parent context to `this`-context
         // context switch
-        ::SwitchToFiber( fiber);
+        ::SwitchToFiber( fiber_context);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         return detail::exchange( current()->from, nullptr);
 #else
@@ -129,15 +129,15 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
     }
 
     template< typename Ctx, typename Fn >
-    fiber_activation_record * resume_with( Fn && fn) {
+    fiber_context_activation_record * resume_with( Fn && fn) {
         from = current();
         // store `this` in static, thread local pointer
         // `this` will become the active (running) context
-        // returned by fiber::current()
+        // returned by fiber_context::current()
         current() = this;
 #if defined(BOOST_NO_CXX14_GENERIC_LAMBDAS)
         current()->ontop = std::bind(
-                [](typename std::decay< Fn >::type & fn, fiber_activation_record *& ptr){
+                [](typename std::decay< Fn >::type & fn, fiber_context_activation_record *& ptr){
                     Ctx c{ ptr };
                     c = fn( std::move( c) );
                     if ( ! c) {
@@ -152,7 +152,7 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
                 std::forward< Fn >( fn),
                 std::placeholders::_1);
 #else
-        current()->ontop = [fn=std::forward<Fn>(fn)](fiber_activation_record *& ptr){
+        current()->ontop = [fn=std::forward<Fn>(fn)](fiber_context_activation_record *& ptr){
             Ctx c{ ptr };
             c = fn( std::move( c) );
             if ( ! c) {
@@ -166,7 +166,7 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
         };
 #endif
         // context switch
-        ::SwitchToFiber( fiber);
+        ::SwitchToFiber( fiber_context);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
         return detail::exchange( current()->from, nullptr);
 #else
@@ -178,37 +178,37 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
     }
 };
 
-struct BOOST_CONTEXT_DECL fiber_activation_record_initializer {
-    fiber_activation_record_initializer() noexcept;
-    ~fiber_activation_record_initializer();
+struct BOOST_CONTEXT_DECL fiber_context_activation_record_initializer {
+    fiber_context_activation_record_initializer() noexcept;
+    ~fiber_context_activation_record_initializer();
 };
 
 struct forced_unwind {
-    fiber_activation_record  *  from{ nullptr };
+    fiber_context_activation_record  *  from{ nullptr };
 
-    explicit forced_unwind( fiber_activation_record * from_) :
+    explicit forced_unwind( fiber_context_activation_record * from_) :
         from{ from_ } {
     }
 };
 
 template< typename Ctx, typename StackAlloc, typename Fn >
-class fiber_capture_record : public fiber_activation_record {
+class fiber_context_capture_record : public fiber_context_activation_record {
 private:
     typename std::decay< StackAlloc >::type             salloc_;
     typename std::decay< Fn >::type                     fn_;
 
-    static void destroy( fiber_capture_record * p) noexcept {
+    static void destroy( fiber_context_capture_record * p) noexcept {
         typename std::decay< StackAlloc >::type salloc = std::move( p->salloc_);
         stack_context sctx = p->sctx;
         // deallocate activation record
-        p->~fiber_capture_record();
+        p->~fiber_context_capture_record();
         // destroy stack with stack allocator
         salloc.deallocate( sctx);
     }
 
 public:
-    fiber_capture_record( stack_context sctx, StackAlloc && salloc, Fn && fn) noexcept :
-        fiber_activation_record( sctx),
+    fiber_context_capture_record( stack_context sctx, StackAlloc && salloc, Fn && fn) noexcept :
+        fiber_context_activation_record( sctx),
         salloc_( std::forward< StackAlloc >( salloc)),
         fn_( std::forward< Fn >( fn) ) {
     }
@@ -236,13 +236,13 @@ public:
         terminated = true;
         force_unwind = false;
         std::move( c).resume();
-        BOOST_ASSERT_MSG( false, "fiber already terminated");
+        BOOST_ASSERT_MSG( false, "fiber_context already terminated");
     }
 };
 
 template< typename Ctx, typename StackAlloc, typename Fn >
-static fiber_activation_record * create_fiber1( StackAlloc && salloc, Fn && fn) {
-    typedef fiber_capture_record< Ctx, StackAlloc, Fn >  capture_t;
+static fiber_context_activation_record * create_fiber_context1( StackAlloc && salloc, Fn && fn) {
+    typedef fiber_context_capture_record< Ctx, StackAlloc, Fn >  capture_t;
 
     auto sctx = salloc.allocate();
     BOOST_ASSERT( ( sizeof( capture_t) ) < sctx.size);
@@ -254,13 +254,13 @@ static fiber_activation_record * create_fiber1( StackAlloc && salloc, Fn && fn) 
     capture_t * record = new ( storage) capture_t{
             sctx, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) };
     // create user-context
-    record->fiber = ::CreateFiber( sctx.size, & detail::fiber_entry_func< capture_t >, record);
+    record->fiber_context = ::CreateFiber( sctx.size, & detail::fiber_context_entry_func< capture_t >, record);
     return record;
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn >
-static fiber_activation_record * create_fiber2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
-    typedef fiber_capture_record< Ctx, StackAlloc, Fn >  capture_t; 
+static fiber_context_activation_record * create_fiber_context2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
+    typedef fiber_context_capture_record< Ctx, StackAlloc, Fn >  capture_t; 
 
     BOOST_ASSERT( ( sizeof( capture_t) ) < palloc.size);
     // reserve space for control structure
@@ -271,54 +271,54 @@ static fiber_activation_record * create_fiber2( preallocated palloc, StackAlloc 
     capture_t * record = new ( storage) capture_t{
             palloc.sctx, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) };
     // create user-context
-    record->fiber = ::CreateFiber( palloc.sctx.size, & detail::fiber_entry_func< capture_t >, record);
+    record->fiber_context = ::CreateFiber( palloc.sctx.size, & detail::fiber_context_entry_func< capture_t >, record);
     return record;
 }
 
 }
 
-class BOOST_CONTEXT_DECL fiber {
+class BOOST_CONTEXT_DECL fiber_context {
 private:
-    friend struct detail::fiber_activation_record;
+    friend struct detail::fiber_context_activation_record;
 
     template< typename Ctx, typename StackAlloc, typename Fn >
-    friend class detail::fiber_capture_record;
+    friend class detail::fiber_context_capture_record;
 
     template< typename Ctx, typename StackAlloc, typename Fn >
-    friend detail::fiber_activation_record * detail::create_fiber1( StackAlloc &&, Fn &&);
+    friend detail::fiber_context_activation_record * detail::create_fiber_context1( StackAlloc &&, Fn &&);
 
     template< typename Ctx, typename StackAlloc, typename Fn >
-    friend detail::fiber_activation_record * detail::create_fiber2( preallocated, StackAlloc &&, Fn &&);
+    friend detail::fiber_context_activation_record * detail::create_fiber_context2( preallocated, StackAlloc &&, Fn &&);
 
-    detail::fiber_activation_record   *   ptr_{ nullptr };
+    detail::fiber_context_activation_record   *   ptr_{ nullptr };
 
-    fiber( detail::fiber_activation_record * ptr) noexcept :
+    fiber_context( detail::fiber_context_activation_record * ptr) noexcept :
         ptr_{ ptr } {
     }
 
 public:
-    fiber() = default;
+    fiber_context() = default;
 
-    template< typename Fn, typename = detail::disable_overload< fiber, Fn > >
-    fiber( Fn && fn) :
-        fiber{ std::allocator_arg,
+    template< typename Fn, typename = detail::disable_overload< fiber_context, Fn > >
+    fiber_context( Fn && fn) :
+        fiber_context{ std::allocator_arg,
                fixedsize_stack(),
                std::forward< Fn >( fn) } {
     }
 
     template< typename StackAlloc, typename Fn >
-    fiber( std::allocator_arg_t, StackAlloc && salloc, Fn && fn) :
-        ptr_{ detail::create_fiber1< fiber >(
+    fiber_context( std::allocator_arg_t, StackAlloc && salloc, Fn && fn) :
+        ptr_{ detail::create_fiber_context1< fiber_context >(
                 std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) } {;
     }
 
     template< typename StackAlloc, typename Fn >
-    fiber( std::allocator_arg_t, preallocated palloc, StackAlloc && salloc, Fn && fn) :
-        ptr_{ detail::create_fiber2< fiber >(
+    fiber_context( std::allocator_arg_t, preallocated palloc, StackAlloc && salloc, Fn && fn) :
+        ptr_{ detail::create_fiber_context2< fiber_context >(
                 palloc, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) } {
     }
 
-    ~fiber() {
+    ~fiber_context() {
         if ( BOOST_UNLIKELY( nullptr != ptr_) && ! ptr_->main_ctx) {
             if ( BOOST_LIKELY( ! ptr_->terminated) ) {
                 ptr_->force_unwind = true;
@@ -329,52 +329,52 @@ public:
         }
     }
 
-    fiber( fiber const&) = delete;
-    fiber & operator=( fiber const&) = delete;
+    fiber_context( fiber_context const&) = delete;
+    fiber_context & operator=( fiber_context const&) = delete;
 
-    fiber( fiber && other) noexcept {
+    fiber_context( fiber_context && other) noexcept {
         swap( other);
     }
 
-    fiber & operator=( fiber && other) noexcept {
+    fiber_context & operator=( fiber_context && other) noexcept {
         if ( BOOST_LIKELY( this != & other) ) {
-            fiber tmp = std::move( other);
+            fiber_context tmp = std::move( other);
             swap( tmp);
         }
         return * this;
     }
 
-    fiber resume() && {
+    fiber_context resume() && {
         BOOST_ASSERT( nullptr != ptr_);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        detail::fiber_activation_record * ptr = detail::exchange( ptr_, nullptr)->resume();
+        detail::fiber_context_activation_record * ptr = detail::exchange( ptr_, nullptr)->resume();
 #else
-        detail::fiber_activation_record * ptr = std::exchange( ptr_, nullptr)->resume();
+        detail::fiber_context_activation_record * ptr = std::exchange( ptr_, nullptr)->resume();
 #endif
-        if ( BOOST_UNLIKELY( detail::fiber_activation_record::current()->force_unwind) ) {
+        if ( BOOST_UNLIKELY( detail::fiber_context_activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
-        } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_activation_record::current()->ontop) ) {
-            ptr = detail::fiber_activation_record::current()->ontop( ptr);
-            detail::fiber_activation_record::current()->ontop = nullptr;
+        } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_context_activation_record::current()->ontop) ) {
+            ptr = detail::fiber_context_activation_record::current()->ontop( ptr);
+            detail::fiber_context_activation_record::current()->ontop = nullptr;
         }
         return { ptr };
     }
 
     template< typename Fn >
-    fiber resume_with( Fn && fn) && {
+    fiber_context resume_with( Fn && fn) && {
         BOOST_ASSERT( nullptr != ptr_);
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
-        detail::fiber_activation_record * ptr =
-            detail::exchange( ptr_, nullptr)->resume_with< fiber >( std::forward< Fn >( fn) );
+        detail::fiber_context_activation_record * ptr =
+            detail::exchange( ptr_, nullptr)->resume_with< fiber_context >( std::forward< Fn >( fn) );
 #else
-        detail::fiber_activation_record * ptr =
-            std::exchange( ptr_, nullptr)->resume_with< fiber >( std::forward< Fn >( fn) );
+        detail::fiber_context_activation_record * ptr =
+            std::exchange( ptr_, nullptr)->resume_with< fiber_context >( std::forward< Fn >( fn) );
 #endif
-        if ( BOOST_UNLIKELY( detail::fiber_activation_record::current()->force_unwind) ) {
+        if ( BOOST_UNLIKELY( detail::fiber_context_activation_record::current()->force_unwind) ) {
             throw detail::forced_unwind{ ptr};
-        } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_activation_record::current()->ontop) ) {
-            ptr = detail::fiber_activation_record::current()->ontop( ptr);
-            detail::fiber_activation_record::current()->ontop = nullptr;
+        } else if ( BOOST_UNLIKELY( nullptr != detail::fiber_context_activation_record::current()->ontop) ) {
+            ptr = detail::fiber_context_activation_record::current()->ontop( ptr);
+            detail::fiber_context_activation_record::current()->ontop = nullptr;
         }
         return { ptr };
     }
@@ -387,7 +387,7 @@ public:
         return nullptr == ptr_ || ptr_->terminated;
     }
 
-    bool operator<( fiber const& other) const noexcept {
+    bool operator<( fiber_context const& other) const noexcept {
         return ptr_ < other.ptr_;
     }
     
@@ -395,7 +395,7 @@ public:
     
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
-    operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other) {
+    operator<<( std::basic_ostream< charT, traitsT > & os, fiber_context const& other) {
         if ( nullptr != other.ptr_) {
             return os << other.ptr_;
         } else {
@@ -407,11 +407,11 @@ public:
     
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
-    operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other);
+    operator<<( std::basic_ostream< charT, traitsT > & os, fiber_context const& other);
 
     #endif
 
-    void swap( fiber & other) noexcept {
+    void swap( fiber_context & other) noexcept {
         std::swap( ptr_, other.ptr_);
     }
 };
@@ -420,7 +420,7 @@ public:
 
     template< typename charT, class traitsT >
     inline std::basic_ostream< charT, traitsT > &
-    operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other) {
+    operator<<( std::basic_ostream< charT, traitsT > & os, fiber_context const& other) {
         if ( nullptr != other.ptr_) {
             return os << other.ptr_;
         } else {
@@ -431,11 +431,9 @@ public:
 #endif
 
 inline
-void swap( fiber & l, fiber & r) noexcept {
+void swap( fiber_context & l, fiber_context & r) noexcept {
     l.swap( r);
 }
-
-typedef fiber fiber_context;
 
 }}
 

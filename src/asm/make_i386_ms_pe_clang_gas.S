@@ -70,7 +70,7 @@ _make_fcontext:
     movl  %ecx, 0x10(%eax)
     /* save bottom address of context-stack as 'dealloction stack' */
     movl  %ecx, 0xc(%eax)
-	/* set fiber-storage to zero */
+	/* set fiber_context-storage to zero */
 	xorl  %ecx, %ecx
     movl  %ecx, 0x8(%eax)
 

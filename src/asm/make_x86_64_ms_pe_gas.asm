@@ -121,7 +121,7 @@ make_fcontext:
     movq  %rcx, 0xc0(%rax)
     /* save address of context stack limit as 'dealloction stack' */
     movq  %rcx, 0xb8(%rax)
-	/* set fiber-storage to zero */
+	/* set fiber_context-storage to zero */
     xorq  %rcx, %rcx
     movq  %rcx, 0xb0(%rax)
 

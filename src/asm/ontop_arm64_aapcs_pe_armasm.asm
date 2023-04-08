@@ -45,7 +45,7 @@
 ;*  -------------------------------------------------  *
 ;*  | 0xa0| 0xa4| 0xa8| 0xac| 0xb0| 0xb4| 0xb8| 0xbc|  *
 ;*  -------------------------------------------------  *
-;*  | fiber data|   base    |   limit   |  dealloc  |  *
+;*  | fiber_context data|   base    |   limit   |  dealloc  |  *
 ;*  -------------------------------------------------  *
 ;*  -------------------------------------------------  *
 ;*  |  48 |  49 |  50 | 51  |           |           |  *
@@ -84,7 +84,7 @@ ontop_fcontext proc BOOST_CONTEXT_EXPORT
     ; save current stack base and limit
     ldp  x5,  x6,  [x18, #0x08] ; TeStackBase and TeStackLimit at ksarm64.h
     stp  x5,  x6,  [sp, #0xa0]
-    ; save current fiber data and deallocation stack
+    ; save current fiber_context data and deallocation stack
     ldr  x5, [x18, #0x1478] ; TeDeallocationStack at ksarm64.h
     ldr  x6, [x18, #0x20] ; TeFiberData at ksarm64.h
     stp  x5,  x6,  [sp, #0xb0]
@@ -98,7 +98,7 @@ ontop_fcontext proc BOOST_CONTEXT_EXPORT
     ; restore stack base and limit
     ldp  x5,  x6,  [sp, #0xa0]
     stp  x5,  x6,  [x18, #0x08] ; TeStackBase and TeStackLimit at ksarm64.h
-    ; restore fiber data and deallocation stack
+    ; restore fiber_context data and deallocation stack
     ldp  x5,  x6,  [sp, #0xb0]
     str  x5, [x18, #0x1478] ; TeDeallocationStack at ksarm64.h
     str  x6, [x18, #0x20] ; TeFiberData at ksarm64.h

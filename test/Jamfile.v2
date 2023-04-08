@@ -89,7 +89,7 @@ test-suite minimal :
                cxx11_thread_local
                cxx11_variadic_templates ] ]
 
-[ run test_fiber.cpp :
+[ run test_fiber_context.cpp :
     : :
     <context-impl>fcontext
     [ requires cxx11_auto_declarations
@@ -105,9 +105,9 @@ test-suite minimal :
                cxx11_template_aliases
                cxx11_thread_local
                cxx11_variadic_templates ]
-    : test_fiber_asm ]
+    : test_fiber_context_asm ]
 
-[ run test_fiber.cpp :
+[ run test_fiber_context.cpp :
     : :
     <conditional>@native-impl
     [ requires cxx11_auto_declarations
@@ -123,9 +123,9 @@ test-suite minimal :
                cxx11_template_aliases
                cxx11_thread_local
                cxx11_variadic_templates ]
-    : test_fiber_native ]
+    : test_fiber_context_native ]
 
-[ run test_fiber.cpp :
+[ run test_fiber_context.cpp :
     : :
     <context-impl>ucontext
     $(only-when-segmented-stack-is-available)
@@ -142,7 +142,7 @@ test-suite minimal :
                cxx11_template_aliases
                cxx11_thread_local
                cxx11_variadic_templates ]
-    : test_fiber_segmented ] ;
+    : test_fiber_context_segmented ] ;
 
 test-suite full :
     minimal ;

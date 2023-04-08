@@ -8,13 +8,13 @@
 #include <iostream>
 #include <tuple>
 
-#include <boost/context/fiber.hpp>
+#include <boost/context/fiber_context.hpp>
 
 namespace ctx = boost::context;
 
 int main() {
     int data = 0;
-    ctx::fiber f{ [&data](ctx::fiber && f) {
+    ctx::fiber_context f{ [&data](ctx::fiber_context && f) {
                         std::cout << "f1: entered first time: " << data  << std::endl;
                         data += 1;
                         f = std::move( f).resume();
@@ -30,7 +30,7 @@ int main() {
     f = std::move( f).resume();
     std::cout << "f1: returned second time: " << data << std::endl;
     data += 1;
-    f = std::move( f).resume_with([&data](ctx::fiber && f){
+    f = std::move( f).resume_with([&data](ctx::fiber_context && f){
         std::cout << "f2: entered: " << data << std::endl;
         data = -1;
         return std::move( f);

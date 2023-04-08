@@ -39,7 +39,7 @@ ENDIF
     ; load NT_TIB into ECX
     mov  edx, fs:[018h]
     assume  fs:error
-    ; load fiber local storage
+    ; load fiber_context local storage
     mov  eax, [edx+010h]
     mov  [esp+08h], eax
     ; load current deallocation stack
@@ -80,7 +80,7 @@ ENDIF
     ; load NT_TIB into EDX
     mov  edx, fs:[018h]
     assume  fs:error
-    ; restore fiber local storage
+    ; restore fiber_context local storage
     mov  ecx, [esp+08h]
     mov  [edx+010h], ecx
     ; restore current deallocation stack

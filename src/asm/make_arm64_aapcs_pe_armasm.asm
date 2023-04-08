@@ -45,7 +45,7 @@
 ;*  -------------------------------------------------  *
 ;*  | 0xa0| 0xa4| 0xa8| 0xac| 0xb0| 0xb4| 0xb8| 0xbc|  *
 ;*  -------------------------------------------------  *
-;*  |   base    |   limit   |  dealloc  | fiber data|  *
+;*  |   base    |   limit   |  dealloc  | fiber_context data|  *
 ;*  -------------------------------------------------  *
 ;*  -------------------------------------------------  *
 ;*  |  48 |  49 |  50 | 51  |           |           |  *
@@ -76,7 +76,7 @@ make_fcontext proc
     ; save bottom address of context-stack as 'limit' and 'dealloction stack'
     sub  x3, x3, x1
     stp  x3, x3, [x0, #0xa8]
-    ; save 0 as 'fiber data'
+    ; save 0 as 'fiber_context data'
     str  xzr, [x0, #0xb8]
 
     ; third arg of make_fcontext() == address of context-function

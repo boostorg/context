@@ -115,7 +115,7 @@ jump_fcontext:
 
     /* load NT_TIB */
     movq  %gs:(0x30), %r10
-    /* save fiber local storage */
+    /* save fiber_context local storage */
     movq  0x20(%r10), %rax
     movq  %rax, 0xb0(%rsp)
     /* save current deallocation stack */
@@ -163,7 +163,7 @@ jump_fcontext:
 
     /* load NT_TIB */
     movq  %gs:(0x30), %r10
-    /* restore fiber local storage */
+    /* restore fiber_context local storage */
     movq  0xb0(%rsp), %rax
     movq  %rax, 0x20(%r10)
     /* restore current deallocation stack */

@@ -10,7 +10,7 @@
 #include <iostream>
 #include <emmintrin.h>
 
-#include <boost/context/fiber.hpp>
+#include <boost/context/fiber_context.hpp>
 
 namespace ctx = boost::context;
 
@@ -28,8 +28,8 @@ void echoSSE( int i) {
 
 int main( int argc, char * argv[]) {
     int i = 0;
-    ctx::fiber f{
-        [&i](ctx::fiber && f) {
+    ctx::fiber_context f{
+        [&i](ctx::fiber_context && f) {
             for (;;) {
                 std::cout << i;
                 echoSSE( i);

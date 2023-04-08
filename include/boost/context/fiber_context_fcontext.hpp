@@ -65,13 +65,13 @@ namespace context {
 namespace detail {
 
 inline
-transfer_t fiber_unwind( transfer_t t) {
+transfer_t fiber_context_unwind( transfer_t t) {
     throw forced_unwind( t.fctx);
     return { nullptr, nullptr };
 }
 
 template< typename Rec >
-transfer_t fiber_exit( transfer_t t) noexcept {
+transfer_t fiber_context_exit( transfer_t t) noexcept {
     Rec * rec = static_cast< Rec * >( t.data);
 #if BOOST_CONTEXT_SHADOW_STACK
     // destory shadow stack
@@ -85,7 +85,7 @@ transfer_t fiber_exit( transfer_t t) noexcept {
 }
 
 template< typename Rec >
-void fiber_entry( transfer_t t) noexcept {
+void fiber_context_entry( transfer_t t) noexcept {
     // transfer control structure to the context-stack
     Rec * rec = static_cast< Rec * >( t.data);
     BOOST_ASSERT( nullptr != t.fctx);
@@ -100,16 +100,16 @@ void fiber_entry( transfer_t t) noexcept {
     }
     BOOST_ASSERT( nullptr != t.fctx);
     // destroy context-stack of `this`context on next context
-    ontop_fcontext( t.fctx, rec, fiber_exit< Rec >);
+    ontop_fcontext( t.fctx, rec, fiber_context_exit< Rec >);
     BOOST_ASSERT_MSG( false, "context already terminated");
 }
 
 template< typename Ctx, typename Fn >
-transfer_t fiber_ontop( transfer_t t) {
+transfer_t fiber_context_ontop( transfer_t t) {
     BOOST_ASSERT( nullptr != t.data);
     auto p = *static_cast< Fn * >( t.data);
     t.data = nullptr;
-    // execute function, pass fiber via reference
+    // execute function, pass fiber_context via reference
     Ctx c = p( Ctx{ t.fctx } );
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
     return { exchange( c.fctx_, nullptr), nullptr };
@@ -119,31 +119,31 @@ transfer_t fiber_ontop( transfer_t t) {
 }
 
 template< typename Ctx, typename StackAlloc, typename Fn >
-class fiber_record {
+class fiber_context_record {
 private:
     stack_context                                       sctx_;
     typename std::decay< StackAlloc >::type             salloc_;
     typename std::decay< Fn >::type                     fn_;
 
-    static void destroy( fiber_record * p) noexcept {
+    static void destroy( fiber_context_record * p) noexcept {
         typename std::decay< StackAlloc >::type salloc = std::move( p->salloc_);
         stack_context sctx = p->sctx_;
-        // deallocate fiber_record
-        p->~fiber_record();
+        // deallocate fiber_context_record
+        p->~fiber_context_record();
         // destroy stack with stack allocator
         salloc.deallocate( sctx);
     }
 
 public:
-    fiber_record( stack_context sctx, StackAlloc && salloc,
+    fiber_context_record( stack_context sctx, StackAlloc && salloc,
             Fn && fn) noexcept :
         sctx_( sctx),
         salloc_( std::forward< StackAlloc >( salloc)),
         fn_( std::forward< Fn >( fn) ) {
     }
 
-    fiber_record( fiber_record const&) = delete;
-    fiber_record & operator=( fiber_record const&) = delete;
+    fiber_context_record( fiber_context_record const&) = delete;
+    fiber_context_record & operator=( fiber_context_record const&) = delete;
 
     void deallocate() noexcept {
         destroy( this);
@@ -165,7 +165,7 @@ public:
 };
 
 template< typename Record, typename StackAlloc, typename Fn >
-fcontext_t create_fiber1( StackAlloc && salloc, Fn && fn) {
+fcontext_t create_fiber_context1( StackAlloc && salloc, Fn && fn) {
     auto sctx = salloc.allocate();
     // reserve space for control structure
 	void * storage = reinterpret_cast< void * >(
@@ -201,14 +201,14 @@ fcontext_t create_fiber1( StackAlloc && salloc, Fn && fn) {
     *((unsigned long*)(reinterpret_cast< uintptr_t >( storage)- 8)) = (unsigned long) ss_base;
     *((unsigned long*)(reinterpret_cast< uintptr_t >( storage)- 16)) = ss_size;
 #endif
-    const fcontext_t fctx = make_fcontext( stack_top, size, & fiber_entry< Record >);
+    const fcontext_t fctx = make_fcontext( stack_top, size, & fiber_context_entry< Record >);
     BOOST_ASSERT( nullptr != fctx);
     // transfer control structure to context-stack
     return jump_fcontext( fctx, record).fctx;
 }
 
 template< typename Record, typename StackAlloc, typename Fn >
-fcontext_t create_fiber2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
+fcontext_t create_fiber_context2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
     // reserve space for control structure
     void * storage = reinterpret_cast< void * >(
             ( reinterpret_cast< uintptr_t >( palloc.sp) - static_cast< uintptr_t >( sizeof( Record) ) )
@@ -242,7 +242,7 @@ fcontext_t create_fiber2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
     *((unsigned long*)(reinterpret_cast< uintptr_t >( storage)- 8)) = (unsigned long) ss_base;
     *((unsigned long*)(reinterpret_cast< uintptr_t >( storage)- 16)) = ss_size;
 #endif
-    const fcontext_t fctx = make_fcontext( stack_top, size, & fiber_entry< Record >);
+    const fcontext_t fctx = make_fcontext( stack_top, size, & fiber_context_entry< Record >);
     BOOST_ASSERT( nullptr != fctx);
     // transfer control structure to context-stack
     return jump_fcontext( fctx, record).fctx;
@@ -250,50 +250,50 @@ fcontext_t create_fiber2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
 
 }
 
-class fiber {
+class fiber_context {
 private:
     template< typename Ctx, typename StackAlloc, typename Fn >
-    friend class detail::fiber_record;
+    friend class detail::fiber_context_record;
 
     template< typename Ctx, typename Fn >
     friend detail::transfer_t
-    detail::fiber_ontop( detail::transfer_t);
+    detail::fiber_context_ontop( detail::transfer_t);
 
     detail::fcontext_t  fctx_{ nullptr };
 
-    fiber( detail::fcontext_t fctx) noexcept :
+    fiber_context( detail::fcontext_t fctx) noexcept :
         fctx_{ fctx } {
     }
 
 public:
-    fiber() noexcept = default;
+    fiber_context() noexcept = default;
 
-    template< typename Fn, typename = detail::disable_overload< fiber, Fn > >
-    fiber( Fn && fn) :
-        fiber{ std::allocator_arg, fixedsize_stack(), std::forward< Fn >( fn) } {
+    template< typename Fn, typename = detail::disable_overload< fiber_context, Fn > >
+    fiber_context( Fn && fn) :
+        fiber_context{ std::allocator_arg, fixedsize_stack(), std::forward< Fn >( fn) } {
     }
 
     template< typename StackAlloc, typename Fn >
-    fiber( std::allocator_arg_t, StackAlloc && salloc, Fn && fn) :
-        fctx_{ detail::create_fiber1< detail::fiber_record< fiber, StackAlloc, Fn > >(
+    fiber_context( std::allocator_arg_t, StackAlloc && salloc, Fn && fn) :
+        fctx_{ detail::create_fiber_context1< detail::fiber_context_record< fiber_context, StackAlloc, Fn > >(
                 std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) } {
     }
 
     template< typename StackAlloc, typename Fn >
-    fiber( std::allocator_arg_t, preallocated palloc, StackAlloc && salloc, Fn && fn) :
-        fctx_{ detail::create_fiber2< detail::fiber_record< fiber, StackAlloc, Fn > >(
+    fiber_context( std::allocator_arg_t, preallocated palloc, StackAlloc && salloc, Fn && fn) :
+        fctx_{ detail::create_fiber_context2< detail::fiber_context_record< fiber_context, StackAlloc, Fn > >(
                 palloc, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) } {
     }
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
     template< typename Fn >
-    fiber( std::allocator_arg_t, segmented_stack, Fn &&);
+    fiber_context( std::allocator_arg_t, segmented_stack, Fn &&);
 
     template< typename StackAlloc, typename Fn >
-    fiber( std::allocator_arg_t, preallocated, segmented_stack, Fn &&);
+    fiber_context( std::allocator_arg_t, preallocated, segmented_stack, Fn &&);
 #endif
 
-    ~fiber() {
+    ~fiber_context() {
         if ( BOOST_UNLIKELY( nullptr != fctx_) ) {
             detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
@@ -302,26 +302,26 @@ public:
                     std::exchange( fctx_, nullptr),
 #endif
                    nullptr,
-                   detail::fiber_unwind);
+                   detail::fiber_context_unwind);
         }
     }
 
-    fiber( fiber && other) noexcept {
+    fiber_context( fiber_context && other) noexcept {
         swap( other);
     }
 
-    fiber & operator=( fiber && other) noexcept {
+    fiber_context & operator=( fiber_context && other) noexcept {
         if ( BOOST_LIKELY( this != & other) ) {
-            fiber tmp = std::move( other);
+            fiber_context tmp = std::move( other);
             swap( tmp);
         }
         return * this;
     }
 
-    fiber( fiber const& other) noexcept = delete;
-    fiber & operator=( fiber const& other) noexcept = delete;
+    fiber_context( fiber_context const& other) noexcept = delete;
+    fiber_context & operator=( fiber_context const& other) noexcept = delete;
 
-    fiber resume() && {
+    fiber_context resume() && {
         BOOST_ASSERT( nullptr != fctx_);
         return { detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
@@ -333,7 +333,7 @@ public:
     }
 
     template< typename Fn >
-    fiber resume_with( Fn && fn) && {
+    fiber_context resume_with( Fn && fn) && {
         BOOST_ASSERT( nullptr != fctx_);
         auto p = std::forward< Fn >( fn);
         return { detail::ontop_fcontext(
@@ -343,7 +343,7 @@ public:
                     std::exchange( fctx_, nullptr),
 #endif
                     & p,
-                    detail::fiber_ontop< fiber, decltype(p) >).fctx };
+                    detail::fiber_context_ontop< fiber_context, decltype(p) >).fctx };
     }
 
     explicit operator bool() const noexcept {
@@ -354,7 +354,7 @@ public:
         return nullptr == fctx_;
     }
 
-    bool operator<( fiber const& other) const noexcept {
+    bool operator<( fiber_context const& other) const noexcept {
         return fctx_ < other.fctx_;
     }
 
@@ -362,7 +362,7 @@ public:
     
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
-    operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other) {
+    operator<<( std::basic_ostream< charT, traitsT > & os, fiber_context const& other) {
         if ( nullptr != other.fctx_) {
             return os << other.fctx_;
         } else {
@@ -374,11 +374,11 @@ public:
     
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
-    operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other);
+    operator<<( std::basic_ostream< charT, traitsT > & os, fiber_context const& other);
 
     #endif
 
-    void swap( fiber & other) noexcept {
+    void swap( fiber_context & other) noexcept {
         std::swap( fctx_, other.fctx_);
     }
 };
@@ -387,7 +387,7 @@ public:
 
     template< typename charT, class traitsT >
     inline std::basic_ostream< charT, traitsT > &
-    operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other) {
+    operator<<( std::basic_ostream< charT, traitsT > & os, fiber_context const& other) {
         if ( nullptr != other.fctx_) {
             return os << other.fctx_;
         } else {
@@ -398,11 +398,9 @@ public:
 #endif
     
 inline
-void swap( fiber & l, fiber & r) noexcept {
+void swap( fiber_context & l, fiber_context & r) noexcept {
     l.swap( r);
 }
-
-typedef fiber fiber_context;
 
 }}
 
