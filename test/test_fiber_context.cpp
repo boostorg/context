@@ -26,7 +26,7 @@
 #include <boost/utility.hpp>
 #include <boost/variant.hpp>
 
-#include <boost/context/fiber_context.hpp>
+#include <boost/context/fiber_context>
 
 #ifdef BOOST_WINDOWS
 #include <windows.h>
