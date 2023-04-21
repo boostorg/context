@@ -524,6 +524,36 @@ void test_badcatch() {
 #endif
 }
 
+void test_can_resume() {
+    int a;
+    std::fiber_context f{
+        [&a](std::fiber_context && f) {
+            a=0;
+            int b=1;
+            for(;;){
+                f = std::move( f).resume();
+                int next=a+b;
+                a=b;
+                b=next;
+            }
+            return std::move( f);
+        }};
+    BOOST_CHECK( ! f.empty() );
+    BOOST_CHECK( f.can_resume() );
+    for ( int j = 0; j < 10; ++j) {
+        f = std::move( f).resume();
+        std::cout << a << " ";
+    }
+    BOOST_CHECK( ! f.empty() );
+    BOOST_CHECK( f.can_resume() );
+    BOOST_CHECK_EQUAL( 34, a);
+    std::thread t{ [&f](){
+        BOOST_CHECK( ! f.empty() );
+        BOOST_CHECK( ! f.can_resume() );
+    }};
+    t.join();
+}
+
 int main()
 {
     test_move();
@@ -543,6 +573,7 @@ int main()
 #endif
     test_goodcatch();
     test_badcatch();
+    test_can_resume();
 
     return boost::report_errors();
 }

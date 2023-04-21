@@ -17,6 +17,7 @@
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <thread>
 #include <utility>
 
 #include <boost/assert.hpp>
@@ -239,9 +240,14 @@ private:
     detail::fiber_context_ontop( detail::transfer_t);
 
     detail::fcontext_t  fctx_{ nullptr };
+    std::thread::id *   id_{ nullptr };
 
     fiber_context( detail::fcontext_t fctx) noexcept :
         fctx_{ fctx } {
+        if ( nullptr != fctx_) {
+            id_ = reinterpret_cast< std::thread::id * >( static_cast< char* >( fctx_) + sizeof( std::thread::id) );
+            *id_ = std::this_thread::get_id();
+        }
     }
 
 public:
@@ -255,13 +261,17 @@ public:
     template< typename StackAlloc, typename Fn >
     fiber_context( std::allocator_arg_t, StackAlloc && salloc, Fn && fn) :
         fctx_{ detail::create_fiber_context1< detail::fiber_context_record< fiber_context, StackAlloc, Fn > >(
-                std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) } {
+                std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) },
+        id_{ reinterpret_cast< std::thread::id * >( static_cast< char* >( fctx_) + sizeof( std::thread::id) ) } {
+        *id_ = std::this_thread::get_id();
     }
 
     template< typename StackAlloc, typename Fn >
     fiber_context( std::allocator_arg_t, preallocated palloc, StackAlloc && salloc, Fn && fn) :
         fctx_{ detail::create_fiber_context2< detail::fiber_context_record< fiber_context, StackAlloc, Fn > >(
-                palloc, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) } {
+                palloc, std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) },
+        id_{ reinterpret_cast< std::thread::id * >( static_cast< char* >( fctx_) + sizeof( std::thread::id) ) } {
+        *id_ = std::this_thread::get_id();
     }
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
@@ -315,10 +325,8 @@ public:
 
     bool can_resume() noexcept {
         if ( ! empty() ) {
-            // TODO:
-            // *this has no owning thread
-            // calling thread is the owning thread represented by *this
-            return true;
+            BOOST_ASSERT_MSG( nullptr != id_, "invalid thread id");
+            return std::this_thread::get_id() == *id_;
         }
         return false;
     }
@@ -333,6 +341,7 @@ public:
 
     void swap( fiber_context & other) noexcept {
         std::swap( fctx_, other.fctx_);
+        std::swap( id_, other.id_);
     }
 
     #if !defined(BOOST_EMBTC)

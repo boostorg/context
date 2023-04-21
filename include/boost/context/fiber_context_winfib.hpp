@@ -20,6 +20,7 @@
 #include <memory>
 #include <ostream>
 #include <system_error>
+#include <thread>
 #include <utility>
 
 #include <boost/assert.hpp>
@@ -62,6 +63,7 @@ struct BOOST_CONTEXT_DECL fiber_context_activation_record {
     std::function< fiber_context_activation_record*(fiber_context_activation_record*&) >    ontop{};
     bool                                                        terminated{ false };
     bool                                                        force_unwind{ false };
+    std::thread::id                                             id{ std::this_thread::get_id() };
 
     static fiber_context_activation_record *& current() noexcept;
 
@@ -193,6 +195,7 @@ public:
         ontop = nullptr;
         terminated = true;
         force_unwind = false;
+        id = std::thread::id{};
         std::move( c).resume();
         BOOST_ASSERT_MSG( false, "fiber_context already terminated");
     }
@@ -330,10 +333,7 @@ public:
 
     bool can_resume() noexcept {
         if ( ! empty() ) {
-            // TODO:
-            // *this has no owning thread
-            // calling thread is the owning thread represented by *this
-            return true;
+            return std::this_thread::get_id() == ptr_->id;
         }
         return false;
     }
