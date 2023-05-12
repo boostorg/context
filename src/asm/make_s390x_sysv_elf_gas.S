@@ -71,7 +71,7 @@ r4 - The address of the context function
 
 make_fcontext:
 	.machine "z10"
-	/* Align the stack to an 8 byte boundary.  */
+	/* Align the stack to an 16 byte boundary.  */
 	nill    %r2,0xfff0
 
 	/* Allocate stack space for the context.  */
