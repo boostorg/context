@@ -327,6 +327,31 @@ alias asm_sources
      <toolset>gcc
    ;
 
+# POWERPC_32/SYSV/MACH-O
+alias asm_sources
+   : asm/make_ppc32_sysv_macho_gas.S
+     asm/jump_ppc32_sysv_macho_gas.S
+     asm/ontop_ppc32_sysv_macho_gas.S
+     asm/tail_ontop_ppc32_sysv.cpp
+   : <abi>sysv
+     <address-model>32
+     <architecture>power
+     <binary-format>mach-o
+     <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_ppc32_sysv_macho_gas.S
+     asm/jump_ppc32_sysv_macho_gas.S
+     asm/ontop_ppc32_sysv_macho_gas.S
+     asm/tail_ontop_ppc32_sysv.cpp
+   : <abi>sysv
+     <address-model>32
+     <architecture>power
+     <binary-format>mach-o
+     <toolset>gcc
+   ;
+
 alias asm_sources
    : asm/make_ppc32_sysv_macho_gas.S
      asm/jump_ppc32_sysv_macho_gas.S
@@ -397,6 +422,18 @@ alias asm_sources
      <architecture>power
      <binary-format>mach-o
      <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_ppc64_sysv_macho_gas.S
+     asm/jump_ppc64_sysv_macho_gas.S
+     asm/ontop_ppc64_sysv_macho_gas.S
+     untested.cpp
+   : <abi>sysv
+     <address-model>64
+     <architecture>power
+     <binary-format>mach-o
+     <toolset>gcc
    ;
 
 alias asm_sources
