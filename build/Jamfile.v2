@@ -23,6 +23,9 @@ feature.compose <htm>tsx : <define>BOOST_USE_TSX ;
 feature.feature valgrind : on : optional propagated composite ;
 feature.compose <valgrind>on : <define>BOOST_USE_VALGRIND ;
 
+obj is_ml_assembler : ../build/is_ml_assembler.cpp ;
+explicit is_ml_assembler ;
+
 project boost/context
     : requirements
       <target-os>windows:<define>_WIN32_WINNT=0x0601
@@ -45,7 +48,7 @@ project boost/context
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
       <define>BOOST_CONTEXT_SOURCE
       <threading>multi
-      <toolset>msvc,<address-model>32:<asmflags>/safeseh
+      [ check-target-builds is_ml_assembler "is ml assembler" : <asmflags>/safeseh ]
     : usage-requirements
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
       <optimization>speed:<define>BOOST_DISABLE_ASSERTS
