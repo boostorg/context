@@ -73,7 +73,7 @@ jobs:
             buildtype: "boost"
             packages: ""
             packages_to_remove: ""
-            os: "ubuntu-18.04"
+            os: "ubuntu-latest"
             cxx: "clang++"
             sources: ""
             llvm_os: ""
