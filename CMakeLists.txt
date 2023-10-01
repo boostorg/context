@@ -214,23 +214,26 @@ target_link_libraries(boost_context
     Boost::smart_ptr
 )
 
+# ATTENTION. Some assemblers are picky to get --defsym,KEY=VALUE pairs where '=' is non-optional!
+# Be sure all defines have the '=' character. Overkill solution: always put '=' throughout this module.
+
 target_compile_definitions(boost_context
-  PUBLIC BOOST_CONTEXT_NO_LIB
-  PRIVATE BOOST_CONTEXT_SOURCE
+  PUBLIC BOOST_CONTEXT_NO_LIB=
+  PRIVATE BOOST_CONTEXT_SOURCE=
 )
 
 if(BUILD_SHARED_LIBS)
-  target_compile_definitions(boost_context PUBLIC BOOST_CONTEXT_DYN_LINK BOOST_CONTEXT_EXPORT=EXPORT)
+  target_compile_definitions(boost_context PUBLIC BOOST_CONTEXT_DYN_LINK= BOOST_CONTEXT_EXPORT=EXPORT)
 else()
-  target_compile_definitions(boost_context PUBLIC BOOST_CONTEXT_STATIC_LINK BOOST_CONTEXT_EXPORT=)
+  target_compile_definitions(boost_context PUBLIC BOOST_CONTEXT_STATIC_LINK= BOOST_CONTEXT_EXPORT=)
 endif()
 
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "ucontext")
-  target_compile_definitions(boost_context PUBLIC BOOST_USE_UCONTEXT)
+  target_compile_definitions(boost_context PUBLIC BOOST_USE_UCONTEXT=)
 endif()
 
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "winfib")
-  target_compile_definitions(boost_context PUBLIC BOOST_USE_WINFIB)
+  target_compile_definitions(boost_context PUBLIC BOOST_USE_WINFIB=)
 endif()
 
 if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
