@@ -230,6 +230,17 @@ alias asm_sources
      <toolset>darwin
    ;
 
+alias asm_sources
+   : asm/make_arm64_aapcs_macho_gas.S
+     asm/jump_arm64_aapcs_macho_gas.S
+     asm/ontop_arm64_aapcs_macho_gas.S
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>mach-o
+     <toolset>gcc
+   ;
+
 # ARM64/AAPCS/PE
 alias asm_sources
    : asm/make_arm64_aapcs_pe_armasm.asm
