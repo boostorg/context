@@ -230,6 +230,17 @@ alias asm_sources
      <toolset>darwin
    ;
 
+alias asm_sources
+   : asm/make_arm64_aapcs_macho_gas.S
+     asm/jump_arm64_aapcs_macho_gas.S
+     asm/ontop_arm64_aapcs_macho_gas.S
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>mach-o
+     <toolset>gcc
+   ;
+
 # ARM64/AAPCS/PE
 alias asm_sources
    : asm/make_arm64_aapcs_pe_armasm.asm
@@ -504,6 +515,30 @@ alias asm_sources
    : <abi>sysv
      <address-model>64
      <architecture>riscv
+     <binary-format>elf
+     <toolset>gcc
+   ;
+
+# SPARC64
+# SPARC64/SYSV/ELF
+alias asm_sources
+   : asm/make_sparc64_sysv_elf_gas.S
+     asm/jump_sparc64_sysv_elf_gas.S
+     asm/ontop_sparc64_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>sparc
+     <binary-format>elf
+     <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_sparc64_sysv_elf_gas.S
+     asm/jump_sparc64_sysv_elf_gas.S
+     asm/ontop_sparc64_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>sparc
      <binary-format>elf
      <toolset>gcc
    ;

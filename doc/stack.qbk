@@ -291,7 +291,7 @@ a stack.]]
 [variablelist
 [[Returns:] [Returns a default stack size, which may be platform specific.
 If the stack is unbounded then the present implementation returns the maximum of
-`64 kB` and `minimum_size()`.]]
+`128 kB` and `minimum_size()`.]]
 [[Throws:] [Nothing.]]
 ]
 
