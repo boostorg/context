@@ -6,17 +6,24 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 
-import-search /boost/config/checks ;
-
 import common ;
+import feature ;
 import indirect ;
 import modules ;
 import os ;
 import toolset ;
-import config : requires ;
-import feature ;
+ import ../../config/checks/config : requires ;
 
-project
+feature.feature segmented-stacks : on : optional propagated composite ;
+feature.compose <segmented-stacks>on : <define>BOOST_USE_SEGMENTED_STACKS ;
+
+feature.feature htm : tsx : optional propagated composite ;
+feature.compose <htm>tsx : <define>BOOST_USE_TSX ;
+
+feature.feature valgrind : on : optional propagated composite ;
+feature.compose <valgrind>on : <define>BOOST_USE_VALGRIND ;
+
+project boost/context
     : requirements
       <target-os>windows:<define>_WIN32_WINNT=0x0601
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
@@ -47,6 +54,53 @@ project
     ;
 
 
+local rule default_binary_format ( )
+{
+    local tmp = elf ;
+    if [ os.name ] = "NT" { tmp = pe ; }
+    else if [ os.name ] = "CYGWIN" { tmp = pe ; }
+    else if [ os.name ] = "AIX" { tmp = xcoff ; }
+    else if [ os.name ] = "MACOSX" { tmp = mach-o ; }
+    return $(tmp) ;
+}
+
+feature.feature binary-format
+   : elf
+     mach-o
+     pe
+     xcoff
+   : propagated
+   ;
+feature.set-default binary-format : [ default_binary_format ] ;
+
+
+local rule default_abi ( )
+{
+    local tmp = sysv ;
+    if [ os.name ] = "NT" { tmp = ms ; }
+    else if [ os.name ] = "CYGWIN" { tmp = ms ; }
+    else if [ os.platform ] = "ARM" { tmp = aapcs ; }
+    else if [ os.platform ] = "ARM64" { tmp = aapcs ; }
+    else if [ os.platform ] = "MIPS32" { tmp = o32 ; }
+    else if [ os.platform ] = "MIPS64" { tmp = n64 ; }
+    return $(tmp) ;
+}
+
+feature.feature abi
+   : aapcs
+     eabi
+     ms
+     n32
+     n64
+     o32
+     o64
+     sysv
+     x32
+   : propagated
+   ;
+feature.set-default abi : [ default_abi ] ;
+
+
 feature.feature context-impl
     : fcontext
       ucontext
@@ -57,7 +111,6 @@ feature.feature context-impl
 feature.set-default context-impl : fcontext ;
 feature.compose <context-impl>ucontext : <define>BOOST_USE_UCONTEXT ;
 feature.compose <context-impl>winfib : <define>BOOST_USE_WINFIB ;
-
 
 # ARM
 # ARM/AAPCS/ELF
@@ -909,3 +962,5 @@ lib boost_context
    : impl_sources
      stack_traits_sources
    ;
+
+boost-install boost_context ;
