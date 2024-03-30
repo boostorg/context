@@ -12,13 +12,13 @@ import predef ;
 
 project /boost/context
     : common-requirements
-        <source>/boost/assert//boost_assert
-        <source>/boost/config//boost_config
-        <source>/boost/core//boost_core
-        <source>/boost/mp11//boost_mp11
-        <source>/boost/pool//boost_pool
-        <source>/boost/predef//boost_predef
-        <source>/boost/smart_ptr//boost_smart_ptr
+        <library>/boost/assert//boost_assert
+        <library>/boost/config//boost_config
+        <library>/boost/core//boost_core
+        <library>/boost/mp11//boost_mp11
+        <library>/boost/pool//boost_pool
+        <library>/boost/predef//boost_predef
+        <library>/boost/smart_ptr//boost_smart_ptr
         <include>include
     : requirements
         # Auto-detect toolset default address-model and architecture.
