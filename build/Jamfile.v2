@@ -41,6 +41,7 @@ project
       <toolset>msvc,<address-model>32:<asmflags>/safeseh
     : usage-requirements
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
+      <define>BOOST_CONTEXT_NO_LIB=1
       <optimization>speed:<define>BOOST_DISABLE_ASSERTS
       <variant>release:<define>BOOST_DISABLE_ASSERTS
     : source-location ../src
@@ -807,7 +808,7 @@ alias asm_sources
      <binary-format>pe
      <toolset>msvc
    ;
-   
+
 # Embarcadero on Windows, bcc64, uses the sysv-elf format for 64-bits
 # This is configured in the embarcadero toolset as using bcc64 with the
 # command line option '-x assembler-with-cpp'.
