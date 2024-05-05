@@ -12,6 +12,7 @@ import modules ;
 import os ;
 import testing ;
 import toolset ;
+import-search /boost/config/checks ;
 import config : requires ;
 using flags ;
 
