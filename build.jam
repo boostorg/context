@@ -3,11 +3,10 @@
 # (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
-require-b2 5.1 ;
+require-b2 5.2 ;
 
 import-search /boost/predef/tools/check ;
 
-import project ;
 import feature ;
 import os ;
 import predef ;
