@@ -17,6 +17,7 @@ import config : requires ;
 import feature ;
 
 project
+    : common-requirements <library>$(boost_dependencies)
     : requirements
       <target-os>windows:<define>_WIN32_WINNT=0x0601
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
