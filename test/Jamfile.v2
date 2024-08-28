@@ -12,12 +12,16 @@ import modules ;
 import os ;
 import testing ;
 import toolset ;
-import ../../config/checks/config : requires ;
+import-search /boost/config/checks ;
+import config : requires ;
 using flags ;
 
 project boost/context/test
     : requirements
+      <library>/boost/array//boost_array
+      <library>/boost/lexical_cast//boost_lexical_cast
       <library>/boost/context//boost_context
+      <library>/boost/variant//boost_variant
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <toolset>clang,<segmented-stacks>on:<cxxflags>-fsplit-stack
