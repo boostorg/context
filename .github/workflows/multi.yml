@@ -14,23 +14,25 @@ on:
 
 jobs:
   emulated:
-    name: ${{ matrix.arch || 'native' }} ${{ matrix.os || matrix.distro || 'bullseye' }} ${{ matrix.toolset }}
+    name: ${{ matrix.container }} ${{ matrix.platform }} ${{ matrix.toolset }}
     runs-on: ${{ matrix.os || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - amd64
-          - arm64
-          - armel
-          - armhf
-          - i386
-          - mipsel
-          - mips64el
-          - ppc64el
-          - s390x
+        container: [ 'debian' ]
+        platform:
+          - linux/386
+          - linux/amd64
+          - linux/arm/v5
+          - linux/arm/v7
+          - linux/arm64/v8
+          - linux/mips64le
+          - linux/ppc64le
+          - linux/s390x
         include:
-          - { arch: mips, distro: buster }
+          - { container: 'debian:experimental', platform: linux/riscv64 }
+          - { container: 'lpenz/debian-buster-mipsel', platform: linux/mipsel }
+          - { container: 'lpenz/debian-buster-mips', platform: linux/mips }
 
     steps:
       - name: Checkout Boost super-repo
@@ -48,7 +50,7 @@ jobs:
           tools/boostdep
 
       - name: Checkout the commit
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: libs/context
 
@@ -56,21 +58,21 @@ jobs:
         run: python tools/boostdep/depinst/depinst.py --git_args "--jobs 10" context
 
       - name: "Setup QEMU and Docker"
-        if: matrix.arch
         run: |
           set -eu
           sudo apt-get -o Acquire::Retries=3 update
           sudo apt-get -o Acquire::Retries=3 -y install qemu-user-static
-          docker pull multiarch/debian-debootstrap:${{ matrix.arch }}-${{ matrix.distro || 'bullseye' }}
 
-      - name: "Building and testing on ${{ matrix.arch }}"
+      - name: "Building and testing on ${{ matrix.container }} ${{ matrix.platform }}"
         uses: addnab/docker-run-action@v3
-        if: matrix.arch
         with:
-          image: multiarch/debian-debootstrap:${{ matrix.arch }}-${{ matrix.distro || 'bullseye' }}
-          options: -v ${{ github.workspace }}:/boost-root -w /boost-root
+          image: ${{ matrix.container }}
+          options: -v ${{ github.workspace }}:/boost-root -w /boost-root ${{ matrix.platform && format('--platform {0}', matrix.platform) || '' }}
           run: |
             set -eu
+            echo "::group::Switch to archive repository"
+              ${{ contains(matrix.container, 'buster') }} && sed -i 's/deb.debian/archive.debian/' /etc/apt/sources.list && cat /etc/apt/sources.list
+            echo "::endgroup::"
             echo "::group::Install GCC"
               apt-get -o Acquire::Retries=3 update
               apt-get -o Acquire::Retries=3 -yq --no-install-suggests --no-install-recommends install g++
@@ -119,7 +121,7 @@ jobs:
           tools/boostdep
 
       - name: Checkout the commit
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: libs/context
 
