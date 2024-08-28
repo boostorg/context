@@ -24,6 +24,10 @@
  *                                                                                      *
  ****************************************************************************************/
 
+#ifdef __x86_64__
+#include "ontop_x86_64_sysv_elf_gas.S"
+#else
+
 .file "ontop_i386_sysv_elf_gas.S"
 .text
 .globl ontop_fcontext
@@ -98,3 +102,5 @@ ontop_fcontext:
 
 /* Mark that we don't need executable stack.  */
 .section .note.GNU-stack,"",%progbits
+
+#endif
