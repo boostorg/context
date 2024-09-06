@@ -140,7 +140,7 @@ jobs:
           if [ -n "$PACKAGES_TO_REMOVE" ]; then sudo apt-get purge -y $PACKAGES_TO_REMOVE; fi
           echo ">>>>> APT: REPO.."
           for i in {1..3}; do sudo -E apt-add-repository -y "ppa:ubuntu-toolchain-r/test" && break || sleep 2; done
-          
+
           if test -n "${LLVM_OS}" ; then
               wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
               if test -n "${LLVM_VER}" ; then
@@ -194,7 +194,7 @@ jobs:
           ./b2 -j 3 libs/context/test toolset=$TOOLSET cxxstd=$CXXSTD
 
           fi
-# 
+#
 #   osx:
 #     strategy:
 #       fail-fast: false
@@ -203,7 +203,7 @@ jobs:
 #
 # Github Actions only supports certain Xcode versions
 # Change (or delete) the Xcode version for this job.
-# 
+#
 #           - name: "TOOLSET=clang COMPILER=clang++ CXXSTD=11,14,1 Job 7"
 #             buildtype: "boost"
 #             packages: ""
@@ -219,7 +219,7 @@ jobs:
 #
 # Github Actions only supports certain Xcode versions
 # Change (or delete) the Xcode version for this job.
-# 
+#
 #           - name: "TOOLSET=clang COMPILER=clang++ CXXSTD=11,14,1 Job 8"
 #             buildtype: "boost"
 #             packages: ""
@@ -232,19 +232,19 @@ jobs:
 #             toolset: "clang"
 #             compiler: "clang++"
 #             cxxstd: "11,14,1z"
-# 
-# 
+#
+#
 #     runs-on: ${{ matrix.os }}
-# 
+#
 #     steps:
 #       - uses: actions/checkout@v2
-# 
+#
 #       - name: Set DEVELOPER_DIR
 #         if: matrix.xcode_version != ''
 #         run: echo "DEVELOPER_DIR=/Applications/Xcode_${{ matrix.xcode_version }}.app/Contents/Developer" >> $GITHUB_ENV
 #       - name: Test DEVELOPER_DIR
 #         run: echo $DEVELOPER_DIR
-# 
+#
 #       - name: "osx"
 #         shell: bash
 #         env:
@@ -274,11 +274,11 @@ jobs:
 #           export USER=$(whoami)
 #           export CC=${CC:-gcc}
 #           export PATH=~/.local/bin:/usr/local/bin:$PATH
-# 
+#
 #           if [ "$JOB_BUILDTYPE" == "boost" ]; then
-# 
+#
 #           echo '==================================> INSTALL'
-# 
+#
 #           BOOST_BRANCH=develop && [ "$TRAVIS_BRANCH" == "master" ] && BOOST_BRANCH=master || true
 #           cd ..
 #           git clone -b $BOOST_BRANCH https://github.com/boostorg/boost.git boost-root
@@ -290,10 +290,10 @@ jobs:
 #           python tools/boostdep/depinst/depinst.py context
 #           ./bootstrap.sh
 #           ./b2 headers
-# 
+#
 #           echo '==================================> SCRIPT'
-# 
+#
 #           echo "using $TOOLSET : : $COMPILER ;" > ~/user-config.jam
 #           ./b2 -j 3 libs/context/test toolset=$TOOLSET cxxstd=$CXXSTD
-# 
+#
 #           fi

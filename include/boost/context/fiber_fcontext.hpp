@@ -359,7 +359,7 @@ public:
     }
 
     #if !defined(BOOST_EMBTC)
-    
+
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
     operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other) {
@@ -371,7 +371,7 @@ public:
     }
 
     #else
-    
+
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
     operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other);
@@ -396,7 +396,7 @@ public:
     }
 
 #endif
-    
+
 inline
 void swap( fiber & l, fiber & r) noexcept {
     l.swap( r);

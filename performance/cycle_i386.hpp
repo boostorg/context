@@ -26,7 +26,7 @@ cycle_type cycles()
 {
     cycle_type c;
     __asm {
-        cpuid 
+        cpuid
         rdtsc
         mov dword ptr [c + 0], eax
         mov dword ptr [c + 4], edx
@@ -52,7 +52,7 @@ cycle_type cycles()
         ::: "%eax", "%ebx", "%ecx", "%edx"
     );
 
-    return ( cycle_type)hi << 32 | lo; 
+    return ( cycle_type)hi << 32 | lo;
 }
 #else
 # error "this compiler is not supported"
