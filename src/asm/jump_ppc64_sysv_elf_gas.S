@@ -97,7 +97,7 @@ jump_fcontext:
 # endif
 #endif
     # reserve space on stack
-    subi  %r1, %r1, 184
+    subi  %r1, %r1, 224
 
 #if _CALL_ELF != 2
     std  %r2,  0(%r1)  # save TOC
@@ -133,6 +133,14 @@ jump_fcontext:
     # save LR as PC
     std   %r0, 176(%r1)
 
+    # Save MSR (Machine State Register)
+    mfmsr %r0
+    std   %r0, 184(%r1)
+
+    # Save VS63
+    li    %r31, 192
+    stvx  %v31, %r1, %r31
+
     # store RSP (pointing to context-data) in R6
     mr  %r6, %r1
 
@@ -145,6 +153,15 @@ jump_fcontext:
 
     ld  %r2,  0(%r1)  # restore TOC
 #endif
+
+    # Restore VS63
+    li    %r31, 192
+    lvx   %v31, %r1, %r31
+
+    # Restore MSR
+    ld    %r0, 184(%r1)
+    mtmsr %r0
+
     ld  %r14, 8(%r1)  # restore R14
     ld  %r15, 16(%r1)  # restore R15
     ld  %r16, 24(%r1)  # restore R16
@@ -180,7 +197,7 @@ jump_fcontext:
     mtctr  %r12
 
     # adjust stack
-    addi  %r1, %r1, 184
+    addi  %r1, %r1, 224
 
 #if _CALL_ELF == 2
     # copy transfer_t into transfer_fn arg registers

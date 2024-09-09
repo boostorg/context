@@ -97,7 +97,7 @@ ontop_fcontext:
 # endif
 #endif
     # reserve space on stack
-    subi  %r1, %r1, 184
+    subi  %r1, %r1, 232
 
 #if _CALL_ELF != 2
     std  %r2,  0(%r1)  # save TOC
@@ -133,6 +133,18 @@ ontop_fcontext:
     # save LR as PC
     std   %r0, 176(%r1)
 
+    # save MSR
+    mfmsr  %r0
+    std   %r0, 184(%r1)
+
+    # save CTR
+    mfctr  %r0
+    std   %r0, 192(%r1)
+
+    # save VS63
+    li %r31, 208
+    stvx %v31, %r1, %r31
+
     # store RSP (pointing to context-data) in R7
     mr  %r7, %r1
 
@@ -144,6 +156,18 @@ ontop_fcontext:
     mr  %r1, %r4
 #endif
 
+    # restore VS63
+    li %r31, 208
+    lvx %v31, %r1, %r31
+
+    # restore CTR
+    ld   %r0, 192(%r1)
+    mtctr  %r0
+
+    # restore MSR
+    ld   %r0, 184(%r1)
+    mtmsr  %r0
+    
     ld  %r14, 8(%r1)  # restore R14
     ld  %r15, 16(%r1)  # restore R15
     ld  %r16, 24(%r1)  # restore R16
@@ -203,7 +227,7 @@ return_to_ctx:
     mtlr  %r0
 
     # adjust stack
-    addi  %r1, %r1, 184
+    addi  %r1, %r1, 232
 
     # jump to context
     bctr
