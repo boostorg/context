@@ -171,8 +171,8 @@ template< typename Record, typename StackAlloc, typename Fn >
 fcontext_t create_fiber1( StackAlloc && salloc, Fn && fn) {
     auto sctx = salloc.allocate();
     // reserve space for control structure
-	void * storage = reinterpret_cast< void * >(
-			( reinterpret_cast< uintptr_t >( sctx.sp) - static_cast< uintptr_t >( sizeof( Record) ) )
+    void * storage = reinterpret_cast< void * >(
+            ( reinterpret_cast< uintptr_t >( sctx.sp) - static_cast< uintptr_t >( sizeof( Record) ) )
             & ~static_cast< uintptr_t >( 0xff) );
     // placment new for control structure on context stack
     Record * record = new ( storage) Record{
@@ -189,7 +189,7 @@ fcontext_t create_fiber1( StackAlloc && salloc, Fn && fn) {
 #if BOOST_CONTEXT_SHADOW_STACK
     std::size_t ss_size = size >> 5;
     // align shadow stack to 8 bytes.
-	ss_size = (ss_size + 7) & ~7;
+    ss_size = (ss_size + 7) & ~7;
     // Todo: shadow stack occupies at least 4KB
     ss_size = (ss_size > 4096) ? size : 4096;
     // create shadow stack
@@ -197,8 +197,8 @@ fcontext_t create_fiber1( StackAlloc && salloc, Fn && fn) {
     BOOST_ASSERT(ss_base != -1);
     unsigned long ss_sp = (unsigned long)ss_base + ss_size;
     /* pass the shadow stack pointer to make_fcontext
-	 i.e., link the new shadow stack with the new fcontext
-	 TODO should be a better way? */
+       i.e., link the new shadow stack with the new fcontext
+       TODO should be a better way? */
     *((unsigned long*)(reinterpret_cast< uintptr_t >( stack_top)- 8)) = ss_sp;
     /* Todo: place shadow stack info in 64byte gap */
     *((unsigned long*)(reinterpret_cast< uintptr_t >( storage)- 8)) = (unsigned long) ss_base;
@@ -230,7 +230,7 @@ fcontext_t create_fiber2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
 #if BOOST_CONTEXT_SHADOW_STACK
     std::size_t ss_size = size >> 5;
     // align shadow stack to 8 bytes.
-	ss_size = (ss_size + 7) & ~7;
+    ss_size = (ss_size + 7) & ~7;
     // Todo: shadow stack occupies at least 4KB
     ss_size = (ss_size > 4096) ? size : 4096;
     // create shadow stack
@@ -238,8 +238,8 @@ fcontext_t create_fiber2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
     BOOST_ASSERT(ss_base != -1);
     unsigned long ss_sp = (unsigned long)ss_base + ss_size;
     /* pass the shadow stack pointer to make_fcontext
-	 i.e., link the new shadow stack with the new fcontext
-	 TODO should be a better way? */
+       i.e., link the new shadow stack with the new fcontext
+       TODO should be a better way? */
     *((unsigned long*)(reinterpret_cast< uintptr_t >( stack_top)- 8)) = ss_sp;
     /* Todo: place shadow stack info in 64byte gap */
     *((unsigned long*)(reinterpret_cast< uintptr_t >( storage)- 8)) = (unsigned long) ss_base;
@@ -362,7 +362,7 @@ public:
     }
 
     #if !defined(BOOST_EMBTC)
-    
+
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
     operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other) {
@@ -374,7 +374,7 @@ public:
     }
 
     #else
-    
+
     template< typename charT, class traitsT >
     friend std::basic_ostream< charT, traitsT > &
     operator<<( std::basic_ostream< charT, traitsT > & os, fiber const& other);
@@ -399,7 +399,7 @@ public:
     }
 
 #endif
-    
+
 inline
 void swap( fiber & l, fiber & r) noexcept {
     l.swap( r);
