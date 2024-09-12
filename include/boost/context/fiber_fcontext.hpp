@@ -47,9 +47,12 @@
 #if defined(__CET__) && defined(__unix__)
 #  include <cet.h>
 #  include <sys/mman.h>
+#  include <unistd.h>
 #  define SHSTK_ENABLED (__CET__ & 0x2)
 #  define BOOST_CONTEXT_SHADOW_STACK (SHSTK_ENABLED && SHADOW_STACK_SYSCALL)
-#  define __NR_map_shadow_stack 451
+#  if !defined(__NR_map_shadow_stack)
+#    define __NR_map_shadow_stack 453
+#  endif
 #ifndef SHADOW_STACK_SET_TOKEN
 #  define SHADOW_STACK_SET_TOKEN 0x1
 #endif
