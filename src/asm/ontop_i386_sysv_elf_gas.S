@@ -31,6 +31,7 @@
 .file "ontop_i386_sysv_elf_gas.S"
 .text
 .globl ontop_fcontext
+.hidden ontop_fcontext
 .align 2
 .type ontop_fcontext,@function
 ontop_fcontext:
