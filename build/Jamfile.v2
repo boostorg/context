@@ -949,6 +949,7 @@ explicit asm_sources ;
 # fcontext_t
 alias impl_sources
     : asm_sources
+      fcontext.cpp
     : <context-impl>fcontext
     ;
 
