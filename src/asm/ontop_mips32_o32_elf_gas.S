@@ -41,7 +41,6 @@
 .file "ontop_mips32_o32_elf_gas.S"
 .text
 .globl ontop_fcontext
-.hidden ontop_fcontext
 .align 2
 .type ontop_fcontext,@function
 .ent ontop_fcontext

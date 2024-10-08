@@ -46,7 +46,6 @@
 .text
 .align  8
 .global ontop_fcontext
-.hidden ontop_fcontext
 .type   ontop_fcontext, @function
 
 #define ARG_OFFSET         0

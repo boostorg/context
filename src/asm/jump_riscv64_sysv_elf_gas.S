@@ -61,7 +61,6 @@
 .text
 .align  1
 .global jump_fcontext
-.hidden jump_fcontext
 .type   jump_fcontext, %function
 jump_fcontext:
     # prepare stack for GP + FPU

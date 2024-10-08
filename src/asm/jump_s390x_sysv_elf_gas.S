@@ -46,7 +46,6 @@
 .text
 .align	8
 .global	jump_fcontext
-.hidden jump_fcontext
 .type	jump_fcontext, @function
 
 #define ARG_OFFSET         0
