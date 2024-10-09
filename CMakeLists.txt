@@ -133,18 +133,18 @@ message(STATUS "Boost.Context: "
   "implementation ${BOOST_CONTEXT_IMPLEMENTATION}")
 
 # Enable the right assembler
-
+set(ASM_LANGUAGE)
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
   if(BOOST_CONTEXT_ASSEMBLER STREQUAL gas)
     if(CMAKE_CXX_PLATFORM_ID MATCHES "Cygwin")
-      enable_language(ASM-ATT)
+      set(ASM_LANGUAGE ASM-ATT)
     else()
-      enable_language(ASM)
+      set(ASM_LANGUAGE ASM)
     endif()
   elseif(BOOST_CONTEXT_ASSEMBLER STREQUAL armasm)
-    enable_language(ASM_ARMASM)
+    set(ASM_LANGUAGE ASM_ARMASM)
   else()
-    enable_language(ASM_MASM)
+    set(ASM_LANGUAGE ASM_MASM)
   endif()
 endif()
 
@@ -177,6 +177,9 @@ if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
   endif()
+
+  enable_language(${ASM_LANGUAGE})
+  set_source_files_properties(${ASM_SOURCES} PROPERTIES LANGUAGE ${ASM_LANGUAGE})
 else()
   set(IMPL_SOURCES
     src/continuation.cpp
