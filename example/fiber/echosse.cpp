@@ -19,10 +19,10 @@ void echoSSE( int i) {
     xmm = _mm_set_epi32( i, i + 1, i + 2, i + 3);
     uint32_t v32[4];
     memcpy( & v32, & xmm, 16);
-    std::cout << v32[0]; 
-    std::cout << v32[1]; 
-    std::cout << v32[2]; 
-    std::cout << v32[3]; 
+    std::cout << v32[0];
+    std::cout << v32[1];
+    std::cout << v32[2];
+    std::cout << v32[3];
 }
 
 

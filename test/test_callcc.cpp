@@ -285,7 +285,7 @@ void test_ontop_exception() {
                     c = c.resume();
                 } catch ( my_exception & ex) {
                     value2 = ex.what();
-                    return std::move( ex.c); 
+                    return std::move( ex.c);
                 }
             }
             return std::move( c);
@@ -478,7 +478,7 @@ void test_badcatch() {
         BOOST_CHECK_EQUAL( 3, value1);
         BOOST_CHECK_EQUAL( 3., value3);
         // the destruction of ctx here will cause a forced_unwind to be thrown that is not caught
-        // in fn19.  That will trigger the "not caught" assertion in ~forced_unwind.  Getting that 
+        // in fn19.  That will trigger the "not caught" assertion in ~forced_unwind.  Getting that
         // assertion to propogate bak here cleanly is non-trivial, and there seems to not be a good
         // way to hook directly into the assertion when it happens on an alternate stack.
         std::move( c);
