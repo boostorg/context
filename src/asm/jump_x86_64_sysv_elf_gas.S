@@ -44,6 +44,7 @@
 .file "jump_x86_64_sysv_elf_gas.S"
 .text
 .globl jump_fcontext
+.hidden jump_fcontext
 .type jump_fcontext,@function
 .align 16
 jump_fcontext:
