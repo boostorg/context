@@ -444,6 +444,28 @@ alias asm_sources
      <toolset>gcc
    ;
 
+alias asm_sources
+   : asm/make_ppc64_sysv_xcoff_gas.S
+     asm/jump_ppc64_sysv_xcoff_gas.S
+     asm/ontop_ppc64_sysv_xcoff_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>power
+     <binary-format>xcoff
+     <toolset>xlclang
+   ;
+
+alias asm_sources
+   : asm/make_ppc64_sysv_xcoff_gas.S
+     asm/jump_ppc64_sysv_xcoff_gas.S
+     asm/ontop_ppc64_sysv_xcoff_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>power
+     <binary-format>xcoff
+     <toolset>openxl
+   ;
+
 # POWERPC universal
 # POWERPC_32_64/SYSV/MACH-O
 alias asm_sources
