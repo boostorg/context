@@ -204,9 +204,9 @@ alias asm_sources
 
 # ARM64/AAPCS/PE
 alias asm_sources
-   : asm/make_arm64_aapcs_pe_armclang.asm
-     asm/jump_arm64_aapcs_pe_armclang.asm
-     asm/ontop_arm64_aapcs_pe_armclang.asm
+   : asm/make_arm64_aapcs_pe_armclang.S
+     asm/jump_arm64_aapcs_pe_armclang.S
+     asm/ontop_arm64_aapcs_pe_armclang.S
    : <abi>aapcs
      <address-model>64
      <architecture>arm
