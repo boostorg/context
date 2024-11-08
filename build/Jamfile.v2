@@ -214,6 +214,18 @@ alias asm_sources
      <toolset>clang
    ;
 
+# ARM64/AAPCS/PE
+alias asm_sources
+   : asm/make_arm64_aapcs_pe_armclang.S
+     asm/jump_arm64_aapcs_pe_armclang.S
+     asm/ontop_arm64_aapcs_pe_armclang.S
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>pe
+     <toolset>gcc
+   ;
+
 # LOONGARCH64
 # LOONGARCH64/SYSV/ELF
 alias asm_sources
