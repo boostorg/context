@@ -202,7 +202,6 @@ alias asm_sources
      <toolset>msvc
    ;
 
-# ARM64/AAPCS/PE
 alias asm_sources
    : asm/make_arm64_aapcs_pe_armclang.S
      asm/jump_arm64_aapcs_pe_armclang.S
@@ -214,7 +213,6 @@ alias asm_sources
      <toolset>clang
    ;
 
-# ARM64/AAPCS/PE
 alias asm_sources
    : asm/make_arm64_aapcs_pe_armclang.S
      asm/jump_arm64_aapcs_pe_armclang.S
