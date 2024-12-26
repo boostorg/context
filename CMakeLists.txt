@@ -89,18 +89,22 @@ if(MSVC)
   else()
     set(_default_asm masm)
   endif()
+elseif(BOOST_CONTEXT_ARCHITECTURE STREQUAL arm64 AND MINGW)
+  set(_default_asm armclang)
 else()
   set(_default_asm gas)
 endif()
 
-set(BOOST_CONTEXT_ASSEMBLER "${_default_asm}" CACHE STRING "Boost.Context assembler (masm, gas, armasm)")
-set_property(CACHE BOOST_CONTEXT_ASSEMBLER PROPERTY STRINGS masm gas armasm)
+set(BOOST_CONTEXT_ASSEMBLER "${_default_asm}" CACHE STRING "Boost.Context assembler (masm, gas, armasm, armclang)")
+set_property(CACHE BOOST_CONTEXT_ASSEMBLER PROPERTY STRINGS masm gas armasm armclang)
 
 unset(_default_asm)
 
 ## Assembler source suffix
 
-if(BOOST_CONTEXT_BINARY_FORMAT STREQUAL pe)
+if(BOOST_CONTEXT_ASSEMBLER STREQUAL armclang)
+  set(_default_ext .S)
+elseif(BOOST_CONTEXT_BINARY_FORMAT STREQUAL pe)
   set(_default_ext .asm)
 elseif(BOOST_CONTEXT_ASSEMBLER STREQUAL gas)
   set(_default_ext .S)
@@ -135,7 +139,7 @@ message(STATUS "Boost.Context: "
 # Enable the right assembler
 set(ASM_LANGUAGE)
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
-  if(BOOST_CONTEXT_ASSEMBLER STREQUAL gas)
+  if(BOOST_CONTEXT_ASSEMBLER STREQUAL gas OR BOOST_CONTEXT_ASSEMBLER STREQUAL armclang)
     if(CMAKE_CXX_PLATFORM_ID MATCHES "Cygwin")
       set(ASM_LANGUAGE ASM-ATT)
     else()
