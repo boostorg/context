@@ -48,7 +48,7 @@ cycle_type cycles()
         ::: "%rax", "%rbx", "%rcx", "%rdx"
     );
 
-    return ( cycle_type)hi << 32 | lo; 
+    return ( cycle_type)hi << 32 | lo;
 }
 #else
 # error "this compiler is not supported"
