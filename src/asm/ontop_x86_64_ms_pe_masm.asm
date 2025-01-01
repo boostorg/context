@@ -142,6 +142,13 @@ ENDIF
 
     mov [rsp+0110h], rcx  ; save hidden address of transport_t
 
+;;  mov rax, gs:[0h]        ; save exception block at gs:[0]
+;;  mov [rsp+0150h], rax
+;;  mov rax, gs:[8h]
+;;  mov [rsp+0158h], rax
+;;  mov rax, gs:[10h]
+;;  mov [rsp+0160h], rax
+
     ; preserve RSP (pointing to context-data) in RCX
     mov  rcx, rsp
 
@@ -189,6 +196,13 @@ ENDIF
     mov rsi, [rsp+0f8h]  ; restore RSI
     mov rbx, [rsp+0100h]  ; restore RBX
     mov rbp, [rsp+0108h]  ; restore RBP
+
+;;  mov rax, [rsp+0150h]        ; restore exception block at gs:[0]
+;;  mov gs:[0h], rax
+;;  mov rax, [rsp+0158h]
+;;  mov gs:[8h], rax
+;;  mov rax, [rsp+0160h]
+;;  mov gs:[10h], rax
 
     mov rax, [rsp+0110h] ; restore hidden address of transport_t
 
