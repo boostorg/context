@@ -64,28 +64,28 @@
 ;  ----------------------------------------------------------------------------------
 ;  |  0x100  |  0x104  |  0x108   |  0x10c  |  0x110  |  0x114  |  0x118  |  0x11c  |
 ;  ----------------------------------------------------------------------------------
-;  |        RBX        |         RBP        |       hidden      |        RIP        |
+;  |        RBX        |         RBP        |       hidden      |      padding      |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
 ;  |    72   |   73    |    74    |   75    |    76   |    77   |    78   |    79   |
 ;  ----------------------------------------------------------------------------------
 ;  |  0x120  |  0x124  |  0x128   |  0x12c  |  0x130  |  0x134  |  0x138  |  0x13c  |
 ;  ----------------------------------------------------------------------------------
-;  |                                   parameter area                               |
+;  |      GS:[0]       |       GS:[8]       |      GS:[16]      |        RIP        |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
 ;  |    80   |   81    |    82    |   83    |    84   |    85   |    86   |    87   |
 ;  ----------------------------------------------------------------------------------
 ;  |  0x140  |  0x144  |  0x148   |  0x14c  |  0x150  |  0x154  |  0x158  |  0x15c  |
 ;  ----------------------------------------------------------------------------------
-;  |       FCTX        |        DATA        |      GS:[0]       |      GS:[8]       |
+;  |                                   parameter area                               |
 ;  ----------------------------------------------------------------------------------
 ;  ----------------------------------------------------------------------------------
 ;  |    88   |   89    |    90    |   91    |    92   |    93   |    94   |    95   |
 ;  ----------------------------------------------------------------------------------
 ;  |  0x160  |  0x164  |  0x168   |  0x16c  |  0x170  |  0x174  |  0x178  |  0x17c  |
 ;  ----------------------------------------------------------------------------------
-;  |      GS:[16]      |                                                            |
+;  |       FCTX        |        DATA        |                                       |
 ;  ----------------------------------------------------------------------------------
 
 ; standard C library function
@@ -106,8 +106,7 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
 
     ; reserve space for context-data on context-stack
     ; on context-function entry: (RSP -0x8) % 16 == 0
-    sub  rax, 0150h
-;;  sub  rax, 0168h
+    sub  rax, 0170h
 
     ; third arg of make_fcontext() == address of context-function
     ; stored in RBX
@@ -127,7 +126,7 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     mov  [rax+0c0h], rcx
 ;;  ; also save low address in GS:[16]
 ;;  mov  [rax+0160h], rcx
-    ; save address of context stack limit as 'dealloction stack'
+    ; save address of context stack limit as 'deallocation stack'
     mov  [rax+0b8h], rcx
     ; set fiber-storage to zero
     xor  rcx, rcx
@@ -144,7 +143,7 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     fnstcw  [rax+0a4h]
 
     ; compute address of transport_t
-    lea rcx, [rax+0140h]
+    lea rcx, [rax+0160h]
     ; store address of transport_t in hidden field
     mov [rax+0110h], rcx
 
@@ -152,7 +151,7 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     lea  rcx, trampoline
     ; save address of trampoline as return-address for context-function
     ; will be entered after calling jump_fcontext() first time
-    mov  [rax+0118h], rcx
+    mov  [rax+0138h], rcx
 
     ; compute abs address of label finish
     lea  rcx, finish
