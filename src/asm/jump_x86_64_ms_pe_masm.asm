@@ -95,7 +95,7 @@ jump_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     .endprolog
 
     ; prepare stack
-    lea rsp, [rsp-0130h]
+    lea rsp, [rsp-0138h]
 
 IFNDEF BOOST_USE_TSX
     ; save XMM storage
@@ -192,7 +192,7 @@ ENDIF
     mov rax, [rsp+0110h] ; restore hidden address of transport_t
 
     ; prepare stack
-    lea rsp, [rsp+0130h]
+    lea rsp, [rsp+0138h]
 
     ; load return-address
     pop  r10

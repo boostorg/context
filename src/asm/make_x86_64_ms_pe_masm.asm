@@ -107,7 +107,7 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
 
     ; reserve space for context-data on context-stack
     ; on context-function entry: (RSP -0x8) % 16 == 0
-    sub  rax, 0168h
+    sub  rax, 0170h
 
     ; third arg of make_fcontext() == address of context-function
     ; stored in RBX
