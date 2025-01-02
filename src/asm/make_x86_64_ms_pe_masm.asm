@@ -115,8 +115,8 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     ; first arg of make_fcontext() == top of context-stack
     ; save top address of context stack as 'base'
     mov  [rax+0c8h], rcx
-;;  ; also save high address in GS:[8]
-;;  mov  [rax+0158h], rcx
+    ; also save high address in GS:[8]
+    mov  [rax+0128h], rcx
     ; second arg of make_fcontext() == size of context-stack
     ; negate stack size for LEA instruction (== substraction)
     neg  rdx
@@ -124,18 +124,18 @@ make_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
     lea  rcx, [rcx+rdx]
     ; save bottom address of context stack as 'limit'
     mov  [rax+0c0h], rcx
-;;  ; also save low address in GS:[16]
-;;  mov  [rax+0160h], rcx
+    ; also save low address in GS:[16]
+    mov  [rax+0130h], rcx
     ; save address of context stack limit as 'deallocation stack'
     mov  [rax+0b8h], rcx
     ; set fiber-storage to zero
     xor  rcx, rcx
     mov  [rax+0b0h], rcx
 
-;;  ; set GS:[0] to end-pointer marker (ffff'ffff'ffff'ffffh) for exception
-;;  ; handler chain
-;;  not  rcx
-;;  mov  [rax+0150h], rcx
+    ; set GS:[0] to end-pointer marker (ffff'ffff'ffff'ffffh) for exception
+    ; handler chain
+    not  rcx
+    mov  [rax+0120h], rcx
 
     ; save MMX control- and status-word
     stmxcsr  [rax+0a0h]
