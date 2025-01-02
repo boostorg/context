@@ -196,12 +196,12 @@ ENDIF
     mov rbx, [rsp+0100h]  ; restore RBX
     mov rbp, [rsp+0108h]  ; restore RBP
 
-;;  mov rax, [rsp+0120h]        ; restore exception block at gs:[0]
-;;  mov gs:[0h], rax
-;;  mov rax, [rsp+0128h]
-;;  mov gs:[8h], rax
-;;  mov rax, [rsp+0130h]
-;;  mov gs:[10h], rax
+    mov rax, [rsp+0120h]        ; restore exception block at gs:[0]
+    mov gs:[0h], rax
+    mov rax, [rsp+0128h]
+    mov gs:[8h], rax
+    mov rax, [rsp+0130h]
+    mov gs:[10h], rax
 
     mov rax, [rsp+0110h] ; restore hidden address of transport_t
 
