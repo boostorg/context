@@ -58,3 +58,14 @@ feature.feature abi
    : propagated
    ;
 feature.set-default abi : [ default_abi ] ;
+
+feature.feature context-impl
+    : fcontext
+      ucontext
+      winfib
+    : propagated
+      composite
+    ;
+feature.set-default context-impl : fcontext ;
+feature.compose <context-impl>ucontext : <define>BOOST_USE_UCONTEXT ;
+feature.compose <context-impl>winfib : <define>BOOST_USE_WINFIB ;
