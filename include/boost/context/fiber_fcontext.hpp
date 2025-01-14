@@ -63,6 +63,51 @@
 # pragma warning(disable: 4702)
 #endif
 
+#if ! (defined(__GLIBCPP__) || defined(__GLIBCXX__))
+namespace boost {
+namespace context {
+namespace detail {
+
+// manage_exception_state is a dummy struct unless we have specific support
+struct manage_exception_state {};
+
+} // namespace detail
+} // namespace context
+} // namespace boost
+
+#else // libstdc++
+#include <cxxabi.h>
+
+namespace __cxxabiv1 {
+struct __cxa_eh_globals {
+    void *       caughtExceptions;
+    unsigned int uncaughtExceptions;
+};
+
+class manage_exception_state {
+public:
+    manage_exception_state() {
+        exception_state_ = *__cxa_get_globals();
+    }
+    ~manage_exception_state() {
+        *__cxa_get_globals() = exception_state_;
+    }
+private:
+    __cxa_eh_globals exception_state_;
+};
+} // namespace __cxxabiv1
+
+namespace boost {
+namespace context {
+namespace detail {
+
+using __cxxabiv1::manage_exception_state;
+
+} // namespace detail
+} // namespace context
+} // namespace boost
+#endif // __GLIBCPP__ or __GLIBCXX__
+
 namespace boost {
 namespace context {
 namespace detail {
@@ -251,7 +296,7 @@ fcontext_t create_fiber2( preallocated palloc, StackAlloc && salloc, Fn && fn) {
     return jump_fcontext( fctx, record).fctx;
 }
 
-}
+} // namespace detail
 
 class fiber {
 private:
@@ -326,6 +371,7 @@ public:
 
     fiber resume() && {
         BOOST_ASSERT( nullptr != fctx_);
+        detail::manage_exception_state exstate;
         return { detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
@@ -338,6 +384,7 @@ public:
     template< typename Fn >
     fiber resume_with( Fn && fn) && {
         BOOST_ASSERT( nullptr != fctx_);
+        detail::manage_exception_state exstate;
         auto p = std::forward< Fn >( fn);
         return { detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
