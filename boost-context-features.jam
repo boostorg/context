@@ -37,9 +37,14 @@ feature.set-default binary-format : [ default_binary_format ] ;
 local rule default_abi ( )
 {
     local tmp = sysv ;
+
+    # Avoid using "in" operator here: it returns true if its left
+    # part is empty, which happens e.g. with os.platform on
+    # some uncommon architectures.
     if [ os.name ] = "NT" { tmp = ms ; }
     else if [ os.name ] = "CYGWIN" { tmp = ms ; }
-    else if [ os.platform ] in "ARM" "ARM64" { tmp = aapcs ; }
+    else if [ os.platform ] = "ARM" { tmp = aapcs ; }
+    else if [ os.platform ] = "ARM64" { tmp = aapcs ; }
     else if [ os.platform ] = "MIPS32" { tmp = o32 ; }
     else if [ os.platform ] = "MIPS64" { tmp = n64 ; }
     return $(tmp) ;
