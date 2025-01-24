@@ -23,6 +23,7 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/intrusive_ptr.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
 #include <boost/context/detail/exchange.hpp>
@@ -372,6 +373,7 @@ public:
     fiber resume() && {
         BOOST_ASSERT( nullptr != fctx_);
         detail::manage_exception_state exstate;
+        boost::ignore_unused(exstate);
         return { detail::jump_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
