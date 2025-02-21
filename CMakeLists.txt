@@ -174,12 +174,23 @@ if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
 
   set(IMPL_SOURCES ${ASM_SOURCES} src/fcontext.cpp)
 
-  if(BOOST_CONTEXT_ASSEMBLER STREQUAL masm AND BOOST_CONTEXT_ARCHITECTURE STREQUAL i386)
-      set_source_files_properties(${ASM_SOURCES} PROPERTIES COMPILE_FLAGS "/safeseh")
+  if(BOOST_CONTEXT_ASSEMBLER STREQUAL masm)
+
+    set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "/nologo")
+
+    if(MSVC AND NOT(MSVC_VERSION LESS 1936)) # Visual Studio 2022 version 17.6
+      set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "/quiet")
+    endif()
+
+    if(BOOST_CONTEXT_ARCHITECTURE STREQUAL i386)
+      set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "/safeseh")
+    endif()
   endif()
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-Wno-unused-command-line-argument")
   endif()
 
   enable_language(${ASM_LANGUAGE})
