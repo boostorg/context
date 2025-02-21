@@ -387,6 +387,7 @@ public:
     fiber resume_with( Fn && fn) && {
         BOOST_ASSERT( nullptr != fctx_);
         detail::manage_exception_state exstate;
+        boost::ignore_unused(exstate);
         auto p = std::forward< Fn >( fn);
         return { detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
