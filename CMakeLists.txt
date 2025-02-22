@@ -178,20 +178,21 @@ if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
 
     set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "/nologo")
 
-    if(MSVC AND NOT(MSVC_VERSION LESS 1936)) # Visual Studio 2022 version 17.6
+    if(MSVC AND NOT(MSVC_VERSION LESS 1936) AND NOT(CMAKE_CXX_SIMULATE_VERSION))
       set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "/quiet")
     endif()
 
     if(BOOST_CONTEXT_ARCHITECTURE STREQUAL i386)
       set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "/safeseh")
     endif()
-  endif()
 
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
-  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-Wno-unused-command-line-argument")
-  endif()
+  else() # masm
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+      set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-Wno-unused-command-line-argument")
+    endif()
+  endif() # masm
 
   enable_language(${ASM_LANGUAGE})
   set_source_files_properties(${ASM_SOURCES} PROPERTIES LANGUAGE ${ASM_LANGUAGE})
