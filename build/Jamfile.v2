@@ -96,6 +96,17 @@ alias asm_sources
    ;
 
 alias asm_sources
+   : asm/make_arm64_aapcs_macho_gas.S
+     asm/jump_arm64_aapcs_macho_gas.S
+     asm/ontop_arm64_aapcs_macho_gas.S
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>mach-o
+     <toolset>gcc
+   ;
+
+alias asm_sources
    : asm/make_arm_aapcs_macho_gas.S
      asm/jump_arm_aapcs_macho_gas.S
      asm/ontop_arm_aapcs_macho_gas.S
