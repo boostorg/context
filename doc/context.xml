@@ -18,7 +18,7 @@
       </para>
     </legalnotice>
     <librarypurpose>
-      C++ Library for swiching different user ctx
+      C++ Library for switching different user ctx
     </librarypurpose>
     <librarycategory name="category:text"></librarycategory>
   </libraryinfo>
@@ -619,7 +619,7 @@
         <para>
           Because the TIB (thread information block on Windows) is not fully described
           in the MSDN, it might be possible that not all required TIB-parts are swapped.
-          Using WinFiber implementation migh be an alternative.
+          Using WinFiber implementation might be an alternative.
         </para>
       </note>
       <bridgehead renderas="sect4" id="context.ff.implementations__fcontext_t__ucontext_t_and_winfiber.h1">
@@ -1707,7 +1707,7 @@
         <para>
           Because the TIB (thread information block on Windows) is not fully described
           in the MSDN, it might be possible that not all required TIB-parts are swapped.
-          Using WinFiber implementation migh be an alternative.
+          Using WinFiber implementation might be an alternative.
         </para>
       </note>
       <bridgehead renderas="sect4" id="context.cc.implementations__fcontext_t__ucontext_t_and_winfiber.h1">
@@ -2611,7 +2611,7 @@
               time that <code><phrase role="special">*</phrase><phrase role="keyword">this</phrase></code>
               needs to allocate system memory. The third argument <code><phrase role="identifier">max_size</phrase></code>
               controls how many memory might be allocated for stacks - a value of
-              zero means no uper limit.
+              zero means no upper limit.
             </para>
           </listitem>
         </varlistentry>
@@ -2942,7 +2942,7 @@
       <title><link linkend="context.stack.stack_traits">Class <emphasis>stack_traits</emphasis></link></title>
       <para>
         <emphasis>stack_traits</emphasis> models a <emphasis>stack-traits</emphasis>
-        providing a way to access certain properites defined by the enironment. Stack
+        providing a way to access certain properties defined by the environment. Stack
         allocators use <emphasis>stack-traits</emphasis> to allocate stacks.
       </para>
 <programlisting><phrase role="preprocessor">#include</phrase> <phrase role="special">&lt;</phrase><phrase role="identifier">boost</phrase><phrase role="special">/</phrase><phrase role="identifier">context</phrase><phrase role="special">/</phrase><phrase role="identifier">stack_traits</phrase><phrase role="special">.</phrase><phrase role="identifier">hpp</phrase><phrase role="special">&gt;</phrase>
@@ -3172,7 +3172,7 @@
         Sanitizers (GCC/Clang) are confused by the stack switches. The library is
         required to be compiled with property (b2 command-line) <code><phrase role="identifier">context</phrase><phrase
         role="special">-</phrase><phrase role="identifier">impl</phrase><phrase role="special">=</phrase><phrase
-        role="identifier">ucontext</phrase></code> and compilers santizer options.
+        role="identifier">ucontext</phrase></code> and compilers sanitizer options.
         Users must define <code><phrase role="identifier">BOOST_USE_ASAN</phrase></code>
         before including any Boost.Context headers when linking against Boost binaries.
       </para>

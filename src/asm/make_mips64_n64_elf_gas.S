@@ -70,7 +70,7 @@ make_fcontext:
     # save global pointer in context-data
     sd  $gp, 136($v0)
 
-    # psudo instruction compute abs address of label finish based on GP
+    # pseudo instruction compute abs address of label finish based on GP
     dla  $t9, finish
 
     # save address of finish as return-address for context-function
