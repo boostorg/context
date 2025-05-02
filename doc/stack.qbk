@@ -131,7 +131,7 @@ stack grows downwards/upwards) the stored address is the highest/lowest
 address of the stack. Argument `next_size` determines the number of stacks to
 request from the system the first time that `*this` needs to allocate system
 memory. The third argument `max_size` controls how many memory might be
-allocated for stacks - a value of zero means no uper limit.]]
+allocated for stacks - a value of zero means no upper limit.]]
 ]
 
 [heading `stack_context allocate()`]
@@ -256,7 +256,7 @@ available stack allocator.]
 [section:stack_traits Class ['stack_traits]]
 
 ['stack_traits] models a __stack_traits__ providing a way to access certain
-properites defined by the enironment. Stack allocators use __stack_traits__ to
+properties defined by the environment. Stack allocators use __stack_traits__ to
 allocate stacks.
 
         #include <boost/context/stack_traits.hpp>
@@ -357,7 +357,7 @@ compiled with `valgrind=on`.
 
 Sanitizers (GCC/Clang) are confused by the stack switches.
 The library is required to be compiled with property (b2 command-line)
-`context-impl=ucontext` and compilers santizer options.
+`context-impl=ucontext` and compilers sanitizer options.
 Users must define `BOOST_USE_ASAN` before including any Boost.Context headers
 when linking against Boost binaries.
 
