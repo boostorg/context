@@ -344,6 +344,8 @@ public:
 
     ~fiber() {
         if ( BOOST_UNLIKELY( nullptr != fctx_) ) {
+            detail::manage_exception_state exstate;
+            boost::ignore_unused(exstate);
             detail::ontop_fcontext(
 #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
                     detail::exchange( fctx_, nullptr),
