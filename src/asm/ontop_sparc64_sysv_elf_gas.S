@@ -45,6 +45,6 @@ ontop_fcontext:
 
 	jmpl %o2, %g0
 	 nop
-.size	jump_fcontext,.-jump_fcontext
+.size	ontop_fcontext,.-ontop_fcontext
 # Mark that we don't need executable stack.
 .section .note.GNU-stack,"",%progbits
