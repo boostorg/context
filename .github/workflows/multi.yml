@@ -92,7 +92,7 @@ jobs:
             echo "::endgroup::"
 
   native:
-    name: native ${{ matrix.os }} ${{ matrix.toolset }}
+    name: native ${{ matrix.os }} ${{ matrix.toolset }} ${{ matrix.options }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -104,6 +104,7 @@ jobs:
           - { os: macos, toolset: clang, options: cxxstd=17 }
           - { os: windows, toolset: gcc }
           - { os: windows, toolset: clang-win, options: embed-manifest-via=linker }
+          - { os: windows, toolset: clang-win, options: "address-model=32 embed-manifest-via=linker" }
 
     steps:
       - name: Checkout Boost super-repo
