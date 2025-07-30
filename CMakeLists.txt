@@ -12,7 +12,7 @@ list(APPEND CMAKE_MODULE_PATH ${boost_context_SOURCE_DIR}/cmake)
 
 ## Binary format
 
-if(WIN32)
+if(WIN32 OR CYGWIN)
   set(_default_binfmt pe)
 elseif(APPLE)
   set(_default_binfmt mach-o)
@@ -31,7 +31,7 @@ math(EXPR _bits "${CMAKE_SIZEOF_VOID_P}*8")
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^[Aa][Rr][Mm]" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
   set(_default_abi aapcs)
-elseif(WIN32)
+elseif(WIN32 OR CYGWIN)
   set(_default_abi ms)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^mips")
   if(_bits EQUAL 32)
