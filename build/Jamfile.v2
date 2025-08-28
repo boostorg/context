@@ -189,12 +189,15 @@ alias asm_sources
      <toolset>gcc
    ;
 
-# ARM64/AAPCS/PE
+# ARM64/AAPCS/PE — also allow <abi>ms for Windows on ARM64 (MSVC)
+# <abi>ms only applies when
+# <architecture>arm <address-model>64 <binary-format>pe,
+# so x86/x64 MSVC builds are unaffected.
 alias asm_sources
    : asm/make_arm64_aapcs_pe_armasm.asm
      asm/jump_arm64_aapcs_pe_armasm.asm
      asm/ontop_arm64_aapcs_pe_armasm.asm
-   : <abi>aapcs
+   : <abi>aapcs,<abi>ms
      <address-model>64
      <architecture>arm
      <binary-format>pe
