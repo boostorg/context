@@ -190,7 +190,8 @@ if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
       set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "/safeseh")
     endif()
 
-  else() # masm
+  # armasm doesn't support most of these options
+  elseif(NOT BOOST_CONTEXT_ASSEMBLER STREQUAL armasm) # masm
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
