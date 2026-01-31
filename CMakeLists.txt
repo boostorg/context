@@ -87,7 +87,7 @@ unset(_default_arch)
 
 ## Assembler type
 
-if(MSVC)
+if(MSVC AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   if(BOOST_CONTEXT_ARCHITECTURE STREQUAL arm64 OR BOOST_CONTEXT_ARCHITECTURE STREQUAL arm)
     set(_default_asm armasm)
   else()
