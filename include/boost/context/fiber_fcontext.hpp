@@ -88,10 +88,10 @@ struct __cxa_eh_globals {
 class manage_exception_state {
 public:
     BOOST_NOINLINE manage_exception_state() {
-        exception_state_ = *__cxa_get_globals();
+        exception_state_ = *(volatile __cxa_eh_globals *)__cxa_get_globals();
     }
     BOOST_NOINLINE ~manage_exception_state() {
-        *__cxa_get_globals() = exception_state_;
+        *(volatile __cxa_eh_globals *)__cxa_get_globals() = exception_state_;
     }
 private:
     __cxa_eh_globals exception_state_;
