@@ -5,6 +5,7 @@
 
 import feature ;
 import os ;
+import property ;
 
 feature.feature segmented-stacks : on : optional propagated composite ;
 feature.compose <segmented-stacks>on : <define>BOOST_USE_SEGMENTED_STACKS ;
@@ -15,14 +16,30 @@ feature.compose <htm>tsx : <define>BOOST_USE_TSX ;
 feature.feature valgrind : on : optional propagated composite ;
 feature.compose <valgrind>on : <define>BOOST_USE_VALGRIND ;
 
-local rule default_binary_format ( )
+rule default_binary_format ( properties * )
 {
     local tmp = elf ;
-    if [ os.name ] = "NT" { tmp = pe ; }
-    else if [ os.name ] = "CYGWIN" { tmp = pe ; }
-    else if [ os.name ] = "AIX" { tmp = xcoff ; }
-    else if [ os.name ] = "MACOSX" { tmp = mach-o ; }
-    return $(tmp) ;
+    local target-os = [ property.select <target-os> : $(properties) ] ;
+
+    if $(target-os)
+    {
+        if <target-os>windows in $(properties) { tmp = pe ; }
+        else if <target-os>cygwin in $(properties) { tmp = pe ; }
+        else if <target-os>aix in $(properties) { tmp = xcoff ; }
+        else if <target-os>darwin in $(properties) { tmp = mach-o ; }
+        else if <target-os>iphone in $(properties) { tmp = mach-o ; }
+        else if <target-os>appletv in $(properties) { tmp = mach-o ; }
+        else if <target-os>watchos in $(properties) { tmp = mach-o ; }
+        # else: android, linux, freebsd, solaris, qnx, vxworks, ... -> elf
+    }
+    else
+    {
+        if [ os.name ] = "NT" { tmp = pe ; }
+        else if [ os.name ] = "CYGWIN" { tmp = pe ; }
+        else if [ os.name ] = "AIX" { tmp = xcoff ; }
+        else if [ os.name ] = "MACOSX" { tmp = mach-o ; }
+    }
+    return <binary-format>$(tmp) ;
 }
 
 feature.feature binary-format
@@ -32,7 +49,7 @@ feature.feature binary-format
      xcoff
    : propagated
    ;
-feature.set-default binary-format : [ default_binary_format ] ;
+feature.set-default binary-format : elf ;
 
 local rule default_abi ( )
 {

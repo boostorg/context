@@ -14,10 +14,12 @@ import modules ;
 import os ;
 import toolset ;
 import config : requires ;
+import boost-context-features ;
 
 project
     : common-requirements <library>$(boost_dependencies)
     : requirements
+      <conditional>@boost-context-features.default_binary_format
       <target-os>windows,<architecture>arm,<address-model>64:<context-impl>winfib
       <target-os>windows:<define>_WIN32_WINNT=0x0601
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
