@@ -38,7 +38,7 @@ int main() {
     c = c.resume_with(
            [](ctx::continuation && c){
                throw my_exception(std::move( c), "abc");
-               return {};
+               return ctx::continuation();
            });
 
     std::cout << "main: done" << std::endl;
