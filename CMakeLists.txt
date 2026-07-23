@@ -50,7 +50,7 @@ unset(_default_abi)
 
 ## Arch-and-model
 
-set(_all_archs arm arm64 loongarch64 mips32 mips64 ppc32 ppc64 riscv64 s390x i386 x86_64 combined)
+set(_all_archs arm arm64 e2k loongarch64 mips32 mips64 ppc32 ppc64 riscv64 s390x i386 x86_64 combined)
 
 # Try at start to auto determine arch from CMake.
 if(CMAKE_SYSTEM_PROCESSOR IN_LIST _all_archs)
@@ -69,6 +69,8 @@ else()
   if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR
     CMAKE_SYSTEM_PROCESSOR MATCHES "^[Aa][Rr][Mm]") # armv8
     set(_default_arch arm64)
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^[Ee]2[Kk]")
+    set(_default_arch e2k)
   elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^mips")
     set(_default_arch mips64)
   elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc64)")
@@ -78,7 +80,7 @@ else()
   endif()
 endif()
 
-set(BOOST_CONTEXT_ARCHITECTURE "${_default_arch}" CACHE STRING "Boost.Context architecture (arm, arm64, loongarch64, mips32, mips64, ppc32, ppc64, riscv64, s390x, i386, x86_64, combined)")
+set(BOOST_CONTEXT_ARCHITECTURE "${_default_arch}" CACHE STRING "Boost.Context architecture (arm, arm64, e2k, loongarch64, mips32, mips64, ppc32, ppc64, riscv64, s390x, i386, x86_64, combined)")
 set_property(CACHE BOOST_CONTEXT_ARCHITECTURE PROPERTY STRINGS ${_all_archs})
 
 unset(_all_archs)
@@ -123,7 +125,11 @@ unset(_default_ext)
 
 ## Implementation
 
-set(_default_impl fcontext)
+if(BOOST_CONTEXT_ARCHITECTURE STREQUAL e2k)
+  set(_default_impl ucontext)
+else()
+  set(_default_impl fcontext)
+endif()
 
 set(BOOST_CONTEXT_IMPLEMENTATION "${_default_impl}" CACHE STRING "Boost.Context implementation (fcontext, ucontext, winfib)")
 set_property(CACHE BOOST_CONTEXT_IMPLEMENTATION PROPERTY STRINGS fcontext ucontext winfib)

@@ -510,6 +510,29 @@ void test_badcatch() {
 #endif
 }
 
+void test_uncaught_exceptions() {
+    int i = 42;
+    {
+        ctx::fiber f{
+            [&i](ctx::fiber && f ) {
+                struct scope_test {
+                    int &i_;
+                    scope_test( int &i) :
+                        i_(i) {
+                    }
+                    ~scope_test() {
+                        i_ = std::uncaught_exceptions();
+                    }
+                };
+                scope_test scope( i);
+                return std::move( f).resume();
+                i = 84;
+        }};
+        f = std::move(f).resume();
+    }
+    BOOST_CHECK_EQUAL( i, 1);
+}
+
 int main()
 {
     test_move();
@@ -529,6 +552,7 @@ int main()
 #endif
     test_goodcatch();
     test_badcatch();
+    test_uncaught_exceptions();
 
     return boost::report_errors();
 }
