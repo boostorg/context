@@ -54,17 +54,21 @@ feature.set-default binary-format : elf ;
 rule default_abi ( properties * )
 {
     local tmp = sysv ;
+    local target-os = [ property.select <target-os> : $(properties) ] ;
     local arch = [ property.select <architecture> : $(properties) ] ;
 
-    if <target-os>windows in $(properties) { tmp = ms ; }
-    else if <target-os>cygwin in $(properties) { tmp = ms ; }
-    else if $(arch)
+    if $(target-os)
     {
-        if <architecture>arm in $(properties) { tmp = aapcs ; }
-        else if <architecture>mips in $(properties)
+        if <target-os>windows in $(properties) { tmp = ms ; }
+        else if <target-os>cygwin in $(properties) { tmp = ms ; }
+        else if $(arch)
         {
-            if <address-model>64 in $(properties) { tmp = n64 ; }
-            else { tmp = o32 ; }
+            if <architecture>arm in $(properties) { tmp = aapcs ; }
+            else if <architecture>mips in $(properties)
+            {
+                if <address-model>64 in $(properties) { tmp = n64 ; }
+                else { tmp = o32 ; }
+            }
         }
     }
     else
