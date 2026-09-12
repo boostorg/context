@@ -528,6 +528,30 @@ alias asm_sources
      <toolset>gcc
    ;
 
+# ALPHA
+# ALPHA/SYSV/ELF
+alias asm_sources
+   : asm/make_alpha_sysv_elf_gas.S
+     asm/jump_alpha_sysv_elf_gas.S
+     asm/ontop_alpha_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>alpha
+     <binary-format>elf
+     <toolset>gcc
+   ;
+
+alias asm_sources
+   : asm/make_alpha_sysv_elf_gas.S
+     asm/jump_alpha_sysv_elf_gas.S
+     asm/ontop_alpha_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>alpha
+     <binary-format>elf
+     <toolset>clang
+   ;
+
 # S390X
 # S390X/SYSV/ELF
 alias asm_sources
