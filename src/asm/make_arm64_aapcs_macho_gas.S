@@ -63,6 +63,11 @@ _make_fcontext:
     ; reserve space for context-data on context-stack
     sub  x0, x0, #0xb0
 
+    ; zero the saved frame-pointer slot (x29, at offset 0x90 of the context block) so a fiber
+    ; starts with a null frame-pointer terminator; a frame-pointer stack walker then stops at the
+    ; fiber entry instead of following an uninitialized value off the stack.
+    str  xzr, [x0, #0x90]
+
     ; third arg of make_fcontext() == address of context-function
     ; store address as a PC to jump in
     str  x2, [x0, #0xa0]
