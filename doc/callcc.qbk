@@ -234,7 +234,7 @@ an exception.
         my_exception: abc
 
 In this exception `my_exception` is throw from a function invoked on-top of
-continuation `c` and catched inside the `for`-loop.
+continuation `c` and caught inside the `for`-loop.
 
 [heading Stack unwinding]
 On construction of __con__ a stack is allocated.
@@ -397,7 +397,7 @@ of the stack.]
 
 In this example a recursive descent parser uses a callback to emit a newly
 passed symbol. Using __callcc__ the control flow can be inverted, e.g. the
-user-code pulls parsed symbols from the parser - instead to get pushed from the
+user-code pulls parsed symbols from the parser - instead of getting pushed from the
 parser (via callback).
 
 The data (character) is transferred between the two continuations.
