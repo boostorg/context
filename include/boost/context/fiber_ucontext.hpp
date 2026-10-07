@@ -152,7 +152,7 @@ struct BOOST_CONTEXT_DECL fiber_activation_record {
         __splitstack_setcontext( sctx.segments_ctx);
 #endif
 #if defined(BOOST_USE_ASAN)
-        if ( terminated) {
+        if ( from->terminated) {
             __sanitizer_start_switch_fiber( nullptr, stack_bottom, stack_size);
         } else {
             __sanitizer_start_switch_fiber( & from->fake_stack, stack_bottom, stack_size);
