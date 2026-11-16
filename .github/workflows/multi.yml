@@ -61,7 +61,7 @@ jobs:
         run: |
           set -eu
           sudo apt-get -o Acquire::Retries=3 update
-          sudo apt-get -o Acquire::Retries=3 -y install qemu-user-static
+          sudo apt-get -o Acquire::Retries=3 -y install qemu-user-binfmt
 
       - name: "Building and testing on ${{ matrix.container }} ${{ matrix.platform }}"
         uses: addnab/docker-run-action@v3
