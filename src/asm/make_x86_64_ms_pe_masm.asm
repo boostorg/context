@@ -88,7 +88,7 @@ EXTERN  _exit:PROC
 
 ; generate function table entry in .pdata and unwind information in
 make_fcontext PROC BOOST_CONTEXT_EXPORT FRAME
-    ; .xdata for a function's structured exception handling unwind behavior
+    ; .xdata for a function structured exception handling unwind behavior
     .endprolog
 
     ; first arg of make_fcontext() == top of context-stack
