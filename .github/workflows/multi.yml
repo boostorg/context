@@ -50,7 +50,7 @@ jobs:
           tools/boostdep
 
       - name: Checkout the commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: libs/context
 
@@ -122,7 +122,7 @@ jobs:
           tools/boostdep
 
       - name: Checkout the commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: libs/context
 
