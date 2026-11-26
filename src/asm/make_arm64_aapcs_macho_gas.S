@@ -70,7 +70,25 @@ _make_fcontext:
 
     ; third arg of make_fcontext() == address of context-function
     ; store address as a PC to jump in
+#if defined(__arm64e__)
+    ; authenticate the C function pointer (IA, zero discriminator) and sign it
+    ; with the address of its slot, as jump_fcontext signs a saved PC
+    mov  x16, x2
+    autiza x16
+    ; trap if authentication failed rather than re-sign a forged pointer,
+    ; as clang does for arm64e
+    mov  x17, x16
+    xpaci x17
+    cmp  x16, x17
+    b.eq 1f
+    brk  #0xc470
+1:
+    add  x17, x0, #0xa0
+    pacia x16, x17
+    str  x16, [x0, #0xa0]
+#else
     str  x2, [x0, #0xa0]
+#endif
 
     adr  x1, finish
 
